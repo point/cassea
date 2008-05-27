@@ -1,5 +1,5 @@
 <?php
-// $Id: WText.php 1020 2008-03-19 17:24:58Z point $
+// $Id:  $
 //
 
 require("functions.php");
@@ -51,7 +51,6 @@ class Controller
 		$this->get = new ParamHolder($_GET);
 		$this->post = new ParamHolder($_POST);
 		$this->header = Header::get();
-		$this->navigator = new Navigator("index");
 		$this->dispatcher = new EventDispatcher();
 	}
 	static function getInstance()
@@ -95,6 +94,10 @@ class Controller
 		$dom = new DomDocument;
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 		$this->parsePage($dom);
+
+
+		$this->navigator = new Navigator($this->controller_name);
+		//$this->navigator->addStep($this->page,"index");
 
 	}
 	private final function parseP1P2()
@@ -300,10 +303,14 @@ class Controller
 	}
 	function tail($echo = 1)
 	{
-		$v = "</body></html>";
+		$v = "\n</body></html>";
 		if($echo)
 			echo $v;
 		else return $v; 
+	}
+	function getDispatcher()
+	{
+		return $this->dispatcher;
 	}
 
 }

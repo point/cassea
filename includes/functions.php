@@ -28,4 +28,9 @@ function property_exists_safe($class, $prop)
 }
 function &t(&$o)
 {return $o;}
+function requestURI($full = 0)
+{	
+	$s = $full?"http://".$_SERVER['SERVER_NAME']:"";
+	return $s.Filter::filter($_SERVER['REQUEST_URI'],Filter::STRING_QUOTE_ENCODE);
+}
 ?>

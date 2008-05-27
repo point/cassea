@@ -1,1 +1,1 @@
-WTEXT!!
+<?php echo $p->value ?>

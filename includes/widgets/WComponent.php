@@ -484,9 +484,9 @@ abstract class WComponent extends WObject
 			$this->setHideIfHidden($params['hide_if_hidden']);
 
 		$controller = Controller::getInstance();
-		//$controller->getDispatcher()->addEvent("increment_id");	
-		//$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
-		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
+		$controller->getDispatcher()->addEvent("increment_id");	
+		$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
+		$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
 		$this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript","javascript_before","javascript_after"));
 
@@ -842,9 +842,9 @@ EOD;
 			if($this->$p instanceof WidgetCollection)
 				$this->$p->postRender();
 
-		//$controller = Controller::getInstance();
-		//$controller->dispatcher->deleteSubscriber("roll_inside", $this->id);
-		//$controller->dispatcher->deleteSubscriber("increment_id", $this->id);
+		$controller = Controller::getInstance();
+		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
+		$controller->getDispatcher()->deleteSubscriber("increment_id", $this->id);
 	}
 	//}}}	
     

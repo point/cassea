@@ -67,7 +67,7 @@ class FSStorage implements StorageEngine
 	{
 		if(isset($this->vars[$var]))
 			return $this->vars[$var];
-		return null;
+		return false;
 	}
 	function sync()
 	{
@@ -113,7 +113,7 @@ class MemcacheStorage
 	}
 	function set($var,$val)
 	{
-		if($this->isset($var))
+		if($this->is_set($var))
 			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
 			$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
@@ -121,7 +121,7 @@ class MemcacheStorage
 	}
 	function get($var)
 	{
-		$r = $this->memcache->get($var);
+		return $this->memcache->get(md5($this->storage_name.$var));
 	}
 	function un_set($var)
 	{
