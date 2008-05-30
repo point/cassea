@@ -21,14 +21,13 @@ class Navigator
 
 		$this->user_path = $this->storage->get("user_path");
 
-		var_dump($this->user_path);
 		if(empty($this->user_path)) $this->user_path = array();
 	}
 	function addStep($page_name,$title = null,$description = null)
 	{
 		if(!isset($page_name)) return;
 
-		if((isset($this->user_path[0]) && $this->user_path[0]['controller'] != $cur_package)
+		if((isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
 			|| empty($this->user_path))
 		{
 			$this->user_path = array();

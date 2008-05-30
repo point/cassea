@@ -88,6 +88,7 @@ class WStyle extends WObject
 			foreach($params->attributes() as $k => $v)
 				if(strpos("-",$k) !== false)
 					$this->setAttribute(str_replace("-","_",$k),$v);
+				else $this->setAttribute($k,$v);
     }
     // }}}
 

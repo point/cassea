@@ -29,7 +29,7 @@ class WidgetLoader
 			require Config::get("ROOT_DIR")."/includes/widgets/".$name.".php";
 			return self::$cache[$name] = $name;
 		}
-		else return null;
+		else return false;
 	}
 }
 class Controller
@@ -91,13 +91,12 @@ class Controller
 		if(!file_exists(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml"))
 			throw new ControllerException('page file not found');
 
+		$this->navigator = new Navigator($this->controller_name);
+		$this->navigator->addStep($this->page);
+
 		$dom = new DomDocument;
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 		$this->parsePage($dom);
-
-
-		$this->navigator = new Navigator($this->controller_name);
-		//$this->navigator->addStep($this->page,"index");
 
 	}
 	private final function parseP1P2()
@@ -175,7 +174,7 @@ class Controller
 	}
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
-		$widget_name = WidgetLoader::load($elem->getName());
+		if(($widget_name = WidgetLoader::load($elem->getName())) === false);
 		if(!isset($widget_name)) return ;
 
 		$widget = new $widget_name(isset($elem['id'])?$elem['id']:null);
@@ -186,7 +185,7 @@ class Controller
 			$widget->setDataSet($this->datasets[$elem['dataset']]);
 
 
-		WidgetLoader::Load("WStyle");
+		WidgetLoader::load("WStyle");
 		if(isset($elem['style']) && isset($this->styles[$elem['style']]))
 			$widget->setStyle($this->styles[$s_name]);
 		else 	$widget->setStyle(new WStyle());
@@ -261,14 +260,39 @@ class Controller
 		$this->datasets[$arr['attr']['name']] = &$ds;
 		 */
 	}
+	protected function addStyle(SimpleXMLElement $elem)
+	{
+		if(empty($elem['id'])) return;
+		$s = new WStyle($elem['id']);
+		$s->parseParams($elem);
+		$this->styles[$elem['id']] = $s;
+	}
+	protected function addJS(SimpleXMLElement $elem)
+	{
+		if(empty($elem['id'])) return;
+		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
+		$j = new $c_name($elem['id']);
+		$j->parseParams($elem);
+		$this->javascripts[$elem['id']] = $j;
+	}	
+	/*function addPageHandler(SimpleXMLElement $elem)
+	{
+		$this->pagehandler = new WPageHandler();
+		if(!empty($this->datahandlers[$arr['attr']['datahandler']]))
+			$this->pagehandler->setDatahandler($this->datahandlers[$arr['attr']['datahandler']]);
+		$this->pagehandler->setHandler($this->vtsaSearch($arr,"handler"));
+		$this->pagehandler->setParams($this->all_params['get']);
+		$this->pagehandler->setGotoURL($arr['attr']['goto']);
+	}*/
+
 	function getWidget($id)
 	{
 		$o = null;
-			if(!empty($this->widgets[$id]))
-					return $this->widgets[$id];
-			elseif(!empty($this->system_widgets[$id]))
-					return $this->system_widgets[$id];
-			else return $o;
+		if(!empty($this->widgets[$id]))
+			return $this->widgets[$id];
+		elseif(!empty($this->system_widgets[$id]))
+			return $this->system_widgets[$id];
+		else return $o;
 	}
 	function allHTML()
 	{
