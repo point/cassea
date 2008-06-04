@@ -57,7 +57,7 @@ abstract class WComponent extends WObject
 		/**
         * @var      array
         */
-		$_class_vars = array(),
+		$class_vars = array(),
 		/**
         * @var      string
         */
@@ -766,13 +766,10 @@ EOD;
     */
 	function buildComplete()
 	{
-		if(empty($this->_class_vars))
+		if(empty($this->class_vars))
 		{
-			$_t = 
-				t(new ReflectionClass(get_class($this)))
-				->getProperties();
-			foreach($_t as $v)
-				$this->_class_vars[] = $v->getName();
+			foreach($this as $k=>$v)
+				$this->class_vars[] = $k;
 		}
 		$this->createMemento();
 	}
@@ -788,7 +785,7 @@ EOD;
     */
 	function preRender()
 	{
-		foreach($this->_class_vars as $p)
+		foreach($this->class_vars as $p)
 			if($this->$p instanceof WidgetCollection)
 				$this->$p->preRender();
 
@@ -838,7 +835,7 @@ EOD;
     */
 	function postRender()
 	{
-		foreach($this->_class_vars as $p)
+		foreach($this->class_vars as $p)
 			if($this->$p instanceof WidgetCollection)
 				$this->$p->postRender();
 

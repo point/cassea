@@ -27,6 +27,10 @@ class ParamHolder
 			return $this->checked_vars[$var_name];
 		return null;
 	}
+	function __isset($var_name)
+	{
+		return isset($this->checked_vars[$var_name]);
+	}
 	function bindFilter($var_name,$type)
 	{
 		if(!isset($this->checked_vars[$var_name])) return;

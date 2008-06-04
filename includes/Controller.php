@@ -11,6 +11,8 @@ require("Storage.php");
 require("Navigator.php");
 require("Template.php");
 require("EventDispatcher.php");
+require("DataObject.php");
+require("ResultSet.php");
 
 class ControllerException extends Exception
 {}
@@ -34,14 +36,17 @@ class WidgetLoader
 }
 class Controller
 {
-	public	$post = null,
-			$get = null;
-	private $header = null,
-			$page = "index",
-			$function = null,
-			$navigator = null,
-			$p1 = null,
+	public	$p1 = null,
 			$p2 = null,
+			$post = null,
+			$get = null
+		;
+
+	protected 
+			$header = null,
+			$page = "index",
+			$page_function = null,
+			$navigator = null,
 			$controller_name = null,
 			$final_html = "",
 			$dispatcher = null
@@ -64,19 +69,19 @@ class Controller
 	function setPageFunc($func)
 	{
 		if(is_callable($func))
-			$this->function = $func;
+			$this->page_function = $func;
 	}
 	function setPageClassMethod($class_name,$func)
 	{
 		if(is_callable($class_name,$func))
-			$this->function = $class_name."::".$func;
+			$this->page_function = $class_name."::".$func;
 	}
 	function init()
 	{
 		$ret = null;
 		$this->parseP1P2();	
-		if(is_string($this->function))
-			$ret = call_user_func($this->function,$this->p1,$this->p2);
+		if(is_string($this->page_function))
+			$ret = call_user_func($this->page_function,$this->p1,$this->p2);
 		if(!isset($ret))
 			if(isset($this->p1))
 				$this->page = $this->p1;
@@ -174,8 +179,7 @@ class Controller
 	}
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
-		if(($widget_name = WidgetLoader::load($elem->getName())) === false);
-		if(!isset($widget_name)) return ;
+		if(($widget_name = WidgetLoader::load($elem->getName())) === false) return;
 
 		$widget = new $widget_name(isset($elem['id'])?$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
@@ -220,45 +224,11 @@ class Controller
 	}
 	function addDataSet(SimpleXMLElement $elem)
 	{
-		WidgetLoader::load("WDataSet");
-		/*$ds = new WDataSet();
-		$ds->setName($arr['attr']['name']);
+		if(WidgetLoader::load("WDataSet") === false) return;
 
-		$ds->setClassname($this->vtsaSearch($arr,"classname"));
-		$ds->setDatasource($this->vtsaSearch($arr['value'],"datasource"));
-		if(isset($arr['attr']['label']))
-			$ds->setLabel($arr['attr']['label']);
-		$ds->setParams(array_merge($ds->getParams(),$this->retrieveParamsByLabel($ds->getLabel())));
-		$additional_params = array();
-		for($i = 0; $i < count($arr['value']); $i++)
-			if($arr['value'][$i]['name'] == "param")
-				$additional_params[$arr['value'][$i]['attr']['name']] = $arr['value'][$i]['attr']['value'];
-		$ds->setParams(array_merge($ds->getParams(),$additional_params));
-		$ds->setPreload( isset($arr['attr']['preload']) ? $arr['attr']['preload']: null);
-		$ds->setPreloadParam( isset( $arr['attr']['preload_param']) ? $arr['attr']['preload_param'] : null);
-		$ds->setStatic( isset( $arr['attr']['static']) ?$arr['attr']['static'] : null );
-		$ds->setDontUseOid( isset( $arr['attr']['dont_use_oid']) ? $arr['attr']['dont_use_oid']: null );
-		$value = $arr['value'];
-		$user_func_params = array();
-		for($i = 0; $i < count($value); $i++)
-		{
-			if($value[$i]['name'] == "user_func")
-			{
-				$value = $value[$i]['value'];
-				$k = 0;
-				for($j = 0; $j < count($value); $j++)
-				{
-					if($value[$j]['name'] != "param") continue;
-					$user_func_array[$k]['type'] = isset( $value[$j]['attr']['type']) ?$value[$j]['attr']['type'] : null;
-					$user_func_array[$k]['variable'] = (!empty($value[$j]['attr']['variable']))?$value[$j]['attr']['variable']:null;
-					$user_func_array[$k++]['constant'] = (!empty($value[$j]['attr']['constant']))?$value[$j]['attr']['constant']:null;
-				}
-				$ds->setUserFuncParams($user_func_array);
-				break;
-			}
-		}
-		$this->datasets[$arr['attr']['name']] = &$ds;
-		 */
+		$ds = new $WDataSet(isset($elem['id'])?$elem['id']:null);
+		$ds->parseParams($elem);
+		$this->datasets[$ds->getId()] = $ds;
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{

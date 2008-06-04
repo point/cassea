@@ -200,7 +200,7 @@ class WText extends WComponent
 		if(isset($this->dataset))
 			$this->setData($this->dataset->getData());
 		parent::preRender();
-		foreach($this->_class_vars as $v)
+		foreach($this->class_vars as $v)
 		{
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)
 			{
