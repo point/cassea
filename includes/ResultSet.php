@@ -8,7 +8,7 @@ class ResultSetPool
 
 	static function set(ResultSet $r,$priority = 0)
 	{
-		if($r->getFor() !== null) return;
+		if($r->getFor() == null) return;
 		if(!isset(self::$cache[$r->getFor()]))
 		{
 			self::$cache[$r->getFor()]['priority'] = array();
@@ -19,11 +19,11 @@ class ResultSetPool
 	}
 	static function get($w_id)
 	{
-		if(!isset(self::$cache[$w_id])) return null;
+		$res = t(new ResultSet())->forid($w_id);
+		if(!isset(self::$cache[$w_id])) return $res;
 		$a = &self::$cache[$w_id];
 		array_multisort($a['priority'],SORT_REGULAR,SORT_ASC,$a['set']);
-		$res = new ResultSet();
-		foreach($a as &$v)
+		foreach($a['set'] as &$v)
 			$res->merge($v);
 		return $res;
 	}
@@ -36,6 +36,10 @@ class ResultSet implements IteratorAggregate
 		$properties = array()
 		;
 
+	function __isset($prop)
+	{
+		return isset($this->properties[$prop]);
+	}
 	function forid($id = null)
 	{
 		if(!isset($id)) return;
@@ -59,8 +63,8 @@ class ResultSet implements IteratorAggregate
 	}
 	function get($k = null)
 	{
-		if(!isset($k,$this->attributes[$k])) return;
-		return $this->attributes[$k];
+		if(!isset($k,$this->properties[$k])) return null;
+		return $this->properties[$k];
 	}
 	function getDef()
 	{

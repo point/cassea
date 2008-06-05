@@ -515,11 +515,11 @@ abstract class WComponent extends WObject
     * @param    array $data
     * @return   void
 	*/
-    function setData($data)
+    function setData(ResultSet $data)
 	{
-		if(!is_array($data[$this->id])) return;
-		$t_data = $data[$this->id];
-		if(!empty($t_data['style']))
+		if($this->getId() != $data->getFor()) return;
+
+		/*if(!empty($t_data['style']))
 		{
 			$controller = Controller::getInstance();
 			$this->setStyle($controller->getStyleByName($t_data['style']));
@@ -574,7 +574,7 @@ abstract class WComponent extends WObject
 
 		if(isset($t_data['hide_if_hidden']))
 			$this->setHideIfHidden($t_data['hide_if_hidden']);
-
+		*/
     }
 	// }}}
     

@@ -1,4 +1,10 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <root>
-	<WText attr="q">qwe</WText>
+	<WDataSet id="ds0">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<datasource method="getText" />
+	</WDataSet>
+	<WText attr="q" id="ttext" dataset="ds0">qwe</WText>
 </root>

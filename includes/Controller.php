@@ -181,35 +181,35 @@ class Controller
 	{
 		if(($widget_name = WidgetLoader::load($elem->getName())) === false) return;
 
-		$widget = new $widget_name(isset($elem['id'])?$elem['id']:null);
+		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
 		$widget->parseParams($elem);
 
-		if(isset($elem['dataset']) && isset($this->datasets[$elem['dataset']]))
-			$widget->setDataSet($this->datasets[$elem['dataset']]);
+		if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
+			$widget->setDataSet($this->datasets[(string)$elem['dataset']]);
 
 
 		WidgetLoader::load("WStyle");
-		if(isset($elem['style']) && isset($this->styles[$elem['style']]))
-			$widget->setStyle($this->styles[$s_name]);
+		if(isset($elem['style']) && isset($this->styles[(string)$elem['style']]))
+			$widget->setStyle($this->styles[(string)$s_name]);
 		else 	$widget->setStyle(new WStyle());
 
 		WidgetLoader::load("WJavaScript");
-		if(isset($elem['javascript']) && isset($this->javascripts[$elem['javascript']]))
-			$widget->setJavaScript($this->javascripts[$j_name]);
+		if(isset($elem['javascript']) && isset($this->javascripts[(string)$elem['javascript']]))
+			$widget->setJavaScript((string)$this->javascripts[$j_name]);
 		else	$widget->setJavaScript(new WJavaScript());
 
-		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[$elem['valuechecker']]))
-					$widget->setValueChecker($this->valuecheckers[$elem['valuechecker']]);
+		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
+					$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
 
-		if($widget instanceof WControl && isset($elem['datahandler']) && isset($this->datahandlers[$elem['datahandler']]))
+		if($widget instanceof WControl && isset($elem['datahandler']) && isset($this->datahandlers[(string)$elem['datahandler']]))
 		{
-			$this->corresp_map[$widget->getName()]['dh'] = $elem['datahandler'];
-			$widget->setDataHandler($elem['datahandler']);
+			$this->corresp_map[$widget->getName()]['dh'] = (string)$elem['datahandler'];
+			$widget->setDataHandler((string)$elem['datahandler']);
 			if(!empty($elem['filter']))
-				$this->corresp_map[$widget->getName()]['filter'] = $elem['filter'];
+				$this->corresp_map[$widget->getName()]['filter'] = (string)$elem['filter'];
 			if(!empty($elem['apply_filter']))
-				$this->corresp_map[$widget->getName()]['apply_filter'] = $elem['apply_filter'];
+				$this->corresp_map[$widget->getName()]['apply_filter'] = (string)$elem['apply_filter'];
 		}
 			if($widget instanceof WComponent && $widget->getState())
 				$widget->buildComplete();
@@ -226,9 +226,9 @@ class Controller
 	{
 		if(WidgetLoader::load("WDataSet") === false) return;
 
-		$ds = new $WDataSet(isset($elem['id'])?$elem['id']:null);
+		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
 		$ds->parseParams($elem);
-		$this->datasets[$ds->getId()] = $ds;
+		$this->datasets[(string)$ds->getId()] = $ds;
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{

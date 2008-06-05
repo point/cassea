@@ -32,7 +32,7 @@ class DataObjectParams
 			{
 				$c = count($controller->p2);
 				if(isset($param['count']))
-					$c = abs($param['count']);
+					$c = abs(0+$param['count']);
 
 				$p = array();
 				for($i = 0,$j = 0; $i < $c;$i++)
@@ -106,16 +106,16 @@ abstract class DataObject
 
 	function __construct($is_static = false)
 	{
-		$this->is_static = $is_static;
+		$this->is_static = 0+$is_static;
 	}
 	function parseParams(SimpleXMLElement $elem)
 	{
 		if(isset($elem->model))
-			$this->model = $elem->model;
+			$this->model = (string)$elem->model;
 		else throw new DataObjectException("Model name for data object does not set");
 
 		if(isset($elem->classname))
-			$this->classname = $elem->classname;
+			$this->classname = (string)$elem->classname;
 		else throw new DataObjectException("Class name for data object does not set");
 
 		if(isset($elem->static))
@@ -127,7 +127,7 @@ abstract class DataObject
 		if(isset($elem->init))
 		{
 			if(isset($elem->init['method']))
-				$this->init_method = $elem->init['method'];
+				$this->init_method = (string)$elem->init['method'];
 
 			$this->init_params = new DataObjectParams($elem->init);		
 		}
@@ -136,7 +136,9 @@ abstract class DataObject
 	{
 		require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
 		$r = new ReflectionClass($this->classname);
-		$this->object = $r->newInstanceArgs($this->init_params->getParams());
+		if($this->init_params->getParams())
+			$this->object = $r->newInstanceArgs($this->init_params->getParams());
+		else $this->object = $r->newInstance();
 	}
 }
 // }}}
@@ -169,7 +171,7 @@ class DataSourceObject extends DataObject
 		{
 
 			if(isset($elem->datasource['method']))
-				$this->datasource_method = $elem->datasource['method'];
+				$this->datasource_method = (string)$elem->datasource['method'];
 			else
 				throw new DataObjectException("Data source method was not found");
 
@@ -184,19 +186,26 @@ class DataSourceObject extends DataObject
 			if(!isset($this->object))
 			{
 				$this->createObject();
-				if(($v = $this->findVlaueInObject($w_id)) !== false)
-					return $v;
 				if(isset($this->datasource_method))
-					return call_user_func_array(array($this->object,$this->datasource_method),$this->datasource_params->getParams());
+				{
+					try{
+						$r = new ReflectionObject($this->object);
+						return $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
+					}catch(Exception $e){}
+				}
+				if(($v = $this->findValueInObject($w_id)) !== false)
+					return $v;
 			}
 		}
 		else
 		{
-			if(($v = $this->findVlaueInStatic($w_id)) !== false)
-				return $v;
 			if(isset($this->datasource_method))
 				return call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
+
+			if(($v = $this->findVlaueInStatic($w_id)) !== false)
+				return $v;
 		}
+		return null;
 	}
 	function findValueInObject($w_id)
 	{

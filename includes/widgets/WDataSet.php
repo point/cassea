@@ -2,7 +2,7 @@
 //
 // $Id$
 //
-
+WidgetLoader::load("WObject");
 //{{{ WDataSet
 class WDataSet extends WObject
 {
@@ -20,7 +20,7 @@ class WDataSet extends WObject
     */
     function WDataSet($id = null)
     {
-		parent::WObject($id);
+		parent::__construct($id);
     }
     // }}}
 	// {{{ parseParams
@@ -35,9 +35,10 @@ class WDataSet extends WObject
     {
 		if(isset($params['name']))
 			$this->setId($params['name']);
-		$this->data_object = new DataSourceObject($params);
+		$this->data_object = new DataSourceObject();
+		$this->data_object->parseParams($params);
 		if(isset($params['priority']))
-			$this->priority = 0+$params['priority'];
+			$this->setPriority(0+$params['priority']);
     }
     // }}}
 
@@ -72,6 +73,35 @@ class WDataSet extends WObject
 		return $this->getId();
     }
     // }}}
+	
+	// {{{ setPriority
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $priority
+    * @return   void
+    */
+    function setPriority($priority = 0)
+    {
+		$this->priority = 0+$priority;
+    }
+    // }}}
+
+	// {{{ getPriority
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getPriority()
+    {
+		return $this->priority;
+    }
+    // }}}
+
 }
 //}}}
 ?>

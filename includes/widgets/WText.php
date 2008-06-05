@@ -153,7 +153,12 @@ class WText extends WComponent
     */
     function setTextStyle($params)
 	{
-    	foreach ($params->attributes() as $k => $v)
+		if($params instanceof SimpleXMLElement)
+			$a = $params->attributes();
+		elseif($params instanceof ResultSet)
+			$a = $params;
+
+    	foreach ($a as $k => $v)
     	{
 			if(preg_match("/is_\S+/",$k))
 				$this->addToMemento(array($k));
@@ -198,8 +203,7 @@ class WText extends WComponent
     function preRender()
     {
 		if(isset($this->dataset))
-			$this->setData($this->dataset->getData());
-		parent::preRender();
+			$this->setData($this->dataset->getData($this->getId()));
 		foreach($this->class_vars as $v)
 		{
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)
@@ -209,6 +213,7 @@ class WText extends WComponent
 			}
 		}		
 		$this->tpl = $this->createTemplate();
+		parent::preRender();
     }
 	// }}}    
     // {{{ assignVars
@@ -235,21 +240,14 @@ class WText extends WComponent
     * @param    mixed $data
     * @return   void
     */
-    function setData($data)
+    function setData(ResultSet $data)
 	{
+		if($this->getId() != $data->getFor()) return;
+
 		$this->restoreMemento();
-		if(empty($data)) return;
-		if(isset($data[$this->id]))
-			$t_data = $data[$this->id];
-		else return;
-		if(is_array($t_data))
-		{
-			$this->setTextStyle($t_data);
-			if(isset($t_data['text']))
-				$this->setText($t_data['text']);
-		}
-		elseif(isset($t_data) && is_scalar($t_data))
-			$this->setText($t_data);
+		$this->setTextStyle($data);
+		$this->setText($data->getDef());
+		$this->setText($data->get('text'));
 
 		parent::setData($data);
     }
@@ -264,12 +262,8 @@ class WText extends WComponent
     */
     function setText($text)
     {
-		if(!isset($text) || is_array($text))
-		{
-	   		$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				"Parameter text is empty or not set"),LOG_LEVEL_WARNING);
+		if(!isset($text) || !is_scalar($text))
 			return;
-		}
 		$this->text = "".$text;
     }
     // }}}

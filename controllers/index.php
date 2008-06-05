@@ -10,5 +10,6 @@ $c->init();
 $c->head();
 echo $c->allHTML();
 $c->tail();
+
 ?>
 
