@@ -23,10 +23,13 @@ class DataObjectParams
 		{
 			if($param['from'] == "p1")
 			{
-				$p = (isset($param['as']) && $param['as'] == "array")?array($controller->p1):$controller->p1;
+				//$p = (isset($param['as']) && $param['as'] == "array")?array($controller->p1):$controller->p1;
+				$p = $controller->p1;
 				if(isset($param->filter))
 					$p = Filter::filter($p,(string)$param->filter);
-				$this->params[] = $p;
+				if((isset($param['as']) && $param['as'] == "array"))
+					$this->params[] = array($p);
+				else $this->params[] = $p;
 			}
 			elseif($param['from'] == "p2")
 			{
@@ -35,14 +38,13 @@ class DataObjectParams
 					$c = abs(0+$param['count']);
 
 				$p = array();
-				for($i = 0,$j = 0; $i < $c;$i++)
+				for($i = 0; $i < $c;$i++)
 				{
-					if(!isset($controller->p2[$i])) continue;
+					//if(!isset($controller->p2[$i])) continue;
 
-					$p[$j] = $controller->p2[$i];
+					$p[$i] = isset($controller->p2[$i])?$controller->p2[$i]:null;
 					if(isset($param->filter[$i]))
-						$p[$j] = Filter::filter($p[$j],(string)$param->filter[$i]);
-					$j++;
+						$p[$i] = Filter::filter($p[$i],(string)$param->filter[$i]);
 				}
 				if(isset($param['as']) && $param['as'] == "array")
 					$this->params[] = $p;
@@ -52,15 +54,22 @@ class DataObjectParams
 			}
 			elseif($param['from'] == "p3" && isset($param['var']))
 			{
-				$p = (isset($param['as']) && $param['as'] == "array")?array($controller->get->$param['var']):
-					$controller->get->$param['var'];
+				/*$p = (isset($param['as']) && $param['as'] == "array")?array($controller->get->$param['var']):
+					$controller->get->$param['var'];*/
+				$p = $controller->get->$param['var'];
 				if(isset($param->filter))
 					$p = Filter::filter($p,(string)$param->filter);
-				$this->params[] = $p;
+				if(isset($param['as']) && $param['as'] == "array")
+					$this->params[] = array($p);
+				else $this->params[] = $p;
 			}
 			elseif(isset($param['constant']))
 			{
-				$this->params[] = $param['constant'];
+				$p = (string)$param['constant'];
+				if(isset($param->filter))
+					$p = Filter::filter($p,(string)$param->filter);
+				$this->params[] = $p;
+
 			}
 		
 		}
@@ -135,10 +144,12 @@ abstract class DataObject
 	function createObject()
 	{
 		require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
-		$r = new ReflectionClass($this->classname);
-		if($this->init_params->getParams())
-			$this->object = $r->newInstanceArgs($this->init_params->getParams());
-		else $this->object = $r->newInstance();
+		try{
+			$r = new ReflectionClass($this->classname);
+			if($this->init_params->getParams())
+				$this->object = $r->newInstanceArgs($this->init_params->getParams());
+			else $this->object = $r->newInstance();
+		}catch(Exception $e){}
 	}
 }
 // }}}
@@ -154,7 +165,12 @@ class DataSourceObject extends DataObject
 		/**
 		* @var  array
 		*/
-		$datasource_params = array()
+		$datasource_params = array(),
+		/**
+		* @var  array
+		*/
+		$datasource_cache = null
+
 	;
 	private
 		$cache = null
@@ -188,9 +204,11 @@ class DataSourceObject extends DataObject
 				$this->createObject();
 				if(isset($this->datasource_method))
 				{
+					if(isset($this->datasource_cache))
+						return $this->datasource_cache;
 					try{
 						$r = new ReflectionObject($this->object);
-						return $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
+						return $this->datasource_cache = $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
 					}catch(Exception $e){}
 				}
 				if(($v = $this->findValueInObject($w_id)) !== false)
@@ -200,7 +218,7 @@ class DataSourceObject extends DataObject
 		else
 		{
 			if(isset($this->datasource_method))
-				return call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
+				return $this->datasource_cache = call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
 
 			if(($v = $this->findVlaueInStatic($w_id)) !== false)
 				return $v;

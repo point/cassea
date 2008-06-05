@@ -4,7 +4,14 @@
 		<model>test</model>
 		<classname>thetest</classname>
 		<init />
-		<datasource method="getText" />
+		<datasource method="getText" >
+			<param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/>
+		</datasource>
 	</WDataSet>
 	<WText attr="q" id="ttext" dataset="ds0">qwe</WText>
 </root>

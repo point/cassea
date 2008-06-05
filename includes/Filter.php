@@ -33,6 +33,8 @@ class Filter
 	{
 		$ret = null;
 		if(!isset($var)) return null;
+		if(!is_int($type))
+			$type = self::getFilter($type);
 		switch($type)
 		{
 			case self::NONE:
