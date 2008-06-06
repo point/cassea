@@ -191,12 +191,12 @@ class Controller
 
 		WidgetLoader::load("WStyle");
 		if(isset($elem['style']) && isset($this->styles[(string)$elem['style']]))
-			$widget->setStyle($this->styles[(string)$s_name]);
+			$widget->setStyle($this->styles[(string)$elem['style']]);
 		else 	$widget->setStyle(new WStyle());
 
 		WidgetLoader::load("WJavaScript");
 		if(isset($elem['javascript']) && isset($this->javascripts[(string)$elem['javascript']]))
-			$widget->setJavaScript((string)$this->javascripts[$j_name]);
+			$widget->setJavaScript($this->javascripts[(string)$elem['javascript']]);
 		else	$widget->setJavaScript(new WJavaScript());
 
 		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
@@ -232,10 +232,11 @@ class Controller
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{
+		WidgetLoader::load("WStyle");
 		if(empty($elem['id'])) return;
-		$s = new WStyle($elem['id']);
+		$s = new WStyle((string)$elem['id']);
 		$s->parseParams($elem);
-		$this->styles[$elem['id']] = $s;
+		$this->styles[$s->getId()] = $s;
 	}
 	protected function addJS(SimpleXMLElement $elem)
 	{
@@ -243,7 +244,7 @@ class Controller
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
 		$j = new $c_name($elem['id']);
 		$j->parseParams($elem);
-		$this->javascripts[$elem['id']] = $j;
+		$this->javascripts[(string)$elem['id']] = $j;
 	}	
 	/*function addPageHandler(SimpleXMLElement $elem)
 	{
@@ -305,6 +306,34 @@ class Controller
 	function getDispatcher()
 	{
 		return $this->dispatcher;
+	}
+	function getStyleByName($name = null)
+	{
+		if(!isset($name) ||empty($this->styles["".$name]))
+			return null;
+		return $this->styles["".$name];
+	}
+	function getJavaScriptByName($name = null)
+	{
+		if(!isset($name) || empty($this->javascripts["".$name]))
+			return null;
+		return $this->javascripts["".$name];
+	}
+	function addScript($src = null)
+	{
+		if(empty($src)) return;
+		if(in_array($src,$this->scripts))return;
+		/*if(strpos($src,"/") === false)
+			$src = "/way_scripts/".$src;*/
+		$this->scripts[] = $src;
+	}
+	function addCSS($src = null)
+	{
+		if(empty($src)) return;
+		if(in_array($src,$this->css)) return;
+		/*if(strpos($src,"/") === false)
+			$src = "/way_admin/css/".$src;*/
+		$this->css[] = $src;
 	}
 
 }

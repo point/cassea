@@ -1,6 +1,6 @@
 <?php
 //
-// $Id: $
+// $Id:$
 //
 //{{{ WJSEvent
 class WJSEvent 
@@ -106,7 +106,7 @@ class WJSEvent
 			$ret .= implode(";",$this->plain)."; ";
 		if(count($this->conditional))
 			$ret .= "return ".implode(" && ",$this->conditional);
-		return WComponent::replaceWithLangConst($ret);
+		return $ret;
     }
     // }}}
 }

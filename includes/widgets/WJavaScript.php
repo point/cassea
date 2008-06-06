@@ -110,10 +110,10 @@ class WJavaScript extends WObject
     {
 		if(isset($params)) 
 			foreach($params->attributes() as $k => $v)
-				$this->setAttribute($k,$v);
+				$this->setAttribute((string)$k,(string)$v);
 
-		if(isset($params->berfore))
-			$this->addBeforeWidget((string) $params->berfore);
+		if(isset($params->before))
+			$this->addBeforeWidget((string) $params->before);
 		if(isset($params->after))
 			$this->addAfterWidget((string) $params->after);
     }
@@ -130,7 +130,7 @@ class WJavaScript extends WObject
     */
     function setAttribute($attribute, $value)
     {
-		if(empty($attribute)  || !isset($value) ||
+		if(empty($attribute)  || !isset($value) || $attribute == "id" ||
 			!property_exists_safe(get_class($this),$attribute)) 
 			return;
 		if($attribute == "src" )

@@ -519,62 +519,37 @@ abstract class WComponent extends WObject
 	{
 		if($this->getId() != $data->getFor()) return;
 
-		/*if(!empty($t_data['style']))
-		{
-			$controller = Controller::getInstance();
-			$this->setStyle($controller->getStyleByName($t_data['style']));
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: style'),LOG_LEVEL_INFO);
-		}
-		if(!empty($t_data['javascript']))
-		{
-			$controller = Controller::getInstance();
-			$this->setJavaScript($controller->getJavaScriptByName($t_data['javascript']));
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: javascript'),LOG_LEVEL_INFO);
-		}
-		if( isset($t_data['visible']))
-		{
-			$this->setVisible($t_data['visible']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: visible'),LOG_LEVEL_INFO);
-		}
-		if( isset($t_data['enabled']))
-		{
-			$this->setState($t_data['enabled']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: enabled'),LOG_LEVEL_INFO);
-		}
-		if(isset($t_data['title']))
-		{
-			$this->setTitle($t_data['title']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: title'),LOG_LEVEL_INFO);
-		}
-		if(isset($t_data['tooltip']))
-		{
-			$this->setTooltip($t_data['tooltip']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: tooltip'),LOG_LEVEL_INFO);
-		}
-		if(!empty($t_data['html_id']))
-		{
-			$this->setHTMLId($t_data['html_id']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: html_id'),LOG_LEVEL_INFO);
-		}
-		if(isset($t_data['class']))
-		{
-			$this->setStyleClass($t_data['class']);
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'WComponent->SetData: class'),LOG_LEVEL_INFO);
-		}
-		if(isset($t_data['hide_if_empty']))
-			$this->setHideIfEmpty($t_data['hide_if_empty']);
+		
+		$controller = Controller::getInstance();
+		if(isset($data->style))
+			$this->setStyle($controller->getStyleByName($data->get('style')));
 
-		if(isset($t_data['hide_if_hidden']))
-			$this->setHideIfHidden($t_data['hide_if_hidden']);
-		*/
+		if(isset($data->javascript))
+			$this->setJavaScript($controller->getJavaScriptByName($data->get('javascript')));
+
+		if(isset($data->visible))
+			$this->setVisible($data->get('visible'));
+
+		if(isset($data->enabled))
+			$this->setState($data->get('enabled'));
+
+		if(isset($data->title))
+			$this->setTitle($data->get('title'));
+
+		if(isset($data->tooltip))
+			$this->setTooltip($data->get('tooltip'));
+
+		if(isset($data->html_id))
+			$this->setHTMLId($data->html_id);
+
+		if(isset($data->class))
+			$this->setStyleClass($data->get('class'));
+
+		if(isset($data->hide_if_empty))
+			$this->setHideIfEmpty($data->get('hide_if_empty'));
+
+		if(isset($data->hide_if_hidden))
+			$this->setHideIfHidden($data->get('hide_if_hidden'));
     }
 	// }}}
     
@@ -679,11 +654,11 @@ EOD;
 			$this->setTitle($this->getTooltip());
 		}
 
-		$this->tpl->setParamsArray(array("title"=>isset($this->title)?"title=\"$this->getTitle()\"":"","id"=>$this->getHTMLId()));
+		$this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"$this->getTitle()\" ":"","id"=>$this->getHTMLId()));
 		if(!empty($this->style_class)) 
-			$this->tpl->setParamsArray(array("class"=>"class=\"".$this->getStyleClass()."\""));
+			$this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
 		if(isset($this->style) && !$this->style->isEmpty()) 
-			$this->tpl->assign_vars(array("style"=>"style=\"".$this->style->generateStyle()."\""));
+			$this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
 		if(!empty($this->javascript)) 
 			$this->tpl->setParamsArray(array("javascript"=>$this->javascript->generateJS(),
 				"javascript_before"=>$this->javascript->getBeforeWidget(),

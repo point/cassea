@@ -1,6 +1,6 @@
 <?php
 //
-// $Id: $
+// $Id:$
 //
 //{{{ WStyle
 class WStyle extends WObject
@@ -107,7 +107,7 @@ class WStyle extends WObject
 		$vars = get_class_vars("WStyle");
 		foreach($vars as $k => $v)
 		{
-			if(isset($this->$k) && is_string($this->$k) && $k !== "attr_setted")
+			if(isset($this->$k) && is_string($this->$k) && $k !== "attr_setted" && $k !== "id")
 			{
 				$k2 = str_replace("_","-",$k);
 				$final_style.= $k2.":".$this->$k.";";

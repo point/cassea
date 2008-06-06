@@ -13,5 +13,9 @@
 			<param constant="mmmmm"/>
 		</datasource>
 	</WDataSet>
-	<WText attr="q" id="ttext" dataset="ds0">qwe</WText>
+	<WStyle id="s1" border="1px solid red"/>
+	<WJavaScript id="js1" onclick="alert(1)">
+		<before>function q(){}</before>
+	</WJavaScript>
+	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
 </root>
