@@ -10,7 +10,7 @@ class thetest
 		var_dump($p23);
 		var_dump($var);
 		var_dump($const);*/
-		return t(new ResultSet())->forid('ttext')->set('text','vvv');
+		return t(new ResultSet())->forid('ttext')->set('text','vvv')->set('style','s2')->set('tooltip',"toooooltip");;
 	}
 }
 ?>

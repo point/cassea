@@ -49,7 +49,9 @@ class Controller
 			$navigator = null,
 			$controller_name = null,
 			$final_html = "",
-			$dispatcher = null
+			$dispatcher = null,
+			$scripts = array(),
+			$css = array()
 		;
 	function __construct()
 	{
@@ -103,6 +105,16 @@ class Controller
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 		$this->parsePage($dom);
 
+		$this->addScript("/0.1/jquery.js");
+		$this->addScript("/0.1/jquery.cookie.js");
+		$this->addScript("/0.1/jquery.bgiframe.js");
+		$this->addScript("/0.1/jquery.tooltip.js");
+		$this->addCSS("/0.1/jquery.tooltip.css");
+		$this->addScript("/0.1/jquery.treeview.js");
+		/*$this->addScript("php_serialize.js");
+		$this->addScript("swfobject.js");
+		$this->addScript("formatDate.js");
+		$this->addScript("w.js");*/
 	}
 	private final function parseP1P2()
 	{
@@ -129,31 +141,35 @@ class Controller
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
 			$el = $node->item($i);
+			if(empty($el)) continue;
 			$this->addDataSet(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 
 		$node = $dom->getElementsByTagName("WDataHandler");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
 			$el = $node->item($i);
+			if(empty($el)) continue;
 			$this->addDataHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 
 		$node = $dom->getElementsByTagName("WStyle");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
 			$el = $node->item($i);
+			if(empty($el)) continue;
 			$this->addStyle(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 
 		$xpath = new DOMXPath($dom);
 		foreach($xpath->query('//WJavaScript | //WHyperLinkJS | //WFormJS | //WInputJS | //WButtonJS | //WTextareaJS') as $el)
 		{
+			if(empty($el)) continue;
 			$this->addJS(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 		unset($xpath);
 
@@ -161,16 +177,18 @@ class Controller
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
 			$el = $node->item($i);
+			if(empty($el)) continue;
 			$this->addPageHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 
 		$node = $dom->getElementsByTagName("WValueChecker");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
 			$el = $node->item($i);
+			if(empty($el)) continue;
 			$this->addValueChecker(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
+			$el->parentNode->removeChild($el->parentNode->firstChild);
 		}
 	
 		$sxml = simplexml_import_dom($dom);
@@ -290,6 +308,10 @@ class Controller
 	function head($echo = 1)
 	{
 		$h = Header::get();
+		foreach($this->scripts as $v)
+			$h->addScript($v);
+		foreach($this->css as $v)
+			$h->addCSS($v);
 		$v = $h->send();
 		$v .= "<body>\n";
 		if($echo)

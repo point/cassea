@@ -229,7 +229,7 @@ abstract class WComponent extends WObject
     * @param    WStyle& $style    
     * @return   void
     */
-    function setStyle(WStyle $style)
+    function setStyle($style)
     {
 		if(!isset($style) || !$style instanceof WStyle) 
 			return;
@@ -654,7 +654,7 @@ EOD;
 			$this->setTitle($this->getTooltip());
 		}
 
-		$this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"$this->getTitle()\" ":"","id"=>$this->getHTMLId()));
+		$this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".$this->getTitle()."\" ":"","id"=>$this->getHTMLId()));
 		if(!empty($this->style_class)) 
 			$this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
 		if(isset($this->style) && !$this->style->isEmpty()) 

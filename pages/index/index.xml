@@ -14,6 +14,7 @@
 		</datasource>
 	</WDataSet>
 	<WStyle id="s1" border="1px solid red"/>
+	<WStyle id="s2" border="1px solid green"/>
 	<WJavaScript id="js1" onclick="alert(1)">
 		<before>function q(){}</before>
 	</WJavaScript>
