@@ -105,6 +105,7 @@ class Controller
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 		$this->parsePage($dom);
 
+		$this->addCSS("/0.1/ns_reset.css");
 		$this->addScript("/0.1/jquery.js");
 		$this->addScript("/0.1/jquery.cookie.js");
 		$this->addScript("/0.1/jquery.bgiframe.js");
