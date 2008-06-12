@@ -113,14 +113,6 @@ class WNavigator extends WComponent
     */
     function assignVars()
     {
-		/*for($i = 0; $i < count($this->steps)-1; $i++)
-		{	
-			$this->tpl->assign_block_vars("item",array(
-				"TITLE" => ($i == 0)?$this->steps[$i]['title']:(" > ".$this->steps[$i]['title']),
-				"URL" => $this->steps[$i]['url'],
-				"DESCRIPTION" => $this->steps[$i]['description']
-			));
-		}*/
 		$l =array_slice($this->steps,-1,1);
 		$l = $l[0];
 		$this->tpl->setParams(t(new TemplateParams())->set('steps',array_slice($this->steps,0,-1))->

@@ -18,6 +18,7 @@
 	<WJavaScript id="js1" onclick="alert(1)">
 		<before>function q(){}</before>
 	</WJavaScript>
-	<WNavigator text="index"/>
+	<WNavigator />
 	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
+	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
 </root>

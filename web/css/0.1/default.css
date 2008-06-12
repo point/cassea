@@ -2,3 +2,32 @@
 {
 	color:#777;
 }
+.image_preview {
+	/*overflow:scroll;*/
+	border:1px solid #039;
+	padding:10px;
+	margin:0px;
+	z-index:200 !important;
+	position:absolute;
+	width:400px;
+	height:400px;
+	background-color:#f9f9f9;
+	/*vertical-align:middle;
+	text-align:center;*/
+	left:-10000px;
+	top:10000px;
+}
+.image_preview img { 
+	cursor:pointer;
+}
+.ajax_helper {
+	position: absolute;
+	width:50px;
+	height:50px;
+	z-index:300 !important;
+	vertical-align:middle;
+	text-align:center;
+}
+.ajax_helper img{
+	border:0px;
+}

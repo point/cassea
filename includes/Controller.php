@@ -2,12 +2,12 @@
 // $Id:  $
 //
 
+require("Config.php");
+require("Storage.php");
 require("functions.php");
 require("Filter.php");
 require("HTTPParamHolder.php");
 require("Header.php");
-require("Config.php");
-require("Storage.php");
 require("Navigator.php");
 require("Template.php");
 require("EventDispatcher.php");
