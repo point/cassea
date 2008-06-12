@@ -1,7 +1,6 @@
 /*		NS Reset CSS				*/
 /*		Author: Nikita Seleckis		*/
 /*		Last update: 2008-05-26		*/
-
 html,body,address,blockquote,div,p,pre,h1,h2,h3,h4,h5,h6,hr,	/* block level 	*/
 dd,dl,dt,ul,ol,li,												/* lists 		*/
 a,abbr,acronym,b,big,br,cite,code,del,dfn,em,i,					/* inline text 	*/
@@ -16,7 +15,10 @@ font,u,s,center,dir,menu,strike,xmp								/* depricated 	*/
 	vertical-align: baseline;
 	text-align: left;
 	text-indent: 0;
-	font: normal 13px/20px "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;
+	/*font: normal 13px/20px "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;*/
+	font-family: "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;
+	font-size:13px;
+	line-height: 20px;
 	color: black;
 	text-decoration: none;
 	list-style-type: none;

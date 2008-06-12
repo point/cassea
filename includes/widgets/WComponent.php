@@ -647,7 +647,7 @@ abstract class WComponent extends WObject
 			$html_id = $this->getHTMLId();
 			$js = <<<EOD
 $(document).ready(function(){
-	$('#{$html_id}').tooltip({track: true,delay: 0,showURL: false,showBody: " - ",opacity: 0.85 });
+	$('#{$html_id}').tooltip({track: true,delay: 0,showURL: false,showBody:false,opacity: 0.85 });
 });
 EOD;
 			$this->javascript->addBeforeWidget($js);
@@ -900,6 +900,7 @@ EOD;
     	return $this->hide_if_empty_id;
     }
     // }}}
+	
 	// {{{ createTemplate
     /**
     * Method description

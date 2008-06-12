@@ -4,7 +4,7 @@
 
 require("functions.php");
 require("Filter.php");
-require("ParamHolder.php");
+require("HTTPParamHolder.php");
 require("Header.php");
 require("Config.php");
 require("Storage.php");
@@ -55,8 +55,8 @@ class Controller
 		;
 	function __construct()
 	{
-		$this->get = new ParamHolder($_GET);
-		$this->post = new ParamHolder($_POST);
+		$this->get = new HTTPParamHolder($_GET);
+		$this->post = new HTTPParamHolder($_POST);
 		$this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
 	}
@@ -112,6 +112,8 @@ class Controller
 		$this->addScript("/0.1/jquery.tooltip.js");
 		$this->addCSS("/0.1/jquery.tooltip.css");
 		$this->addScript("/0.1/jquery.treeview.js");
+		$this->addScript("/0.1/IE8.js","IE");
+		$this->addCSS("/0.1/default.css");
 		/*$this->addScript("php_serialize.js");
 		$this->addScript("swfobject.js");
 		$this->addScript("formatDate.js");
@@ -310,9 +312,9 @@ class Controller
 	{
 		$h = Header::get();
 		foreach($this->scripts as $v)
-			$h->addScript($v);
+			$h->addScript($v['src'],$v['cond']);
 		foreach($this->css as $v)
-			$h->addCSS($v);
+			$h->addCSS($v['src'],$v['cond']);
 		$v = $h->send();
 		$v .= "<body>\n";
 		if($echo)
@@ -342,21 +344,25 @@ class Controller
 			return null;
 		return $this->javascripts["".$name];
 	}
-	function addScript($src = null)
+	function addScript($src = null,$cond = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->scripts))return;
 		/*if(strpos($src,"/") === false)
 			$src = "/way_scripts/".$src;*/
-		$this->scripts[] = $src;
+		$this->scripts[] = array('src'=>$src,'cond'=>$cond);
 	}
-	function addCSS($src = null)
+	function addCSS($src = null,$cond = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->css)) return;
 		/*if(strpos($src,"/") === false)
 			$src = "/way_admin/css/".$src;*/
-		$this->css[] = $src;
+		$this->css[] = array('src'=>$src,'cond'=>$cond);
+	}
+	function getNavigator()
+	{
+		return $this->navigator;
 	}
 
 }

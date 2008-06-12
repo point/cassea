@@ -1,5 +1,5 @@
 <?php
-// $Id:  $
+// $Id:$
 //
 
 // {{{ Navigator
@@ -27,13 +27,14 @@ class Navigator
 	{
 		if(!isset($page_name)) return;
 
+		if(!isset($title))
+			$title = requestURI();
 		if((isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
 			|| empty($this->user_path))
 		{
 			$this->user_path = array();
 			$this->user_path[0]['url'] = requestURI(1);
-			if(isset($title))
-				$this->user_path[0]['title'] = $title;
+			$this->user_path[0]['title'] = $title;
 			if(isset($description))
 				$this->user_path[0]['desription'] = $description;
 			$this->user_path[0]['page'] = $page_name;
@@ -44,8 +45,7 @@ class Navigator
 		if($this->user_path[0]['page'] == $page_name)
 		{
 			$this->user_path[0]['url'] = requestURI(1);
-			if(isset($title))
-				$this->user_path[0]['title'] = $title;
+			$this->user_path[0]['title'] = $title;
 			if(isset($description))
 				$this->user_path[0]['desription'] = $description;
 			$this->user_path[0]['page'] = $page_name;
@@ -111,7 +111,7 @@ class Navigator
 		if(empty($url) || !isset($title)) return;
 		for($i = 0; $i < count($this->user_path);$i++)
 			if($this->user_path[$i]['url'] == $url)
-				$this->user_path[$i]['title'] = Filter::filter($title,STRING_QUOTE_ENCODE);
+				$this->user_path[$i]['title'] = Filter::filter($title,Filter::STRING_QUOTE_ENCODE);
 		$this->storage->set("user_path",$this->user_path);
 	}
 }

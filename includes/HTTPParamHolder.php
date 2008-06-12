@@ -1,5 +1,5 @@
 <?php
-class ParamHolder
+class HTTPParamHolder
 {
 	private $vars = array(),
 		$checked_vars = array();
