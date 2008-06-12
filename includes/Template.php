@@ -118,7 +118,7 @@ class TemplateParam implements IteratorAggregate,ArrayAccess
 	}
 	function __toString()
 	{
-		return $this->scalar;
+		return (string)$this->scalar;
 	}
 }
 ?>

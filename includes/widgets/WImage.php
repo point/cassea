@@ -69,13 +69,20 @@ class WImage extends WComponent
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		$this->setAlt((string)$elem['alt']);
-	    $this->setHeight((string)$elem['height']);
-		$this->setWidth((string)$elem['width']);
-		$this->setSrc((string)$elem['src']);       	
-		$this->setMaxWidth((string)$elem['max_width']);
-		$this->setMaxHeight((string)$elem['max_height']);
-		$this->setWithPreview((string)$elem['with_preview']);
+		if(isset($elem['alt']))
+			$this->setAlt((string)$elem['alt']);
+		if(isset($elem['height']))
+			$this->setHeight((string)$elem['height']);
+		if(isset($elem['width']))
+			$this->setWidth((string)$elem['width']);
+		if(isset($elem['src']))
+			$this->setSrc((string)$elem['src']);       	
+		if(isset($elem['max_width']))
+			$this->setMaxWidth((string)$elem['max_width']);
+		if(isset($elem['max_height']))
+			$this->setMaxHeight((string)$elem['max_height']);
+		if(isset($elem['with_preview']))
+			$this->setWithPreview((string)$elem['with_preview']);
 
 		$this->addToMemento(array("alt","height","width","src","align","max_width","max_height","with_preview","use_cache"));
 
