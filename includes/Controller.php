@@ -101,24 +101,26 @@ class Controller
 		$this->navigator = new Navigator($this->controller_name);
 		$this->navigator->addStep($this->page);
 
-		$dom = new DomDocument;
-		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
-		$this->parsePage($dom);
-
-		$this->addCSS("/0.1/ns_reset.css");
-		$this->addScript("/0.1/jquery.js");
-		$this->addScript("/0.1/jquery.cookie.js");
-		$this->addScript("/0.1/jquery.bgiframe.js");
-		$this->addScript("/0.1/jquery.tooltip.js");
-		$this->addCSS("/0.1/jquery.tooltip.css");
-		$this->addScript("/0.1/jquery.treeview.js");
-		$this->addScript("/0.1/IE8.js","IE");
-		$this->addCSS("/0.1/default.css");
+		$this->addCSS("ns_reset.css");
+		$this->addScript("jquery.js");
+		$this->addScript("jquery.cookie.js");
+		$this->addScript("jquery.bgiframe.js");
+		$this->addScript("jquery.tooltip.js");
+		$this->addCSS("jquery.tooltip.css");
+		$this->addScript("jquery.treeview.js");
+		$this->addScript("IE8.js","IE");
+		$this->addCSS("default.css");
 		/*$this->addScript("php_serialize.js");
 		$this->addScript("swfobject.js");
 		$this->addScript("formatDate.js");
 		$this->addScript("w.js");*/
-	}
+	
+
+		$dom = new DomDocument;
+		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
+		$this->parsePage($dom);
+
+		}
 	private final function parseP1P2()
 	{
 		$this->get->bindFilter('__p1',Filter::STRING_QUOTE_ENCODE);
@@ -350,7 +352,7 @@ class Controller
 		if(in_array($src,$this->scripts))return;
 		/*if(strpos($src,"/") === false)
 			$src = "/way_scripts/".$src;*/
-		$this->scripts[] = array('src'=>$src,'cond'=>$cond);
+		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".$src,'cond'=>$cond);
 	}
 	function addCSS($src = null,$cond = null)
 	{
@@ -358,7 +360,7 @@ class Controller
 		if(in_array($src,$this->css)) return;
 		/*if(strpos($src,"/") === false)
 			$src = "/way_admin/css/".$src;*/
-		$this->css[] = array('src'=>$src,'cond'=>$cond);
+		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".$src,'cond'=>$cond);
 	}
 	function getNavigator()
 	{

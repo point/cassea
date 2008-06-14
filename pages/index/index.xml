@@ -22,4 +22,5 @@
 	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
 	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
 	<WEdit />
+	<WCalendar />
 </root>

@@ -8,6 +8,9 @@ class Config
 	
 	const IMAGES_PATH = "/usr/local/www/devel/web/images";
 	const USE_IMAGES_CACHE = true;
+
+	const JS_VER = "0.1";
+	const CSS_VER = "0.1";
 	
 	static function get($var)
 	{
