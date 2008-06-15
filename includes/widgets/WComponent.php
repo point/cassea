@@ -467,21 +467,21 @@ abstract class WComponent extends WObject
     function parseParams(SimpleXMLElement $params)
 	{
 		if(isset($params['enabled'])) $this->setState(0+$params['enabled']);
-		if(isset($params['title'])) $this->setTitle($params['title']);
+		if(isset($params['title'])) $this->setTitle((string)$params['title']);
 		if(isset($params['visible'])) $this->setVisible(0+$params['visible']);
-		if(isset($params['html_id'])) $this->setHTMLId($params['html_id']);
+		if(isset($params['html_id'])) $this->setHTMLId((string)$params['html_id']);
 
         if(isset($params['class'])) 
-            $this->setStyleClass($params['class']);
-        $this->setTemplate(isset($params['template'])?$params['template']:null);
+            $this->setStyleClass((string)$params['class']);
+        $this->setTemplate(isset($params['template'])?(string)$params['template']:null);
 		if(isset($params['tooltip']))
-			$this->setTooltip($params['tooltip']);
+			$this->setTooltip((string)$params['tooltip']);
 
 		if(isset($params['hide_if_empty']))
-			$this->setHideIfEmpty($params['hide_if_empty']);
+			$this->setHideIfEmpty((string)$params['hide_if_empty']);
 
 		if(isset($params['hide_if_hidden']))
-			$this->setHideIfHidden($params['hide_if_hidden']);
+			$this->setHideIfHidden((string)$params['hide_if_hidden']);
 
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
