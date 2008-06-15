@@ -200,20 +200,18 @@ class DataSourceObject extends DataObject
 		if(!$this->is_static)
 		{
 			if(!isset($this->object))
-			{
 				$this->createObject();
-				if(isset($this->datasource_method))
-				{
-					if(isset($this->datasource_cache))
-						return $this->datasource_cache;
-					try{
-						$r = new ReflectionObject($this->object);
-						return $this->datasource_cache = $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
-					}catch(Exception $e){}
-				}
-				if(($v = $this->findValueInObject($w_id)) !== false)
-					return $v;
+			if(isset($this->datasource_method))
+			{
+				if(isset($this->datasource_cache))
+					return false;//$this->datasource_cache;
+				try{
+					$r = new ReflectionObject($this->object);
+					return $this->datasource_cache = $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
+				}catch(Exception $e){}
 			}
+			if(($v = $this->findValueInObject($w_id)) !== false)
+				return $v;
 		}
 		else
 		{
@@ -223,7 +221,7 @@ class DataSourceObject extends DataObject
 			if(($v = $this->findVlaueInStatic($w_id)) !== false)
 				return $v;
 		}
-		return null;
+		return false;
 	}
 	function findValueInObject($w_id)
 	{

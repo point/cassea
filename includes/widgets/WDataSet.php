@@ -52,10 +52,14 @@ class WDataSet extends WObject
     function getData($w_id)
 	{
 		if(($v = $this->data_object->getData($w_id)) !== false)
+		{
 			if($v instanceof ResultSet)
+				ResultSetPool::set($v->end(),$this->getPriority());
+			elseif($v instanceof Result)
 				ResultSetPool::set($v,$this->getPriority());
 			else
-				ResultSetPool::set(t(new ResultSet())->forid($w_id)->def($v),$this->getPriority());
+				ResultSetPool::set(t(new Result())->forid($w_id)->def($v)->end(),$this->getPriority());
+		}
 		return ResultSetPool::get($w_id);
 	}
     //}}}
