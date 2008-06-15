@@ -23,4 +23,6 @@
 	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
 	<WEdit />
 	<WCalendar />
+	<WButton/>
+	<WButton type="image" src="/w_images/calendar.gif"/>
 </root>
