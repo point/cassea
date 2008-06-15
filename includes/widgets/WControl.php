@@ -86,7 +86,7 @@ class WControl extends WComponent
 		{
 	       	$this->setName((string) $elem['name'] );
 			if(!isset($elem['id']))
-				$this->setId($elem['name']);
+				$this->setId((string)$elem['name']);
 		}
 		if(isset($elem['readonly']))
 			$this->setReadOnly((string)$elem['readonly'] );

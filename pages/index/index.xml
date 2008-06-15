@@ -25,5 +25,6 @@
 	<WCalendar />
 	<WButton/>
 	<WButton type="image" src="/w_images/calendar.gif"/>
-	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0"/>
+	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0" name="rradio"/>
+	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
 </root>
