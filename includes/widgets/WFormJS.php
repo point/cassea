@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WFormJS
 class WFormJS extends WJavaScript
 {

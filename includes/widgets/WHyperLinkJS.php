@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WHyperLinkJS
 class WHyperLinkJS extends WJavaScript
 {

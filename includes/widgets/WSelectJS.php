@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WSelectJS
 class WSelectJS extends WJavaScript
 {

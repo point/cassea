@@ -13,6 +13,7 @@
 			<param constant="mmmmm"/>
 		</datasource>
 	</WDataSet>
+	<WTextareaJS id="tjs" onselect="alert(1)"/>
 	<WStyle id="s1" border="1px solid red"/>
 	<WStyle id="s2" border="1px solid green"/>
 	<WJavaScript id="js1" onclick="alert(1)">
@@ -27,4 +28,5 @@
 	<WButton type="image" src="/w_images/calendar.gif"/>
 	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0" name="rradio"/>
 	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
+	<WTextarea name="ta" cols="20" rows="3" dataset="ds0" javascript="tjs">text text text </WTextarea>
 </root>

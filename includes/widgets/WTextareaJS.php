@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WTextareaJS
 class WTextareaJS extends WJavaScript
 {

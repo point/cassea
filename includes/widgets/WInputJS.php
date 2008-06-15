@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WInputJS
 class WInputJS extends WJavaScript
 {

@@ -12,7 +12,8 @@ class thetest
 		var_dump($const);*/
 		return t(new Result())->forid('ttext')->set('text','vvv')->set('style','s2')->set('tooltip',"toooooltip")->set('strong',1)
 			->forid("test_radio")->set("text","radio text2")->set('checked','1')
-			->forid("hidden")->set("value","qwe2");
+			->forid("hidden")->set("value","qwe2")->end()
+			->forid("ta")->set("value","qqqq");
 	}
 }
 ?>

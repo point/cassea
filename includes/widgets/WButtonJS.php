@@ -2,6 +2,7 @@
 //
 // $Id: $
 //
+WidgetLoader::load("WJavaScript");
 //{{{ WButtonJS
 class WButtonJS extends WJavaScript
 {
