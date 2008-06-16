@@ -35,9 +35,7 @@ input,select,button {
 textarea {
 	vertical-align: top;						/* ...and all textareas, but... */
 }
-input,button{
-	overflow: visible;							/* remove padding in buttons in IE */
-}
+
 select[size]{
 	vertical-align: top;						/* make align top to textline for all selectboxes which has attribute "size",.. */
 }
