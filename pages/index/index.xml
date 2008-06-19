@@ -31,4 +31,8 @@
 	<WTextarea name="ta" cols="20" rows="3" dataset="ds0" javascript="tjs">text text text </WTextarea>
 	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
 	<WFlash />
+	<WValueChecker id="vc1">
+		<check rule="required" message="msg"/>
+		<check rule="minlength" value="15" message="msg2"/>
+	</WValueChecker>
 </root>

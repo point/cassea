@@ -51,7 +51,8 @@ class Controller
 			$final_html = "",
 			$dispatcher = null,
 			$scripts = array(),
-			$css = array()
+			$css = array(),
+			$valuecheckers = array()
 		;
 	function __construct()
 	{
@@ -278,6 +279,14 @@ class Controller
 		$this->pagehandler->setParams($this->all_params['get']);
 		$this->pagehandler->setGotoURL($arr['attr']['goto']);
 	}*/
+	function addValueChecker(SimpleXMLElement $elem)
+	{
+		if(!isset($elem['id'])) return;
+		if(WidgetLoader::load("WValueChecker") === false) return;
+		$vc = new WValueChecker((string) $elem['id']);
+		$vc->parseParams($elem);
+		$this->valuecheckers[$vc->getId()] = $vc;
+	}	
 
 	function getWidget($id)
 	{
