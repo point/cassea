@@ -30,4 +30,5 @@
 	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
 	<WTextarea name="ta" cols="20" rows="3" dataset="ds0" javascript="tjs">text text text </WTextarea>
 	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
+	<WFlash />
 </root>
