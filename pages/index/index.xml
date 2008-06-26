@@ -20,7 +20,7 @@
 		<before>function q(){}</before>
 	</WJavaScript>
 	<WNavigator />
-	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
+	<!--WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText-->
 	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
 	<WEdit />
 	<WCalendar />
@@ -35,4 +35,7 @@
 		<check rule="required" message="msg"/>
 		<check rule="minlength" value="15" message="msg2"/>
 	</WValueChecker>
+	<WHyperLink id="href" dataset="ds0">
+		<WText  b="1">GOOGLE</WText>
+	</WHyperLink>
 </root>

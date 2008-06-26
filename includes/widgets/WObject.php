@@ -55,6 +55,22 @@ abstract class WObject
 		$this->id = $id;
     }
     // }}}
+	// {{{ getProperties
+	function getProperties()
+	{
+		$class = get_class($this);
+		$ret_prop = array();
+		foreach($this as $k=>$v)
+		{
+			try{
+			$prop = new ReflectionProperty($class, $k);
+			if($prop->isPublic() || $prop->isProtected())
+				$ret_prop[] = $k;
+			}catch(Exception $e){}
+		}
+		return $ret_prop;
+	}
+	// }}}
 }
 //}}}
 

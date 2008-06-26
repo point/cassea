@@ -742,10 +742,10 @@ EOD;
 	function buildComplete()
 	{
 		if(empty($this->class_vars))
-		{
-			foreach($this as $k=>$v)
-				$this->class_vars[] = $k;
-		}
+			//foreach(get_class_vars(get_class($this)) as $k=>$v)
+			/*foreach($this->getProperties() as $k)
+				$this->class_vars[] = $k;*/
+			$this->class_vars = $this->getProperties();
 		$this->createMemento();
 	}
 	//}}}	
@@ -760,10 +760,6 @@ EOD;
     */
 	function preRender()
 	{
-		foreach($this->class_vars as $p)
-			if($this->$p instanceof WidgetCollection)
-				$this->$p->preRender();
-
 		if(!empty($this->tpl))
 			$this->tpl->flushVars();
 

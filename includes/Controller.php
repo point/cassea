@@ -14,6 +14,7 @@ require("EventDispatcher.php");
 require("DataObject.php");
 require("ResultSet.php");
 
+
 class ControllerException extends Exception
 {}
 
@@ -116,7 +117,6 @@ class Controller
 		$this->addScript("formatDate.js");
 		$this->addScript("w.js");*/
 	
-
 		$dom = new DomDocument;
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 		$this->parsePage($dom);
@@ -375,6 +375,77 @@ class Controller
 	{
 		return $this->navigator;
 	}
+	function makeURL($page = null, $p2 = null,$controller_name = null, $get = null)
+	{
+		if(!isset($controller_name) || !is_scalar($controller_name))
+			$controller_name = $this->controller_name;
+		if(!isset($page) || !is_scalar($page))
+			$page = $this->p1;
+		$n_p2 = $this->p2;
+		$n_get = array();
+		if(isset($p2) && is_array($p2))
+		{
+			//determining p2 type. If it is assoc, type == 1, if numeric , type == 2
+			$p2_type = 1;
+			foreach($p2 as $k=>$v)
+				if(is_int($k))
+					{$p2_type = 2;break;}
 
+			if($p2_type == 1)
+			{
+				$c_p2 = array_flip($this->p2);
+				foreach($p2 as $k=>$v)
+					if(isset($c_p2[$k]))
+					{
+						$n_p2_k = null;
+						if($v == null)
+							{unset($n_p2[$c_p2[$k]]);continue;}
+						elseif(substr($k,0,1) == "/")
+							$n_p2_k = preg_replace($k,$v,$c_p2[$k]);
+						else
+							$n_p2_k = $v;
+						$n_p2[$c_p2[$k]] = $n_p2_k;
+					}
+					else
+						$n_p2[] = $k;
+			}
+			else
+				foreach($p2 as $k=>$v)
+				{
+					if($v == null)
+					{unset($n_p2[(int)$k]);continue;}
+					$n_p2[(int)$k] = $v;
+				}
+		}
+		if(isset($get) && is_array($get))
+		{
+			$n_get = $c_get = $this->get->getAllChecked();
+			foreach($n_get as $k=>$v)
+				if(substr($k,0,2) == "__") unset($n_get[$k]);
+			foreach($get as $k=>$v)
+			{
+				if(substr($k,0,2) == "__") continue;
+				if(isset($c_get[$k]))
+					if($v == null)
+						unset($n_get[$k]);
+					else
+						$n_get[$k] = $v;
+				else
+					$n_get[$k] = $v;
+			}
+		}
+
+		$n_get2 = array();
+		foreach($n_get as $k=>$v)
+			$n_get2[] = $k."=".$v;
+		return 	Filter::filter("http://".$_SERVER['SERVER_NAME']."/".$controller_name."/".
+			(!empty($n_p2)?implode("/",$n_p2)."/":"").(strpos($page,".") === false?$page.".html":$page).
+			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
+
+
+		//for testing
+		//var_dump($this->makeURL('nnn',array("c"=>"c2",'bb'=>'bb')));
+		//var_dump($this->makeURL(null,array('p1','p2')));
+	}
 }
 ?>

@@ -64,7 +64,8 @@ class ResultSet implements IteratorAggregate
 		$for_id = null,
 		$def = null,
 		$properties = array(),
-		$parent = null
+		$parent = null,
+		$children = null
 		;
 
 	function __isset($prop)
@@ -113,6 +114,11 @@ class ResultSet implements IteratorAggregate
 	function getDef()
 	{
 		return $this->def;
+	}
+	function getAnonChildData()
+	{
+		//stub
+		return null;
 	}
 	function merge(ResultSet $r)
 	{
