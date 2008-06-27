@@ -190,18 +190,21 @@ class WidgetCollection
 	// {{{ setData
 	function setData(ResultSet $data)
 	{
-		if($this->count()  == 1)
+		$child_data = $data->getAnonChild();
+		if($this->count()  == 1 && isset($child_data))
 		{
-			$child_data = $data->getAnonChildData();
 			if(isset($child_data))
-				$this->getItem($this->items[0])->setData($child_data);
+			{
+				$child_data->setForId($this->items[0]);
+				$this->getItem(0)->setData($child_data);
+			}
 		}
 		else
 			for($i = 0, $c = count($this->items); $i < $c;$i++)
 			{
-				$child_data = $data->getChildData($this->items[$i]);
+				$child_data = $data->getChild($this->items[$i]);
 				if(!isset($child_data)) continue;
-				$this->getItem($this->items[$i])->setData($child_data);
+				$this->getItem($i)->setData($child_data);
 			}
 	}
 	// }}}

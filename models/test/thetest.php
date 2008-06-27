@@ -13,8 +13,9 @@ class thetest
 		return t(new Result())->forid('ttext')->set('text','vvv')->set('style','s2')->set('tooltip',"toooooltip")->set('strong',1)
 			->forid("test_radio")->set("text","radio text2")->set('checked','1')
 			->forid("hidden")->set("value","qwe2")->end()
-			->forid("ta")->set("value","qqqq")
-			->forid("href")->set("href","http://www.google.com");
+			->forid("ta")->set("value","qqqq")->end()
+			->forid("href")->set("href","http://www.google.com")
+				->child("google")->set('text',"www.google.com")->set("i","1")->end();
 	}
 }
 ?>

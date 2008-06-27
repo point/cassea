@@ -65,7 +65,8 @@ class ResultSet implements IteratorAggregate
 		$def = null,
 		$properties = array(),
 		$parent = null,
-		$children = null
+		$anon_child = null,
+		$children = array()
 		;
 
 	function __isset($prop)
@@ -81,6 +82,18 @@ class ResultSet implements IteratorAggregate
 	{
 		if(!isset($id)) return;
 		return $this->parent->forid($id);
+	}
+	function child($id = null)
+	{
+		$rs = new ResultSet();
+		if(isset($id))
+			$rs->setForId($id);
+		$rs->setParent($this);
+		if(isset($id))
+			$this->children[$id] = $rs;
+		else
+			$this->anon_child = $rs;
+		return $rs;
 	}
 	function setParent($parent)
 	{
@@ -115,16 +128,39 @@ class ResultSet implements IteratorAggregate
 	{
 		return $this->def;
 	}
-	function getAnonChildData()
+	function setAnonChild(ResultSet $child)
 	{
-		//stub
-		return null;
+		$this->anon_child = $child;
+	}
+	function getAnonChild()
+	{
+		return $this->anon_child;
+	}
+
+	function getChild($id)
+	{
+		if(!isset($this->children[$id])) return null;
+		return $this->children[$id];
+	}
+	function getAllChildren()
+	{
+		if(empty($this->children)) return null;
+		return $this->children;
+	}
+	function setChildren($children)
+	{
+		if(!isset($children) || !is_array($children)) return;
+		$this->children = $children;
 	}
 	function merge(ResultSet $r)
 	{
 		$this->def($r->getDef());
 		foreach($r as $k => $v)
 			$this->set($k,$v);
+		if(($c = $r->getAnonChild()) !== null)
+			$this->setAnonChild($c);
+		if(($c = $r->getAllChildren()) !== null)
+			$this->setChildren($c);
 	}
 	function getIterator()
 	{

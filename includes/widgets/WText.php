@@ -160,34 +160,35 @@ class WText extends WComponent
 
     	foreach ($a as $k => $v)
     	{
+			$v = (int)$v;
 			if(preg_match("/is_\S+/",$k))
 				$this->addToMemento(array($k));
     		switch ($k)
     		{
-    			case "abbr": $this->is_abbr = 1; break 2;
-    			case "acronym": $this->is_acronym = 1;  break 2;
-				case "address": $this->is_address = 1;  break 2;
-				case "blockqoute": $this->is_blockqoute = 1;   break 2;
-				case "code": $this->is_code = 1;   break 2;
-				case "dfn": $this->is_dfn = 1;   break 2;
-				case "em": $this->is_em = 1;   break 2;
-				case "h": $this->heading = ($v>0 and $v < 5)?$v:1; $this->is_h = 1;  break 2;
-				case "kbd": $this->is_kbd = 1;   break 2;
-				case "p": $this->is_p = 1;   break 2;
-				case "pre": $this->is_pre = 1;   break 2;
-				case "q": $this->is_q = 1;   break 2;
-				case "samp": $this->is_samp = 1;   break 2;
-				case "strong": $this->is_strong = 1;   break 2;
-				case "var": $this->is_var = 1;   break 2;
-				case "b": $this->is_strong = 1;   break 2;
-				case "big": $this->is_big = 1;  break 2;
-				case "hr": $this->is_hr = 1;  break 2;
-				case "i": $this->is_i = 1;   break 2;
-				case "small": $this->is_small = 1;   break 2;
-				case "sub": $this->is_sub = 1;   break 2;
-				case "sup": $this->is_sup = 1;   break 2;
-				case "br" :$this->is_br = 1;   	break 2;
-				case "simple" : $this->simple = 1;break 2;
+    			case "abbr": $this->is_abbr = $v; break 2;
+    			case "acronym": $this->is_acronym = $v;  break 2;
+				case "address": $this->is_address = $v;  break 2;
+				case "blockqoute": $this->is_blockqoute = $v;   break 2;
+				case "code": $this->is_code = $v;   break 2;
+				case "dfn": $this->is_dfn = $v;   break 2;
+				case "em": $this->is_em = $v;   break 2;
+				case "h": $this->heading = ($v>0 and $v < 5)?$v:1; $this->is_h = $v;  break 2;
+				case "kbd": $this->is_kbd = $v;   break 2;
+				case "p": $this->is_p = $v;   break 2;
+				case "pre": $this->is_pre = $v;   break 2;
+				case "q": $this->is_q = $v;   break 2;
+				case "samp": $this->is_samp = $v;   break 2;
+				case "strong": $this->is_strong = $v;   break 2;
+				case "var": $this->is_var = $v;   break 2;
+				case "b": $this->is_strong = $v;   break 2;
+				case "big": $this->is_big = $v;  break 2;
+				case "hr": $this->is_hr = $v;  break 2;
+				case "i": $this->is_i = $v;   break 2;
+				case "small": $this->is_small = $v;   break 2;
+				case "sub": $this->is_sub = $v;   break 2;
+				case "sup": $this->is_sup = $v;   break 2;
+				case "br" :$this->is_br = $v;   	break 2;
+				case "simple" : $this->simple = $v;break 2;
     		}
     	}
 	}
