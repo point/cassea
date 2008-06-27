@@ -64,6 +64,8 @@ class WControl extends WComponent
 		if(isset($id))
 			$this->setName($id);
 		parent::__construct($id);
+		if(!isset($id))
+			$this->setName($this->getId());
     }
     // }}}
     // {{{ parseParams

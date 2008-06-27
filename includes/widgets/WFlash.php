@@ -213,6 +213,9 @@ class WFlash extends WComponent
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 		parent::buildComplete();
+
+		$controller = Controller::getInstance();
+		$controller->addScript("swfobject.js");
 	}    
 	// }}}
     // {{{ preRender
@@ -227,8 +230,6 @@ class WFlash extends WComponent
     {
 		if(isset($this->dataset))
 			$this->setData($this->dataset->getData($this->getId()));
-		$controller = Controller::getInstance();
-		$controller->addScript("swfobject.js");
 		parent::preRender();
     }
 	// }}}    

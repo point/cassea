@@ -3,7 +3,6 @@
 </div>
 <script type="text/javascript">
 	// <![CDATA[
-	var so_<?php echo $p->id?> = new SWFObject("<?php echo $p->src?>", "flash", "<?php echo $p->width?>", "<?php echo $p->height?>", "7", "<?php echo $p->ngcolor?>");
-	so.write("flashcontent_<?php echo $p->id?>");
+	swfobject.embedSWF("<?php echo $p->src?>", "flashcontent_<?php echo $p->id?>", "<?php echo $p->width?>", "<?php echo $p->height?>", "7.0.0");
 	// ]]>
 </script>

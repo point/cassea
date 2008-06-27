@@ -38,4 +38,5 @@
 	<WHyperLink id="href" dataset="ds0">
 		<WText  id="google">GOOGLE</WText>
 	</WHyperLink>
+	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
 </root>
