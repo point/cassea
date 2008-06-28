@@ -44,4 +44,7 @@
 		<!--WText >BLOCK!</WText-->
 	qwe
 	</WBlock>
+	<WFieldSet legend="field set">
+		<WText> in field set </WText>
+	</WFieldSet>
 </root>

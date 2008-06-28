@@ -3,15 +3,21 @@
 // $Id:$
 //
 WidgetLoader::load("WContainer");
-//{{{ WBlock
-class WBlock extends WContainer
+//{{{ WFieldSet
+class WFieldSet extends WContainer
 {
-	var
-		/**
-		* @var WidgetCollection&
-		*/
-		$items = null
-		;
+    var
+
+        /**
+        * @var      WidgetCollection&
+        */
+        $items = null,
+        /**
+        * @var  string
+        */
+		$legend_text = null
+        ;
+    
     // {{{ __construct
     /**
     * Method description
@@ -33,12 +39,46 @@ class WBlock extends WContainer
     * @return void
     */
     function parseParams(SimpleXMLElement $elem)
-    {
-		$this->items = new MixedCollection($elem);
+	{
+		if(isset($elem['legend']))
+			$this->setLegend((string)$elem['legend']);
+		$this->items = new WidgetCollection($elem);
+		
+		$this->addToMemento(array("legend_text"));
+
 		parent::parseParams($elem);		    	
     }
     // }}}
-   
+    
+    // {{{ setLegend 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $legend    
+    * @return   void
+    */
+    function setLegend($legend)
+    {
+		if(!isset($legend) || !is_scalar($legend))
+			return;
+		$this->legend_text = (string)$legend;
+    }
+    // }}}
+    
+    // {{{ getLegend 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getLegend()
+    {
+		return $this->legend_text;
+    }
+    // }}}
     // {{{ buildComplete
     /**
     * Method description
@@ -80,8 +120,9 @@ class WBlock extends WContainer
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-				"content"=>$this->items->generateAllHTML()
-			));
+			"legend"=>$this->getLegend(),
+			"fieldset_content"=>$this->items->generateAllHTML()
+		));
 		parent::assignVars();
     }
 	// }}}	
@@ -94,11 +135,15 @@ class WBlock extends WContainer
     * @return   void
     */
     function setData(ResultSet $data)
-	{
+    {
 		if($data->getFor() != $this->getId()) return;
-		parent::setData($data);
+		$this->restoreMemento();
+		$this->setLegend($data->get('legend'));
+    	parent::setData($data);
     }
     //}}}
+
 }
 //}}}
+
 ?>
