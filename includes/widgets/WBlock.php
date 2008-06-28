@@ -33,8 +33,7 @@ class WBlock extends WContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(count($elem->children()))
-			$this->items = new WidgetCollection($elem);
+		$this->items = new MixedCollection($elem);
 		parent::parseParams($elem);		    	
     }
     // }}}
@@ -79,10 +78,9 @@ class WBlock extends WContainer
     */
     function assignVars()
     {
-		if(isset($this->items) && $this->items->count())
-			$this->tpl->setParamsArray(array(
-					"content"=>$this->items->generateAllHTML()
-				));
+		$this->tpl->setParamsArray(array(
+				"content"=>$this->items->generateAllHTML()
+			));
 		parent::assignVars();
     }
 	// }}}	

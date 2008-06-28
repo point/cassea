@@ -67,11 +67,8 @@ class WHyperLink extends WContainer
 			$this->setAttribute('rev',(string)$elem['rev']);
 		if(!empty($elem['target']))
 			$this->setAttribute('target',(string)$elem['target']);
-		if(count($elem))
-			$this->items = new WidgetCollection($elem);
-		elseif((string)$elem)
-			$this->setText((string)$elem);
-		$this->addToMemento(array("href","baseurl","label","rel","rev","target","text"));
+		$this->items = new MixedCollection($elem);
+		$this->addToMemento(array("href","baseurl","label","rel","rev","target"));
 
 		parent::parseParams($elem);		    	
     }
@@ -92,7 +89,6 @@ class WHyperLink extends WContainer
 		$this->setAttribute('rel',$data->get('rel'));
 		$this->setAttribute('rev',$data->get('rev'));
 		$this->setAttribute('target',$data->get('target'));
-		$this->setText($data->get('text'));
 
 		$href = $data->get('href');
 		if(isset($href))
@@ -154,16 +150,9 @@ class WHyperLink extends WContainer
 			'href'=> $this->getHREF(), 
 			"rev"=> (!empty($this->rev))?('rev="'.$this->rev.'"'):'',
 			"rel" => (!empty($this->rel))?('rel="'.$this->rel.'"'):'',
-			"target"=>(!empty($this->target))?('target="'.$this->target.'"'):''
+			"target"=>(!empty($this->target))?('target="'.$this->target.'"'):'',
+			"text"=>$this->items->generateAllHTML()
 		));
-		if(!empty($this->items))
-			$this->tpl->setParamsArray(array(
-				"text"=>$this->items->generateAllHTML()
-			));
-		else
-			$this->tpl->setParamsArray(array(
-				"text"=>$this->getText()
-			));
 		parent::assignVars();
     }
 	// }}}	
@@ -198,36 +187,6 @@ class WHyperLink extends WContainer
 		return $this->href;
     }
     // }}}
-    // {{{ setText
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $text
-    * @return   void
-    */
-    function setText($text)
-    {
-		if(!isset($text) || !is_scalar($text))
-			return;
-        $this->text = (string)$text;
-    }
-    // }}}
-    
-    // {{{ getText
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getText()
-    {
-		return $this->text;
-    }
-    // }}}
-
 }
 //}}}
 

@@ -22,7 +22,7 @@ class WContainer extends WComponent
 	}
 	// }}}
 	// {{{ setChildData
-	function setChildData(ResultSet $data)
+	protected function setChildData(ResultSet $data)
 	{
 		if($this->getId() != $data->getFor()) return;
 		foreach($this->class_vars as $v)
@@ -38,7 +38,7 @@ class WContainer extends WComponent
 	}
 	// }}}
 	// {{{ childPreRender
-	function childPreRender()
+	protected function childPreRender()
 	{
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
@@ -54,7 +54,7 @@ class WContainer extends WComponent
 	// }}}
 
 	// {{{ childPostRender
-	function childPostRender()
+	protected function childPostRender()
 	{
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
@@ -81,7 +81,7 @@ class WidgetCollection
 	// }}}
 
 	// {{{ init
-	function init(SimpleXMLElement $elem)
+	protected function init(SimpleXMLElement $elem)
 	{
 		$controller = Controller::getInstance();
 		foreach($elem as $v)
@@ -264,6 +264,38 @@ class WidgetCollection
 		}
 	}
 	// }}}
+}
+// }}}
+// {{{ MixedCollection
+class MixedCollection extends WidgetCollection
+{
+	protected $str = null;
+	// {{{ init
+	protected function init(SimpleXMLElement $elem )
+	{
+		if(!count($elem->children()))
+			$this->str = trim((string)$elem);
+		else
+			parent::init($elem);
+	}
+	// }}}
+	// {{{ generateHTML
+	function generateHTML($pos = 0)
+	{
+		if(isset($this->str))
+			return $this->str;
+		return parent::generateHTML($pos);
+	}
+	// }}}
+	// {{{ generateAllHTML
+	function generateAllHTML()
+	{
+		if(isset($this->str))
+			return $this->str;
+		return parent::generateAllHTML();
+	}
+	// }}}
+
 }
 // }}}
 ?>

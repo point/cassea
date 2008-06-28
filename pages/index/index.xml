@@ -36,10 +36,12 @@
 		<check rule="minlength" value="15" message="msg2"/>
 	</WValueChecker>
 	<WHyperLink id="href" dataset="ds0">
-		<WText  id="google">GOOGLE</WText>
+		<!--WText  id="google">GOOGLE</WText-->
+	google.com
 	</WHyperLink>
 	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
 	<WBlock >
-		<WText >BLOCK!</WText>
+		<!--WText >BLOCK!</WText-->
+	qwe
 	</WBlock>
 </root>
