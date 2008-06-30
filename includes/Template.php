@@ -55,6 +55,10 @@ class TemplateParams
 			return $this->properties[$name];
 		return null;
 	}
+	function __isset($name)
+	{
+		return isset($this->properties[$name]);
+	}
 	function set($name = null,$val = null)
 	{
 		if(!isset($val) || empty($name)) return;

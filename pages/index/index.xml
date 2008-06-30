@@ -22,14 +22,6 @@
 	<WNavigator />
 	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
 	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
-	<WEdit />
-	<WCalendar />
-	<WButton/>
-	<WButton type="image" src="/w_images/calendar.gif"/>
-	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0" name="rradio"/>
-	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
-	<WTextarea name="ta" cols="20" rows="3" dataset="ds0" javascript="tjs">text text text </WTextarea>
-	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
 	<WFlash />
 	<WValueChecker id="vc1">
 		<check rule="required" message="msg"/>
@@ -39,7 +31,6 @@
 		<!--WText  id="google">GOOGLE</WText-->
 	google.com
 	</WHyperLink>
-	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
 	<WBlock >
 		<!--WText >BLOCK!</WText-->
 	qwe
@@ -47,4 +38,15 @@
 	<WFieldSet legend="field set">
 		<WText> in field set </WText>
 	</WFieldSet>
+	<WForm>
+	<WEdit valuechecker="vc1"/>
+	<WCalendar />
+	<WButton/>
+	<WButton type="image" src="/w_images/calendar.gif"/>
+	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0" name="rradio"/>
+	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
+	<WTextarea  cols="20" rows="3" dataset="ds0" >text text text </WTextarea>
+	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
+	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
+	</WForm>
 </root>

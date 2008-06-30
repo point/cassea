@@ -287,6 +287,12 @@ class Controller
 		$vc->parseParams($elem);
 		$this->valuecheckers[$vc->getId()] = $vc;
 	}	
+	function getValueChecker($id)
+	{
+		if(isset($id) && isset($this->valuecheckers[$id]))
+			return $this->valuecheckers[$id];
+		return null;
+	}
 
 	function getWidget($id)
 	{

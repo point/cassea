@@ -291,23 +291,18 @@ class WControl extends WComponent
     // {{{
     function preRender()
     {
-		parent::preRender();
 
-    	if(!empty($this->valuechecker))
+    	if(isset($this->valuechecker))
     	{
 			$this->valuechecker->addWidgetId($this->id);
-   			$controller = &CController::getInstance();
-			$controller->dispatcher->addEvent("valuechecker_puttosubmit");
 
-			$event = new CEvent();
-			$event->event_name = "valuechecker_puttosubmit";
+			$event = new Event();
+			$event->event_name = "have_valuechecker";
 			$event->notifywidget_id = $this->id;
-			$vc_js = $this->valuechecker->generateJS();
-			if(empty($vc_js)) return;
-			$event->event_params['js_name'] = $vc_js['name'];
-			$event->event_params['js_function'] = $vc_js['function'];
-			$controller->dispatcher->notify($event);
+			$event->event_params['id'] = $this->valuechecker->getId();
+			Controller::getInstance()->getDispatcher()->notify($event);
 		}
+		parent::preRender();
     }
     // }}}
     // {{{ setAdditionalID

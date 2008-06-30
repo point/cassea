@@ -19,7 +19,8 @@ class WValueChecker extends WObject
 		 /**
         * @var      array
 		*/
-		$messages = array()
+		$messages = array(),
+		$widget_ids = array()
 		;
 	const def_message = "wrong value";
     
