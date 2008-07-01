@@ -48,5 +48,6 @@
 	<WTextarea  cols="20" rows="3" dataset="ds0" >text text text </WTextarea>
 	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
 	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
+	<WColorPicker/>
 	</WForm>
 </root>
