@@ -50,4 +50,9 @@
 	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
 	<WColorPicker/>
 	</WForm>
+	<WTabs>
+		<WTab tab_title="test">tttttttttttteeeeeeeeeeesssssssssssttttttttt</WTab>
+		<WTab tab_title="test2" selected="1">tttttttttttteeeeeeeeeeesssssssssssttttttttt2</WTab>
+		<WTab tab_title="test3" href="http://devel/phpinfo/"/>
+	</WTabs>
 </root>
