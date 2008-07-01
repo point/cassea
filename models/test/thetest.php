@@ -15,7 +15,8 @@ class thetest
 			->forid("hidden")->set("value","qwe2")->end()
 			->forid("ta")->set("value","qqqq")->end()
 			->forid("href")->set("href","http://www.google.com")
-				->child("google")->set('text',"www.google.com")->set("i","1")->end();
+				->child("google")->set('text',"www.google.com")->set("i","1")->end()
+			->forid("tabs")->child("test3")->set("href","http://devel/phpinfo/")->end();
 	}
 }
 ?>

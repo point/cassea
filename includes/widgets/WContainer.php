@@ -243,12 +243,13 @@ class WidgetCollection
 	// {{{ filter
 	function filter($class_names = array())
 	{
-		if(!is_array($class_names) || empty($class_names)) return;
-		/*for($i = 0, $c = count($class_names); $i < $c; $i++)
-			$class_names[$i] = strtolower($class_names[$i]);*/
+		if(empty($class_names)) return;
+		if(is_string($class_names))
+			$class_names = array($class_names);
+		if(!is_array($class_names) ) return;
 
 		for($i = 0, $c = count($this->items); $i < $c; $i++)
-			if(!in_array(get_class($this->getWidget($i)),$class_names))
+			if(!in_array(get_class($this->getItem($i)),$class_names))
 				unset($this->items[$i]);
 		$this->items = array_values($this->items);
 	}

@@ -50,9 +50,17 @@
 	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
 	<WColorPicker/>
 	</WForm>
-	<WTabs>
-		<WTab tab_title="test">tttttttttttteeeeeeeeeeesssssssssssttttttttt</WTab>
-		<WTab tab_title="test2" selected="1">tttttttttttteeeeeeeeeeesssssssssssttttttttt2</WTab>
-		<WTab tab_title="test3" href="http://devel/phpinfo/"/>
+	<WTabs dataset="ds0" id="tabs">
+		<WTab tab_title="test" >tttttttttttteeeeeeeeeeesssssssssssttttttttt</WTab>
+		<WTab tab_title="test2" selected="1"><WText i="1">qwe</WText></WTab>
+		<WTab tab_title="test3" id="test3" href="http://ya.ru"/>
+		<WText>qweqweqweqwe</WText>
 	</WTabs>
+	<WTable>
+		<WTableRow>
+			<WTableColumn>
+				IN THE TABLE!!
+			</WTableColumn>
+		</WTableRow>
+	</WTable>
 </root>
