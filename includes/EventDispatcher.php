@@ -53,7 +53,7 @@ class EventDispatcher
 	{
 		if(empty($event_obj)) return;
 		$controller = Controller::getInstance();
-		$event = $event_obj->event_name;
+		$event = $event_obj->getName();
 		if(!isset($this->events[$event]))
 			return;
 		if(!empty($this->subscribers[$event]))
@@ -63,8 +63,8 @@ class EventDispatcher
 				if(isset($id)) $w = $controller->getWidget($id);
 				if(isset($w) && method_exists($w,"handleEvent"))
 					$w->handleEvent($event_obj);
-				elseif(($vc = $controller->getValueChecker($id)) && isset($vc) && method_exists($vc,"handleEvent"))
-					$vc->handleEvent($event_obj);
+				/*elseif(($vc = $controller->getValueChecker($id)) && isset($vc) && method_exists($vc,"handleEvent"))
+					$vc->handleEvent($event_obj);*/
 				else
 					return;
 			}
@@ -72,13 +72,64 @@ class EventDispatcher
 }
 // }}}
 
+class EventException extends Exception {}
+
 // {{{ Event
 class Event
 {
-	public
-		$event_name,
-		$notifywidget_id,
-		$event_params;
+	protected
+		$event_name = null,
+		$src_id = null,
+		$dst_ids = array(),
+		$event_params = array()
+		;
+	function __construct($event_name,$src_id = null, $dst_ids = null,$event_params = null)
+	{
+		if(isset($event_name))
+			$this->event_name = $event_name;
+		else throw EventException("Event name must be specified");
+
+		if(isset($src_id))
+			$this->setSrc($src_id);
+		if(isset($dst_ids))
+			$this->setDst($dst_ids);
+		if(isset($event_params))
+			$this->setParams($event_params);
+	}
+	function getName()
+	{
+		return $this->event_name;
+	}
+	function setSrc($id)
+	{
+		$this->src_id = $id;
+	}
+	function getSrc()
+	{
+		return $this->src_id;
+	}
+	function setDst($dst)
+	{
+		if(is_string($dst))
+			$this->dst_ids = array($dst);
+		elseif(is_array($dst))
+			$this->dst_ids = $dst;
+	}
+	function inDst($id)
+	{
+		return in_array($id,$this->dst_ids);
+	}
+	function setParams($params)
+	{
+		if(!is_array($params)) return;
+		$k = key($params);
+		$this->event_params[$k] = $params[$k];
+	}
+	function getParam($param_name)
+	{
+		return isset($this->event_params[$param_name])?
+			$this->event_params[$param_name]:null;
+	}
 }
 //}}}
 

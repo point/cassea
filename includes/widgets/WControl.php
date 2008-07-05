@@ -296,10 +296,8 @@ class WControl extends WComponent
     	{
 			$this->valuechecker->addWidgetId($this->id);
 
-			$event = new Event();
-			$event->event_name = "have_valuechecker";
-			$event->notifywidget_id = $this->id;
-			$event->event_params['id'] = $this->valuechecker->getId();
+			$event = new Event("have_valuechecker",$this->id);
+			$event->setParams(array('id' => $this->valuechecker->getId()));
 			Controller::getInstance()->getDispatcher()->notify($event);
 		}
 		parent::preRender();

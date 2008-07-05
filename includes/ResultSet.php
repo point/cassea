@@ -66,7 +66,8 @@ class ResultSet implements IteratorAggregate
 		$properties = array(),
 		$parent = null,
 		$anon_child = null,
-		$children = array()
+		$children = array(),
+		$iterative = array()
 		;
 
 	function __isset($prop)
@@ -93,6 +94,16 @@ class ResultSet implements IteratorAggregate
 			$this->children[$id] = $rs;
 		else
 			$this->anon_child = $rs;
+		return $rs;
+	}
+	function each($ind )
+	{
+		if(!isset($ind) || !is_numeric($ind) || $ind < 0) return;
+
+		$rs = new ResultSet();
+		$rs->setForId($this->for_id);
+		$rs->setParent($this);
+		$this->iterative[$ind] = $rs;
 		return $rs;
 	}
 	function setParent($parent)
@@ -152,6 +163,25 @@ class ResultSet implements IteratorAggregate
 		if(!isset($children) || !is_array($children)) return;
 		$this->children = $children;
 	}
+	function getIterative($id)
+	{
+		if(isset($this->iterative[$id]))
+			return $this->iterative[$id];
+		return null;
+	}
+	function getIterativeCount()
+	{
+		return count($this->iterative);
+	}
+	function getAllIterative()
+	{
+		return $this->iterative;
+	}
+	function setIterative($a)
+	{
+		if(!is_array($a)) return;
+		$this->iterative = $a;
+	}
 	function merge(ResultSet $r)
 	{
 		$this->def($r->getDef());
@@ -161,6 +191,8 @@ class ResultSet implements IteratorAggregate
 			$this->setAnonChild($c);
 		if(($c = $r->getAllChildren()) !== null)
 			$this->setChildren($c);
+		if(($c = $r->getAllIterative()) !== null)
+			$this->setIterative($c);
 	}
 	function getIterator()
 	{

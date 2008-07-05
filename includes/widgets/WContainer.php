@@ -267,10 +267,11 @@ class WidgetCollection
 	// }}}
 }
 // }}}
+
 // {{{ MixedCollection
 class MixedCollection extends WidgetCollection
 {
-	protected $str = null;
+	private $str = null;
 	// {{{ init
 	protected function init(SimpleXMLElement $elem )
 	{
@@ -279,7 +280,7 @@ class MixedCollection extends WidgetCollection
 		else
 			parent::init($elem);
 	}
-	// }}}
+	 // }}}
 	// {{{ generateHTML
 	function generateHTML($pos = 0)
 	{
@@ -295,6 +296,144 @@ class MixedCollection extends WidgetCollection
 			return $this->str;
 		return parent::generateAllHTML();
 	}
+	// }}}
+
+}
+// }}}
+
+// {{{ IterableCollection
+class IterableCollection extends WidgetCollection
+{
+	private $i_elem = null;
+	// {{{ init
+	protected function init(SimpleXMLElement $elem )
+	{
+		if(!count($elem->children())) return;
+		parent::init($elem);
+	}
+	// }}}
+	// {{{ setData
+	function setData(ResultSet $data)
+	{
+		$controller = Controller::getInstance();
+		$child_data = $data->getAnonChild();
+		if($this->count()  == 1 && isset($child_data))
+		{
+			for($i = 0, $c = $child_data->getIterativeCount();$i < $c; $i++)
+			{
+				$i_data = $child_data->getIterative($i);
+				if(!isset($i_data)) {$this->i_elem = clone $this->getItem(0);continue;}
+
+				$i_data->setForId($this->items[0]);
+
+				$controller->getDispatcher()->notify(
+					new Event("increment_id",null,$this->getItem(0)->getId(),
+					array('do_increment'=>1)));
+
+				$this->i_elem[$i][0] = clone $this->getItem(0);
+				$this->i_elem[$i][0]->setData($i_data);
+			}
+		}
+		else
+		{
+			$max = 0;
+			for($i = 0, $c = count($this->items); $i < $c;$i++)
+			{
+				$child_data = $data->getChild($this->items[$i]);
+				if(isset($child_data))
+				{
+					$cnt = $data->getChild($this->items[$i])->getIterativeCount();
+					if($cnt > $max)
+						$max = $cnt;
+				}
+			}
+			for($j = 0; $j < $max; $j++)
+				for($i = 0, $c = count($this->items); $i < $c;$i++)
+				{
+					$child_data = $data->getChild($this->items[$i]);
+
+					$controller->getDispatcher()->notify(
+						new Event("increment_id",null,$this->getItem($i)->getId(),
+						array('do_increment'=>1)));
+					if(!isset($child_data) || $child_data->getIterative($j) == null) 
+					{
+						$this->i_elem[$j][$i] = clone $this->getItem($i);
+					}
+					else
+					{
+						$this->i_elem[$j][$i] = clone $this->getItem($i);
+						$this->i_elem[$j][$i] ->setData($child_data->getIterative($j));
+					}
+				}
+		}
+	}
+	// }}}
+
+	// {{{ preReder
+	function preRender()
+	{
+		for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+		{
+			for($i = 0, $c = $this->count(); $i < $c; $i++)
+				$this->i_elem[$j][$i]->messageInterchange();
+
+			for($i = 0, $c = $this->count();$i < $c; $i++)
+				$this->i_elem[$j][$i]->preRender();
+		}
+	}
+	// }}}
+	// {{{ generateHTML
+	function generateHTML($pos = 0)
+	{
+		return "";
+	}
+	// }}}
+	// {{{ generateAllHTML
+	function generateAllHTML()
+	{
+		$ret = "";
+		if(isset($this->i_elem))
+			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+			{
+				for($i = 0, $c = $this->count(); $i < $c; $i++)
+					$ret .= $this->i_elem[$j][$i]->generateHTML();
+				$ret .= "\n";
+			}
+		else
+			$ret = parent::generateAllHTML();
+
+		return $ret;
+	}
+	// }}}
+	// {{{ generateAllHTMLByLines
+	function generateAllHTMLByLines($line = null)
+	{
+// todo: output content if no data was settted
+		if(!isset($line) || $line < 0 || $line > count($this->i_elem))
+		{
+			$ret_a = array();
+			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+			{
+				$ret_s = "";
+				for($i = 0, $c = $this->count(); $i < $c; $i++)
+					$ret_s .= $this->i_elem[$j][$i]->generateHTML();
+				$ret_a[] = $ret_s;
+			}
+			return $ret_a;
+		}
+		$ret_s = "";
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$ret_s .= $this->i_elem[$line][$i]->generateHTML();
+		return $ret_s;
+	}
+	// }}}
+	// {{{ postRender
+	function postRender()
+	{
+		for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+			for($i = 0, $c = $this->count();$i < $c; $i++)
+				$this->i_elem[$j][$i]->postRender();
+	} 
 	// }}}
 
 }

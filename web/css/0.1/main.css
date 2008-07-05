@@ -1,0 +1,276 @@
+body, input{
+    /*font-family:  Arial;*/
+    font-size:13px;
+    margin:0px;
+
+}
+img{
+    border:0px;
+}
+
+.tr { 
+    clear: both; /* Отменяет действие параметра float */ 
+}
+
+
+/* header {{{ */
+#header{
+    height:50px;
+    text-align:right;
+
+    background: url(/img/01.png) repeat-x;
+    /*background-color: red;*/
+    /*background-repeat: repeat-x; */
+
+}
+#header2{
+    height:13px;
+    background: url(/img/02.png) repeat-x;
+
+}
+
+#header3{
+    height:2px;
+    background: url(/img/03.png) repeat-x;
+}
+
+#logo{
+
+    width:357px;
+    height:34px;
+    float:left;
+    margin: 10px 30px;
+
+}
+
+#auth{
+    float:right;
+    vertical-align:bottom;
+    margin:10px 20px;
+}
+/* }}} */
+
+/* menu {{{ */
+#menurow{
+    width:100%;
+    height:50px;
+    border:0px black solid;
+    text-align:center;
+    background-image: url(/img/07.png);
+    background-position: 0px 20px;
+    background-repeat: repeat-x;
+}
+
+#menu_main{
+    margin-left:0px;
+    padding-left:70px;
+    width:70%;
+    /*border:1px green solid;*/
+    float:left;
+    background: url(/img/11.png) no-repeat;
+    background-position:top right;
+    /*font-family: Terminus;*/
+}
+
+.menu_item{
+    padding-left:10px;
+    padding-right:10px;
+    float:left;
+}
+
+.menu_item div{
+    float:left;
+    height:50px;
+
+}
+
+.menu_item_text{
+    text-align:center;
+    padding-left:10px;
+    padding-right:10px;
+    padding-top:3px;
+}
+
+.menu_item_lc, .menu_item_rc{
+    width:9px;
+}
+
+
+.menu_item_active .menu_item_lc{
+    background-image: url(/img/08.png);
+    background-position: 0px 20px;
+    background-repeat: no-repeat;
+}
+
+
+.menu_item_active .menu_item_text{
+    padding-top:10px;
+    background-image: url(/img/09.png);
+    background-position: 0px 20px;
+    background-repeat: repeat-x;
+    font-weight:bold;
+}
+
+
+.menu_item_active .menu_item_rc{
+    /*float:left;
+    width:9px;*/
+    background-image: url(/img/10.png);
+    background-position: 0px 20px;
+    background-repeat: no-repeat;
+    /*border:green solid 1px;*/
+}
+
+
+/* search {{{ */
+
+#search_form{
+    width:180px;
+    float:left;
+    text-align:right;
+    background: url(/img/13.png) no-repeat;
+}
+#search_form input{
+    border:0px solid red !important;
+    width:170px;
+    padding-left:10px;
+
+}
+
+#search_form img{
+    float:left;
+
+}
+/* search }}} */
+
+/* }}} */
+
+
+/* content {{{ */
+/* layout {{{ */
+#contentleft{
+    width:300px;
+    float:left;
+    padding-left:10px;
+    padding-right:20px;
+
+}
+
+#contentright{
+    width:100%;
+    padding-right:310px;
+    float:left;
+}
+.leftblock{
+    background-image: url(/img/14.png);
+    background-position:right;
+    background-repeat: repeat-y;
+}
+
+
+.leftblock .corner{
+    width:100%;
+    height:13px;
+    background-image: url(/img/15.png);
+    background-repeat: no-repeat;
+    background-position:right;
+}
+
+.rightblock{
+    padding-left:340px;
+    background-image: url(/img/16.png);
+    background-repeat: repeat-y;
+    background-position: 340px 0px;
+    margin-bottom:25px;
+}
+
+
+.rightblock .corner{
+    width:100%;
+    height:13px;
+    background-image: url(/img/17.png);
+    background-repeat: no-repeat;
+    background-position:left;
+}
+/* }}} */
+
+/* catalog top10{{{  */
+
+.catalog h1, .catalog h2{
+    display:inline;
+    /*font-family: Arial;*/
+    font-weight:normal ;
+    font-size:27px;
+}
+
+
+.top{
+    padding: 10px 15px 20px 5px;
+    /*font-family: Arial;*/
+}
+
+.top h2{
+    padding-left:55px;
+}
+
+.top .title{
+    font-size:12px;
+    font-weight:bold;
+
+}
+.top .content{
+    font-size:11px;
+    vertical-align:top;
+    color: gray;
+}
+.top .tdimg{
+    width:50px;
+    text-align: center;
+    vertical-align:top;
+
+}
+.top .trseparator{
+    height:10px;
+}    
+
+/* catalog top10 }}} */
+
+/* blogs cut {{{ */
+.blog{
+    /*font-family: Verdana;*/
+    font-size: 13px;
+    line-height: 2.0em;
+
+}
+
+.blog p{
+    /*text-indent:25px;*/
+}
+
+.blog h1, .blog h2{
+    display:inline;
+    /*font-family: Arial;*/
+    font-weight:normal ;
+    font-size:27px;
+}
+
+
+.blogcut{
+    padding: 10px 15px 20px 15px;
+}
+
+/* blogs cut }}}*/
+
+/* }}} */
+
+
+/* footer {{{ */
+#footer2{
+    height: 13px;
+    background: url(/img/19.png) repeat-x;
+}
+#footer{
+    height: 50px;
+    background: url(/img/18.png) repeat-x;
+}
+/* }}} */

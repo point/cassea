@@ -16,7 +16,12 @@ class thetest
 			->forid("ta")->set("value","qqqq")->end()
 			->forid("href")->set("href","http://www.google.com")
 				->child("google")->set('text',"www.google.com")->set("i","1")->end()
-			->forid("tabs")->child("test3")->set("href","http://devel/phpinfo/")->end();
+			->forid("tabs")->child("test3")->set("href","http://devel/phpinfo/")->end()
+			->forid("list")->child("li")->each(0)->set('text','list item 0')->end()
+									->each(1)->set('text','list item 1')->end()
+									->each(2)->set('text','list item 2')->end()
+							->end()
+			->end();
 	}
 }
 ?>

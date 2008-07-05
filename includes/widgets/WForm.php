@@ -246,8 +246,8 @@ class WForm extends WContainer
 	// }}}	
     function handleEvent($event)
 	{
-		if($event->event_name == "have_valuechecker" && !empty($event->event_params['id']))
-			$this->inner_valuecheckers[$event->event_params['id']] = 1;
+		if($event->getName() == "have_valuechecker" && ($id = $event->getParam('id')))
+			$this->inner_valuecheckers[$id] = 1;
     }
 	// {{{ 
 	function postRender()

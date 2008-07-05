@@ -53,7 +53,8 @@ class Controller
 			$dispatcher = null,
 			$scripts = array(),
 			$css = array(),
-			$valuecheckers = array()
+			$valuecheckers = array(),
+			$widgets = array()
 		;
 	function __construct()
 	{

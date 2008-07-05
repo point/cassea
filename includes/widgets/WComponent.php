@@ -634,7 +634,6 @@ abstract class WComponent extends WObject
 		elseif($this->inside_roll || $this->do_increment)
 		{
 			$final_html_id = $this->id."_".$this->add_html_id;
-			$this->add_html_id++;
 			$this->setHTMLId($final_html_id);
 		}
 		else 
@@ -676,10 +675,13 @@ EOD;
     */
     function handleEvent($event)
     {
-		if($event->event_name == "roll_inside" )
-			$this->inside_roll = 0 + $event->event_params['inside'];
-		if($event->event_name == "increment_id")
-			$this->do_increment = 0 + $event->event_params['do_increment'];
+		/*if($event->getName() == "roll_inside" )
+			$this->inside_roll = 0 + $event->event_params['inside'];*/
+		if($event->getName() == "increment_id" && $event->inDst($this->getId()))
+		{
+			$this->do_increment = 0 + $event->getParam('do_increment');
+			$this->add_html_id++;
+		}
     }
 	//}}}
     
