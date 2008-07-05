@@ -1,7 +1,7 @@
 <?php
 // $Id:$
 //
-
+class ResultSetException extends Exception {}
 class ResultSetPool
 {
 	static $pool = array();
@@ -86,7 +86,7 @@ class ResultSet implements IteratorAggregate
 	}
 	function child($id = null)
 	{
-		$rs = new ResultSet();
+		$rs = new ChildResultSet();
 		if(isset($id))
 			$rs->setForId($id);
 		$rs->setParent($this);
@@ -100,7 +100,7 @@ class ResultSet implements IteratorAggregate
 	{
 		if(!isset($ind) || !is_numeric($ind) || $ind < 0) return;
 
-		$rs = new ResultSet();
+		$rs = new IterativeResultSet();
 		$rs->setForId($this->for_id);
 		$rs->setParent($this);
 		$this->iterative[$ind] = $rs;
@@ -198,5 +198,43 @@ class ResultSet implements IteratorAggregate
 	{
 		return t(new ArrayObject($this->properties))->getIterator();
 	}
+}
+class ChildResultSet extends ResultSet
+{
+	function forid($id)
+	{
+		if(!isset($id)) return;
+		return $this->parent->forid($id);
+	}
+	function child($id = null)
+	{
+		return $this->parent->child($id);
+	}
+	function end()
+	{
+		return $this->parent->end();
+	}
+
+}
+class iterativeResultSet extends ResultSet
+{
+	function forid($id)
+	{
+		if(!isset($id)) return;
+		return $this->parent->forid($id);
+	}
+	function child($id = null)
+	{
+		return $this->parent->child($id);
+	}
+	function end()
+	{
+		return $this->parent->end();
+	}
+	function each($ind)
+	{
+		return $this->parent->each($ind);
+	}
+
 }
 ?>

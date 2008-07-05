@@ -28,8 +28,7 @@
 		<check rule="minlength" value="15" message="msg2"/>
 	</WValueChecker>
 	<WHyperLink id="href" dataset="ds0">
-		<!--WText  id="google">GOOGLE</WText-->
-	google.com
+		<WText  id="google">GOOGLE</WText>
 	</WHyperLink>
 	<WBlock >
 		<!--WText >BLOCK!</WText-->
