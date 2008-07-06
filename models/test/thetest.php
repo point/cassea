@@ -17,9 +17,10 @@ class thetest
 			->forid("href")->set("href","http://www.google.com")
 				->child("google")->set('text',"www.google.com")
 			->forid("tabs")->child("test3")->set("href","http://devel/phpinfo/")
-			->forid("list")->child("li")->each(0)->set('text','list item 0')
+			->forid("li")->each(0)->set('text','li2')->each(1)->set('text',"li1")
+			->forid("list")->child("li")->each(0)->set('text','list item 0')/*
 									->each(1)->set('text','list item 1')
-									->each(2)->set('text','list item 2');
+									->each(2)->set('text','list item 2')*/;
 	}
 }
 ?>

@@ -16,7 +16,8 @@ font,u,s,center,dir,menu,strike,xmp								/* depricated 	*/
 	text-align: left;
 	text-indent: 0;
 	/*font: normal 13px/20px "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;*/
-	font-family: "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;
+	/*font-family: "Lucida Grande","Myriad Pro","Lucida Sans Unicode",sans-serif;*/
+	font-family: Verdana,sans-serif;
 	font-size:13px;
 	line-height: 20px;
 	color: black;

@@ -372,19 +372,41 @@ class IterableCollection extends WidgetCollection
 	// {{{ preReder
 	function preRender()
 	{
-		for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+		if(count($this->i_elem))
 		{
-			for($i = 0, $c = $this->count(); $i < $c; $i++)
-				$this->i_elem[$j][$i]->messageInterchange();
+			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+			{
+				for($i = 0, $c = $this->count(); $i < $c; $i++)
+					$this->i_elem[$j][$i]->messageInterchange();
 
-			for($i = 0, $c = $this->count();$i < $c; $i++)
-				$this->i_elem[$j][$i]->preRender();
+				for($i = 0, $c = $this->count();$i < $c; $i++)
+					$this->i_elem[$j][$i]->preRender();
+			}
+		}
+		else
+		{
+			$controller = Controller::getInstance();
+			$controller->setDisplayMode(Controller::DISPLAY_ITERATIVE);
+			parent::preRender();
+			for($i = 0, $c = $this->count(); $i < $c; $i++)
+				$this->i_elem[0][$i] = clone $this->getItem($i);
+			for($j = 1, $c2 = $controller->getDisplayModeParams()->iterative_count;$j < $c2; $j++)
+			{
+				$controller->getDisplayModeParams()->setIterativeCurrent($j);
+				parent::preRender();
+				for($i = 0, $c = $this->count(); $i < $c; $i++)
+					$this->i_elem[$j][$i] = clone $this->getItem($i);
+			}
+
+			$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
 		}
 	}
 	// }}}
 	// {{{ generateHTML
 	function generateHTML($pos = 0)
 	{
+		if(!count($this->i_elem))
+			return parent::generateHTML($pos);
 		return "";
 	}
 	// }}}
@@ -430,9 +452,12 @@ class IterableCollection extends WidgetCollection
 	// {{{ postRender
 	function postRender()
 	{
-		for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
-			for($i = 0, $c = $this->count();$i < $c; $i++)
-				$this->i_elem[$j][$i]->postRender();
+		if(count($this->i_elem))
+			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
+				for($i = 0, $c = $this->count();$i < $c; $i++)
+					$this->i_elem[$j][$i]->postRender();
+		else 
+			parent::postRender();
 	} 
 	// }}}
 

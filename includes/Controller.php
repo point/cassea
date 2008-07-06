@@ -54,8 +54,14 @@ class Controller
 			$scripts = array(),
 			$css = array(),
 			$valuecheckers = array(),
-			$widgets = array()
-		;
+			$widgets = array(),
+			$display_mode = self::DISPLAY_REGULAR,
+			$display_mode_params = null
+			;
+
+	const DISPLAY_REGULAR = 1;
+	const DISPLAY_ITERATIVE = 2;
+
 	function __construct()
 	{
 		$this->get = new HTTPParamHolder($_GET);
@@ -454,5 +460,57 @@ class Controller
 		//var_dump($this->makeURL('nnn',array("c"=>"c2",'bb'=>'bb')));
 		//var_dump($this->makeURL(null,array('p1','p2')));
 	}
+	function setDisplayMode($mode)
+	{
+		if($mode == self::DISPLAY_REGULAR || $mode == self::DISPLAY_ITERATIVE)
+		{
+		//	if($this->display_mode != $mode)
+		//		$this->display_mode_params = new DisplayModeParams();
+			$this->display_mode = $mode;
+		}
+		
+	}
+	function getDisplayMode()
+	{
+		return $this->display_mode;
+	}
+	/*function setDisplayModeParams(DisplayModeParams $p)
+	{
+		$this->display_mode_params = $p;
+	}*/
+	function getDisplayModeParams()
+	{
+		if(!isset($this->display_mode_params))
+			$this->display_mode_params = new DisplayModeParams();
+		return $this->display_mode_params;
+	}
+}
+class DisplayModeParams
+{
+	protected 
+		$iterative_count = 0,
+		$iterative_current = 0
+		;
+	function __get($param)
+	{
+		return property_exists($this,$param)?$this->$param:null;
+	}
+	/*function __set($param,$value)
+	{
+		if(property_exists($this,$param))
+			$this->$param = $value;
+	}*/
+	function updateIterativeCount($cnt)
+	{
+		if(!is_numeric($cnt)) return;
+		if(!isset($this->iterative_count) || $cnt > $this->iterative_count)
+			$this->iterative_count = $cnt;
+	}
+	function setIterativeCurrent($cur)
+	{
+		if(isset($cur) && 0+$cur > 0)
+			$this->iterative_current = $cur;
+	}
+
 }
 ?>

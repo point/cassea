@@ -117,6 +117,9 @@ class Event
 	}
 	function inDst($id)
 	{
+		// broadband message
+		if(!isset($this->dst_ids)) return true;
+
 		return in_array($id,$this->dst_ids);
 	}
 	function setParams($params)

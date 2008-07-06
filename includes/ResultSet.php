@@ -22,13 +22,19 @@ class ResultSetPool
 	}
 	static function get($w_id)
 	{
-		$res = new ResultSet();
-		$res->setForId($w_id);
+		$res = new ResultSet();//must return instance if ResultSet
 		if(!isset(self::$pool[$w_id])) return $res;
+		$res->setForId($w_id);
 		$a = &self::$pool[$w_id];
 		array_multisort($a['priority'],SORT_REGULAR,SORT_ASC,$a['set']);
 		foreach($a['set'] as &$v)
 			$res->merge($v);
+		if($res->getIterativeCount() && Controller::getInstance()->getDisplayMode() == Controller::DISPLAY_ITERATIVE)
+		{
+			$controller = Controller::getInstance();
+			$controller->getDisplayModeParams()->updateIterativeCount($res->getIterativeCount());
+			return $res->getIterative($controller->getDisplayModeParams()->iterative_current);
+		}
 		return $res;
 	}
 }

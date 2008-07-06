@@ -63,7 +63,7 @@
 		</WTableRow>
 	</WTable>
 	<WList dataset="ds0" id="list">
-		<WListItem id="li">list item</WListItem>
-		<WListItem id="li2">list item</WListItem>
+		<WListItem id="li" dataset="ds0">list item</WListItem>
+		<WListItem id="li2">list item2</WListItem>
 	</WList>
 </root>
