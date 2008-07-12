@@ -4,21 +4,21 @@
 //
 WidgetLoader::load("WObject");
 //{{{ WDataSet
-class WDataSet extends WObject
+class WDataSet extends WObject implements DataSet
 {
 	protected 
 		$data_object = null,
 		$priority = 0
 
 		    ;
-    // {{{ WDataSet 
+    // {{{ __construct
     /**
     * Method description
     *
     * More detailed method description
     * @param    void
     */
-    function WDataSet($id = null)
+    function __construct($id = null)
     {
 		parent::__construct($id);
     }
@@ -42,14 +42,14 @@ class WDataSet extends WObject
     }
     // }}}
 
-    // {{{ GetData
+    // {{{ prepareData
     /**
     * Method description
     *
     * More detailed method description
     * @param    void
     */
-    function getData($w_id)
+    function prepareData($w_id)
 	{
 		if(($v = $this->data_object->getData($w_id)) !== false)
 		{
@@ -60,6 +60,19 @@ class WDataSet extends WObject
 			else
 				ResultSetPool::set(t(new Result())->forid($w_id)->def($v)->end(),$this->getPriority());
 		}
+	}
+	//}}}
+
+    // {{{ GetData
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    */
+    function getData($w_id)
+	{
+		$this->prepareData($w_id);
 		return ResultSetPool::get($w_id);
 	}
     //}}}

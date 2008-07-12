@@ -13,7 +13,7 @@ require("Template.php");
 require("EventDispatcher.php");
 require("DataObject.php");
 require("ResultSet.php");
-
+require("DataSet.php");
 
 class ControllerException extends Exception
 {}
@@ -64,7 +64,7 @@ class Controller
 
 	function __construct()
 	{
-		$this->get = new HTTPParamHolder($_GET);
+		$this->get = new HTTPParamHolder($_GET,0);
 		$this->post = new HTTPParamHolder($_POST);
 		$this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();

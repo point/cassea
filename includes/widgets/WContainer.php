@@ -130,7 +130,7 @@ class WidgetCollection
 	// }}}
 	
     // {{{ getItems 
-    function getItems()
+    function getItemsIds()
     {
 		return $this->items;
     }
@@ -193,19 +193,15 @@ class WidgetCollection
 		$child_data = $data->getAnonChild();
 		if($this->count()  == 1 && isset($child_data))
 		{
-			if(isset($child_data))
-			{
-				$child_data->setForId($this->items[0]);
-				$this->getItem(0)->setData($child_data);
-			}
+			$child_data->setForId($this->getItemId(0));
+			$this->getItem(0)->setDataset(new SurrogateDataSet($child_data));
 		}
 		else
-			for($i = 0, $c = count($this->items); $i < $c;$i++)
-			{
-				$child_data = $data->getChild($this->items[$i]);
-				if(!isset($child_data)) continue;
-				$this->getItem($i)->setData($child_data);
-			}
+		{
+			for($i = 0, $c = $this->count(); $i < $c; $i++)
+				if(($child_data = $data->getChild($this->getItemId($i))) != null)
+					$this->getItem($i)->setDataset(new SurrogateDataSet($child_data));
+		}
 	}
 	// }}}
 	// {{{ getItem
@@ -312,94 +308,27 @@ class IterableCollection extends WidgetCollection
 		parent::init($elem);
 	}
 	// }}}
-	// {{{ setData
-	function setData(ResultSet $data)
-	{
-		$controller = Controller::getInstance();
-		$child_data = $data->getAnonChild();
-		if($this->count()  == 1 && isset($child_data))
-		{
-			for($i = 0, $c = $child_data->getIterativeCount();$i < $c; $i++)
-			{
-				$i_data = $child_data->getIterative($i);
-				if(!isset($i_data)) {$this->i_elem = clone $this->getItem(0);continue;}
-
-				$i_data->setForId($this->items[0]);
-
-				$controller->getDispatcher()->notify(
-					new Event("increment_id",null,$this->getItem(0)->getId(),
-					array('do_increment'=>1)));
-
-				$this->i_elem[$i][0] = clone $this->getItem(0);
-				$this->i_elem[$i][0]->setData($i_data);
-			}
-		}
-		else
-		{
-			$max = 0;
-			for($i = 0, $c = count($this->items); $i < $c;$i++)
-			{
-				$child_data = $data->getChild($this->items[$i]);
-				if(isset($child_data))
-				{
-					$cnt = $data->getChild($this->items[$i])->getIterativeCount();
-					if($cnt > $max)
-						$max = $cnt;
-				}
-			}
-			for($j = 0; $j < $max; $j++)
-				for($i = 0, $c = count($this->items); $i < $c;$i++)
-				{
-					$child_data = $data->getChild($this->items[$i]);
-
-					$controller->getDispatcher()->notify(
-						new Event("increment_id",null,$this->getItem($i)->getId(),
-						array('do_increment'=>1)));
-					if(!isset($child_data) || $child_data->getIterative($j) == null) 
-					{
-						$this->i_elem[$j][$i] = clone $this->getItem($i);
-					}
-					else
-					{
-						$this->i_elem[$j][$i] = clone $this->getItem($i);
-						$this->i_elem[$j][$i] ->setData($child_data->getIterative($j));
-					}
-				}
-		}
-	}
-	// }}}
-
 	// {{{ preReder
 	function preRender()
 	{
-		if(count($this->i_elem))
+		$controller = Controller::getInstance();
+		$controller->setDisplayMode(Controller::DISPLAY_ITERATIVE);
+		
+		$controller->getDispatcher()->notify(
+			new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));
+		parent::preRender();
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$this->i_elem[0][$i] = clone $this->getItem($i);
+		for($j = 1, $c2 = $controller->getDisplayModeParams()->iterative_count;$j < $c2; $j++)
 		{
-			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
-			{
-				for($i = 0, $c = $this->count(); $i < $c; $i++)
-					$this->i_elem[$j][$i]->messageInterchange();
-
-				for($i = 0, $c = $this->count();$i < $c; $i++)
-					$this->i_elem[$j][$i]->preRender();
-			}
-		}
-		else
-		{
-			$controller = Controller::getInstance();
-			$controller->setDisplayMode(Controller::DISPLAY_ITERATIVE);
+			$controller->getDisplayModeParams()->setIterativeCurrent($j);
+			$controller->getDispatcher()->notify(
+				new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));
 			parent::preRender();
 			for($i = 0, $c = $this->count(); $i < $c; $i++)
-				$this->i_elem[0][$i] = clone $this->getItem($i);
-			for($j = 1, $c2 = $controller->getDisplayModeParams()->iterative_count;$j < $c2; $j++)
-			{
-				$controller->getDisplayModeParams()->setIterativeCurrent($j);
-				parent::preRender();
-				for($i = 0, $c = $this->count(); $i < $c; $i++)
-					$this->i_elem[$j][$i] = clone $this->getItem($i);
-			}
-
-			$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
+				$this->i_elem[$j][$i] = clone $this->getItem($i);
 		}
+		$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
 	}
 	// }}}
 	// {{{ generateHTML
@@ -425,28 +354,6 @@ class IterableCollection extends WidgetCollection
 			$ret = parent::generateAllHTML();
 
 		return $ret;
-	}
-	// }}}
-	// {{{ generateAllHTMLByLines
-	function generateAllHTMLByLines($line = null)
-	{
-// todo: output content if no data was settted
-		if(!isset($line) || $line < 0 || $line > count($this->i_elem))
-		{
-			$ret_a = array();
-			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
-			{
-				$ret_s = "";
-				for($i = 0, $c = $this->count(); $i < $c; $i++)
-					$ret_s .= $this->i_elem[$j][$i]->generateHTML();
-				$ret_a[] = $ret_s;
-			}
-			return $ret_a;
-		}
-		$ret_s = "";
-		for($i = 0, $c = $this->count(); $i < $c; $i++)
-			$ret_s .= $this->i_elem[$line][$i]->generateHTML();
-		return $ret_s;
 	}
 	// }}}
 	// {{{ postRender

@@ -11,5 +11,17 @@ $c->head();
 echo $c->allHTML();
 $c->tail();
 
+
+class a
+{
+	public
+		$v1 = 1;
+	function seta($a)
+	{
+		$this->a = $a;
+	}
+}
+
+
 ?>
 

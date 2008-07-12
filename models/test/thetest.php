@@ -15,12 +15,19 @@ class thetest
 			->forid("hidden")->set("value","qwe2")->end()
 			->forid("ta")->set("value","qqqq")->end()
 			->forid("href")->set("href","http://www.google.com")
-				->child("google")->set('text',"www.google.com")
+			->child("google")->set('text',"www.google.com")
 			->forid("tabs")->child("test3")->set("href","http://devel/phpinfo/")
-			->forid("li")->each(0)->set('text','li2')->each(1)->set('text',"li1")
-			->forid("list")->child("li")->each(0)->set('text','list item 0')/*
-									->each(1)->set('text','list item 1')
-									->each(2)->set('text','list item 2')*/;
+
+			->forid("list")->child("li")->each(0)->set('text','list item 0')
+									->each(1)->set('text',"list item 1")
+									->each(2)->set('text',"list item 2")
+
+			;
+	}
+	function getList()
+	{
+		return t(new Result())
+			->forid("li")->each(0)->set('text','li0')->each(1)->set('text',"li1");
 	}
 }
 ?>

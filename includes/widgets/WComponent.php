@@ -448,11 +448,11 @@ abstract class WComponent extends WObject
     * @param    WDataSet& $dataset    
     * @return   void
     */
-    function setDataSet(WDataSet $dataset)
+    function setDataSet(DataSet $dataset)
     {
-		if(!isset($dataset) || !$dataset instanceof WDataSet) 
-			return;
-		$this->dataset = $dataset;		
+		if(!isset($this->dataset))
+			$this->dataset = new DataSetAggregator();
+		$this->dataset->addDataSet($dataset);
     }
     // }}}
     

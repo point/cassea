@@ -3,14 +3,14 @@ class HTTPParamHolder
 {
 	private $vars = array(),
 		$checked_vars = array();
-	function __construct(array $vars)
+	function __construct(array $vars,$allow_array = true)
 	{
 		if(!empty($this->vars) || !empty($this->checked_vars)) return;
 		if(!empty($vars))
 			$this->vars = $vars;
 		foreach($vars as $k=>&$v)
 			if((is_scalar($v) && mb_check_encoding($k,"UTF8") && mb_check_encoding($v,"UTF8"))||
-				!is_scalar($v) && mb_check_encoding($k,"UTF8"))
+				$allow_array &&!is_scalar($v) && mb_check_encoding($k,"UTF8"))
 				$this->checked_vars[$k] = &$v;
 	}
 	function getAll()

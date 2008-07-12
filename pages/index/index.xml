@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <root>
-	<WDataSet id="ds0">
+	<WDataSet id="ds0" priority="11">
 		<model>test</model>
 		<classname>thetest</classname>
 		<init />
@@ -11,6 +11,13 @@
 			<param from="p2" count="3" />
 			<param from="p3" var="q"/>
 			<param constant="mmmmm"/>
+		</datasource>
+	</WDataSet>
+	<WDataSet id="ds1" priority="10">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<datasource method="getList" >
 		</datasource>
 	</WDataSet>
 	<WTextareaJS id="tjs" onselect="alert(1)"/>
@@ -63,7 +70,7 @@
 		</WTableRow>
 	</WTable>
 	<WList dataset="ds0" id="list">
-		<WListItem id="li" dataset="ds0">list item</WListItem>
-		<WListItem id="li2">list item2</WListItem>
+		<WListItem id="li" dataset="ds1">list item</WListItem>
+		<!--WListItem id="li2">list item2</WListItem-->
 	</WList>
 </root>

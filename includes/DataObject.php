@@ -169,7 +169,7 @@ class DataSourceObject extends DataObject
 		/**
 		* @var  array
 		*/
-		$datasource_cache = null
+		$datasource_method_called = false
 
 	;
 	private
@@ -203,11 +203,12 @@ class DataSourceObject extends DataObject
 				$this->createObject();
 			if(isset($this->datasource_method))
 			{
-				if(isset($this->datasource_cache))
+				if($this->datasource_method_called)
 					return false;//$this->datasource_cache;
 				try{
 					$r = new ReflectionObject($this->object);
-					return $this->datasource_cache = $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
+					$this->datasource_method_called = 1;
+					return $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
 				}catch(Exception $e){}
 			}
 			if(($v = $this->findValueInObject($w_id)) !== false)
@@ -215,9 +216,11 @@ class DataSourceObject extends DataObject
 		}
 		else
 		{
-			if(isset($this->datasource_method))
-				return $this->datasource_cache = call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
-
+			if(isset($this->datasource_method) && !$this->datasource_method_called)
+			{
+				$this->datasource_method_called = 1;
+				return call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
+			}
 			if(($v = $this->findVlaueInStatic($w_id)) !== false)
 				return $v;
 		}

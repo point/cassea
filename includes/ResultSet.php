@@ -16,6 +16,9 @@ class ResultSetPool
 				self::$pool[$r->getFor()]['priority'] = array();
 				self::$pool[$r->getFor()]['set'] = array();
 			}
+			foreach(self::$pool[$r->getFor()]['set'] as &$er)
+				if($r === $er) continue;
+			$r->setPriority($priority);
 			self::$pool[$r->getFor()]['priority'][] = $priority;
 			self::$pool[$r->getFor()]['set'][] = $r;
 		}
@@ -26,14 +29,16 @@ class ResultSetPool
 		if(!isset(self::$pool[$w_id])) return $res;
 		$res->setForId($w_id);
 		$a = &self::$pool[$w_id];
-		array_multisort($a['priority'],SORT_REGULAR,SORT_ASC,$a['set']);
+		array_multisort($a['priority'],SORT_NUMERIC,SORT_ASC,$a['set']);
 		foreach($a['set'] as &$v)
 			$res->merge($v);
 		if($res->getIterativeCount() && Controller::getInstance()->getDisplayMode() == Controller::DISPLAY_ITERATIVE)
 		{
 			$controller = Controller::getInstance();
 			$controller->getDisplayModeParams()->updateIterativeCount($res->getIterativeCount());
-			return $res->getIterative($controller->getDisplayModeParams()->iterative_current);
+			$it = $res->getIterative($controller->getDisplayModeParams()->iterative_current);
+			$it->setForId($w_id);
+			return $it;
 		}
 		return $res;
 	}
@@ -61,6 +66,11 @@ class Result implements IteratorAggregate
 	{
 		return t(new ArrayObject($this->result_sets))->getIterator();
 	}
+	function addResultSet(ResultSet $rs)
+	{
+		if($rs->getFor() == null) return;
+		$this->result_sets[$rs->getFor()] = $rs;
+	}
 
 
 }
@@ -73,7 +83,8 @@ class ResultSet implements IteratorAggregate
 		$parent = null,
 		$anon_child = null,
 		$children = array(),
-		$iterative = array()
+		$iterative = array(),
+		$ds_priority = 0
 		;
 
 	function __isset($prop)
@@ -84,6 +95,15 @@ class ResultSet implements IteratorAggregate
 	{
 		if(!isset($id)) return;
 		$this->for_id = $id;
+	}
+	function setPriority($p)
+	{
+		if(!isset($p) || !is_numeric($p) || $p < 0) return;
+		$this->ds_priority = $p;
+	}
+	function getPriority()
+	{
+		return $this->ds_priority;
 	}
 	function forid($id)
 	{
@@ -200,6 +220,13 @@ class ResultSet implements IteratorAggregate
 		if(($c = $r->getAllIterative()) !== null)
 			$this->setIterative($c);
 	}
+	function __toString()
+	{
+		$ret = "<pre>";
+		foreach($this->properties as $k=>$v)
+			$ret .= $k." = ".$v."\n<br>\n";
+		$ret .= "</pre>";
+	}
 	function getIterator()
 	{
 		return t(new ArrayObject($this->properties))->getIterator();
@@ -219,6 +246,10 @@ class ChildResultSet extends ResultSet
 	function end()
 	{
 		return $this->parent->end();
+	}
+	function getPriority()
+	{
+		return $this->parent->getPriority();
 	}
 
 }
@@ -241,6 +272,9 @@ class iterativeResultSet extends ResultSet
 	{
 		return $this->parent->each($ind);
 	}
-
+	function getPriority()
+	{
+		return $this->parent->getPriority();
+	}
 }
 ?>
