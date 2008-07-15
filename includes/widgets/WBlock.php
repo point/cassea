@@ -6,7 +6,7 @@ WidgetLoader::load("WContainer");
 //{{{ WBlock
 class WBlock extends WContainer
 {
-	var
+	protected
 		/**
 		* @var WidgetCollection&
 		*/

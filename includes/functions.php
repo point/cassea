@@ -86,4 +86,17 @@ function recalcSizeArray($arr,$max_width = null,$max_height = null)
 	if($arr === false) return array(1,1);
 	return recalcSize($arr['width']?$arr['width']:$arr[0],$arr['height']?$arr['height']:$arr[0],$max_width,$max_height);
 }
+
+function pageChanged($path,$time)
+{
+	if(!file_exists($path))
+	{
+		$path = Config::get('ROOT_DIR').$path;
+		if(!file_exists($path)) return true;
+	}
+
+	$stat = stat($path);
+	if($stat['mtime'] > $time) return true;
+	else return false;
+}
 ?>

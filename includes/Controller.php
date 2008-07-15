@@ -104,7 +104,7 @@ class Controller
 		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
 			$this->controller_name = $m[1];
 
-		if(!file_exists(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml"))
+		if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml"))
 			throw new ControllerException('page file not found');
 
 		$this->navigator = new Navigator($this->controller_name);
@@ -123,12 +123,13 @@ class Controller
 		$this->addScript("swfobject.js");
 		$this->addScript("formatDate.js");
 		$this->addScript("w.js");*/
-	
+
 		$dom = new DomDocument;
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
+
 		$this->parsePage($dom);
 
-		}
+	}
 	private final function parseP1P2()
 	{
 		$this->get->bindFilter('__p1',Filter::STRING_QUOTE_ENCODE);
@@ -483,6 +484,20 @@ class Controller
 		if(!isset($this->display_mode_params))
 			$this->display_mode_params = new DisplayModeParams();
 		return $this->display_mode_params;
+	}
+	function getPage()
+	{
+		return $this->page;
+	}
+	function getControllerName()
+	{
+		return $this->controller_name;
+	}
+	function XMLPageChanged($mtime)
+	{
+		if(!isset($mtime)) return true;
+		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml";
+		return pageChanged($file,$mtime); 
 	}
 }
 class DisplayModeParams

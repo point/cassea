@@ -73,4 +73,6 @@
 		<WListItem id="li" dataset="ds1">list item</WListItem>
 		<!--WListItem id="li2">list item2</WListItem-->
 	</WList>
+	<WHTML src="/index.html">
+	</WHTML>
 </root>
