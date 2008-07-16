@@ -53,3 +53,7 @@
 	font-size:10px;
 	margin-left:5px;
 }
+th > img
+{
+	vertical-align:bottom;
+}

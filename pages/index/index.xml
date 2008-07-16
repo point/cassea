@@ -64,6 +64,11 @@
 	</WTabs>
 	<WTable>
 		<WTableRow>
+			<WTableHeader sortby="qwe.qwe">
+				HEADER
+			</WTableHeader>
+		</WTableRow>
+		<WTableRow>
 			<WTableColumn>
 				IN THE TABLE!!
 			</WTableColumn>

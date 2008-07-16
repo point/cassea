@@ -102,7 +102,7 @@ class MemcacheStorage
 		$this->ttl = (int)$ttl;
 
 		$this->memcache = new Memcache;
-		$this->memcache->connect('localhost',11211);
+		$this->memcache->pconnect('localhost',11211);
 	}
 	
 	function is_set($var)
