@@ -60,13 +60,11 @@ class EventDispatcher
 			for($i = 0; $i < count($this->subscribers[$event]); $i++)
 			{
 				$id = $this->subscribers[$event][$i];
-				if(isset($id)) $w = $controller->getWidget($id);
+				if(!isset($id)) continue;
+				if(!$event_obj->inDst($id) || (($src_id = $event_obj->getSrc()) && $src_id == $id)) continue;
+				$w = $controller->getWidget($id);
 				if(isset($w) && method_exists($w,"handleEvent"))
 					$w->handleEvent($event_obj);
-				/*elseif(($vc = $controller->getValueChecker($id)) && isset($vc) && method_exists($vc,"handleEvent"))
-					$vc->handleEvent($event_obj);*/
-				else
-					return;
 			}
 	}
 }
@@ -118,7 +116,7 @@ class Event
 	function inDst($id)
 	{
 		// broadband message
-		if(!isset($this->dst_ids)) return true;
+		if(empty($this->dst_ids)) return true;
 
 		return in_array($id,$this->dst_ids);
 	}
