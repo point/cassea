@@ -37,7 +37,8 @@ class ResultSetPool
 			$controller = Controller::getInstance();
 			$controller->getDisplayModeParams()->updateIterativeCount($res->getIterativeCount());
 			$it = $res->getIterative($controller->getDisplayModeParams()->iterative_current);
-			$it->setForId($w_id);
+			if($it instanceof ResultSet)
+				$it->setForId($w_id);
 			return $it;
 		}
 		return $res;
@@ -84,6 +85,7 @@ class ResultSet implements IteratorAggregate
 		$anon_child = null,
 		$children = array(),
 		$iterative = array(),
+		$descent = array(),
 		$ds_priority = 0
 		;
 
@@ -130,6 +132,15 @@ class ResultSet implements IteratorAggregate
 		$rs->setForId($this->for_id);
 		$rs->setParent($this);
 		$this->iterative[$ind] = $rs;
+		return $rs;
+	}
+	function descent($id )
+	{
+		$rs = new DescentResultSet();
+		$rs->setForId($id);
+		$rs->setParent($this);
+		if(isset($id))
+			$this->descent[$id] = $rs;
 		return $rs;
 	}
 	function setParent($parent)
@@ -189,6 +200,41 @@ class ResultSet implements IteratorAggregate
 		if(!isset($children) || !is_array($children)) return;
 		$this->children = $children;
 	}
+	function setDescent($descent)
+	{
+		if(!isset($descent) || !is_array($descent)) return;
+		$this->descent = $descent;
+	}
+	function hasDescent()
+	{
+		return (bool)count($this->descent);
+	}
+	function getDescent($id)
+	{
+		if(!isset($this->descent[$id])) return null;
+		return $this->descent[$id];
+	}
+	function shiftDescent($id)
+	{
+		if(($d = $this->getDescent($id)))
+		{
+			unset($this->descent[$id]);
+			return $d;
+		}
+		return null;
+	}
+	function getDescentResultSet($to_id)
+	{
+		if(!count($this->descent)) return null;
+		$rs = new ResultSet();
+		$rs->setForId($to_id); 
+		$rs->setDescent($this->getAllDescent());
+		return $rs;
+	}
+	function getAllDescent()
+	{
+		return $this->descent;
+	}
 	function getIterative($id)
 	{
 		if(isset($this->iterative[$id]))
@@ -219,6 +265,8 @@ class ResultSet implements IteratorAggregate
 			$this->setChildren($c);
 		if(($c = $r->getAllIterative()) !== null)
 			$this->setIterative($c);
+		if(($c = $r->getAllDescent()) !== null)
+			$this->setDescent($c);
 	}
 	function __toString()
 	{
@@ -232,7 +280,7 @@ class ResultSet implements IteratorAggregate
 		return t(new ArrayObject($this->properties))->getIterator();
 	}
 }
-class ChildResultSet extends ResultSet
+class CustomResultSet extends ResultSet 
 {
 	function forid($id)
 	{
@@ -251,30 +299,20 @@ class ChildResultSet extends ResultSet
 	{
 		return $this->parent->getPriority();
 	}
-
+	function descent($id)
+	{
+		return $this->parent->descent($id);
+	}
 }
-class iterativeResultSet extends ResultSet
+class ChildResultSet extends CustomResultSet
+{ }
+class DescentResultSet extends ChildResultSet
+{ }
+class IterativeResultSet extends CustomResultSet
 {
-	function forid($id)
-	{
-		if(!isset($id)) return;
-		return $this->parent->forid($id);
-	}
-	function child($id = null)
-	{
-		return $this->parent->child($id);
-	}
-	function end()
-	{
-		return $this->parent->end();
-	}
 	function each($ind)
 	{
 		return $this->parent->each($ind);
-	}
-	function getPriority()
-	{
-		return $this->parent->getPriority();
 	}
 }
 ?>

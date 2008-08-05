@@ -680,7 +680,8 @@ EOD;
 		if($event->getName() == "increment_id" && $event->inDst($this->getId()))
 		{
 			$this->do_increment = 0 + $event->getParam('do_increment');
-			$this->add_html_id++;
+			/*if($this->do_increment)
+				$this->add_html_id++;*/
 		}
     }
 	//}}}
@@ -795,6 +796,8 @@ EOD;
 					$this->setVisible(0);
 			}
 		}
+		if($this->do_increment)
+			$this->add_html_id++;
 	}
 	//}}}	
 

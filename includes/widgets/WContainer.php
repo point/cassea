@@ -30,6 +30,13 @@ class WContainer extends WComponent
 				$this->$v->setData($data);
 	}
 	// }}}
+	function __clone()
+	{
+		foreach($this->class_vars as $v)
+			if($this->$v instanceof WidgetCollection)
+				$this->$v = clone $this->$v;
+	}
+	// }}}
 	// {{{ preRender
 	function preRender()
 	{
@@ -52,7 +59,6 @@ class WContainer extends WComponent
 		parent::postRender();
 	}
 	// }}}
-
 	// {{{ childPostRender
 	protected function childPostRender()
 	{
@@ -69,7 +75,8 @@ class WContainer extends WComponent
 class WidgetCollection
 {
 	protected
-		$items = array()
+		$item_ids = array(),
+		$item_objs = array()
 		;
 	
 	// {{{ __construct
@@ -93,62 +100,76 @@ class WidgetCollection
 	function addItem($item_id)
     {
 		if(!empty($item_id) && is_scalar($item_id))
-			$this->items[] = $item_id;
+		{
+			$w = Controller::getInstance()->getWidget($item_id);
+			if($w == null) return;
+			$this->item_ids[] = $item_id;
+			$this->item_objs[] = $w; 
+		}
     }
 	// }}}
 	
 	// {{{ deleteItemById 
     function deleteItemById($id)
     {
-		for($i = 0, $c = count($this->items);$i < $c; $i++)
-			if($this->items[$i] == $id)
+		for($i = 0, $c = count($this->item_ids);$i < $c; $i++)
+			if($this->item_ids[$i] == $id)
 			{
-				unset($this->items[$i]);
+				unset($this->item_ids[$i]);
+				unset($this->item_objs[$i]);
+
+				$this->item_ids = array_values($this->item_ids);
+				$this->item_objs = array_values($this->item_objs);
 				break;
 			}
-		$this->items = array_values($this->items);
     }
     // }}}
     
     // {{{ deleteItemByPos 
     function deleteItemByPos($position)
     {
-    	if($position < 0 || $position > count($this->items)) 
+    	if($position < 0 || $position > count($this->item_ids)) 
 			return;
 
-		if(isset($this->items[$position]))
-			unset($this->items[$position]);
-		$this->items = array_values($this->items);
+		if(isset($this->item_ids[$position]))
+		{
+			unset($this->item_ids[$position]);
+			unset($this->item_objs[$position]);
+
+			$this->item_ids = array_values($this->item_ids);
+			$this->item_objs = array_values($this->item_objs);
+		}
     }
     // }}}
 
 	// {{{ clear
 	function clear()
 	{
-		$this->items = array();
+		$this->item_ids = array();
+		$this->item_objs = array();
 	}
 	// }}}
 	
     // {{{ getItems 
     function getItemsIds()
     {
-		return $this->items;
+		return $this->item_ids;
     }
-    // }}}
+    // }}} 
 	
-	// {{{ count
+	// {{{ count 
 	function count()
 	{
-		return count($this->items);
+		return count($this->item_ids);
 	}
 	// }}}
 
 	// {{{ getItemId
 	function getItemId($position = 0)
 	{
-    	if($position < 0 || $position > count($this->items)) 
+    	if($position < 0 || $position > count($this->item_ids)) 
 			return;
-		return $this->items[$position];
+		return $this->item_ids[$position];
 	}
 	// }}}
 	// {{{ preReder
@@ -202,24 +223,33 @@ class WidgetCollection
 				if(($child_data = $data->getChild($this->getItemId($i))) != null)
 					$this->getItem($i)->setDataset(new SurrogateDataSet($child_data));
 		}
+		for($i = 0, $c = $this->count(); $i < $c;$i++)
+			if(($desc = $data->shiftDescent($this->getItemId($i))) != null)
+				$this->getItem($i)->setDataset(new SurrogateDataSet($desc));
+
+		
+		if($data->hasDescent())
+			for($i = 0, $c = $this->count(); $i < $c;$i++)
+				if(($desc = $data->getDescentResultSet($this->getItemId($i))) != null)
+					$this->getItem($i)->setDataset(new SurrogateDataSet($desc));
 	}
 	// }}}
 	// {{{ getItem
 	function getItem($position = 0)
 	{
-		$w = null;
-		if(!$this->exists($position)) return $w;
-		$controller = Controller::getInstance();
-		return $w = $controller->getWidget($this->items[$position]);
+		if(!$this->exists($position)) return null;
+		return $this->item_objs[$position];
 	}
-	// }}}
+	// }}} 
 	// {{{ exists
 	function exists($position)
 	{
-		if(empty($this->items)) return 0;
-	   	if($position < 0 || $position > count($this->items)) 
+		if(empty($this->item_ids)) return 0;
+	   	if($position < 0 || $position > count($this->item_ids)) 
 			return 0;
-		return 1;
+		if(!empty($this->item_ids[$position]) && !empty($this->item_objs[$position]))
+			return 1;
+		return 0;
 	}
 	// }}}
 	// {{{ has
@@ -231,12 +261,12 @@ class WidgetCollection
 
 	/*	for($i = 0, $c = count($class_names); $i < $c; $i++)
 		$class_names[$i] = strtolower($class_names[$i]);*/
-		for($i = 0, $c = count($this->items); $i < $c; $i++)
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
 			if(in_array(get_class($this->getItem($i)),$class_names)) return 1;
 		return 0;
 	}
-	// }}}
-	// {{{ filter
+	// }}} 
+	// {{{ filter 
 	function filter($class_names = array())
 	{
 		if(empty($class_names)) return;
@@ -244,10 +274,9 @@ class WidgetCollection
 			$class_names = array($class_names);
 		if(!is_array($class_names) ) return;
 
-		for($i = 0, $c = count($this->items); $i < $c; $i++)
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
 			if(!in_array(get_class($this->getItem($i)),$class_names))
-				unset($this->items[$i]);
-		$this->items = array_values($this->items);
+				$this->deleteItemByPos($i);
 	}
 	// }}}
 	// {{{ truncate
@@ -259,6 +288,13 @@ class WidgetCollection
 			$this->clear();
 			$this->addItem($it);
 		}
+	}
+	// }}}
+	// {{{ __clone
+	function __clone()
+	{
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$this->item_objs[$i] = clone $this->item_objs[$i];
 	}
 	// }}}
 }
@@ -314,21 +350,37 @@ class IterableCollection extends WidgetCollection
 		$controller = Controller::getInstance();
 		$controller->setDisplayMode(Controller::DISPLAY_ITERATIVE);
 		
+		/*$controller->getDispatcher()->notify(
+			new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));*/
+
 		$controller->getDispatcher()->notify(
-			new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));
+			new Event("increment_id",null,null,array('do_increment'=>1)));
 		parent::preRender();
 		for($i = 0, $c = $this->count(); $i < $c; $i++)
 			$this->i_elem[0][$i] = clone $this->getItem($i);
-		for($j = 1, $c2 = $controller->getDisplayModeParams()->iterative_count;$j < $c2; $j++)
+		$controller->getDispatcher()->notify(
+			new Event("increment_id",null,null,array('do_increment'=>0)));
+		$from = $controller->getDisplayModeParams()->iterative_from;
+		$limit = $controller->getDisplayModeParams()->iterative_limit;
+		if(!isset($from) || !isset($limit))
+		{
+			$from = 1; $limit = $controller->getDisplayModeParams()->iterative_count - 1;
+		}
+		for($j = $from,$l = 0;$j < $from + $limit; $j++,$l++)
 		{
 			$controller->getDisplayModeParams()->setIterativeCurrent($j);
+		/*	$controller->getDispatcher()->notify(
+		new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));*/
+
 			$controller->getDispatcher()->notify(
-				new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));
+				new Event("increment_id",null,null,array('do_increment'=>1)));
 			parent::preRender();
 			for($i = 0, $c = $this->count(); $i < $c; $i++)
-				$this->i_elem[$j][$i] = clone $this->getItem($i);
+				$this->i_elem[$l][$i] = clone $this->getItem($i);
+
+			$controller->getDispatcher()->notify(
+				new Event("increment_id",null,null,array('do_increment'=>0)));
 		}
-		$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
 	}
 	// }}}
 	// {{{ generateHTML
@@ -365,6 +417,9 @@ class IterableCollection extends WidgetCollection
 					$this->i_elem[$j][$i]->postRender();
 		else 
 			parent::postRender();
+
+		$controller = Controller::getInstance();
+		$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
 	} 
 	// }}}
 

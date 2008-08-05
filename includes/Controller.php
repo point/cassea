@@ -38,7 +38,7 @@ class WidgetLoader
 class Controller
 {
 	public	$p1 = null,
-			$p2 = null,
+			$p2 = array(),
 			$post = null,
 			$get = null
 		;
@@ -68,6 +68,7 @@ class Controller
 		$this->post = new HTTPParamHolder($_POST);
 		$this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
+		$this->display_mode_params = new DisplayModeParams();
 	}
 	static function getInstance()
 	{
@@ -117,7 +118,7 @@ class Controller
 		$this->addScript("jquery.tooltip.js");
 		$this->addCSS("jquery.tooltip.css");
 		$this->addScript("jquery.treeview.js");
-		$this->addScript("IE8.js","IE");
+		//$this->addScript("IE8.js","IE");
 		$this->addCSS("default.css");
 		/*$this->addScript("php_serialize.js");
 		$this->addScript("swfobject.js");
@@ -154,28 +155,27 @@ class Controller
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
-			$el = $node->item($i);
+			$el = $node->item(0);
 			if(empty($el)) continue;
 			$this->addDataSet(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
-
 		$node = $dom->getElementsByTagName("WDataHandler");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
-			$el = $node->item($i);
+			$el = $node->item(0);
 			if(empty($el)) continue;
 			$this->addDataHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
 
 		$node = $dom->getElementsByTagName("WStyle");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
-			$el = $node->item($i);
+			$el = $node->item(0);
 			if(empty($el)) continue;
 			$this->addStyle(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
 
 		$xpath = new DOMXPath($dom);
@@ -183,26 +183,26 @@ class Controller
 		{
 			if(empty($el)) continue;
 			$this->addJS(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
 		unset($xpath);
 
 		$node = $dom->getElementsByTagName("WPageHandler");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
-			$el = $node->item($i);
+			$el = $node->item(0);
 			if(empty($el)) continue;
 			$this->addPageHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
 
 		$node = $dom->getElementsByTagName("WValueChecker");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
-			$el = $node->item($i);
+			$el = $node->item(0);
 			if(empty($el)) continue;
 			$this->addValueChecker(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el->parentNode->firstChild);
+			$el->parentNode->removeChild($el);
 		}
 	
 		$sxml = simplexml_import_dom($dom);
@@ -320,6 +320,11 @@ class Controller
 		{
 			if(!$widget->getState()) continue;
 			$this->widgets[$name]->messageInterchange();
+		}
+
+		foreach($this->widgets as $name=>$widget)
+		{
+			if(!$widget->getState()) continue;
 			$this->widgets[$name]->preRender();
 			$this->final_html .= $this->widgets[$name]->generateHTML();
 			$this->widgets[$name]->postRender();				
@@ -404,24 +409,42 @@ class Controller
 			foreach($p2 as $k=>$v)
 				if(is_int($k))
 					{$p2_type = 2;break;}
-
 			if($p2_type == 1)
 			{
 				$c_p2 = array_flip($this->p2);
 				foreach($p2 as $k=>$v)
+				{
 					if(isset($c_p2[$k]))
 					{
 						$n_p2_k = null;
 						if($v == null)
 							{unset($n_p2[$c_p2[$k]]);continue;}
-						elseif(substr($k,0,1) == "/")
-							$n_p2_k = preg_replace($k,$v,$c_p2[$k]);
 						else
-							$n_p2_k = $v;
-						$n_p2[$c_p2[$k]] = $n_p2_k;
+							$n_p2[$c_p2[$k]] = $v;
 					}
-					else
+					elseif(substr($k,0,1) == "/")
+					{
+						$flag = 0;
+						foreach($this->p2 as $temp_k_p2 => $temp_v_p2)
+							if(preg_match($k,$temp_v_p2))
+							{ 
+								if($v === null)
+								{
+									unset($n_p2[$temp_k_p2]);
+									$flag = 1;break;
+								}
+								else 
+								{
+									$n_p2[$temp_k_p2] = preg_replace($k,$v,$temp_v_p2); 
+									$flag = 1; break;
+								}
+							}
+						if(!$flag && !empty($v))
+							$n_p2[] = $v;
+					}
+					elseif(!empty($k))
 						$n_p2[] = $k;
+				}
 			}
 			else
 				foreach($p2 as $k=>$v)
@@ -431,11 +454,11 @@ class Controller
 					$n_p2[(int)$k] = $v;
 				}
 		}
+		$n_get = $c_get = $this->get->getAllChecked();
+		foreach($n_get as $k=>$v)
+			if(substr($k,0,2) == "__") unset($n_get[$k]);
 		if(isset($get) && is_array($get))
 		{
-			$n_get = $c_get = $this->get->getAllChecked();
-			foreach($n_get as $k=>$v)
-				if(substr($k,0,2) == "__") unset($n_get[$k]);
 			foreach($get as $k=>$v)
 			{
 				if(substr($k,0,2) == "__") continue;
@@ -452,8 +475,10 @@ class Controller
 		$n_get2 = array();
 		foreach($n_get as $k=>$v)
 			$n_get2[] = $k."=".$v;
+		foreach($n_p2 as $k=>$v)
+			if(empty($v)) unset($n_p2[$k]);
 		return 	Filter::filter("http://".$_SERVER['SERVER_NAME']."/".$controller_name."/".
-			(!empty($n_p2)?implode("/",$n_p2)."/":"").(strpos($page,".") === false?$page.".html":$page).
+			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
 			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
 
 
@@ -465,8 +490,9 @@ class Controller
 	{
 		if($mode == self::DISPLAY_REGULAR || $mode == self::DISPLAY_ITERATIVE)
 		{
-		//	if($this->display_mode != $mode)
-		//		$this->display_mode_params = new DisplayModeParams();
+			if($this->display_mode != $mode)
+				$this->display_mode_params->clear();
+				//$this->display_mode_params = new DisplayModeParams();
 			$this->display_mode = $mode;
 		}
 		
@@ -481,8 +507,6 @@ class Controller
 	}*/
 	function getDisplayModeParams()
 	{
-		if(!isset($this->display_mode_params))
-			$this->display_mode_params = new DisplayModeParams();
 		return $this->display_mode_params;
 	}
 	function getPage()
@@ -504,11 +528,25 @@ class DisplayModeParams
 {
 	protected 
 		$iterative_count = 0,
-		$iterative_current = 0
+		$iterative_current = 0,
+		$gather_stat = 0,
+		$stat = array(),
+
+		$iterative_from = null,
+		$iterative_limit = null
 		;
 	function __get($param)
 	{
-		return property_exists($this,$param)?$this->$param:null;
+		if($param == "iterative_current" || $param == "iterative_count"
+		|| $param == "iterative_from" || $param == "iterative_limit")
+			return $this->$param;
+		return  null;
+	}
+	function clear()
+	{
+		$this->iterative_count = 0;
+		$this->iterative_current = 0;
+		$this->iterative_from = $this->iterative_limit = null;
 	}
 	/*function __set($param,$value)
 	{
@@ -519,13 +557,37 @@ class DisplayModeParams
 	{
 		if(!is_numeric($cnt)) return;
 		if(!isset($this->iterative_count) || $cnt > $this->iterative_count)
-			$this->iterative_count = $cnt;
+		{
+			if($this->getGatherStat())
+				$this->stat['iterative_count'] = $cnt;
+			else $this->iterative_count = $cnt;
+		}
 	}
 	function setIterativeCurrent($cur)
 	{
+		if($this->getGatherStat()) return;
 		if(isset($cur) && 0+$cur > 0)
 			$this->iterative_current = $cur;
 	}
-
+	function setIterativeLimits($from, $limit)
+	{
+		if(!isset($from,$limit) || !is_numeric($from) || !is_numeric($limit)) return;
+		if($from < 0 || $limit < 0) return;
+		$this->iterative_from = $from;
+		$this->iterative_limit = $limit;
+	}
+	function gatherStat($gather = false)
+	{
+		$this->gather_stat = (bool)$gather;
+	}
+	function getGatherStat()
+	{
+		return $this->gather_stat;
+	}
+	function getStat($param)
+	{
+		if(!isset($this->stat[$param])) return null;
+		return $this->stat[$param];
+	}
 }
 ?>

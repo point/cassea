@@ -123,8 +123,8 @@ class Event
 	function setParams($params)
 	{
 		if(!is_array($params)) return;
-		$k = key($params);
-		$this->event_params[$k] = $params[$k];
+		foreach($params as $k => $v)
+			$this->event_params[$k] = $v;
 	}
 	function getParam($param_name)
 	{

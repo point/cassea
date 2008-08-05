@@ -20,6 +20,13 @@
 		<datasource method="getList" >
 		</datasource>
 	</WDataSet>
+	<WDataSet id="ds2" priority="20">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<datasource method="roll" >
+		</datasource>
+	</WDataSet>
 	<WTextareaJS id="tjs" onselect="alert(1)"/>
 	<WStyle id="s1" border="1px solid red"/>
 	<WStyle id="s2" border="1px solid green"/>
@@ -78,6 +85,19 @@
 		<WListItem id="li" dataset="ds1">list item</WListItem>
 		<!--WListItem id="li2">list item2</WListItem-->
 	</WList>
-	<WHTML src="/index.html">
-	</WHTML>
+	<!--WHTML src="/index.html">
+	</WHTML-->
+	<WTable table_sorter="1" odd="table_odd" even="table_even" hover="table_hover">
+		<WTableRow>
+			<WTableHeader >Header</WTableHeader>
+		</WTableRow>
+		<WRoll dataset="ds22" id="roll" ruler="ruler1">
+			<WTableRow>
+				<WTableColumn>
+					<WText id="roll_text" dataset="ds2"/>
+				</WTableColumn>
+			</WTableRow>
+		</WRoll>
+	</WTable>
+	<WRuler id="ruler1" reverse="1" />
 </root>

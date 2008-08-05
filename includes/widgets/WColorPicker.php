@@ -32,7 +32,7 @@ class WColorPicker extends WEdit
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 		$controller = Controller::getInstance();
-		$controller->addScript("jquery.colorpicker.js");
+		$controller->addScript("colorpicker.js");
 		$controller->addCSS("colorpicker.css");
 		parent::buildComplete();
 	}    

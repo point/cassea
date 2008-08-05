@@ -29,5 +29,13 @@ class thetest
 		return t(new Result())
 			->forid("li")->each(0)->set('text','li0')->each(1)->set('text',"li1");
 	}
+	function roll()
+	{
+		$r = t(new Result())
+			->forid("roll_text");
+		for($i = 0; $i < 20; $i++)
+			$r->each($i)->set("text","text".($i+1));
+		return $r;
+	}
 }
 ?>

@@ -5,7 +5,7 @@
 //{{{ WTableRow
 class WTableRow extends WContainer
 {
-    var
+    protected
 
         /**
         * @var      string
@@ -18,8 +18,10 @@ class WTableRow extends WContainer
         /**
         * @var		WidgetCollection&
         */
-		$items = null
-		;
+		$items = null;
+
+	private 
+		$thead = 0	;
     
     // {{{ __construct
     /**
@@ -53,7 +55,7 @@ class WTableRow extends WContainer
 		$this->addToMemento(array("align","valign"));
 		parent::parseParams($elem);		    	
     }
-    // }}}
+    // } }}
     // {{{ buildComplete
     /**
     * Method description
@@ -66,6 +68,8 @@ class WTableRow extends WContainer
 	{
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
+		if($this->items->has("WTableHeader"))
+			$this->thead = 1;
 		parent::buildComplete();
 	}    
 	// }}}
@@ -97,7 +101,8 @@ class WTableRow extends WContainer
 		$this->tpl->setParamsArray(array(
 			"align"=>(isset($this->align))?"align=\"".$this->getAlign()."\"":"",
 			"valign"=>(isset($this->valign))?"valign=\"".$this->getValign()."\"":"",
-			"row_content"=>$this->items->generateAllHTML()
+			"row_content"=>$this->items->generateAllHTML(),
+			"thead"=>$this->thead
 		));
 		parent::assignVars();
     }

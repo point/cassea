@@ -39,8 +39,23 @@ class WTable extends WContainer
         /**
         * @var      string
         */
-		$summary = null
-			
+		$summary = null,
+        /**
+        * @var      bool
+        */
+		$table_sorter = 0,
+	    /**
+        * @var		string
+		*/
+		$odd_class = null,
+	    /**
+        * @var		string
+		*/
+		$even_class = null,
+	    /**
+        * @var		string
+		*/
+		$hover_class = null
 		;
         
     // {{{ __construct
@@ -79,10 +94,20 @@ class WTable extends WContainer
 	       	$this->setWidth((string)$elem['width']);
 		if(!empty($elem['summary']))
 	       	$this->setSummary((string)$elem['summary']);
+		if(!empty($elem['table_sorter']))
+	       	$this->setTableSorter((string)$elem['table_sorter']);
 
-			$this->items = new WidgetCollection($elem);
+		if(isset($elem['odd']))
+			$this->setOddClass((string)$elem['odd']);
+		if(isset($elem['even']))
+			$this->setEvenClass((string)$elem['even']);
+		if(isset($elem['hover']))
+			$this->setHoverClass((string)$elem['hover']);
 
-		$this->addToMemento(array("cellspacing","cellpadding","frame","rules","border","width","summary"));
+		$this->items = new WidgetCollection($elem);
+
+		$this->addToMemento(array("cellspacing","cellpadding","frame","rules","border","width","summary",
+			"table_sorter","odd_class","even_class","hover_class"));
 		parent::parseParams($elem);		    	
     }
     // }}}
@@ -98,6 +123,15 @@ class WTable extends WContainer
 	{
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
+
+		if($this->getTableSorter())
+		{
+			$controller = Controller::getInstance();
+			$controller->addScript("jquery.metadata.js");
+			$controller->addScript("jquery.tablesorter.js");
+			$controller->addCSS("jquery.tablesorter.css");
+			$this->setStyleClass("tablesorter");
+		}
 		parent::buildComplete();
 	}    
 	// }}}
@@ -113,6 +147,7 @@ class WTable extends WContainer
     {
 		if(isset($this->dataset))
 			$this->setData($this->dataset->getData($this->getId()));
+
 		parent::preRender();
     }
 	// }}}    
@@ -134,7 +169,11 @@ class WTable extends WContainer
 			"border"=>(isset($this->border))?"border=\"".$this->getBorder()."\"":"",
 			"width"=>(isset($this->width))?"width=\"".$this->getWidth()."\"":"",
 			"summary"=>(isset($this->summary))?"summary=\"".$this->getSummary()."\"":"",
-			"table_content"=>$this->items->generateAllHTML()
+			"table_content"=>$this->items->generateAllHTML(),
+			"table_sorter"=>$this->getTableSorter(),
+			"odd_class"=>$this->getOddClass(),
+			"even_class"=>$this->getEvenClass(),
+			"hover_class"=>$this->getHoverClass()
 		));
 		parent::assignVars();
     }
@@ -345,6 +384,29 @@ class WTable extends WContainer
 		return $this->width;
     }
     // }}}
+	
+   // {{{ setTableSorter
+    function setTableSorter($sorter)
+    {
+		if(!isset($sorter) || !is_scalar($sorter))
+			return;
+		$this->table_sorter = 0+$sorter;
+    }
+    // }}}
+	
+    // {{{ getTableSorter
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getTableSorter()
+    {
+		return $this->table_sorter;
+    }
+    // }}}
     // {{{ setData 
     /**
     * Method description
@@ -367,10 +429,103 @@ class WTable extends WContainer
 		$this->setWidth($data->get('width'));
 		$this->setSummary($data->get('summary'));
 
+		$this->setOddClass($data->get('odd'));
+		$this->setEvenClass($data->get('even'));
+		$this->setHoverClass($data->get('even'));
+
 		parent::setData($data);
     }
     //}}}
 
+    // {{{ setEvenClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $even_class
+    * @return   void
+    */
+    function setEvenClass($even_class)
+    {
+		if(!isset($even_class) || !is_scalar($even_class))
+			return;
+		$this->even_class = "".$even_class;
+
+    }
+    // }}}
+    // {{{ getEvenClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getEvenClass()
+    {
+		return $this->even_class;
+    }
+    // }}}
+
+    // {{{ setOddClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $odd_class
+    * @return   void
+    */
+    function setOddClass($odd_class)
+    {
+		if(!isset($odd_class) || !is_scalar($odd_class))
+			return;
+		$this->odd_class = "".$odd_class;
+
+    }
+    // }}}
+    // {{{ getOddClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getOddClass()
+    {
+		return $this->odd_class;
+    }
+    // }}}
+	
+    // {{{ setHoverClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $hover_class
+    * @return   void
+    */
+    function setHoverClass($hover_class)
+    {
+		if(!isset($hover_class) || !is_scalar($hover_class))
+			return;
+		$this->hover_class = "".$hover_class;
+
+    }
+    // }}}
+    // {{{ getHoverClass
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getHoverClass()
+    {
+		return $this->hover_class;
+    }
+    // }}}
 }
 //}}}
 
