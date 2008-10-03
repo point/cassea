@@ -1,3 +1,16 @@
+1.4
+---
+* Fixed #2931, validate elements in document order and ignore type=image inputs
+* Fixed usage of $ and jQuery variables, now fully comptible with all variations of noConflict usage
+* Implemented #2908, enabling custom messages via metadata ala class="{required:true,messages:{required:'required field'}}", added demo/custom-messages-metadata-demo.html
+* Removed deprecated methods minValue (min), maxValue (max), rangeValue (rangevalue), minLength (minlength), maxLength (maxlength), rangeLength (rangelength)
+* Fixed #2215 regression: Call unhighlight only for current elements, not everything
+* Implemented #2989, enabling image button to cancel validation
+* Fixed issue where IE incorrectly validates against maxlength=0
+* Added czech (cs) localization
+* Reset validator.submitted on validator.resetForm(), enabling a full reset when necessary
+* Fixed #3035, skipping all falsy attributes when reading rules (0, undefined, empty string), removed part of the maxlength workaround (for 0)
+
 1.3
 ---
 * Fixed invalid-form event, now only triggered when form is invalid

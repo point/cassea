@@ -1,4 +1,31 @@
 <?php
+/*- vim:expandtab:shiftwidth=4:tabstop=4: 
+{{{ LICENSE  
+* Copyright (c) 2008, Cassea Project
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the Cassea Project nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY CASSEA PROJECT ''AS IS'' AND ANY
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL CASSEA PROJECT BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+}}} -*/
 
 WidgetLoader::load("WComponent");
 
@@ -14,22 +41,7 @@ interface Container
 // {{{ WContainer
 class WContainer extends WComponent 
 {
-	// {{{ setData
-	function setData(ResultSet $data)
-	{
-		parent::setData($data);
-		$this->setChildData($data);
-	}
-	// }}}
-	// {{{ setChildData
-	protected function setChildData(ResultSet $data)
-	{
-		if($this->getId() != $data->getFor()) return;
-		foreach($this->class_vars as $v)
-			if($this->$v instanceof WidgetCollection)
-				$this->$v->setData($data);
-	}
-	// }}}
+	// {{{
 	function __clone()
 	{
 		foreach($this->class_vars as $v)
@@ -76,12 +88,15 @@ class WidgetCollection
 {
 	protected
 		$item_ids = array(),
-		$item_objs = array()
+		$item_objs = array(),
+		$parent_id =null
 		;
 	
 	// {{{ __construct
-	function __construct($elem = null)
+	function __construct($parent_id,$elem = null)
 	{
+		if(!is_string($parent_id)) return;
+		$this->parent_id = $parent_id;
 		if(isset($elem))
 			$this->init($elem);
 	}
@@ -92,7 +107,10 @@ class WidgetCollection
 	{
 		$controller = Controller::getInstance();
 		foreach($elem as $v)
+		{
 			$this->addItem(($id = $controller->buildWidget($v,1)));
+			$controller->getAdjacencyList()->add($id,$this->parent_id);
+		}
 	}
 	// }}}
 
@@ -209,7 +227,7 @@ class WidgetCollection
 	// }}}
 
 	// {{{ setData
-	function setData(ResultSet $data)
+	/*function setData(ResultSet $data)
 	{
 		$child_data = $data->getAnonChild();
 		if($this->count()  == 1 && isset($child_data))
@@ -232,7 +250,7 @@ class WidgetCollection
 			for($i = 0, $c = $this->count(); $i < $c;$i++)
 				if(($desc = $data->getDescentResultSet($this->getItemId($i))) != null)
 					$this->getItem($i)->setDataset(new SurrogateDataSet($desc));
-	}
+	}*/
 	// }}}
 	// {{{ getItem
 	function getItem($position = 0)
@@ -348,39 +366,22 @@ class IterableCollection extends WidgetCollection
 	function preRender()
 	{
 		$controller = Controller::getInstance();
-		$controller->setDisplayMode(Controller::DISPLAY_ITERATIVE);
-		
-		/*$controller->getDispatcher()->notify(
-			new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));*/
-
-		$controller->getDispatcher()->notify(
-			new Event("increment_id",null,null,array('do_increment'=>1)));
-		parent::preRender();
-		for($i = 0, $c = $this->count(); $i < $c; $i++)
-			$this->i_elem[0][$i] = clone $this->getItem($i);
-		$controller->getDispatcher()->notify(
-			new Event("increment_id",null,null,array('do_increment'=>0)));
-		$from = $controller->getDisplayModeParams()->iterative_from;
-		$limit = $controller->getDisplayModeParams()->iterative_limit;
-		if(!isset($from) || !isset($limit))
+		for($i = 0, $c = $controller->getDisplayModeParams()->getLimit($this->parent_id);$i < $c; $i++)
 		{
-			$from = 1; $limit = $controller->getDisplayModeParams()->iterative_count - 1;
-		}
-		for($j = $from,$l = 0;$j < $from + $limit; $j++,$l++)
-		{
-			$controller->getDisplayModeParams()->setIterativeCurrent($j);
-		/*	$controller->getDispatcher()->notify(
-		new Event("increment_id",null,$this->getItemsIds(),array('do_increment'=>1)));*/
-
 			$controller->getDispatcher()->notify(
 				new Event("increment_id",null,null,array('do_increment'=>1)));
 			parent::preRender();
-			for($i = 0, $c = $this->count(); $i < $c; $i++)
-				$this->i_elem[$l][$i] = clone $this->getItem($i);
+
+			for($j = 0, $c2 = $this->count();$j < $c2; $j++)
+				$this->i_elem[$i][$j] = clone $this->getItem($j);
 
 			$controller->getDispatcher()->notify(
 				new Event("increment_id",null,null,array('do_increment'=>0)));
+
+			$controller->getDisplayModeParams()->incCurrent($this->parent_id);
 		}
+		$controller->getDisplayModeParams()->resetCurrent($this->parent_id);
+
 	}
 	// }}}
 	// {{{ generateHTML
@@ -395,15 +396,15 @@ class IterableCollection extends WidgetCollection
 	function generateAllHTML()
 	{
 		$ret = "";
-		if(isset($this->i_elem))
+		//if(isset($this->i_elem))
 			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
 			{
 				for($i = 0, $c = $this->count(); $i < $c; $i++)
 					$ret .= $this->i_elem[$j][$i]->generateHTML();
 				$ret .= "\n";
 			}
-		else
-			$ret = parent::generateAllHTML();
+		/*else
+			$ret = parent::generateAllHTML();*/
 
 		return $ret;
 	}
@@ -419,7 +420,6 @@ class IterableCollection extends WidgetCollection
 			parent::postRender();
 
 		$controller = Controller::getInstance();
-		$controller->setDisplayMode(Controller::DISPLAY_REGULAR);
 	} 
 	// }}}
 

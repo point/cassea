@@ -30,7 +30,7 @@ $().ready(function() {
 			},
 			password: {
 				required: true,
-				minLength: 5
+				minlength: 5
 			},
 			confirm_password: {
 				required: true,
@@ -43,7 +43,7 @@ $().ready(function() {
 			},
 			topic: {
 				required: "#newsletter:checked",
-				minLength: 2
+				minlength: 2
 			},
 			agree: "required"
 		},
@@ -52,15 +52,15 @@ $().ready(function() {
 			lastname: "Please enter your lastname",
 			username: {
 				required: "Please enter a username",
-				minLength: "Your username must consist of at least 2 characters"
+				minlength: "Your username must consist of at least 2 characters"
 			},
 			password: {
 				required: "Please provide a password",
-				minLength: "Your password must be at least 5 characters long"
+				minlength: "Your password must be at least 5 characters long"
 			},
 			confirm_password: {
 				required: "Please provide a password",
-				minLength: "Your password must be at least 5 characters long",
+				minlength: "Your password must be at least 5 characters long",
 				equalTo: "Please enter the same password as above"
 			},
 			email: "Please enter a valid email address",
@@ -199,6 +199,7 @@ $().ready(function() {
 <h3>Syntetic examples</h3>
 <ul>
 	<li><a href="errorcontainer-demo.html">Error message containers in action</a></li>
+	<li><a href="custom-messages-metadata-demo.html">Custom Messages as Metadata</a></li>
 	<li><a href="radio-checkbox-select-demo.html">Radio and checkbox buttons and selects</a></li>
 	<li><a href="ajaxSubmit-intergration-demo.html">Integration with Form Plugin (AJAX submit)</a></li>
 	<li><a href="custom-methods-demo.html">Custom methods and message display.</a></li>
@@ -216,15 +217,6 @@ $().ready(function() {
 <ul>
 	<li><a href="../test/">Validation Testsuite</a></li>
 </ul>	
-
-<h3>Javascript files used</h3>
-<ul>
-	<li><a href="js/jquery.js">jquery.js - required</a></li>
-	<li><a href="../jquery.validate.js">jquery.validate.js</a> - the validate plugin itself, required</li>
-	<li><a href="../lib/jquery.delegate.js">jquery.delegate.js</a> - special event delegation, required</li>
-	<li><a href="../lib/jquery.metadata.js">jquery.metadata.js</a> - Metadata plugin, optional</li>
-	<li><a href="js/cmxforms.js">cmxforms.js</a> - only used for form layout, optional, <a href="http://alistapart.com/articles/prettyaccessibleforms">see article by Nick Rigby</a></li>
-</ul>
 
 </div>
 

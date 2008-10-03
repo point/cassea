@@ -40,7 +40,7 @@ form.cmxform label.error {
 // only for demo purposes
 $.validator.setDefaults({
 	submitHandler: function() {
-		alert("submitted!");
+		alert("submitted! (skipping validation for cancel button)");
 	}
 });
 
@@ -51,11 +51,15 @@ $().ready(function() {
 	
 	var container = $('div.container');
 	// validate the form when it is submitted
-	$("#form2").validate({
+	var validator = $("#form2").validate({
 		errorContainer: container,
 		errorLabelContainer: $("ol", container),
 		wrapper: 'li',
 		meta: "validate"
+	});
+	
+	$(".cancel").click(function() {
+		validator.resetForm();
 	});
 });
 </script>
@@ -105,6 +109,15 @@ $().ready(function() {
 			<input id="email" name="email" class="{validate:{required:true,email:true}}" />
 		</p>
 		<p>
+			<label for="agree">Favorite Color</label>
+			<select id="color" name="color" title="Please select your favorite color!" class="{validate:{required:true}}">
+				<option></option>
+				<option>Red</option>
+				<option>Blue</option>
+				<option>Yellow</option>
+			</select>
+		</p>
+		<p>
 			<label for="phone">Phone</label>
 			<input id="phone" name="phone" class="some styles {validate:{required:true,number:true, rangeLength:[2,8]}}" />
 		</p>
@@ -117,21 +130,12 @@ $().ready(function() {
 			<input type="file" id="avatar" name="avatar" class="{validate:{required:true,accept:true}}" />
 		</p>
 		<p>
-			<label for="cv">CV</label>
-			<input type="file" id="cv" name="cv" class="{validate:{required:true,accept:'docx?|txt|pdf'}}" />
-		</p>
-		<p>
 			<label for="agree">Please agree to our policy</label>
 			<input type="checkbox" id="agree" title="Please agree to our policy!" name="agree" class="{validate:{required:true}}" />
 		</p>
 		<p>
-			<label for="agree">Favorite Color</label>
-			<select id="color" name="color" title="Please select your favorite color!" class="{validate:{required:true}}">
-				<option></option>
-				<option>Red</option>
-				<option>Blue</option>
-				<option>Yellow</option>
-			</select>
+			<label for="cv">CV</label>
+			<input type="file" id="cv" name="cv" class="{validate:{required:true,accept:'docx?|txt|pdf'}}" />
 		</p>
 		<p>
 			<input class="submit" type="submit" value="Submit"/>

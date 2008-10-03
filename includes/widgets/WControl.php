@@ -1,10 +1,39 @@
 <?php
+/*- vim:expandtab:shiftwidth=4:tabstop=4: 
+{{{ LICENSE  
+* Copyright (c) 2008, Cassea Project
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the Cassea Project nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY CASSEA PROJECT ''AS IS'' AND ANY
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL CASSEA PROJECT BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+}}} -*/
+
+
 //
 // $Id:$
 //
 WidgetLoader::load("WComponent");
 //{{{ WControl
-class WControl extends WComponent
+abstract class WControl extends WComponent
 {
     protected
 
@@ -48,7 +77,6 @@ class WControl extends WComponent
         * @var      boolean
         */
 		$name_w_braces = 0
-
 		
 		   ;
     
@@ -87,15 +115,15 @@ class WControl extends WComponent
 		if(!empty($elem['name']))
 		{
 	       	$this->setName((string) $elem['name'] );
-			if(!isset($elem['id']))
-				$this->setId((string)$elem['name']);
+			/*if(!isset($elem['id']))
+				$this->setId((string)$elem['name']);*/
 		}
 		if(isset($elem['readonly']))
 			$this->setReadOnly((string)$elem['readonly'] );
 		if(isset($elem['disabled']))
 	       	$this->setDisabled((string) $elem['disabled']);
 
-		$this->addToMemento(array("value","name","readonly","disabled"));
+		$this->addToMemento(array("value","name","readonly","disabled","alt","additional_id","filter_error_string","name_w_braces"));
 
 		parent::parseParams($elem);		    	
     }
@@ -112,10 +140,11 @@ class WControl extends WComponent
     {
 		if(!isset($name) || !is_scalar($name)) return ;
 		$name = "".$name;
-		if(substr($name,-2,2) == "[]")
+		//if(substr($name,-2,2) == "[]")
+		if(strpos($name,'[') !== false)
 		{
 			$this->name_w_braces = 1;
-			$this->name = substr($name,0,-2);
+			$this->name = preg_replace("/\[.*\]/","",$name);
 		}
 		else $this->name = $name;
     }
@@ -132,6 +161,22 @@ class WControl extends WComponent
     function getName()
     {
 		return $this->name;
+    }
+    // }}}
+	
+    // {{{ getFullName 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getFullName()
+    {
+		return (isset($this->additional_id))?
+				($this->name.'['.$this->additional_id.']'.($this->name_w_braces?"[]":"")):
+				($this->name.($this->name_w_braces?"[]":""));
     }
     // }}}
     
@@ -294,12 +339,15 @@ class WControl extends WComponent
 
     	if(isset($this->valuechecker))
     	{
-			$this->valuechecker->addWidgetId($this->id);
+			$this->valuechecker->addWidgetId($this->getId());
 
-			$event = new Event("have_valuechecker",$this->id);
+			$event = new Event("have_valuechecker",$this->getId());
 			$event->setParams(array('id' => $this->valuechecker->getId()));
 			Controller::getInstance()->getDispatcher()->notify($event);
 		}
+		if(POSTErrors::hasErrors())
+			$this->restorePOST();
+
 		parent::preRender();
     }
     // }}}
@@ -341,9 +389,8 @@ class WControl extends WComponent
     * @param    array $data
     * @return   void
     */
-    function setData(ResultSet $data)
+    function setData(WidgetResultSet $data)
 	{
-		if($this->getId() != $data->getFor()) return;
 		$this->setName($data->get('name'));
 		$this->setValue($data->getDef());
 		$this->setValue($data->get('value'));
@@ -374,8 +421,8 @@ class WControl extends WComponent
 			"disabled"=>($this->disabled)?('disabled="'.$this->disabled.'"'):''
 			));
 		if(isset($this->filter_error_string))
-			$tpl->assign_vars(array("error_string"=>
-			"<font style=\"color:red\">*</font> ".$this->filter_error_string));
+			$this->tpl->setParamsArray(array("error_string"=>
+			"<span class=\"widget_error\">".$this->getFilterError()."</span>"));
 
 		parent::assignVars();
     }
@@ -408,6 +455,52 @@ class WControl extends WComponent
     }
     // }}}
 
+    // {{{ restorePOST
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $post
+    * @param    array $errors
+    * @return   string
+    */
+    function restorePOST()
+	{
+		$errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
+		if($errors !== null)
+			$this->setFilterError(implode("<br/>",$errors));
+		$this->setValue(POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID()));
+    }
+    // }}}
+	
+    // {{{ setFilterError
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $string
+    * @return   void
+    */
+    function setFilterError($str)
+	{
+		if(!isset($str) || !is_string($str)) return;
+
+		$this->filter_error_string = $str;
+	}
+	// }}}
+	
+    // {{{ getFilterError
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @return   string
+    */
+    function getFilterError()
+	{
+		return $this->filter_error_string;
+	}
+	// }}}
 }
 //}}}
 

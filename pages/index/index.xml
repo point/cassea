@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <root>
-	<WDataSet id="ds0" priority="11">
+	<WDataSet priority="11" >
 		<model>test</model>
 		<classname>thetest</classname>
 		<init />
@@ -13,91 +13,116 @@
 			<param constant="mmmmm"/>
 		</datasource>
 	</WDataSet>
-	<WDataSet id="ds1" priority="10">
+	<WDataHandler priority="11">
 		<model>test</model>
 		<classname>thetest</classname>
 		<init />
-		<datasource method="getList" >
-		</datasource>
-	</WDataSet>
-	<WDataSet id="ds2" priority="20">
+		<checker method="checkText">
+			<param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/>
+		</checker>
+		<handler method="handleText" >
+			<!--param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/-->
+		</handler>
+		<finilize method="finilize"/>
+	</WDataHandler>
+
+	<WDataHandler priority="12">
+		<model>test</model>
+		<classname>thetest</classname>
+		<checker method="checkLogin"/>
+	</WDataHandler>
+	<WDataSet priority="12">
 		<model>test</model>
 		<classname>thetest</classname>
 		<init />
 		<datasource method="roll" >
 		</datasource>
 	</WDataSet>
-	<WTextareaJS id="tjs" onselect="alert(1)"/>
-	<WStyle id="s1" border="1px solid red"/>
-	<WStyle id="s2" border="1px solid green"/>
-	<WJavaScript id="js1" onclick="alert(1)">
-		<before>function q(){}</before>
-	</WJavaScript>
-	<WNavigator />
-	<WText attr="q" id="ttext" dataset="ds0" style="s1" javascript="js1" class="qwe">qwe</WText>
-	<WImage with_preview="1" src="/01.jpg" max_width="100"/>
-	<WFlash />
+
+	<!--WDataSet priority="10">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+	</WDataSet-->
 	<WValueChecker id="vc1">
-		<check rule="required" message="msg"/>
-		<check rule="minlength" value="15" message="msg2"/>
+		<check rule="required"/>
+		<!--check rule="minlength" value="3"/-->
+		<!--check rule="maxlength" value="3"/-->
+		<!--check rule="rangelength" value="[3,5]"/-->
+		<!--check rule="min" value="3"/-->
+		<!--check rule="max" value="3"/-->
+		<check rule="range" value="[3,5]"/>
+		<filter>array_int</filter>
 	</WValueChecker>
-	<WHyperLink id="href" dataset="ds0">
-		<WText  id="google">GOOGLE</WText>
-	</WHyperLink>
-	<WBlock >
-		<!--WText >BLOCK!</WText-->
-	qwe
+	<WBlock>
+		<WText attr="q" id="ttext">qwe</WText>
 	</WBlock>
-	<WFieldSet legend="field set">
-		<WText> in field set </WText>
-	</WFieldSet>
-	<WForm>
-	<WEdit valuechecker="vc1"/>
-	<WCalendar />
-	<WButton/>
-	<WButton type="image" src="/w_images/calendar.gif"/>
-	<WRadio id="test_radio" value="test_radio" style="s1" dataset="ds0" name="rradio"/>
-	<WHidden name="hidden" dataset="ds0">qwe</WHidden>
-	<WTextarea  cols="20" rows="3" dataset="ds0" >text text text </WTextarea>
-	<WCheckbox name="cb" checked="1" title="click me" >checkbox</WCheckbox>
-	<WSpinner min="0" max="10" step="2" text="choose me" tooltip="choose"/>
-	<WColorPicker/>
-	</WForm>
-	<WTabs dataset="ds0" id="tabs">
-		<WTab tab_title="test" >tttttttttttteeeeeeeeeeesssssssssssttttttttt</WTab>
-		<WTab tab_title="test2" selected="1"><WText i="1">qwe</WText></WTab>
-		<WTab tab_title="test3" id="test3" href="http://ya.ru"/>
-		<WText>qweqweqweqwe</WText>
-	</WTabs>
-	<WTable>
-		<WTableRow>
-			<WTableHeader sortby="qwe.qwe">
-				HEADER
-			</WTableHeader>
-		</WTableRow>
-		<WTableRow>
-			<WTableColumn>
-				IN THE TABLE!!
-			</WTableColumn>
-		</WTableRow>
-	</WTable>
-	<WList dataset="ds0" id="list">
-		<WListItem id="li" dataset="ds1">list item</WListItem>
-		<!--WListItem id="li2">list item2</WListItem-->
-	</WList>
-	<!--WHTML src="/index.html">
-	</WHTML-->
-	<WTable table_sorter="1" odd="table_odd" even="table_even" hover="table_hover">
-		<WTableRow>
-			<WTableHeader >Header</WTableHeader>
-		</WTableRow>
-		<WRoll dataset="ds22" id="roll" ruler="ruler1">
-			<WTableRow>
-				<WTableColumn>
-					<WText id="roll_text" dataset="ds2"/>
-				</WTableColumn>
-			</WTableRow>
-		</WRoll>
-	</WTable>
-	<WRuler id="ruler1" reverse="1" />
+			<WText id="ttext3">poi</WText>
+			<WHyperLink id="href" href="http://www.google.com">GOOGLE</WHyperLink>
+			<WText id="ttext2">zxc</WText>
+			<WBlock id="block2">
+				<WText id="yyy">yyy</WText>
+				<WText id="yyy2">yyy2</WText>
+			</WBlock>
+			<WRoll id='roll' ruler='ruler1'>
+				<WRoll id="roll2">
+					<WBlock>
+						<WText>in the roll</WText>
+					</WBlock>
+				</WRoll>
+			</WRoll>
+				<WRuler id='ruler1' res_per_page="2" reverse="0" />
+			<WButton />
+			<WCalendar />
+			<WCheckbox />
+			<WColorPicker />
+			<WFieldSet>
+				<WFlash src="jeep.swf" width="1000" height="200"/>
+			</WFieldSet>
+			<WForm id="form1">
+				<WHidden />
+				<WHTML >html text </WHTML>
+				<WImage width="100" with_preview="1"/>
+			</WForm>
+			<WList ol="1">
+				<WListItem>qwe</WListItem>
+			</WList>
+			<WNavigator />
+			<WRadio />
+			<!--WSeparator/-->
+			<WSpinner />
+			<WTabs>
+				<WTab >tab tab tab
+				</WTab>
+			</WTabs>
+			<WTable table_sorter="1">
+				<WTableRow>
+					<WTableHeader sorter="1">header 1</WTableHeader>
+				</WTableRow>
+				<WTableRow>
+					<WTableColumn>col1</WTableColumn>
+				</WTableRow>
+				<WTableRow>
+					<WTableColumn>col2</WTableColumn>
+				</WTableRow>
+			</WTable>
+			<WTextarea />
+
+			<WForm id="form1">
+				<WRoll id="edit_roll">
+					<WEdit valuechecker="vc1" id="edit1" name="edit"/>
+				</WRoll>
+				<WEdit name="login" size="3"/>
+				<WButton value="submit"/>
+			</WForm>
 </root>

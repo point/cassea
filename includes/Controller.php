@@ -1,4 +1,32 @@
 <?php
+/*- vim:expandtab:shiftwidth=4:tabstop=4: 
+{{{ LICENSE  
+* Copyright (c) 2008, Cassea Project
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the Cassea Project nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY CASSEA PROJECT ''AS IS'' AND ANY
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL CASSEA PROJECT BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+}}} -*/
+
 // $Id:  $
 //
 
@@ -12,8 +40,13 @@ require("Navigator.php");
 require("Template.php");
 require("EventDispatcher.php");
 require("DataObject.php");
+require("SelectorMatcher.php");
+require("DataPools.php");
 require("ResultSet.php");
-require("DataSet.php");
+require("WidgetsAdjacencyList.php");
+require("DB.php");
+require("Session.php");
+require("POSTChecker.php");
 
 class ControllerException extends Exception
 {}
@@ -47,6 +80,8 @@ class Controller
 			$header = null,
 			$page = "index",
 			$page_function = null,
+			$datasets = array(),
+			$datahandlers = array(),
 			$navigator = null,
 			$controller_name = null,
 			$final_html = "",
@@ -55,20 +90,33 @@ class Controller
 			$css = array(),
 			$valuecheckers = array(),
 			$widgets = array(),
-			$display_mode = self::DISPLAY_REGULAR,
-			$display_mode_params = null
+			$system_widgets = array(),
+			$display_mode_params = null,
+			$adjacency_list = null,
+			$form_signatures = array(),
+			$checker_rules = array()
 			;
 
-	const DISPLAY_REGULAR = 1;
-	const DISPLAY_ITERATIVE = 2;
 
 	function __construct()
 	{
+		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
+			$this->controller_name = $m[1];
+		else throw new ControllerException('controller name not defined');
+
 		$this->get = new HTTPParamHolder($_GET,0);
 		$this->post = new HTTPParamHolder($_POST);
 		$this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
+		$this->adjacency_list = new WidgetAdjacencyList();
+
+		new DB(null, 'root', 'root','devel'); 
+		Session::getInstance();
+
+		POSTErrors::restoreErrorList();
+
+		$this->navigator = new Navigator($this->controller_name);
 	}
 	static function getInstance()
 	{
@@ -92,6 +140,7 @@ class Controller
 	{
 		$ret = null;
 		$this->parseP1P2();	
+		$this->handlePOST();
 		if(is_string($this->page_function))
 			$ret = call_user_func($this->page_function,$this->p1,$this->p2);
 		if(!isset($ret))
@@ -102,13 +151,10 @@ class Controller
 		else
 			$this->page = $ret;
 
-		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
-			$this->controller_name = $m[1];
 
 		if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml"))
 			throw new ControllerException('page file not found');
 
-		$this->navigator = new Navigator($this->controller_name);
 		$this->navigator->addStep($this->page);
 
 		$this->addCSS("ns_reset.css");
@@ -208,6 +254,7 @@ class Controller
 		$sxml = simplexml_import_dom($dom);
 		foreach($sxml as $elem)
 			$this->buildWidget($elem);
+
 	}
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
@@ -215,6 +262,9 @@ class Controller
 
 		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
+		$w_id = $widget->getID();
+		$this->adjacency_list->add($w_id);
+
 		$widget->parseParams($elem);
 
 		if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
@@ -243,16 +293,15 @@ class Controller
 			if(!empty($elem['apply_filter']))
 				$this->corresp_map[$widget->getName()]['apply_filter'] = (string)$elem['apply_filter'];
 		}
-			if($widget instanceof WComponent && $widget->getState())
-				$widget->buildComplete();
-			$w_id = $widget->getID();
-			if($system)
-			{
-				$this->system_widgets[$w_id] = $widget;
-				return $w_id;
-			}
-			else
-				$this->widgets[$w_id] = $widget;
+		if($widget instanceof WComponent && $widget->getState())
+			$widget->buildComplete();
+		if($system)
+		{
+			$this->system_widgets[$w_id] = $widget;
+			return $w_id;
+		}
+		else
+			$this->widgets[$w_id] = $widget;
 	}
 	function addDataSet(SimpleXMLElement $elem)
 	{
@@ -261,6 +310,19 @@ class Controller
 		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
 		$ds->parseParams($elem);
 		$this->datasets[(string)$ds->getId()] = $ds;
+	}
+
+	function addDataHandler(SimpleXMLElement $elem)
+	{
+		if(WidgetLoader::load("WDataHandler") === false) return;
+
+		$dh = new WDataHandler(isset($elem['id'])?$elem['id']:null);
+		$dh->parseParams($elem);
+		$this->datahandlers[] = $dh;
+
+		/*$this->datahandlers[] = array("id"=>$dh->getId(),'priority'=>$dh->getPriority(),"object"=>$dh); 
+		usort($this->datahandlers,create_function('$a,$b',
+			'return ($a["priority"] < $b["priority"])?-1:1;'));*/
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{
@@ -305,14 +367,17 @@ class Controller
 	function getWidget($id)
 	{
 		$o = null;
-		if(!empty($this->widgets[$id]))
+		if(isset($this->widgets[$id]))
 			return $this->widgets[$id];
-		elseif(!empty($this->system_widgets[$id]))
+		elseif(isset($this->system_widgets[$id]))
 			return $this->system_widgets[$id];
 		else return $o;
 	}
 	function allHTML()
 	{
+		foreach($this->datasets as $d)
+			$d->loadDelayed();
+
 		if(!is_array($this->widgets)) return "";
 		reset($this->widgets);					
 
@@ -321,7 +386,6 @@ class Controller
 			if(!$widget->getState()) continue;
 			$this->widgets[$name]->messageInterchange();
 		}
-
 		foreach($this->widgets as $name=>$widget)
 		{
 			if(!$widget->getState()) continue;
@@ -361,6 +425,10 @@ class Controller
 	function getDispatcher()
 	{
 		return $this->dispatcher;
+	}
+	function getAdjacencyList()
+	{
+		return $this->adjacency_list;
 	}
 	function getStyleByName($name = null)
 	{
@@ -486,25 +554,6 @@ class Controller
 		//var_dump($this->makeURL('nnn',array("c"=>"c2",'bb'=>'bb')));
 		//var_dump($this->makeURL(null,array('p1','p2')));
 	}
-	function setDisplayMode($mode)
-	{
-		if($mode == self::DISPLAY_REGULAR || $mode == self::DISPLAY_ITERATIVE)
-		{
-			if($this->display_mode != $mode)
-				$this->display_mode_params->clear();
-				//$this->display_mode_params = new DisplayModeParams();
-			$this->display_mode = $mode;
-		}
-		
-	}
-	function getDisplayMode()
-	{
-		return $this->display_mode;
-	}
-	/*function setDisplayModeParams(DisplayModeParams $p)
-	{
-		$this->display_mode_params = $p;
-	}*/
 	function getDisplayModeParams()
 	{
 		return $this->display_mode_params;
@@ -523,71 +572,161 @@ class Controller
 		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml";
 		return pageChanged($file,$mtime); 
 	}
+	private function handlePOST()
+	{
+		if($this->post->isEmpty()) return;
+
+		$this->restoreSignatures();
+		$this->restoreCheckers();
+		if(!in_array($this->post->__sig,$this->form_signatures))
+			$this->gotoStep_1();
+
+		POSTErrors::flushErrors();
+		POSTChecker::checkByRules($this->post,$this->checker_rules);
+		if(POSTErrors::hasErrors())
+		{
+			POSTErrors::saveErrorList();
+			$this->gotoStep_1();
+		}
+
+		DataUpdaterPool::restorePool();
+		try
+		{
+			DataUpdaterPool::callCheckers();
+		}
+		catch(CheckerException $e)
+		{
+			POSTErrors::addError($e->getWidgetName(),$e->getAdditionalId(),$e->getMessage());
+		}
+		if(POSTErrors::hasErrors())
+		{
+			POSTErrors::saveErrorList();
+			$this->gotoStep_1();
+		}
+		DataUpdaterPool::callHandlers();
+		DataUpdaterPool::callFinilze();
+
+		$this->gotoStep_1();
+	}
+	private function gotoStep_1()
+	{
+		$s = $this->navigator->getStep(-1);
+		if(isset($s,$s['url']))
+			header("Location: ".$s['url']);
+		exit();
+	}
+	// checkers
+	function setChecker($name,$rule,$rule_value)
+	{
+		if(!isset($name) || !isset($rule) || !isset($rule_value)) return;
+		$this->checker_rules[$name][$rule] = trim($rule_value);
+	}
+	private function restoreCheckers()
+	{
+		$storage = Storage::createWithSession("controller");
+		$this->checker_rules = $storage->get('checker_rules');
+		$storage->un_set('checker_rules');
+		if(!is_array($this->checker_rules))
+			$this->checker_rules = array();
+	}
+	// signatures
+	function addFormSignature($sig = null)
+	{
+		if(!isset($sig)) return;
+		$this->form_signatures[] = $sig;
+	}
+	private function checkSignature($sig = null)
+	{
+		if(!isset($sig)) return false;
+		return in_array($sig,$this->form_signatures);
+	}
+	private function restoreSignatures()
+	{
+		$storage = Storage::createWithSession("controller");
+		$this->form_signatures = $storage->get('signatures');
+		$storage->un_set('signatures');
+		if(!is_array($this->form_signatures))
+			$this->form_signatures = array();
+	}
+	// destructor
+	function __destruct()
+	{
+		$storage = Storage::createWithSession("controller");
+		$storage->set('signatures',$this->form_signatures);
+		$storage->set('checker_rules',$this->checker_rules);
+		DataUpdaterPool::savePool();
+	}
 }
 class DisplayModeParams
 {
 	protected 
-		$iterative_count = 0,
-		$iterative_current = 0,
-		$gather_stat = 0,
-		$stat = array(),
-
-		$iterative_from = null,
-		$iterative_limit = null
+		$widget_params = array();
+	public 
+		$predicted_from = null,
+		$predicted_limit = null
 		;
-	function __get($param)
+		
+
+	function set($widget_id,$from,$limit,$count)
 	{
-		if($param == "iterative_current" || $param == "iterative_count"
-		|| $param == "iterative_from" || $param == "iterative_limit")
-			return $this->$param;
-		return  null;
+		if(!isset($widget_id) || !is_numeric($from) || !is_numeric($limit) || !is_numeric($count)) return;
+		$this->widget_params[$widget_id] = array(
+			"from"=>$from,
+			"limit"=>$limit,
+			"count"=>$count,
+			"current"=>$from
+			);
 	}
-	function clear()
+	function getFrom($widget_id)
 	{
-		$this->iterative_count = 0;
-		$this->iterative_current = 0;
-		$this->iterative_from = $this->iterative_limit = null;
+		return !isset($this->widget_params[$widget_id])?$this->widget_params[$widget_id]['from']:0;
 	}
-	/*function __set($param,$value)
+	function getLimit($widget_id)
 	{
-		if(property_exists($this,$param))
-			$this->$param = $value;
-	}*/
-	function updateIterativeCount($cnt)
-	{
-		if(!is_numeric($cnt)) return;
-		if(!isset($this->iterative_count) || $cnt > $this->iterative_count)
-		{
-			if($this->getGatherStat())
-				$this->stat['iterative_count'] = $cnt;
-			else $this->iterative_count = $cnt;
-		}
+		if(!isset($this->widget_params[$widget_id])) return 0;
+		if($this->widget_params[$widget_id]['from'] + $this->widget_params[$widget_id]['limit'] > $this->widget_params[$widget_id]['count'])
+			return $this->widget_params[$widget_id]['count'] - $this->widget_params[$widget_id]['from'];
+		return $this->widget_params[$widget_id]['limit'];
 	}
-	function setIterativeCurrent($cur)
+	function getCurrent($widget_id,$scope)
 	{
-		if($this->getGatherStat()) return;
-		if(isset($cur) && 0+$cur > 0)
-			$this->iterative_current = $cur;
+		if(!isset($this->widget_params[$widget_id])) return;
+		if($scope == "global")
+			return $this->widget_params[$widget_id]['current'];
+		else
+			return $this->widget_params[$widget_id]['current'] - $this->widget_params[$widget_id]['from'];
 	}
-	function setIterativeLimits($from, $limit)
+
+	function incCurrent($widget_id)
 	{
-		if(!isset($from,$limit) || !is_numeric($from) || !is_numeric($limit)) return;
-		if($from < 0 || $limit < 0) return;
-		$this->iterative_from = $from;
-		$this->iterative_limit = $limit;
+		if(!isset($this->widget_params[$widget_id])) return;
+		if($this->widget_params[$widget_id]['current'] - $this->widget_params[$widget_id]['from']+1 > 
+			$this->widget_params[$widget_id]['limit']) return;
+
+		$this->widget_params[$widget_id]['current']++;
 	}
-	function gatherStat($gather = false)
+	function resetCurrent($widget_id)
 	{
-		$this->gather_stat = (bool)$gather;
+		if(!isset($this->widget_params[$widget_id])) return ;
+		$this->widget_params[$widget_id]['current'] = $this->widget_params[$widget_id]['from'];
+		
 	}
-	function getGatherStat()
+	function isFirst($widget_id,$scope)
 	{
-		return $this->gather_stat;
+		if(!isset($this->widget_params[$widget_id])) return false;
+		if($scope == "global")
+			return $this->widget_params[$widget_id]['current'] == 0;
+		else
+			return $this->widget_params[$widget_id]['current'] == $this->widget_params[$widget_id]['from'];
 	}
-	function getStat($param)
+	function isLast($widget_id,$scope)
 	{
-		if(!isset($this->stat[$param])) return null;
-		return $this->stat[$param];
+		if(!isset($this->widget_params[$widget_id])) return false;
+		if($scope == "global")
+			return $this->widget_params[$widget_id]['current'] == $this->widget_params[$widget_id]['count']-1;
+		return $this->widget_params[$widget_id]['current'] == 
+			$this->widget_params[$widget_id]['from'] + $this->widget_params[$widget_id]['limit'] -1;
+		
 	}
 }
 ?>

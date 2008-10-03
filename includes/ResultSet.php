@@ -1,318 +1,116 @@
 <?php
-// $Id:$
+/*- vim:expandtab:shiftwidth=4:tabstop=4: 
+{{{ LICENSE  
+* Copyright (c) 2008, Cassea Project
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the Cassea Project nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY CASSEA PROJECT ''AS IS'' AND ANY
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL CASSEA PROJECT BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+}}} -*/
+
+ 
+// $Id:  $
 //
-class ResultSetException extends Exception {}
-class ResultSetPool
+class WidgetResultSet implements IteratorAggregate
 {
-	static $pool = array();
-
-	static function set(Result $result,$priority = 0)
-	{
-		foreach($result as $r) //ResultSet
-		{
-			if($r->getFor() == null || !$r instanceof ResultSet) continue;
-			if(!isset(self::$pool[$r->getFor()]))
-			{
-				self::$pool[$r->getFor()]['priority'] = array();
-				self::$pool[$r->getFor()]['set'] = array();
-			}
-			foreach(self::$pool[$r->getFor()]['set'] as &$er)
-				if($r === $er) continue;
-			$r->setPriority($priority);
-			self::$pool[$r->getFor()]['priority'][] = $priority;
-			self::$pool[$r->getFor()]['set'][] = $r;
-		}
-	}
-	static function get($w_id)
-	{
-		$res = new ResultSet();//must return instance if ResultSet
-		if(!isset(self::$pool[$w_id])) return $res;
-		$res->setForId($w_id);
-		$a = &self::$pool[$w_id];
-		array_multisort($a['priority'],SORT_NUMERIC,SORT_ASC,$a['set']);
-		foreach($a['set'] as &$v)
-			$res->merge($v);
-		if($res->getIterativeCount() && Controller::getInstance()->getDisplayMode() == Controller::DISPLAY_ITERATIVE)
-		{
-			$controller = Controller::getInstance();
-			$controller->getDisplayModeParams()->updateIterativeCount($res->getIterativeCount());
-			$it = $res->getIterative($controller->getDisplayModeParams()->iterative_current);
-			if($it instanceof ResultSet)
-				$it->setForId($w_id);
-			return $it;
-		}
-		return $res;
-	}
-}
-class Result implements IteratorAggregate
-{
-	private $result_sets = array();
-	function forid($id = null)
-	{
-		if(!isset($id)) return;
-
-		$rs = null;
-		if(isset($this->result_sets[$id]))
-			$rs = $this->result_sets[$id];
-		else
-		{
-			$rs = new ResultSet();
-			$rs->setForId($id);
-			$rs->setParent($this);
-			$this->result_sets[$id] = $rs;
-		}
-		return $rs;
-	}
-	function getIterator()
-	{
-		return t(new ArrayObject($this->result_sets))->getIterator();
-	}
-	function addResultSet(ResultSet $rs)
-	{
-		if($rs->getFor() == null) return;
-		$this->result_sets[$rs->getFor()] = $rs;
-	}
-
-
-}
-class ResultSet implements IteratorAggregate
-{
-	protected 
-		$for_id = null,
-		$def = null,
+	private
 		$properties = array(),
-		$parent = null,
-		$anon_child = null,
-		$children = array(),
-		$iterative = array(),
-		$descent = array(),
-		$ds_priority = 0
+		$def = null
 		;
-
-	function __isset($prop)
+	function merge($arr)
 	{
-		return isset($this->properties[$prop]);
+		foreach($arr as $k => $v)
+			if(is_scalar($k) && is_scalar($v))
+				$this->properties[$k] = $v;
 	}
-	function setForId($id = null)
+	function get($key)
 	{
-		if(!isset($id)) return;
-		$this->for_id = $id;
+		return (isset($this->properties[$key]))?$this->properties[$key]:null;
 	}
-	function setPriority($p)
+	function setDef($value)
 	{
-		if(!isset($p) || !is_numeric($p) || $p < 0) return;
-		$this->ds_priority = $p;
-	}
-	function getPriority()
-	{
-		return $this->ds_priority;
-	}
-	function forid($id)
-	{
-		if(!isset($id)) return;
-		return $this->parent->forid($id);
-	}
-	function child($id = null)
-	{
-		$rs = new ChildResultSet();
-		if(isset($id))
-			$rs->setForId($id);
-		$rs->setParent($this);
-		if(isset($id))
-			$this->children[$id] = $rs;
-		else
-			$this->anon_child = $rs;
-		return $rs;
-	}
-	function each($ind )
-	{
-		if(!isset($ind) || !is_numeric($ind) || $ind < 0) return;
-
-		$rs = new IterativeResultSet();
-		$rs->setForId($this->for_id);
-		$rs->setParent($this);
-		$this->iterative[$ind] = $rs;
-		return $rs;
-	}
-	function descent($id )
-	{
-		$rs = new DescentResultSet();
-		$rs->setForId($id);
-		$rs->setParent($this);
-		if(isset($id))
-			$this->descent[$id] = $rs;
-		return $rs;
-	}
-	function setParent($parent)
-	{
-		if(!isset($parent)) return ;
-		$this->parent = $parent;
-	}
-	function end()
-	{
-		return $this->parent;
-	}
-	function getFor()
-	{
-		return $this->for_id;
-	}
-	function def($v)
-	{
-		$this->def = $v;
-		return $this;
-	}
-	function set($k, $v)
-	{
-		if(!isset($k,$v)) return;
-		$this->properties[$k] = $v;
-		return $this;
-	}
-	function get($k = null)
-	{
-		if(!isset($k,$this->properties[$k])) return null;
-		return $this->properties[$k];
+		if(!is_scalar($value)) return;
+		$this->def = $value;
 	}
 	function getDef()
 	{
 		return $this->def;
 	}
-	function setAnonChild(ResultSet $child)
+	function __get($key)
 	{
-		$this->anon_child = $child;
+		return $this->get($key);
 	}
-	function getAnonChild()
+	function __isset($key)
 	{
-		return $this->anon_child;
+		return isset($this->properties[$key]);
 	}
+	function isEmpty()
+	{
+		return (empty($this->properties) && empty($this->def));
+	}
+	// implements
+	function getIterator(){	return t(new ArrayObject($this->properties))->getIterator();}
 
-	function getChild($id)
-	{
-		if(!isset($this->children[$id])) return null;
-		return $this->children[$id];
-	}
-	function getAllChildren()
-	{
-		if(empty($this->children)) return null;
-		return $this->children;
-	}
-	function setChildren($children)
-	{
-		if(!isset($children) || !is_array($children)) return;
-		$this->children = $children;
-	}
-	function setDescent($descent)
-	{
-		if(!isset($descent) || !is_array($descent)) return;
-		$this->descent = $descent;
-	}
-	function hasDescent()
-	{
-		return (bool)count($this->descent);
-	}
-	function getDescent($id)
-	{
-		if(!isset($this->descent[$id])) return null;
-		return $this->descent[$id];
-	}
-	function shiftDescent($id)
-	{
-		if(($d = $this->getDescent($id)))
-		{
-			unset($this->descent[$id]);
-			return $d;
-		}
-		return null;
-	}
-	function getDescentResultSet($to_id)
-	{
-		if(!count($this->descent)) return null;
-		$rs = new ResultSet();
-		$rs->setForId($to_id); 
-		$rs->setDescent($this->getAllDescent());
-		return $rs;
-	}
-	function getAllDescent()
-	{
-		return $this->descent;
-	}
-	function getIterative($id)
-	{
-		if(isset($this->iterative[$id]))
-			return $this->iterative[$id];
-		return null;
-	}
-	function getIterativeCount()
-	{
-		return count($this->iterative);
-	}
-	function getAllIterative()
-	{
-		return $this->iterative;
-	}
-	function setIterative($a)
-	{
-		if(!is_array($a)) return;
-		$this->iterative = $a;
-	}
-	function merge(ResultSet $r)
-	{
-		$this->def($r->getDef());
-		foreach($r as $k => $v)
-			$this->set($k,$v);
-		if(($c = $r->getAnonChild()) !== null)
-			$this->setAnonChild($c);
-		if(($c = $r->getAllChildren()) !== null)
-			$this->setChildren($c);
-		if(($c = $r->getAllIterative()) !== null)
-			$this->setIterative($c);
-		if(($c = $r->getAllDescent()) !== null)
-			$this->setDescent($c);
-	}
-	function __toString()
-	{
-		$ret = "<pre>";
-		foreach($this->properties as $k=>$v)
-			$ret .= $k." = ".$v."\n<br>\n";
-		$ret .= "</pre>";
-	}
-	function getIterator()
-	{
-		return t(new ArrayObject($this->properties))->getIterator();
-	}
 }
-class CustomResultSet extends ResultSet 
+class ResultSet
 {
-	function forid($id)
+	private 
+		$cur_for = null,
+		$fors = array(),
+		$for_values = array(),
+		$default_values = array()
+		;
+	function f($selector = "",$index = null,$scope = "global")
 	{
-		if(!isset($id)) return;
-		return $this->parent->forid($id);
+
+		$this->cur_for = count($this->fors);// i.e. +1
+		$this->fors[$this->cur_for] = array("selector"=>$selector,"index"=>$index,"scope"=>$scope);
+		$this->for_values[$this->cur_for] = array();
+		return $this;
 	}
-	function child($id = null)
+	function set($key,$value)
 	{
-		return $this->parent->child($id);
+		if(!isset($this->cur_for)) return $this;
+		$this->for_values[$this->cur_for][$key] = $value;
+		return $this;
 	}
-	function end()
+	function def($value)
 	{
-		return $this->parent->end();
+		if(!isset($this->cur_for)) return $this;
+		$this->default_values[$this->cur_for] = $value;
 	}
-	function getPriority()
+	function findMatched(WidgetResultSet $wrs,WComponent $widget)
 	{
-		return $this->parent->getPriority();
+		foreach($this->fors as $ind => $selectors_a)
+			foreach(explode(",",$selectors_a['selector']) as $selector)
+				if(SelectorMatcher::matched($widget,$selector,$selectors_a['index'],$selectors_a['scope']))
+					$wrs->merge($this->for_values[$ind]);
+
+		return $wrs;
 	}
-	function descent($id)
+	function __call($name,$arguments)
 	{
-		return $this->parent->descent($id);
+		if(!isset($arguments[0])) return;
+		if($name === 'f') return $this->f($arguments[0]);
+		return $this->set($name,$arguments[0]);
 	}
 }
-class ChildResultSet extends CustomResultSet
-{ }
-class DescentResultSet extends ChildResultSet
-{ }
-class IterativeResultSet extends CustomResultSet
-{
-	function each($ind)
-	{
-		return $this->parent->each($ind);
-	}
-}
-?>
