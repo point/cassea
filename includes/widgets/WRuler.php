@@ -29,7 +29,7 @@
 
 
 //
-// $Id:$
+// $Id$
 //
 //{{{ WRuler 
 class WRuler extends WContainer

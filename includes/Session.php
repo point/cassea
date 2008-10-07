@@ -38,7 +38,7 @@
 * @author billy
 *
 */
-// $Id: Session.php 465 2007-11-22 17:46:33Z billy $
+// $Id$
 //
 
 define ('SESSION_NAME', "SID");

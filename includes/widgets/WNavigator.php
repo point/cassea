@@ -29,7 +29,7 @@
 
 
 //
-// $Id:$
+// $Id$
 //
 WidgetLoader::load("WComponent");
 //{{{ WNavigator

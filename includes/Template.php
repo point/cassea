@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id: WText.php 1020 2008-03-19 17:24:58Z point $
+// $Id$
 //
 class TemplateException extends Exception{}
 

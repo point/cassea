@@ -29,7 +29,7 @@
 
 
 //
-// $Id:$
+// $Id$
 //
 //{{{ WTableColumn
 class WTableColumn extends WContainer

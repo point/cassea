@@ -28,7 +28,7 @@
 }}} -*/
 
 
-// $Id: $
+// $Id$
 // {{{ Header
 class Header
 {

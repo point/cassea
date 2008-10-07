@@ -28,7 +28,7 @@
 }}} -*/
 
  
-// $Id:  $
+// $Id$
 //
 class WidgetResultSet implements IteratorAggregate
 {

@@ -28,7 +28,7 @@
 }}} -*/
 
 
-// $Id: $
+// $Id$
 //
 WidgetLoader::load("WObject");
 //{{{ WComponent

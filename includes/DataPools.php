@@ -28,7 +28,7 @@
 }}} -*/
 
 //
-// $Id:$
+// $Id$
 //
 
 class ResultSetPool

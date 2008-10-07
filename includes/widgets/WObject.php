@@ -28,7 +28,7 @@
 }}} -*/
 
 
-// $Id: $
+// $Id$
 
 //{{{ WObject
 abstract class WObject

@@ -29,7 +29,7 @@
 
 
 //
-// $Id:$
+// $Id$
 //
 //{{{ WStyle
 class WStyle extends WObject
