@@ -96,7 +96,6 @@ class thetest
 	function finilize()
 	{
 		echo "FINILIZE";
-		die("QQQQ");
 	}
 	function checkLogin($post)
 	{
@@ -111,5 +110,14 @@ class thetest
 		var_dump($val);
 
 	}
+    function test_ph()
+    {
+        return "qweqwe";
+    }
+
+    function test_ph2()
+    {
+        return "zzzzzzz";
+    }
 }
 ?>

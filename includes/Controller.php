@@ -94,7 +94,8 @@ class Controller
 			$display_mode_params = null,
 			$adjacency_list = null,
 			$form_signatures = array(),
-			$checker_rules = array()
+			$checker_rules = array(),
+            $pagehandler = null
 			;
 
 
@@ -340,15 +341,13 @@ class Controller
 		$j->parseParams($elem);
 		$this->javascripts[(string)$elem['id']] = $j;
 	}	
-	/*function addPageHandler(SimpleXMLElement $elem)
+	function addPageHandler(SimpleXMLElement $elem)
 	{
-		$this->pagehandler = new WPageHandler();
-		if(!empty($this->datahandlers[$arr['attr']['datahandler']]))
-			$this->pagehandler->setDatahandler($this->datahandlers[$arr['attr']['datahandler']]);
-		$this->pagehandler->setHandler($this->vtsaSearch($arr,"handler"));
-		$this->pagehandler->setParams($this->all_params['get']);
-		$this->pagehandler->setGotoURL($arr['attr']['goto']);
-	}*/
+		if(WidgetLoader::load("WPageHandler") === false) return;
+
+        $this->pagehandler = new WPageHandler();
+        $this->pagehandler->parseParams($elem);
+	}
 	function addValueChecker(SimpleXMLElement $elem)
 	{
 		if(!isset($elem['id'])) return;
@@ -578,6 +577,8 @@ class Controller
 
 		$this->restoreSignatures();
 		$this->restoreCheckers();
+        $this->restorePageHandler();
+
 		if(!in_array($this->post->__sig,$this->form_signatures))
 			$this->gotoStep_1();
 
@@ -606,6 +607,13 @@ class Controller
 		DataUpdaterPool::callHandlers();
 		DataUpdaterPool::callFinilze();
 
+        $ret = $this->pagehandler->handle();
+
+        if(is_string($ret))
+            $this->gotoLocation($ret);
+        elseif(is_numeric($ret))
+            $this->gotoLocation($this->navigator->getStepURL($ret));
+
 		$this->gotoStep_1();
 	}
 	private function gotoStep_1()
@@ -614,7 +622,13 @@ class Controller
 		if(isset($s,$s['url']))
 			header("Location: ".$s['url']);
 		exit();
-	}
+    }
+    private function gotoLocation($loc)
+    {
+        if(isset($loc))
+            header("Location: ".$loc);
+        exit();
+    }
 	// checkers
 	function setChecker($name,$rule,$rule_value)
 	{
@@ -648,6 +662,13 @@ class Controller
 		if(!is_array($this->form_signatures))
 			$this->form_signatures = array();
 	}
+    private function restorePageHandler()
+    {
+        if(WidgetLoader::load("WPageHandler") === false) return;
+		$storage = Storage::createWithSession("controller");
+		$this->pagehandler = $storage->get('pagehandler');
+		$storage->un_set('pagehandler');
+    }
 	// destructor
 	function __destruct()
 	{
@@ -655,6 +676,7 @@ class Controller
 		$storage->set('signatures',$this->form_signatures);
 		$storage->set('checker_rules',$this->checker_rules);
 		DataUpdaterPool::savePool();
+        $storage->set('pagehandler',$this->pagehandler);
 	}
 }
 class DisplayModeParams

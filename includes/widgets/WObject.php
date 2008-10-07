@@ -75,6 +75,8 @@ abstract class WObject
 	{
 		if(!isset($id))
 			$id = "__s".(self::$s_counter++);
+        else
+            $id = (string)$id;
 
 		if(strpos($id,'[') !== false || strpos($id,']') !== false)
 			$id = str_replace('[','_',

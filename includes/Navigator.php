@@ -121,6 +121,11 @@ class Navigator
 		if($step >= count($this->user_path)) return $this->user_path[0]?$this->user_path[0]:"";
 		return $this->user_path[$step];
 	}
+    function getStepURL($step)
+    {
+        $s = $this->getStep($step);
+        return isset($s['url'])?$s['url']:"";
+    }
 	function getAdminStep($step)
 	{
 		if($step >= count($this->user_path)) return $this->user_path[0]['url'];

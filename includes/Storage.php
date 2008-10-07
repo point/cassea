@@ -134,17 +134,19 @@ class MemcacheStorage
 	}
 	
 	function is_set($var)
-	{
-		$f = $this->memcache->get(md5($this->storage_name.$var));
+    {
+        // @ used due to strage warnings
+		@$f = $this->memcache->get(md5($this->storage_name.$var));
 		if($f === false) return false;
 		return true;
 	}
 	function set($var,$val)
-	{
+    {
+        // @ used due to strage warnings
 		if($this->is_set($var))
-			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
+			@$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
-			$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
+			@$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
 		return $r;
 	}
 	function get($var)

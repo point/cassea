@@ -32,7 +32,7 @@
 // $Id$
 //
 WidgetLoader::load("WObject");
-//{{{ WDataSet
+//{{{ WDataHandler
 class WDataHandler extends WObject
 {
 	protected 
@@ -65,7 +65,7 @@ class WDataHandler extends WObject
 		$this->handler_object->parseParams($params);
 		if(isset($params['priority']))
 			$this->setPriority(0+$params['priority']);
-		DataUpdaterPool::set($this->handler_object,$this->getPriority());
+		DataUpdaterPool::set($this->handler_object,$this->getPriority(),$this->getId());
     }
     // }}}
 	// {{{ setPriority

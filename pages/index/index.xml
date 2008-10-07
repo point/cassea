@@ -33,10 +33,10 @@
 			<param from="p3" var="q"/>
 			<param constant="mmmmm"/-->
 		</handler>
-		<finilize method="finilize"/>
+		<finalize method="finilize"/>
 	</WDataHandler>
 
-	<WDataHandler priority="12">
+	<WDataHandler priority="12" id="dh1">
 		<model>test</model>
 		<classname>thetest</classname>
 		<checker method="checkLogin"/>
@@ -49,6 +49,11 @@
 		</datasource>
 	</WDataSet>
 
+	<WPageHandler goto="-1" object_from="dh1" method="test_ph2">
+		<model>test</model>
+		<classname>thetest</classname>
+		<handler method="test_ph"/>
+	</WPageHandler>
 	<!--WDataSet priority="10">
 		<model>test</model>
 		<classname>thetest</classname>

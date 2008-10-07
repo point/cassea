@@ -163,11 +163,11 @@ abstract class DataObject
 		/**
 		* @var  string
 		*/
-		$finilize_method = null,
+		$finalize_method = null,
 		/**
 		* @var  array
 		*/
-		$finilize_params = array(),
+		$finalize_params = array(),
 		/**
 		* @var  stdClass&
 		*/
@@ -178,7 +178,7 @@ abstract class DataObject
 	{
 		$this->is_static = 0+$is_static;
 		$this->init_params = new DataObjectParams();		
-		$this->finilize_params = new DataObjectParams();		
+		$this->finalize_params = new DataObjectParams();		
 	}
 	function parseParams(SimpleXMLElement $elem)
 	{
@@ -204,12 +204,12 @@ abstract class DataObject
 			$this->init_params = new DataObjectParams($elem->init);		
 		}
 
-		if(isset($elem->finilize))
+		if(isset($elem->finalize))
 		{
-			if(isset($elem->finilize['method']))
-				$this->finilize_method = (string)$elem->finilize['method'];
+			if(isset($elem->finalize['method']))
+				$this->finalize_method = (string)$elem->finalize['method'];
 
-			$this->finilize_params = new DataObjectParams($elem->finilize);		
+			$this->finalize_params = new DataObjectParams($elem->finalize);		
 		}
 	}
 	function createObject()
@@ -231,7 +231,11 @@ abstract class DataObject
 					call_user_func_array(array($this->object,$this->init_method),array());
 			}
 		}catch(Exception $e){}
-	}
+    }
+    function getObject()
+    {
+        return $this->object;
+    }
 }
 // }}} 
 
@@ -351,6 +355,8 @@ class DataSourceObject extends DataObject
 		return $this->datasource_method !== null;
 	}
 }
+// }}}
+
 //{{{ CheckerException
 class CheckerException extends Exception
 {
@@ -374,6 +380,7 @@ class CheckerException extends Exception
 	}
 }
 //}}}
+
 //{{{ DataHandlerObject
 class DataHandlerObject extends DataObject
 {
@@ -460,17 +467,18 @@ class DataHandlerObject extends DataObject
 		if(!$this->is_static)
 		{
 			if(!isset($this->object))
-				$this->createObject();
+                $this->createObject();
+
 			if(isset($this->handler_method))
 			{
 				try{
 					$r = new ReflectionObject($this->object);
-					$arr = $this->checker_params->getParams();
-					array_unshift($arr,$post);
+					$arr = $this->handler_params->getParams();
+                    array_unshift($arr,$post);
 					$r->getMethod($this->handler_method)->invokeArgs($this->object,$arr);
-				}catch(ReflectionException $e){ return ;}
+                }catch(ReflectionException $e){ return ;}
 			}
-			else
+			elseif(!empty($post))
 				foreach($post as $name=>$value)
 					$this->handleInObject($name,$value);
 		}
@@ -486,23 +494,23 @@ class DataHandlerObject extends DataObject
 						call_user_func_array($this->classname."::".$this->handler_method,$arr);
 				}
 				catch(ReflectionException $e){return; }
-			else
+			elseif(!empty($post))
 				foreach($post as $name=>$value)
 					$this->handleInStatic($name,$value);
 		}
 		return null;
 	}
 
-	function handleInObject($name,$value)
+	protected function handleInObject($name,$value)
 	{
-		if(!isset($name) || !isset($this->object)) return;
+		if(!isset($name) || !is_object($this->object)) return;
 
 		if(method_exists($this->object,"set".ucfirst(strtolower($name))))
 			return call_user_func(array($this->object,"set".ucfirst(strtolower($name))),$value);
 		if(method_exists($this->object,"set_".strtolower($name)))
 			return call_user_func(array($this->object,"set_".strtolower($name)),$value);
 	}
-	function handleInStatic($name,$value)
+	protected function handleInStatic($name,$value)
 	{
 		if(!isset($name) || !$this->is_static) return;
 
@@ -513,32 +521,97 @@ class DataHandlerObject extends DataObject
 		return;
 
 	}
-	function finilize()
+	function finalize()
 	{
 		if(!$this->is_static)
 		{
 			if(!isset($this->object))
 				$this->createObject();
-			if(isset($this->finilize_method))
+			if(isset($this->finalize_method))
 			{
 				try{
 					$r = new ReflectionObject($this->object);
-					$r->getMethod($this->finilize_method)->invokeArgs($this->object,$this->finilize_params->getParams());
+					$r->getMethod($this->finalize_method)->invokeArgs($this->object,$this->finalize_params->getParams());
 				}catch(ReflectionException $e){ return ;}
 			}
 		}
 		else
 		{
-			if(isset($this->finilize_method))
+			if(isset($this->finalize_method))
 				try
 				{
 					$r = new ReflectionClass($this->classname);
-					if($r->getMethod($this->finilize_method)->isAbstract())
-						call_user_func_array($this->classname."::".$this->finilize_method,$this->finilize_params->getParams());
+					if($r->getMethod($this->finalize_method)->isAbstract())
+						call_user_func_array($this->classname."::".$this->finalize_method,$this->finalize_params->getParams());
 				}
 				catch(ReflectionException $e){return; }
 		}
 		return ;
 	}
 }
+// }}}
+
+//{{{ PageHandlerObject
+class PageHandlerObject extends DataObject
+{
+	protected
+		/**
+		* @var  string
+		*/
+		$handler_method = null,
+		/**
+		* @var  DataObjectParams
+		*/
+		$handler_params = null
+
+	;
+
+	function __construct($static = false)
+	{
+		parent::__construct($static);
+	}
+	function parseParams(SimpleXMLElement $elem)
+	{
+		parent::parseParams($elem);
+
+		if(isset($elem->handler))
+		{
+			if(isset($elem->handler['method']))
+				$this->handler_method = (string)$elem->handler['method'];
+			else
+				throw new DataObjectException("Handler method was not found");
+		}
+		$this->handler_params = new DataObjectParams($elem->handler);		
+	}
+
+	function handle()
+	{
+		if(!$this->is_static)
+		{
+			if(!isset($this->object))
+                $this->createObject();
+            
+			if(isset($this->handler_method))
+			{
+				try{
+					$r = new ReflectionObject($this->object);
+					return $r->getMethod($this->handler_method)->invokeArgs($this->object,$this->handler_params->getParams());
+                }catch(ReflectionException $e){ return ;}
+			}
+		}
+		else
+		{
+			if(isset($this->handler_method))
+				try
+				{
+					$r = new ReflectionClass($this->classname);
+					if($r->getMethod($this->handler_method)->isAbstract())
+						return call_user_func_array($this->classname."::".$this->handler_method,$this->handler_params->getParams());
+				}
+				catch(ReflectionException $e){return; }
+		}
+		return null;
+	}
+}
+// }}}
 ?>

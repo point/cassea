@@ -100,14 +100,21 @@ class DataUpdaterPool
 {
 	static $pool = array();
 
-	static function set(DataHandlerObject $dho, $priority = 0)
+	static function set(DataHandlerObject $dho, $priority = 0,$id = null)
 	{
 		self::$pool[] = array('priority'=>$priority,
-			'data_handler_object'=>$dho);
+			'data_handler_object'=>$dho,'id'=>$id);
 
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
+    static function getById($id)
+    {
+        foreach(self::$pool as $o)
+            if($o['id'] == $id)
+                return $o['data_handler_object'];
+        return null;
+    }
 	static function savePool()
 	{
 		$storage = Storage::createWithSession("DataUpdaterPool");
@@ -142,8 +149,8 @@ class DataUpdaterPool
 		foreach(self::$pool as $p)
 		{	
 			if($dho = $p['data_handler_object'])
-				$dho->finilize();
+				$dho->finalize();
 		}
-	}
+    }
 }
 ?>
