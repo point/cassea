@@ -35,7 +35,7 @@ interface StorageEngine
 	function un_set($var);
 	function sync();
 }
-class StorageException
+class StorageException extends Exception
 {
 	function __construct($message)
 	{
@@ -44,7 +44,6 @@ class StorageException
 }
 class FSStorage implements StorageEngine
 {
-	const STORAGE_PATH = "/cache/storage";
 	private $storage_name = null,
 			$vars = array(),
 			$ttl = null,
@@ -55,8 +54,13 @@ class FSStorage implements StorageEngine
 		self::cleanup();
 		if(empty($storage_name))
 			throw(new StorageException('storage name is empty'));
-		$this->storage_name = $storage_name;
-		$this->real_storage_path = Config::get('ROOT_DIR').self::STORAGE_PATH."/".md5($storage_name);
+
+        $this->storage_name = $storage_name;
+        
+        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH')))
+            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH'));
+
+		$this->real_storage_path = Config::get('ROOT_DIR').Config::get('STORAGE_PATH')."/".md5($storage_name);
 		
 		if(!is_dir($this->real_storage_path))
 			mkdir($this->real_storage_path);
@@ -69,8 +73,10 @@ class FSStorage implements StorageEngine
 
 		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
 
-		foreach(glob($this->real_storage_path."/*.cache") as $f)
-			$this->vars[basename($f,".cache")] = unserialize($f);
+        foreach(glob($this->real_storage_path."/*.cache") as $f)
+        {
+            $this->vars[basename($f,".cache")] = file_get_contents($f);
+        }
 	}
 	function is_set($var)
 	{
@@ -89,12 +95,14 @@ class FSStorage implements StorageEngine
 		$m = md5($var);
 		if(isset($this->vars[$m]))
 			unset($this->vars[$m]);
-		unlink($this->real_storage_path."/".$m.".cache");
+        if(file_exists($this->real_storage_path."/".$m.".cache"))
+		    unlink($this->real_storage_path."/".$m.".cache");
 	}
 	function get($var)
-	{
+    {
+        $var = md5($var);
 		if(isset($this->vars[$var]))
-			return $this->vars[$var];
+			return unserialize($this->vars[$var]);
 		return false;
 	}
 	function sync()
@@ -104,7 +112,7 @@ class FSStorage implements StorageEngine
 	}
 	static function cleanup()
 	{
-		$dir = Config::get('ROOT_DIR').self::STORAGE_PATH;
+		$dir = Config::get('ROOT_DIR').Config::get('STORAGE_PATH');
 		foreach(glob($dir."/*/*.ttl") as $f)
 			if(intval(file_get_contents($f)) < time())
 				deltree(dirname($f));
@@ -130,7 +138,8 @@ class MemcacheStorage
 		$this->ttl = (int)$ttl;
 
 		$this->memcache = new Memcache;
-		$this->memcache->pconnect('localhost',11211);
+        if($this->memcache->pconnect(Config::get('MEMCACHED_HOST'),Config::get('MEMCACHED_PORT')) === false)
+            throw new StorageException('could not connect to server');
 	}
 	
 	function is_set($var)

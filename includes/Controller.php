@@ -609,6 +609,8 @@ class Controller
 
         $ret = $this->pagehandler->handle();
 
+        /*var_dump($ret);
+        die("BBBBBBBBB");*/
         if(is_string($ret))
             $this->gotoLocation($ret);
         elseif(is_numeric($ret))

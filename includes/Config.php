@@ -32,8 +32,13 @@ class Config
 	const ROOT_DIR = "/usr/local/www/devel";
 
 	const STORAGE_ENGINE = "memcache";
-	//const STORAGE_ENGINE = "filesystem";
-	
+//	const STORAGE_ENGINE = "filesystem";
+
+    const MEMCACHED_HOST = 'localhost';
+    const MEMCACHED_PORT = '11211';
+
+    const STORAGE_PATH = "/cache/storage";
+
 	const XMLPAGES_PATH = "/pages";
 
 	const IMAGES_PATH = "/usr/local/www/devel/web/images";
