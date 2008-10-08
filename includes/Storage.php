@@ -27,6 +27,15 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ *
+ *
+ *
+ * @package Storage
+ */
+
+
+
 interface StorageEngine
 {
 	function set($var, $val);
@@ -35,32 +44,36 @@ interface StorageEngine
 	function un_set($var);
 	function sync();
 }
-class StorageException extends Exception
+
+// {{{ StorageException
+class StorageException
 {
 	function __construct($message)
 	{
 		parent::__construct($message);
 	}
-}
-class FSStorage implements StorageEngine
+}// }}}
+
+// {{{ FSStorage
+/**
+ *
+ */
+class FSStorage implements StorageEngine, ArrayAccess
 {
+	const STORAGE_PATH = "/cache/storage";
 	private $storage_name = null,
 			$vars = array(),
 			$ttl = null,
 			$real_storage_path = null
-			;
+            ;
+    // {{{ __construct
 	function __construct($storage_name, $ttl = null)
 	{
 		self::cleanup();
 		if(empty($storage_name))
 			throw(new StorageException('storage name is empty'));
-
-        $this->storage_name = $storage_name;
-        
-        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH')))
-            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH'));
-
-		$this->real_storage_path = Config::get('ROOT_DIR').Config::get('STORAGE_PATH')."/".md5($storage_name);
+		$this->storage_name = $storage_name;
+		$this->real_storage_path = Config::get('ROOT_DIR').self::STORAGE_PATH."/".md5($storage_name);
 		
 		if(!is_dir($this->real_storage_path))
 			mkdir($this->real_storage_path);
@@ -73,15 +86,17 @@ class FSStorage implements StorageEngine
 
 		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
 
-        foreach(glob($this->real_storage_path."/*.cache") as $f)
-        {
-            $this->vars[basename($f,".cache")] = file_get_contents($f);
-        }
-	}
+		foreach(glob($this->real_storage_path."/*.cache") as $f)
+			$this->vars[basename($f,".cache")] = unserialize($f);
+    }// }}}
+
+    // {{{ is_set
 	function is_set($var)
 	{
 		return isset($this->vars[md5($var)]);
-	}
+    }// }}}
+
+    // {{{ set
 	function set($var,$val)
 	{
 		$m = md5($var);
@@ -89,41 +104,65 @@ class FSStorage implements StorageEngine
 		$r = file_put_contents($this->real_storage_path."/".$m.".cache",serialize($val));
 		if($r === false) return false;
 		return true;
-	}
+    }// }}}
+
+    // {{{ un_set
 	function un_set($var)
 	{
 		$m = md5($var);
 		if(isset($this->vars[$m]))
 			unset($this->vars[$m]);
-        if(file_exists($this->real_storage_path."/".$m.".cache"))
-		    unlink($this->real_storage_path."/".$m.".cache");
-	}
+		unlink($this->real_storage_path."/".$m.".cache");
+    }// }}}
+
+    // {{{get
+    /**
+     *
+     * @return null
+     */
 	function get($var)
-    {
-        $var = md5($var);
+	{
 		if(isset($this->vars[$var]))
-			return unserialize($this->vars[$var]);
+			return $this->vars[$var];
 		return false;
-	}
-	function sync()
+    }// }}}
+
+    // {{{ sync
+    function sync()
 	{
 		foreach(glob($this->real_storage_path."/*.cache") as $f)
 			$this->vars[basename($f,".cache")] = unserialize($f);
-	}
+    }// }}}
+
+    // {{{ cleanup
 	static function cleanup()
 	{
-		$dir = Config::get('ROOT_DIR').Config::get('STORAGE_PATH');
+		$dir = Config::get('ROOT_DIR').self::STORAGE_PATH;
 		foreach(glob($dir."/*/*.ttl") as $f)
 			if(intval(file_get_contents($f)) < time())
 				deltree(dirname($f));
-	}
-}
-class MemcacheStorage
+    }// }}}
+
+    //  {{{ ArrayAccess interface
+    public function offsetExists($key){ return $this->is_set($key);}
+    public function offsetGet($key){ return $this->get($key);}
+    public function offsetSet($key, $val){ return $this->set($key, $val);}
+    public function offsetUnset($key){ return $this->un_set($key);}
+    // }}}
+
+}// }}}
+
+// {{{ MemcacheStorage
+/**
+ *
+ */
+class MemcacheStorage implements StorageEngine, ArrayAccess
 {
 	private $storage_name = null,
 			$ttl = null,
 			$memcache = null
-			;
+            ;
+    // {{{ __construct
 	function __construct($storage_name, $ttl = null)
 	{
 		if(empty($storage_name))
@@ -138,40 +177,59 @@ class MemcacheStorage
 		$this->ttl = (int)$ttl;
 
 		$this->memcache = new Memcache;
-        if($this->memcache->pconnect(Config::get('MEMCACHED_HOST'),Config::get('MEMCACHED_PORT')) === false)
-            throw new StorageException('could not connect to server');
-	}
-	
+		$this->memcache->pconnect('localhost',11211);
+	}// }}}
+
+    // {{{ is_set
 	function is_set($var)
-    {
-        // @ used due to strage warnings
-		@$f = $this->memcache->get(md5($this->storage_name.$var));
+	{
+		$f = $this->memcache->get(md5($this->storage_name.$var));
 		if($f === false) return false;
 		return true;
-	}
-	function set($var,$val)
-    {
-        // @ used due to strage warnings
+	}// }}}
+
+    // {{{ set
+    function set($var,$val)
+	{
 		if($this->is_set($var))
-			@$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
+			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
-			@$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
+			$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
 		return $r;
-	}
+    }// }}}
+
+    // {{{ get
 	function get($var)
 	{
 		return $this->memcache->get(md5($this->storage_name.$var));
-	}
+    }// }}}
+
+    // {{{ un_set
 	function un_set($var)
 	{
 		$this->memcache->delete(md5($this->storage_name.$var));
-	}
-	function sync(){}
+    }// }}}
+
+    // {{{ sync
+    function sync(){}
+    // }}} sync
+
+    // {{{ __destruct
 	function __destruct()
 	{
 		$this->memcache->close();
-	}
-}
+	}// }}}
+
+    //  {{{ ArrayAccess interface
+    public function offsetExists($key){ return $this->is_set($key);}
+    public function offsetGet($key){ return $this->get($key);}
+    public function offsetSet($key, $val){ return $this->set($key, $val);}
+    public function offsetUnset($key){ return $this->un_set($key);}
+    // }}}
+
+}// }}}
+
+// {{{ Storage
 class Storage 
 {
 	static function create($storage_name,$ttl = null)
@@ -185,5 +243,5 @@ class Storage
 	{
 		return self::create($storage_name.Session::getInstance()->getId(),$ttl);
 	}
-}
+}// }}}
 ?>
