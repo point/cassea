@@ -26,19 +26,75 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+/**
+ * Набор классов для работы с базой данных Mysql 5.0.50+
+ *
+ *
+ * Флаги по умолчанию: DB::FETCH_ASSOC, DB::STORE_RESULT, DB::DROP_EMPTY_RESULTSET, DB::COMPRESS_RESULTS;
+ *
+ *
+ * TODO DB::init() через mysqli->real_comnnect(..);
+ * @version $Id$
+ * @package Database
+ */
 
+
+error_reporting(E_ALL | E_STRICT);
+//mysqli_report(MYSQLI_REPORT_ALL);
+
+// {{{ DBException
+/**
+ * Исключение используемое классами для работы с БД.
+ *
+ * Расширяет встроенный класс Extension путем дополнительной
+ * закрытой переменной и параметром конструктора  $query.
+ * В случае если исключение вызвано ошибкой SQL запроса
+ * то при вызове  {@link __toString  __toString} он будет отображен.
+ *
+ *
+ * Расширен метод {@link __toString __toString} для симпатичного отображения исключения.
+ *  
+ *
+ * @package Database
+ *
+ **/
 class DBException extends Exception
 {
+    /**
+     * Запрос вызвавший исключение. 
+     * Null если исключение не связано с SQL запросом.
+     *
+     * @var string
+     * @access private
+     */
     private $query = null;
 
+    // {{{ __construct
+    /**
+     * Конструктор расширенный параметром $query
+     *
+     * @param string  $message сообщение, сообщение ошибки mysql сервера(error)
+     * @param int     $code код ошибке,  ошибки mysql сервера(errno)
+     * @param string  $query SQL запрос вызвавший ошибку.       
+     */
     function __construct( $message = NULL, $code = null, $query = NULL )
     {
         if ($query !== NULL) $this->query = $query;
         parent::__construct(wordwrap($message,75, "\r\n\t\t" ), $code);
-    }
+    }//}}}
 
+    // {{{ __toString
+    /**
+     * Приведение исключения к строке. 
+     *
+     * Для отображение в html странице окружается < pre > </pre> для 
+     * удобочитаемости.
+     *
+     * @return string исключение в виде строки
+     */
     function __toString(){
-        $str = "\r\n\r\n";
+        $isweb = isset($_SERVER['HTTP_HOST']);
+        $str = $isweb?"<pre>":"\r\n\r\n";
         $str.= "Exception:\t".get_class($this)."\r\n";
         if ( $this->query !== NULL )
             $str .= "Query:\t".$this->query."\r\n";
@@ -49,45 +105,615 @@ class DBException extends Exception
         $str.= "File:\t".$this->file."\r\n\r\n";
 
         $str.= parent::getTraceAsString();
+
+        $str.= $isweb?"</pre>":"\r\n\r\n";
         return $str;
-    }
-}
+    }// }}}
+}// }}}
 
+// {{{ DBStmt
+/**
+ * "Подготовленные выражения"
+ *
+ * Класс расширяет класс mysqli_stmt, добавляя его функции 
+ * для установки параметров запроса, обработки результатов
+ * и выполнения запроса.
+ *
+ * Подготовленные выражение необходимо использовать для вставки
+ * в БД текстовых данных, которые могут содержать символы
+ * неадекватно воспринимаемые парсером MySQL сервера. Например:
+ * <code>
+ *      $badString = <<<EOD "' # \\' \' \\\' < >"
+ * EOD; 
+ *      $r = DB::getStmt('update table set text=? where id=?', 'si' )
+ *          ->execute(array( $badString, 1));
+ *      
+ * </code>
+ *
+ * Так же подготовленные выражения необходимо использовать для выполнения
+ * однотипных запросов в базе данных.Например:
+ * <code>
+ *      $id = 1222;
+ *      $stmt = DB::getStmt('select parent, name from tree where id=?', 'i' );
+ *      for($i = 0; $i < 100; $i++){
+ *          $row = $smtm->execute(array($id));
+ *          print_r($row[0]);
+ *          $id = $row[0]['id'];
+ *      }
+ * </code>
+ *
+ * Ввиду того что класс расширяет класс mysqli_stmt, можно обрасчатся 
+ * к родительским функциям непосредственно. Исключением является
+ * функция execute() - она перегруженна, и для обращения к mysqli_stmt::execute() 
+ * необходимо использовать {@link DBStmt::pexecute() DBStmt::pexecute()}.
+ *
+ *
+ * @package Database
+ */
+class DBStmt extends mysqli_stmt{
+    // {{{ class variables
+    /**
+     * Строка с типом параметров для выражения.
+     * См. {@link DBStmt::__construct() конструктор класса}
+     * 
+     * @var string
+     * @access private
+     */
+    private $typesStr = '';
 
-class DB{
-  
-    const FETCH_ASSOC = 1;
-    const FETCH_NUM =   2;
-    const FETCH_BOTH =  4;
+    /**
+     * SQL запрос для подготовленного выражения.
+     *
+     * Необходим только для более информативного отображения выбрасываемых исключений.
+     *
+     * @see DBException
+     * @var string
+     * @access private
+     */
+    private $userQuery;
+    // }}}
 
-    const DROP_EMPTY_RESULTSET =    0; 
-    const SAVE_EMPTY_RESULTSET =    8; 
+    // {{{ constructor
+    /**
+     * Конструктор
+     *
+     * Нет необходимости вызывать конструктор напрямую. Необходимо 
+     * использовать метод <b>{@link DB::getStmt()}</b>.
+     *
+     * Зарос для подготовки выражения задается строкой в которой параметры
+     * заменены занками вопроса(?) без кавычек.
+     *
+     * Для каждого параметра в SQL запросе необходимо указать тип.
+     * Типы параметров указываются в порядке их вхождения в запрос.
+     * Типы для запроса перечисляются строкой, позиция 
+     * символа определяет номер параметра в запросе.
+     * 
+     * Строка параметров может  состоять только из символов 'i', 'd', 's', 'b'.
+     * <ul>
+     *      <li><b>i</b> целочисленные значения;
+     *      <li><b>d</b> значения с плавающей запятой;
+     *      <li><b>s</b> строковые значения;
+     *      <li><b>b</b> BLOB значния, будут пересылатся пакетами;
+     * </ul>
+     *
+     * @throws DBException если строка параметров некорректна.
+     * @param msqyli $link  соеденение с базой данных
+     * @param string $query SQL запрос подготовленного выражения
+     * @param string $types перечесление типов параметров
+     */
+    public function __construct( $link, $query, $types){
+        $this-> setTypes($types);
+        $this->userQuery = $query;
 
-    const COMPRESS_RESULTS =        0;
-    const DONT_COMPRESS_RESULTS =  16;
+        parent::__construct($link, $query);
+    }// }}}
 
-    const USE_RESULT =  32;
-    const STOR_RESULT =  0;
- 
-
-    private static $mysqli;
-
-    // {{{ __construct
+    // {{{__destruct
     /**
      *
      *
      *
      */
-    function __construct( $host, $username, $password, $dbname, $port = NULL, $socket = NULL ){
+    function __destruct(){
+    }// }}}
+
+
+
+    // {{{bindParam
+    /**
+     * Устанавливает значение параметров для "Подготовлленного выражения".
+     *
+     * 
+     *
+     * @access private
+     * @param array $param индексированный массив значений 
+     */
+    private function bindParam($param){
+        if ( $c = ($this->param_count)){
+            $args = array($this->typesStr);
+            for ($i =0; $i < $c; $i++){
+                $args[] = isset($param[$i])? $param[$i]: null;
+            }
+            call_user_func_array(array($this, 'bind_param'), $args);
+        }
+    }//}}}
+
+
+
+    // {{{ processResults
+    /**
+     * Обрабатывает результаты выполнения "Подготовленного выражения"
+     *
+     * ОБработка происходит только первого набора результатов возвращенного
+     * подготовленным выражением. Остальные наборы из-за невозможности обработать
+     * игнорируются. Те можно вызывать функции, которые возвращают один набор результатов.
+     *
+     * Для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT};
+     *
+     * @throws DBException В случае возникновения ошибки.
+     * @param int $flags флаги переданные из метода {@link execute() execute()}.
+     * @return mixed  ассоциативный массив результатов, NULL если нет результатов
+     */
+    private function processResults($flags){
+        // Обработка флангов
+        $store = true;
+        if ($flags & DB::USE_RESULT) $store = false;
+
+        // Есть ли данные
+        $meta = $this->result_metadata();
+        if (!$meta) return;
+
+        if ( $store) $this->store_result();
+        
+        $resultdata = array();
+        $data = array();
+        $fields = array($this );
+        while($field = mysqli_fetch_field($meta)){ 
+            $fields[] = &$data[$field->name];
+        }
+
+        do{
+            call_user_func_array('mysqli_stmt_bind_result', $fields);
+            if ($r =  $this->fetch()){
+                $i = count($resultdata);
+                foreach ($data as $k => $v)
+                    $resultdata[$i][$k] = $v;
+            }
+            // Ошибка в процесе вытягивания результатов
+            if ($r === false) 
+                throw(new DBException($this->error,$this->errno, $this->userQuery));
+
+        } while( $r !== null );
+
+        $meta->close();
+        if ($store) $this->free_result();
+
+        // Чистим соединение
+        DB::clearResultset();
+
+        return $resultdata;
+    }// }}}
+
+    // {{{ execute
+    /**
+     * Выполняет Подготовленное выражение с указанными параметрами.
+     *
+     * Функция последовательно вызывает {@link DBStmt::bindParam() DBStmt::bindParam() }, mysqli_smtm::execute, {@link DBStmt::processResults() DBStmt::processResults() },
+     * и возвращает результат последней.
+     * 
+     * 
+     *
+     * @throws DBException в случае ошибки в любом из вызываемых методов.
+     * @param array $param массив значений для выражения
+     * @param int $flags флаги для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT};
+     * @return mixed  ассоциативный массив результатов, NULL если нет результатов
+     */
+    public function execute($param = array(), $flags = 0){
+        // bind params
+        $this->bindParam($param);
+
+        if (! parent::execute())
+            throw(new DBException($this->error,$this->errno, $this->userQuery));
+
+        //Обработка результатов
+        return $this->processResults($flags);
+    }// }}}
+
+    // {{{ pexecute
+    /**
+    * Прозрачно вызывает mysqli_stmt::exeute();
+    *
+    * @return bool
+    */
+    public function pexecute(){
+        return parent::execute();
+    }// }}}
+    
+    // {{{ setTypes
+    /**
+     * Проверяет корректность строки параметров и устанавливает переменную {@link typesStr "$typesStr}.
+     *
+     * @access private
+     * @throws DBException если  строка параметров переданная в {@link DBStmt::__construct() конструктор} или   фабричный метод {@link DB::getStmt()} некорректна.
+     * @param string $types
+     * @return void
+     */
+    private function setTypes($types){
+        if (preg_match('/^[disb]*$/',$types))
+            $this->typesStr = $types;
+        else
+            throw( new DBException('Bad parameters list: "'.$types.'".') );
+    }// }}}
+
+}// }}}
+
+// {{{ DBTransaction
+/**
+ * Транзакция 
+ *
+ * Класс является реализацией транзакций Базы данных.
+ * База данных должна быть транзакционной. Ннапример  InnoDB, Falcon.
+ *
+ * Пример использования:
+ * <code>
+ *      $t = DB::getTransaction(); // получение объекта
+ *      // выполнение запросов
+ *      $t->query('update table1 set value="new value" where k =1');
+ *      $t->query('delete table2  where field1 > 100');
+ *      $t->query('call someproc()');
+ *      // завершение транзакции
+ *      $t->commit();
+ * </code>
+ *
+ *
+ * Метод query выбрасывает исключение в случае возникновения ошибки,
+ * но не делает автоматического отката. Более устойчивый пример:
+ * <code>
+ *      $t = DB::getTransaction(); // получение объекта
+ *      // выполнение запросов
+ *      try{
+ *          $t->query('update table1 set value="new value" where k =1');
+ *          $t->query('delete table2  where field1 > 100');
+ *          $t->query('call someproc()');
+ *      }
+ *      catch(DBException $e){
+ *          $t->rollback();
+ *      }
+ *      // завершение транзакции
+ *      // $t->commit() выбросит исключение если транзакция закрыта
+ *      try{
+ *          $t->commit();
+ *      }
+ *      catch (DBException $e) {}
+ * </code>
+ *
+ * Если фабричному методу {@link DB::getTransaction() DB::Transaction()} передан параметр
+ * $useException = false, то функция DBTransaction::query() не будт выбрасывать исключения.
+ * ее результат будет true в случае успешного выполнения запроса, иначе false. Использовать
+ * этот флаг не реккомедуется.
+ *
+ * Так же следует отметить что функция DBTransaction::query() игнорирует результаты SELECT запросов,
+ * ввиду из возможной необъективности в контексте базы данных.
+ *
+ * На время жизни  транзацкии блокируется доступ к методам DB - любое обращение к ним вызовет исключение.
+ * В случае необходимости (выполнение "подготовленных" выражений, невозможности сформировать запросы транзакции
+ * без использования результатов SELECT) методу  {@link DB::getTransaction() DB::Transaction()} 
+ * необходимо передать параметр $lockDB = false. Использовать этот флаг так же не реккомендуется.
+ *
+ * Из других ограничений следует отметить невозможность исползования 2х транзакций ввиду единственного
+ * соединения с базой данных.
+ *
+ * @package Database
+ */
+class DBTransaction{
+    // {{{ variable
+    /**
+     * Объект mysqli
+     *
+     * Используется для всех операций связанных с базой данных.
+     *
+     * @var mysqli
+     * @access private
+     */
+    private $mysqli;
+
+    /**
+     * Флаг определяет поведение DBTransaction::query() в случае возникновения ошибки
+     * @var bool
+     * @access private
+     */
+    private $useException = false;
+
+    /**
+     * Количество созданных объектов DBTransaction.
+     * Если больше одного конструктор выбросит исключение.
+     * @var int
+     * @access private
+     * @static
+     */
+    //private static $transactionCount = 0;
+
+    /**
+     * Флаг определяющий возможность выполнять SQL запросы.
+     *
+     * Устанавливается в false после вызово методов DBTransaction::commit(),
+     * DBTransaction::rollback(). 
+     * 
+     * @var bool
+     * @access private
+     */
+    private $queryAllow = true;
+    // }}}
+
+    // {{{ __construct
+    /**
+     * Конструктор вызывается неявно из метода {@link DB::getTransaction() DB::Transaction()}.
+     *
+     *
+     * @param mysqli $conn Соединение с базой данных
+     * @param bool $useException использовать исключения в случае возникновения ошибок в метода {@link DBTransaction::query  DBTransaction::query}.
+     *
+     */
+    public function __construct($conn, $useException = true){
+        $this->transationCount++;
+        $this->mysqli = $conn;
+        $this->useException = $useException;
+        $this->mysqli->autocommit(false);
+    }//}}}
+
+    // {{{ __destruct
+    public function __destruct(){
+        if ($this->mysqli instanceof mysqli){
+            $this->mysqli->close();
+        }
+   
+    }// }}}
+
+    // {{{ query
+    /**
+     * Выполняет sql запрос
+     *
+     * Результаты запросов не обрабатываются.
+     *
+     * @throws DBException при наличии флага $useException в конструкторе; Если транзакция уже завершена(выполненны commit или rollback)
+     * @param string sql запрос
+     * @return bool true если запрос выполнен, false если запрос не выполнен и в конструкторе указан флаг  $useException
+     */
+    public function query($sql){
+        if (!$this->queryAllow)
+            throw new DBException('Transaction already commit or rollback. Query cancel.', 0, $sql);
+        
+        $res = $this->mysqli->real_query($sql);
+        if ( $this->mysqli->field_count != 0 ){
+            do
+                if($result = $this->mysqli->use_result())
+                    $result->free();
+            while($this->mysqli->next_result());        
+        }
+     
+        if ($res) return true;
+        if ($this->useException)
+            throw new DBException($this->mysqli->error,$this->mysqli->errno,$sql);
+        return false;
+    }// }}}
+
+
+    // {{{ commit 
+    /**
+     * Завершение транзакции
+     *
+     * @throws DBException если транзакция уже завершена(выполненны commit или rollback)
+     */
+    public function commit(){
+        if (!$this->queryAllow)
+            throw new DBException('Transaction already commit or rollbacked. Query cancel.');
+
+        $this->mysqli->commit();
+        $this->shutdown();
+    }// }}}
+    
+    // {{{ rollback
+    /**
+     * Откат транзакции
+     * @throws DBException если транзакция уже завершена(выполненны commit или rollback)
+     */
+    public function rollback(){
+        if (!$this->queryAllow)
+            throw new DBException('Transaction already commited or rollbacked. Query cancel.');
+
+        $this->mysqli->rollback();
+        $this->shutdown();
+    }// }}}
+
+    // {{{ shutdown
+    /**
+     * Завершение транзакции, перевод DB в рабочее состояние.
+     *
+     */
+    private function shutdown(){
+        $this->mysqli->autocommit(true);
+
+        DB::closeTransaction($this);
+        $this->mysqli = null;
+        $this->queryAllow = false;
+
+    }//}}}
+
+    // {{{ getConnection 
+    /**
+     * For DB::closeTransaction only
+     * @return $mysqli
+     */
+    public function getConnection(){
+        return $this->mysqli;
+    }// }}}
+
+}// }}}
+
+// {{{ DBMysqliFake
+/**
+ *
+ * @package Database
+ */
+class DBMysqliFake{
+    public function __call($name, $arguments) {
+        throw new DBException("DB is locked while transation didn't commit.",0,"\r\nMethod: ".$name."( ". implode(', ', $arguments). " )\n");
+    }
+}// }}}
+
+// {{{ DB
+/**
+ * Статический класс для работы с базой данных Mysql 5.0.50+ 
+ * использующий библиотеку mysqli(nd). 
+ *
+ * Класс DB агрегирует объект mysqli, ссылку на который можно получить с помощбю метода
+ * {@link DB::getMysqli() DB::getMysqli()}:
+ * <code>
+ *      $affected_rows = DB::getMysqli()->affected_rows;
+ * </code>
+ *
+ * Основной функционал сосредоточен в функциях {@link DB::query() DB::query()} и 
+ * {@link DB::multiQuery() DB::multiQuery()}. Они реализуют запрос к базе даннных
+ * и предварительную обработку результатов.
+ *
+ *
+ * @package Database
+ */ 
+class DB{
+
+    // {{{ Constants
+    /**
+     * Флаг используемый функциями {@link DB::query() DB::query()}, {@link DB::multiQuery DB::multiQuery} и {@link DBStmt::execute()  DBStmt::execute()}
+     * для формирования результатов запроса.
+     *
+     * Результаты формируются ввиде ассоциативного массива.
+     * 
+     * Данное значение является значением по умолчанию для всех fetch-функций.
+     */
+    const FETCH_ASSOC = 1;
+    /**
+     * Флаг используемый функциями {@link DB::query() DB::query()}, {@link DB::multiQuery DB::multiQuery} и {@link DBStmt::execute()  DBStmt::execute()}
+     * для формирования результатов запроса.
+     *
+     * Результаты формируются ввиде нумерованного массива.
+     */
+    const FETCH_NUM =   2;
+    /**
+     * Флаг используемый функциями {@link DB::query() DB::query()}, {@link DB::multiQuery DB::multiQuery} и {@link DBStmt::execute()  DBStmt::execute()}
+     * для формирования результатов запроса.
+     *
+     * Результаты формируются ввиде ассоциативного и нумерованного массива.
+     */
+    const FETCH_BOTH =  4;
+
+    /**
+     * Флаг для функции {@link DB::multiQuery DB::multiQuery}.
+     * Влияет на представление запросов без результатов (UPDATE, DELETE etc): пустые результаты не добавляются в результирующий массив
+     *
+     *
+     * Данное значение является значением по умолчанию.
+     */
+    const DROP_EMPTY_RESULTSET =    0; 
+    /**
+     * Флаг для функции {@link DB::multiQuery DB::multiQuery}.
+     * Влияет на представление запросов без результатов (UPDATE, DELETE etc): пустые результаты  добавляются в результирующий массив 
+     */
+    const SAVE_EMPTY_RESULTSET =    8; 
+
+
+
+    /**
+     * Флаг для функции {@link DB::multiQuery() DB::multiQuery()}.
+     * 
+     * Результирующий набор представлен ввиде двух мерного массива(а не трех мерного), в который добавляются строки из
+     * всех запросов переданных функции {@link DB::multiQuery() DB::multiQuery()};
+     *  
+     * Данное значение является значением по умолчанию.
+     *
+     */
+    const COMPRESS_RESULTS =        0;
+    /**
+     * Флаг для функции {@link DB::multiQuery() DB::multiQuery()}.
+     * 
+     * Результирующий набор представлен ввиде трех мерного массива, состоящего из результатов 
+     * кадого из запросов переданных функции {@link DB::multiQuery() DB::multiQuery()};
+     *  
+     */
+    const DONT_COMPRESS_RESULTS =  16;
+
+
+    /**
+     * Флаг используемый функциями {@link DB::query() DB::query()}, {@link DB::multiQuery DB::multiQuery} и {@link DBStmt::execute()  DBStmt::execute()}
+     * для работы с результатми запросов.
+     *
+     * С использованием данного флага результаты используются непосредственно на строне MySql сервера и не переносятся
+     * в память php-процесса. 
+     *
+     * Использование данного флага может приводить к блокировке записей и таблиц которые используются в запросе.
+     *
+     */
+    const USE_RESULT =  32;
+
+    /**
+     * Флаг используемый функциями {@link DB::query() DB::query()}, {@link DB::multiQuery DB::multiQuery} и {@link DBStmt::execute()  DBStmt::execute()}
+     * для работы с результатми запросов.
+     *
+     * С использованием данного флага результаты сохраняются на стороне php-процесса. 
+     *
+     * Данное значение является значением по умолчанию.
+     */
+    const STORE_RESULT =  0;
+ 
+    // }}}
+    /**
+     * Объект mysqli
+     *
+     * Используется для всех операций связанных с базой данных.
+     *
+     * @var mysqli
+     * @access private
+     * @static
+     */
+    private static $mysqli;
+
+    // {{{ init
+    /**
+     * Инициализирует соединение с базой данных.
+     *
+     * Инстанцирует объект mysqli в скрытой статической пересменной DB::mysqli.
+     *
+     *
+     * @throws DBException В случае возникновения ошибок подключения к базе данных
+     * @param string $host Хост сервера Базы данных
+     * @param string $username логин пользователя
+     * @param string $password пароль пользователя
+     * @param string $dbname имя базы данных
+     * @param int $port порт сервера 
+     * @param string $socket сокет сервера
+     * @return void
+     */
+    static public function init( $host, $username, $password, $dbname, $port = NULL, $socket = NULL ){
         if (is_object(self::$mysqli)) return;
         self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
         if ( mysqli_connect_errno()) throw ( new DBException(mysqli_connect_error(), mysqli_connect_errno()));
     }// }}}
 
+
+    // {{{ close
+    /**
+     *Закрывает соединение
+     */
+    public static function close(){
+        if (self::$mysqli instanceof mysqli)
+            self::$mysqli->close();
+         
+    }// }}}
+
     // {{{ getMysqli
     /**
+     * Get-метод для получения ссылки на объект {@link DB::mysqli DB::mysqli}.
      *
-     *
+     * @return mysqli
      */
     static public function &getMysqli(){
         return self::$mysqli;
@@ -95,20 +721,44 @@ class DB{
 
     // {{{ query
     /**
+     * Выполнение SQL запроса.
      *
+     * Если запрос вернет несколько наборов результатов(multi query)
+     * будет обработан только первый. Все остальные будут проигнорированы,
+     * а соединение с базой данных будет доступно для следующих запросов.
      *
+     * Данный метод реккомендуется использовать для выполнения 
+     * хранимых продцедур, которые возвращают один набор результатов.
+     * Второй набор результатов OK/ERR будет автоматически проигнорирован.
      *
+     * @throws DBException в случае возникновения ошибки в запросе
+     * @param string $query SQL запрос
+     * @param int $flags флаги для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT},
+     *                      {@link DB::FETCH_NUM  DB::FETCH_NUM }, {@link DB::FETCH_ASSOC  DB::FETCH_ASSOC }, {@link DB::FETCH_BOTH  DB::FETCH_BOTH };
+     * @return mixed массив результатов; true в случает успешного запроса без результатов.
      */
-    static public function query( $query, $resulttype = MYSQLI_ASSOC){
-        if ( $res = self::$mysqli->query($query) ){
+    static public function query( $query, $flags = null){
+        if ( self::$mysqli->real_query($query) ){
+            // process flags
+            $data_process ='mysqli_store_result';
+            if ($flags & DB::USE_RESULT) $data_process ='mysqli_use_result';
+            //var_dump($data_process);
+            $resulttype = MYSQLI_ASSOC;
+            if ($flags & DB::FETCH_NUM ) $resulttype = MYSQLI_NUM;
+            else if ($flags & DB::FETCH_BOTH ) $resulttype = MYSQLI_BOTH;
+
+            $res =  call_user_func($data_process, self::$mysqli);
             if (is_object($res)){
                 $data = array();
-                for ($i = 0; $i < $res->num_rows; $i++)
-                    $data[] = $res->fetch_array($resulttype);
-                $res->close();
-                return $data;
+                while( ($d = $res->fetch_array($resulttype)) !== null){
+                        $data[] = $d;
+                }
             }
-            return $res;
+            else $data = $res;
+
+            self::clearResultset($res);
+
+            return $data;
         }
         else
             throw (new DBException(self::$mysqli->error,self::$mysqli->errno,$query));
@@ -116,10 +766,68 @@ class DB{
 
     // {{{ multiQuery
     /**
+     * Выполнение нескольких SQL запросов.
+     *
+     * Основное отличии от {@link DB::query() DB::query()} состоит в том, что 
+     * в параметр $query можно опдавать несколько запросов, разделенных ';'.
+     * SQL конструкция 'delimiter' не поддерживается.
+     *
+     * <code>
+     * $proc = <<<DDD
+     * drop procedure if exists test;
+     *
+     * create procedure test()
+     *
+     *     select rand() as test;
+     *
+     * DDD;
+     * DB::multiQuery($proc);
+     * </code>
+     *
+     * Вид результата метода будет зависить от флагов.
+     * Например: 
+     * <code>
+     * $proc = <<<DDD
+     * select k as `key`, v as `value` from table limit 2;
+     * update table set v = 10 where k = 12;
+     * DDD;
+     * $res = DB::multiQuery($proc, DB::DONT_COMPRESS_RESULTS | DB::SAVE_EMPTY_RESULTSET);
+     * print_r($res);
+     * </code>
      *
      *
-     */
-    //static public function multiQuery( $query, $compress = true,  $data_process = DB::STORE_RESULT,  $resulttype = MYSQLI_ASSOC){
+     * Для результатов каждого запроса в результирующем массиве будет
+     * <code> 
+     *   Array
+     *   (
+     *       [0] => Array
+     *       (
+     *           [0] => Array
+     *           (
+     *               [key] => 1
+     *               [value] => -1
+     *           )
+     *
+     *           [1] => Array
+     *           (
+     *               [key] => 82
+     *               [value] => 1
+     *           )
+     *  
+     *       )
+     *       [1] => NULL
+     *
+     *   )
+     * </code>
+     *
+     * @throws DBException в случае возникновения ошибки в запросе
+     * @param string $query SQL запрос
+     * @param int $flags флаги для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT},
+     *                      {@link DB::FETCH_NUM  DB::FETCH_NUM }, {@link DB::FETCH_ASSOC  DB::FETCH_ASSOC }, {@link DB::FETCH_BOTH  DB::FETCH_BOTH },
+     *                      {@link DB::DONT_COMPRESS_RESULTS DB::DONT_COMPRESS_RESULTS}, {@link DB::SAVE_EMPTY_RESULTSET DB::SAVE_EMPTY_RESULTSET};
+     *                      ;
+     * @return mixed массив результатов;
+    */
     static public function multiQuery( $query, $flags = 0){
         // flag processing
         
@@ -142,8 +850,6 @@ class DB{
             $compress = false;
         }
 
-
-
         $mysql = &self::$mysqli;
         $i = 0;
         if ( $res = $mysql->multi_query($query) ){
@@ -157,7 +863,7 @@ class DB{
                     $sdcount = 0;
                     while( $tr =  $res->fetch_array($resulttype) )
                         $subdata[$sdcount ++]= $tr;
-                    $res->free();
+                    $res->close();
                     $data[] = $subdata;
                 }
                 // store_result возвращает FALSE для запросов без выбоки
@@ -191,19 +897,78 @@ class DB{
         }
     }// }}}
 
+    // {{{ getStmt
+    /**
+     * Фабричный метод для получения объекта DBStmt.
+     *
+     * Подробного описание см. {@link DBStmt::__construct() DBStmt::__construct()}.
+     *
+     * @throws DBException если строка параметров некорректна.
+     * @param string $query SQL запрос подготовленного выражения
+     * @param string $types перечесление типов параметров
+     * @return object DBStmt
+     */
+    static public function getStmt($query, $types = null){
+        $stmt = new DBStmt(self::$mysqli, $query, $types);
+        if ( self::$mysqli->errno)
+            throw (new DBException(self::$mysqli->error,self::$mysqli->errno,$query));
+        return $stmt;
+    }// }}}
+
+    // {{{ getTransaction
+    /**
+     * Фабричный метод для получения объекта транзакции
+     *
+     * 
+     * @throws DBException если создание новой транзакции невозможно.
+     * @return object DBTransaction
+     */
+    static public function getTransaction($useException = true, $lockDB = true ){
+        var_dump(self::$mysqli);
+        if ((self::$mysqli instanceof DBMysqliFake) )
+            throw new DBException('Only one Transaction my be executed at time');
+
+        $t = new DBTransaction(self::$mysqli, $useException);
+        if ($lockDB ) self::$mysqli = new DBMysqliFake();
+
+        return $t;
+    }// }}}
+
+
+    // {{{ closeTransaction
+    /**
+     * Закрытие транзакции
+     *
+     * @param DBTransaction 
+     */
+    static public function closeTransaction(DBTransaction $t ){
+        if ( !(self::$mysqli instanceof mysqli) ) self::$mysqli = $t->getConnection();
+    }// }}}
+
     // {{{ clearResultset
     /**
+     * Отчистка соединения с базой данных.
+     *
+     * Соединение с БД может быть рассинхронизоровано. 
+     * Наример, запрос вернул несколько наборов результов, а клиент забрал только 
+     * часть из них и пытается выполнить следующий запрос. В такой ситуции сервер возвращает 
+     * ошибку и ждет пока ползователь заберет все наборы результатов. 
+     * Для решение проблемы необходимо забрать все наборы с сервера, чем и занимается данный метод.
+     *
+     * DB::query() и DB::multiQuery() оставляют соединение с базой "чистым". 
+     * Метод будет полезен при использования объекта mysqli, полученного с помощью метода
+     * {@link DB::getMysqli() DB::getMysqli()}.
      * 
-     *
-     *
+     * @param mixed $result если передан объект mysqli_result, то выполнится его закрытие;
      */
     static public function clearResultset($result = null){
         if (is_object($result)) $result->free();    
         while(self::$mysqli->next_result()){
-            if($result = self::$mysqli->store_result()){
+            if($result = self::$mysqli->use_result()){
                 $result->free();
             }
         }
     } // }}}
-}
+
+} // }}}
 ?>

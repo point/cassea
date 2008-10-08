@@ -112,7 +112,7 @@ class Controller
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetAdjacencyList();
 
-		new DB(null, 'root', 'root','devel'); 
+        DB::init(null, 'root', '','intvideo'); 
 		Session::getInstance();
 
 		POSTErrors::restoreErrorList();
@@ -679,6 +679,7 @@ class Controller
 		$storage->set('checker_rules',$this->checker_rules);
 		DataUpdaterPool::savePool();
         $storage->set('pagehandler',$this->pagehandler);
+		DB::close();
 	}
 }
 class DisplayModeParams
