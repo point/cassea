@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<root>
+	<WText id='included_text'>included text</WText>
+	<WText id='included_text2'>included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text2</WText>
+	<WText >included text n</WText>
+</root>

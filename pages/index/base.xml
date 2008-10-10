@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<root >
+	<WDataSet priority="11" >
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<datasource method="getText" >
+			<param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/>
+		</datasource>
+	</WDataSet>
+	<WDataHandler priority="11">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<checker method="checkText">
+			<param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/>
+		</checker>
+		<handler method="handleText" >
+			<!--param from="p1" as="array">
+				<filter>string_quote_encode</filter>
+			</param>
+			<param from="p2" count="3" />
+			<param from="p3" var="q"/>
+			<param constant="mmmmm"/-->
+		</handler>
+		<finalize method="finilize"/>
+	</WDataHandler>
+
+	<WDataHandler priority="12" id="dh1">
+		<model>test</model>
+		<classname>thetest</classname>
+		<checker method="checkLogin"/>
+	</WDataHandler>
+	<WDataSet priority="12">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+		<datasource method="roll" >
+		</datasource>
+	</WDataSet>
+
+	<WPageHandler goto="-1" object_from="dh1" method="test_ph2">
+		<model>test</model>
+		<classname>thetest</classname>
+		<handler method="test_ph"/>
+	</WPageHandler>
+	<!--WDataSet priority="10">
+		<model>test</model>
+		<classname>thetest</classname>
+		<init />
+	</WDataSet-->
+	<WValueChecker id="vc1">
+		<check rule="required"/>
+		<!--check rule="minlength" value="3"/-->
+		<!--check rule="maxlength" value="3"/-->
+		<!--check rule="rangelength" value="[3,5]"/-->
+		<!--check rule="min" value="3"/-->
+		<!--check rule="max" value="3"/-->
+		<check rule="range" value="[3,5]"/>
+		<filter>array_int</filter>
+	</WValueChecker>
+	<WBlock>
+		<WText attr="q" id="ttext">qwe</WText>
+	</WBlock>
+			<WText id="ttext3">poi</WText>
+			<WHyperLink id="href" href="http://www.google.com">GOOGLE</WHyperLink>
+			<WText id="ttext2">zxc</WText>
+			<WBlock id="block2">
+				<WText id="yyy">yyy</WText>
+				<WText id="yyy2">yyy2</WText>
+			</WBlock>
+			<WRoll id='roll' ruler='ruler1'>
+				<WRoll id="roll2">
+					<WBlock>
+						<WText>in the roll</WText>
+					</WBlock>
+				</WRoll>
+			</WRoll>
+				<WRuler id='ruler1' res_per_page="2" reverse="0" />
+			<WButton />
+			<WCalendar />
+			<WCheckbox />
+			<WColorPicker />
+			<WFieldSet>
+				<WFlash src="jeep.swf" width="1000" height="200"/>
+			</WFieldSet>
+			<WForm id="form1">
+				<WHidden />
+				<WHTML >html text </WHTML>
+				<WImage width="100" with_preview="1"/>
+			</WForm>
+			<WList ol="1">
+				<WListItem>qwe</WListItem>
+			</WList>
+			<WNavigator />
+			<WRadio />
+			<!--WSeparator/-->
+			<WSpinner />
+			<WTabs>
+				<WTab >tab tab tab
+				</WTab>
+			</WTabs>
+			<WTable table_sorter="1">
+				<WTableRow>
+					<WTableHeader sorter="1">header 1</WTableHeader>
+				</WTableRow>
+				<WTableRow>
+					<WTableColumn>col1</WTableColumn>
+				</WTableRow>
+				<WTableRow>
+					<WTableColumn>col2</WTableColumn>
+				</WTableRow>
+			</WTable>
+			<WTextarea />
+
+			<WForm id="form1">
+				<WRoll id="edit_roll">
+					<WEdit valuechecker="vc1" id="edit1" name="edit"/>
+				</WRoll>
+				<WEdit name="login" size="3"/>
+				<WButton value="submit"/>
+			</WForm>
+			<include src="qwe.xml"/>
+			<block id="subst_me">
+				<WText>BASE SUBST_ME</WText>
+			</block>
+</root>

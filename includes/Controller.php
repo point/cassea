@@ -143,7 +143,7 @@ class Controller
 		$this->parseP1P2();	
 		$this->handlePOST();
 		if(is_string($this->page_function))
-			$ret = call_user_func($this->page_function,$this->p1,$this->p2);
+			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
 		if(!isset($ret))
 			if(isset($this->p1))
 				$this->page = $this->p1;
@@ -175,7 +175,7 @@ class Controller
 		$dom = new DomDocument;
 		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
 
-		$this->parsePage($dom);
+		$this->parsePage($this->processPage($dom));
 
 	}
 	private final function parseP1P2()
@@ -196,9 +196,108 @@ class Controller
 
 			$this->p2 = explode("/",$this->p2);
 		}
-	}
+    }
+    private function pagePath($src)
+    {
+        if(empty($src))
+            throw new ControllerException('page file not found');
+        $src = str_replace('.xml','',$src);
+        if($src{0} == "/") 
+            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml'))
+                throw new ControllerException('page file not found');
+            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml';
+        else
+            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml'))
+                throw new ControllerException('page file not found');
+            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml';
+        return $src;
+    }
+    protected function processPage(DomDocument $dom)
+    {
+        // extends
+        $adj_list = array($dom);
+        $included_pages = array($this->page.".xml");
+        $t_dom = $dom;
+        while(($e_src = $t_dom->firstChild->getAttribute('extends')) != "" && !in_array($e_src,$included_pages))
+        {
+            $t_dom = new DomDocument;
+            try { $t_dom->load($this->pagePath($e_src)); }
+            catch(ControllerException $e) { throw new ControllerException('extends page not found');}
+            //$included_pages[] = $e_src;
+            array_unshift($included_pages,$e_src);
+            array_unshift($adj_list,$t_dom);
+        }
+        // searching for <parent> blocks
+        for($i = 1, $c = count($adj_list);$i < $c;$i++)
+        {
+            $nl = t(new DOMXPath($adj_list[$i]))->query("//parent[@id]");
+            for($j = 0, $c2 = $nl->length;$j < $c2;$j++)
+                for($k = $i-1; $k >=0; $k--)
+                {
+                    $nl2 = t(new DOMXPath($adj_list[$k]))->query("//block[@id='".$nl->item($j)->getAttribute('id')."']");
+                    if(!$nl2->length) continue;
+                    $el = $nl->item($j);
+                    $el2 = $nl2->item(0);
+
+                    $el2 = $adj_list[$i]->importNode($el2,true);
+                    $el->parentNode->replaceChild($el2,$el);
+                    break;
+                }
+        }
+        // extending
+
+        $dom = $adj_list[0];
+        $blocks = t(new DOMXPath($dom))->query("//block[@id]");
+        for($i = 0, $c = $blocks->length;$i < $c;$i++)
+        {
+            if(($id = $blocks->item($i)->getAttribute("id")) == "") continue;
+            for($j = count($adj_list)-1; $j > 0; $j--)
+            {
+                $subst_blocks = t(new DOMXPath($adj_list[$j]))->query("//block[@id='".$id."']");
+                if(!$subst_blocks->length) continue;
+
+                $el = $blocks->item($i);
+                $el2 = $subst_blocks->item(0);
+
+                $el2 = $dom->importNode($el2,true);
+                $el->parentNode->replaceChild($el2,$el);
+                break;
+            }
+        }
+
+
+        // clean up from <block>
+        $node_list = $dom->getElementsByTagName('block');
+        for($i = 0, $c = $node_list->length; $i < $c; $i++)
+        {
+            for($el = $node_list->item(0),$el_cn = $el->childNodes,$j = 0, $c2 = $el_cn->length;$j < $c2;$j++)
+                $el->parentNode->insertBefore($el_cn->item($j)->cloneNode(true),$el);
+            $el->parentNode->removeChild($el);
+        }
+
+        // include
+		$node = $dom->getElementsByTagName("include");
+		for($i = 0, $c = $node->length;$i < $c;$i++)
+        {
+			$el = $node->item(0);
+            if(($src = $el->getAttribute('src')) == "") continue;
+            try{$src = $this->pagePath($src);}
+            catch(ControllerException $e){ throw new ControllerException('include page file not found');}
+            $d = new DomDocument;
+            $d->load($src);
+            $imported_node = $dom->importNode($d->firstChild,true);
+            if($imported_node->hasChildNodes())
+                for($node_list = $imported_node->childNodes,$i = 0, $c = $node_list->length; $i < $c;$i++)
+                    $el->parentNode->insertBefore($node_list->item($i)->cloneNode(true),$el);
+            
+            $el->parentNode->removeChild($el);
+            
+        }
+        return $dom;
+    }
 	private function parsePage(DomDocument $dom)
 	{
+
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
