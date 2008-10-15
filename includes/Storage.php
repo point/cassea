@@ -46,7 +46,7 @@ interface StorageEngine
 }
 
 // {{{ StorageException
-class StorageException
+class StorageException extends Exception
 {
 	function __construct($message)
 	{
@@ -60,7 +60,6 @@ class StorageException
  */
 class FSStorage implements StorageEngine, ArrayAccess
 {
-	const STORAGE_PATH = "/cache/storage";
 	private $storage_name = null,
 			$vars = array(),
 			$ttl = null,
@@ -72,7 +71,11 @@ class FSStorage implements StorageEngine, ArrayAccess
 		self::cleanup();
 		if(empty($storage_name))
 			throw(new StorageException('storage name is empty'));
-		$this->storage_name = $storage_name;
+        $this->storage_name = $storage_name;
+        
+        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH')))
+            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH'));
+
 		$this->real_storage_path = Config::get('ROOT_DIR').self::STORAGE_PATH."/".md5($storage_name);
 		
 		if(!is_dir($this->real_storage_path))
@@ -86,11 +89,11 @@ class FSStorage implements StorageEngine, ArrayAccess
 
 		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
 
-		foreach(glob($this->real_storage_path."/*.cache") as $f)
-			$this->vars[basename($f,".cache")] = unserialize($f);
-    }// }}}
-
-    // {{{ is_set
+        foreach(glob($this->real_storage_path."/*.cache") as $f)
+        {
+            $this->vars[basename($f,".cache")] = file_get_contents($f);
+        }
+	}
 	function is_set($var)
 	{
 		return isset($this->vars[md5($var)]);
@@ -112,18 +115,14 @@ class FSStorage implements StorageEngine, ArrayAccess
 		$m = md5($var);
 		if(isset($this->vars[$m]))
 			unset($this->vars[$m]);
-		unlink($this->real_storage_path."/".$m.".cache");
-    }// }}}
-
-    // {{{get
-    /**
-     *
-     * @return null
-     */
+        if(file_exists($this->real_storage_path."/".$m.".cache"))
+		    unlink($this->real_storage_path."/".$m.".cache");
+	}
 	function get($var)
-	{
+    {
+        $var = md5($var);
 		if(isset($this->vars[$var]))
-			return $this->vars[$var];
+			return unserialize($this->vars[$var]);
 		return false;
     }// }}}
 
@@ -177,24 +176,24 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
 		$this->ttl = (int)$ttl;
 
 		$this->memcache = new Memcache;
-		$this->memcache->pconnect('localhost',11211);
-	}// }}}
-
-    // {{{ is_set
+        if($this->memcache->pconnect(Config::get('MEMCACHED_HOST'),Config::get('MEMCACHED_PORT')) === false)
+            throw new StorageException('could not connect to server');
+	}
+	
 	function is_set($var)
-	{
-		$f = $this->memcache->get(md5($this->storage_name.$var));
+    {
+        // @ used due to strage warnings
+		@$f = $this->memcache->get(md5($this->storage_name.$var));
 		if($f === false) return false;
 		return true;
-	}// }}}
-
-    // {{{ set
-    function set($var,$val)
-	{
+	}
+	function set($var,$val)
+    {
+        // @ used due to strage warnings
 		if($this->is_set($var))
-			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
+			@$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
-			$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
+			@$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
 		return $r;
     }// }}}
 

@@ -145,7 +145,7 @@ class Controller
 		if(is_string($this->page_function))
 			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
 		if(!isset($ret))
-			if(isset($this->p1))
+			if(!empty($this->p1))
 				$this->page = $this->p1;
 			else
 				$this->page = 'index';
