@@ -735,10 +735,11 @@ class DB{
      * @param string $query SQL запрос
      * @param int $flags флаги для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT},
      *                      {@link DB::FETCH_NUM  DB::FETCH_NUM }, {@link DB::FETCH_ASSOC  DB::FETCH_ASSOC }, {@link DB::FETCH_BOTH  DB::FETCH_BOTH };
-     * @return mixed массив результатов; true в случает успешного запроса без результатов.
+     * @return mixed массив результатов; affected_rows  в случает успешного запроса без результатов.
      */
     static public function query( $query, $flags = null){
-        if ( self::$mysqli->real_query($query) ){
+        $r = self::$mysqli->real_query($query);
+        if ( $r === true ){
             // process flags
             $data_process ='mysqli_store_result';
             if ($flags & DB::USE_RESULT) $data_process ='mysqli_use_result';
@@ -748,13 +749,13 @@ class DB{
             else if ($flags & DB::FETCH_BOTH ) $resulttype = MYSQLI_BOTH;
 
             $res =  call_user_func($data_process, self::$mysqli);
-            if (is_object($res)){
+           if (is_object($res)){
                 $data = array();
                 while( ($d = $res->fetch_array($resulttype)) !== null){
                         $data[] = $d;
                 }
             }
-            else $data = $res;
+            else $data = self::$mysqli->affected_rows;
 
             self::clearResultset($res);
 

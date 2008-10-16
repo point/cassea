@@ -31,6 +31,7 @@
 //
 // $Id$
 //
+WidgetLoader::load("WControl");
 //{{{ WStyle
 class WStyle extends WObject
 {

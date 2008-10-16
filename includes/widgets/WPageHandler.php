@@ -69,13 +69,16 @@ class WPageHandler extends WObject
 		if(isset($params['goto']))
 			$this->setGotoURL((string)$params['goto']);
 		
-        if(isset($params['object_from']) && isset($params['method']))
+        elseif(isset($params['object_from']) && isset($params['method']))
         {
             $this->setObjectFrom((string)$params['object_from']);
             $this->setMethod((string)$params['method']);
         }
-		$this->handler_object = new PageHandlerObject();
-		$this->handler_object->parseParams($params);
+        else
+        {
+		    $this->handler_object = new PageHandlerObject();
+            $this->handler_object->parseParams($params);
+        }
     }
     // }}}
     
@@ -121,11 +124,14 @@ class WPageHandler extends WObject
     {
 		if(isset($this->goto_url))
 			return $this->getGotoURL();
-        if(isset($this->object_from_id))
+        elseif(isset($this->object_from_id))
+        {
             if(($dh = DataUpdaterPool::getById($this->getObjectFrom())) != null &&
                 ($o = $dh->getObject()) != null && method_exists($o,$this->getMethod()))
                 return  $o->{$this->getMethod()}();
-		return $this->handler_object->handle(null);
+        }
+        else
+	    	return $this->handler_object->handle(null);
     }
     // }}}
     // {{{ setObjectFrom

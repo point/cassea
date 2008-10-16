@@ -45,7 +45,8 @@ require("DataPools.php");
 require("ResultSet.php");
 require("WidgetsAdjacencyList.php");
 require("DB.php");
-require("Session.php");
+require("user/Session.php");
+require("user/User.php");
 require("POSTChecker.php");
 
 class ControllerException extends Exception
@@ -113,7 +114,8 @@ class Controller
 		$this->adjacency_list = new WidgetAdjacencyList();
 
         DB::init(null, 'root', '','intvideo'); 
-		Session::getInstance();
+		Session::init();
+        User::get();
 
 		POSTErrors::restoreErrorList();
 
@@ -276,19 +278,19 @@ class Controller
         }
 
         // include
-		$node = $dom->getElementsByTagName("include");
+        $node = $dom->getElementsByTagName("include");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
         {
 			$el = $node->item(0);
-            if(($src = $el->getAttribute('src')) == "") continue;
+            if($el && ($src = $el->getAttribute('src')) == "") continue;
             try{$src = $this->pagePath($src);}
-            catch(ControllerException $e){ throw new ControllerException('include page file not found');}
+            catch(ControllerException $e){ throw new ControllerException('include page file '.$src.' not found');}
             $d = new DomDocument;
             $d->load($src);
             $imported_node = $dom->importNode($d->firstChild,true);
             if($imported_node->hasChildNodes())
-                for($node_list = $imported_node->childNodes,$i = 0, $c = $node_list->length; $i < $c;$i++)
-                    $el->parentNode->insertBefore($node_list->item($i)->cloneNode(true),$el);
+                for($node_list = $imported_node->childNodes,$j = 0, $c2 = $node_list->length; $j < $c2;$j++)
+                    $el->parentNode->insertBefore($node_list->item($j)->cloneNode(true),$el);
             
             $el->parentNode->removeChild($el);
             
@@ -297,7 +299,6 @@ class Controller
     }
 	private function parsePage(DomDocument $dom)
 	{
-
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
@@ -705,7 +706,6 @@ class Controller
 		}
 		DataUpdaterPool::callHandlers();
 		DataUpdaterPool::callFinilze();
-
         $ret = $this->pagehandler->handle();
 
         /*var_dump($ret);
