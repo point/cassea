@@ -172,22 +172,25 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
 
 		$this->storage_name = $storage_name;
 		
-		if (!isset($ttl)) $ttl = 86400; //1day
-		$this->ttl = (int)$ttl;
+        if (!isset($ttl)) $ttl = 86400; //1day
+        $this->ttl = min((int)$ttl, 2592000 );
 
 		$this->memcache = new Memcache;
         if($this->memcache->pconnect(Config::get('MEMCACHED_HOST'),Config::get('MEMCACHED_PORT')) === false)
             throw new StorageException('could not connect to server');
-	}
-	
+	}// }}}
+
+    // {{{ is_set
 	function is_set($var)
     {
         // @ used due to strage warnings
 		@$f = $this->memcache->get(md5($this->storage_name.$var));
 		if($f === false) return false;
 		return true;
-	}
-	function set($var,$val)
+	}// }}}
+
+    // {{{ set
+    function set($var,$val)
     {
         // @ used due to strage warnings
 		if($this->is_set($var))

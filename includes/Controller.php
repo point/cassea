@@ -706,7 +706,8 @@ class Controller
 		}
 		DataUpdaterPool::callHandlers();
 		DataUpdaterPool::callFinilze();
-        $ret = $this->pagehandler->handle();
+        if(isset($this->pagehandler))
+            $ret = $this->pagehandler->handle();
 
         /*var_dump($ret);
         die("BBBBBBBBB");*/

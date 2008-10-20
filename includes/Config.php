@@ -39,6 +39,17 @@ class Config
 
     const STORAGE_PATH = "/cache/storage";
 
+    const SESSION_ENGINE='memcache';
+    //const SESSION_ENGINE='database';
+
+    const SESSION_LENGTH=3600; //length of server-side session
+    const SESSION_COOKIE_LENGTH = 315360000; // 10 years
+
+    /*** User ***/ 
+    //time to cache some user profile data
+    const USER_PROXY_TIME = 86400; // 0 - disabled; 
+    const USER_SECRET = 'It may or may not be worthwhile, but it still has to be done.';
+	
 	const XMLPAGES_PATH = "/pages";
 
 	const IMAGES_PATH = "/usr/local/www/devel/web/images";
