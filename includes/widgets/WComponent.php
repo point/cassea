@@ -675,15 +675,16 @@ EOD;
 			$this->setTitle($this->getTooltip());
 		}
 
-		$this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".$this->getTitle()."\" ":"","id"=>$this->getHTMLId()));
+        $this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".Language::encodePair($this->getTitle())."\" ":"",
+            "id"=>$this->getHTMLId()));
 		if(!empty($this->style_class)) 
 			$this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
 		if(isset($this->style) && !$this->style->isEmpty()) 
 			$this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
 		if(!empty($this->javascript)) 
-			$this->tpl->setParamsArray(array("javascript"=>$this->javascript->generateJS(),
-				"javascript_before"=>$this->javascript->getBeforeWidget(),
-				"javascript_after"=>$this->javascript->getAfterWidget()));
+			$this->tpl->setParamsArray(array("javascript"=>Language::encodePair($this->javascript->generateJS()),
+				"javascript_before"=>Language::encodePair($this->javascript->getBeforeWidget()),
+				"javascript_after"=>Language::encodePair($this->javascript->getAfterWidget())));
     }
 	// }}}
     

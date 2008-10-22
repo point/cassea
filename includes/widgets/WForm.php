@@ -272,7 +272,7 @@ class WForm extends WContainer
 			"method"=>$this->getMethod(),
 			"form_content" =>$this->items->generateAllHTML(),
 			"vc_rules"=>$this->vc_rules,
-			"vc_messages"=>$this->vc_messages,
+			"vc_messages"=>Language::encodePair($this->vc_messages),
 			"signature"=>$this->form_signature,
 			"signature_name"=>self::signature_name		
 		));

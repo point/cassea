@@ -122,7 +122,7 @@ class WTabs extends WContainer
 			if($this->tabs->getItem($i)->getHref())
 				$hrefs[$i] = $this->tabs->getItem($i)->getHref();
 			else $hrefs[$i] = "#".$this->tabs->getItem($i)->getId();
-			$titles[$i] = $this->tabs->getItem($i)->getTabTitle();
+			$titles[$i] = Language::encodePair($this->tabs->getItem($i)->getTabTitle());
 			if($this->tabs->getItem($i)->getSelected())
 				$selected = $i;
 		}

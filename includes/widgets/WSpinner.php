@@ -243,7 +243,7 @@ class WSpinner extends WEdit
 			"step"=>$this->getStep(),
 			"min"=>$this->getMin(),
 			"max"=>$this->getMax(),
-			"text"=>$this->getText(),
+			"text"=>Language::encodePair($this->getText()),
 		));
 		parent::assignVars();
     }

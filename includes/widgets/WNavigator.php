@@ -162,7 +162,7 @@ class WNavigator extends WComponent
 			return;
 		$this->text = $text;
 		$controller = Controller::getInstance();
-		$controller->getNavigator()->setTitle(requestURI(1),$this->text);
+		$controller->getNavigator()->setTitle(requestURI(1),Language::encodePair($this->text));
 
     }
     // }}}

@@ -30,3 +30,38 @@ CREATE TABLE IF NOT EXISTS `user_session` (
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Table structure for table `langs`
+--
+
+CREATE TABLE IF NOT EXISTS `langs` (
+  `lang_id` int(11) NOT NULL,
+  `package` varchar(255) NOT NULL,
+  `k` varchar(255) NOT NULL,
+  `v` text,
+  PRIMARY KEY  (`lang_id`,`package`,`k`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `language`
+--
+
+CREATE TABLE IF NOT EXISTS `language` (
+  `id` int(11) NOT NULL,
+  `short_name` varchar(255) default NULL,
+  `name` varchar(255) default NULL,
+  `default` enum('1','0') NOT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `langs`
+--
+ALTER TABLE `langs`
+  ADD CONSTRAINT `r_langs_to_language` FOREIGN KEY (`lang_id`) REFERENCES `language` (`id`) ON DELETE CASCADE;

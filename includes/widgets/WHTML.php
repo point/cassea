@@ -198,13 +198,17 @@ class WHTML extends WComponent
     function setSrc($src)
     {
 		if(!isset($src) || !is_scalar($src)) 
-			return ;
+            return ;
+        if($src{0} == "/")
+            $src = substr($src,1);
 		if(file_exists($src))
 			$this->src = $src;
-		elseif(file_exists(Config::get("ROOT_DIR").$src))
-			$this->src = Config::get("ROOT_DIR").$src;
-		elseif(file_exists(Config::get("HTML_DIR").$src))
-			$this->src = Config::get("HTML_DIR").$src;
+		/*elseif(file_exists(Config::get("ROOT_DIR").$src))
+            $this->src = Config::get("ROOT_DIR").$src;*/
+		elseif(file_exists(Config::get("HTML_DIR").'/'.$src))
+            $this->src = Config::get("HTML_DIR").'/'.$src;
+        elseif(file_exists(Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src))
+            $this->src = Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src;
     }
     // }}}
     

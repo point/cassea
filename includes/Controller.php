@@ -45,6 +45,7 @@ require("DataPools.php");
 require("ResultSet.php");
 require("WidgetsAdjacencyList.php");
 require("DB.php");
+require("Language.php");
 require("user/Session.php");
 require("user/User.php");
 require("POSTChecker.php");
@@ -108,12 +109,14 @@ class Controller
 
 		$this->get = new HTTPParamHolder($_GET,0);
 		$this->post = new HTTPParamHolder($_POST);
-		$this->header = Header::get();
+        DB::init(null, 'intvideo', 'intvideo','intvideo'); 
+        $this->determineLanguage();
+        
+        $this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetAdjacencyList();
 
-        DB::init(null, 'root', '','intvideo'); 
 		Session::init();
         User::get();
 
@@ -198,6 +201,32 @@ class Controller
 
 			$this->p2 = explode("/",$this->p2);
 		}
+    }
+    private final function determineLanguage()
+    {
+        $this->get->bindFilter('__lang',Filter::STRING_QUOTE_ENCODE);
+        $language_final = null;
+        if(!empty($this->get->__lang))
+            Language::$current_language = Language::getLangIdByName(substr($this->get->__lang,0,2));
+        elseif(is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+        {
+            $languages = strtolower(Filter::filter($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
+
+            // $languages = ' fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
+            // need to remove spaces from strings to avoid error
+            $languages = str_replace( ' ', '', $languages );
+            $languages = explode( ",", $languages );
+            $parsed_short_langs = array();
+            $parsed_long_langs = array();
+            foreach ( $languages as $language_list )
+                $parsed_long_langs[] = substr( $language_list, 0, strcspn( $language_list, ';' )) and
+                $parsed_short_langs[] = substr( $language_list, 0, 2 );
+            
+            Language::$current_language = Language::getEnableLang($parsed_short_langs);
+        }
+        else
+            Language::$current_language = Language::getDefault();
+        Language::getDefaultLangName();
     }
     private function pagePath($src)
     {

@@ -144,7 +144,7 @@ class WListItem extends WComponent
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			"text"=>$this->getText()
+			"text"=>Language::encodePair($this->getText())
 		));
 		parent::assignVars();
     }

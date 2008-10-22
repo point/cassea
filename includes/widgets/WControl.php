@@ -415,7 +415,7 @@ abstract class WControl extends WComponent
 			"name"=>(isset($this->additional_id))?
 				($this->name.'['.$this->additional_id.']'.($this->name_w_braces?"[]":"")):
 				($this->name.($this->name_w_braces?"[]":"")),
-			"value"=>$this->value,
+			"value"=>Language::encodePair($this->value),
 			//"alt"=>(isset($this->alt))?('alt="'.$this->alt.'"'):'',
 			"readonly"=>($this->readonly)?('readonly="'.$this->readonly.'"'):'',
 			"disabled"=>($this->disabled)?('disabled="'.$this->disabled.'"'):''

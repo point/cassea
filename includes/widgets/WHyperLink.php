@@ -178,7 +178,7 @@ class WHyperLink extends WContainer
 			"rev"=> (!empty($this->rev))?('rev="'.$this->rev.'"'):'',
 			"rel" => (!empty($this->rel))?('rel="'.$this->rel.'"'):'',
 			"target"=>(!empty($this->target))?('target="'.$this->target.'"'):'',
-			"text"=>$this->items->generateAllHTML()
+			"text"=>Language::encodePair($this->items->generateAllHTML())
 		));
 		parent::assignVars();
     }

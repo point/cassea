@@ -181,7 +181,7 @@ class WCheckbox extends WControl
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			"text"=>$this->getText(),
+			"text"=>Language::encodePair($this->getText()),
 			"checked"=>($this->getChecked())?'checked="1"':''
 		));
 		parent::assignVars();

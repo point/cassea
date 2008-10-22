@@ -131,6 +131,7 @@
 				<WButton value="submit"/>
 			</WForm>
 			<include src="qwe.xml"/>
+			<WText>LANGUAGE TEST {common.TEST_LANG} LANGUAGE TEST</WText>
 			<block id="subst_me">
 				<WText>BASE SUBST_ME</WText>
 			</block>

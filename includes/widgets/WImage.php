@@ -342,7 +342,7 @@ EOD;
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			"alt"=> ($this->getAlt())?'alt="'.$this->getAlt().'"':'',
+			"alt"=> ($this->getAlt())?'alt="'.Language::encodePair($this->getAlt()).'"':'',
 			"width" => ($this->getWidth())?' width="'.$this->getWidth().'"':'',
 			"height" => ($this->getHeight())?' height="'.$this->getHeight().'"':'',
 			"src" => $this->getSrc(),

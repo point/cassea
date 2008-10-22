@@ -180,7 +180,7 @@ class WRadio extends WControl
     {
 		$this->tpl->setParamsArray(array(
 			"checked"=>$this->getChecked()?"checked=\"1\"":"",
-			"label"=>!empty($this->text)?"<label for=\"".$this->getId()."\">&nbsp;".$this->getText()."</label>":""
+			"label"=>!empty($this->text)?"<label for=\"".$this->getId()."\">&nbsp;".Language::encodePair($this->getText())."</label>":""
 		));
 		parent::assignVars();
     }

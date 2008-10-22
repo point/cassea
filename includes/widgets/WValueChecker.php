@@ -170,7 +170,7 @@ class WValueChecker extends WObject
 			$t1 = "'".$w."': {\n";
 			foreach($this->rules as $i=>$r)
 				if($this->messages[$i] !== null)
-					$ta2[] = $r.": \"".$this->messages[$i]."\"";
+					$ta2[] = $r.": \"".Language::encodePair($this->messages[$i])."\"";
 			$t1 .= implode(",\n",$ta2)."\n}";
 			if(empty($ta2)) continue;
 			unset($ta2);

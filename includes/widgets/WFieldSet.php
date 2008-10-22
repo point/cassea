@@ -148,7 +148,7 @@ class WFieldSet extends WContainer
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			"legend"=>$this->getLegend(),
+			"legend"=>Language::encodePair($this->getLegend()),
 			"fieldset_content"=>$this->items->generateAllHTML()
 		));
 		parent::assignVars();

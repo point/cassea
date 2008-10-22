@@ -258,7 +258,7 @@ class WText extends WComponent
     {
 		if($this->is_h)
 			$this->tpl->setParamsArray(array("heading"=>$this->heading));
-		$this->tpl->setParamsArray(array('value'=>$this->text));
+		$this->tpl->setParamsArray(array('value'=>Language::encodePair($this->text)));
 		parent::assignVars();
     }
 	// }}}	
