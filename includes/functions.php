@@ -72,9 +72,19 @@ function getImgSizeNoCache($path = null)
 
 	$ret = array();
 	try{
-		$i = new Imagick($full_path);
-		$ret[0] = $ret['width'] = $i->getImageWidth();
-		$ret[1] = $ret['height'] = $i->getImageHeight();
+        if(class_exists("Imagick"))
+        {
+		    $i = new Imagick($full_path);
+		    $ret[0] = $ret['width'] = $i->getImageWidth();
+		    $ret[1] = $ret['height'] = $i->getImageHeight();
+        }
+        elseif(function_exists('getimagesize'))
+        {
+            list($width, $height) = getimagesize($full_path);
+            $ret[0] = $ret['width'] = $width;
+            $ret[1] = $ret['height'] = $height;
+        }
+        else return false;
 	}catch(Exception $e){ return false;}
 	return $ret;
 }
@@ -82,10 +92,12 @@ function getImgSizeCache($path = null)
 {
 
 	$v = Storage::create("images_size");
-	if(($ret = $v->get($path)) !== false)
-		return $ret;
+	if(($ret = $v->get($path)) !== false && ($stat =stat(Config::get("IMAGES_PATH")."/".$path)) !== false && $stat['mtime'] <= $ret['mtime'])
+        return $ret;
 	if(($ret = getImgSizeNoCache($path)) !== false)
-	{
+    {
+        if(($stat = stat(Config::get("IMAGES_PATH")."/".$path)) !== false)
+            $ret['mtime'] = $stat['mtime'];
 		$v->set($path,$ret);
 		return $ret;
 	}

@@ -29,7 +29,9 @@ class Language{
      * @param int $lang_id id языка
      * @return void
      */
-    public static function getLangConst($key, $package='common', $lang_id = 0){
+	public static function getLangConst($key, $package='common', $lang_id = -1){
+		if($lang_id == -1)
+			$lang_id = self::$current_language;
         if (empty(self::$__cacheLang[$lang_id][$package][$key])){
             //$r = DB::getStmt('select `v` from '.self::LANG_CONST_TABLE.' where `lang_id`='.$lang_id.' AND  `package`="'.$package.'" AND `k`="'.$key.'"');
             $r = DB::getStmt('select `v` from '.self::LANG_CONST_TABLE.' where `lang_id`=? AND  `package`=? AND `k`=?','iss')->execute(array($lang_id,$package,$key));

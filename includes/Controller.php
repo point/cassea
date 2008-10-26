@@ -97,7 +97,8 @@ class Controller
 			$adjacency_list = null,
 			$form_signatures = array(),
 			$checker_rules = array(),
-            $pagehandler = null
+            $pagehandler = null,
+            $ie_files = array() //included and extending files
 			;
 
 
@@ -159,7 +160,7 @@ class Controller
 
 
 		if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml"))
-			throw new ControllerException('page file not found');
+			throw new ControllerException('page file '.$this->page.'.xml not found');
 
 		$this->navigator->addStep($this->page);
 
@@ -235,11 +236,11 @@ class Controller
         $src = str_replace('.xml','',$src);
         if($src{0} == "/") 
             if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml'))
-                throw new ControllerException('page file not found');
+                throw new ControllerException('page file '.$src.'.xml not found');
             else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml';
         else
             if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml'))
-                throw new ControllerException('page file not found');
+                throw new ControllerException('page file '.$src.'.xml not found');
             else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml';
         return $src;
     }
@@ -252,11 +253,12 @@ class Controller
         while(($e_src = $t_dom->firstChild->getAttribute('extends')) != "" && !in_array($e_src,$included_pages))
         {
             $t_dom = new DomDocument;
-            try { $t_dom->load($this->pagePath($e_src)); }
+            try { $t_dom->load(($pp = $this->pagePath($e_src))); }
             catch(ControllerException $e) { throw new ControllerException('extends page not found');}
             //$included_pages[] = $e_src;
             array_unshift($included_pages,$e_src);
             array_unshift($adj_list,$t_dom);
+            $this->ie_files[] = $pp;
         }
         // searching for <parent> blocks
         for($i = 1, $c = count($adj_list);$i < $c;$i++)
@@ -322,6 +324,7 @@ class Controller
                     $el->parentNode->insertBefore($node_list->item($j)->cloneNode(true),$el);
             
             $el->parentNode->removeChild($el);
+            $this->ie_files[] = $src;
             
         }
         return $dom;
@@ -592,7 +595,7 @@ class Controller
 	}
 	function makeURL($page = null, $p2 = null,$controller_name = null, $get = null)
 	{
-		if(!isset($controller_name) || !is_scalar($controller_name))
+		if((!isset($controller_name) || !is_scalar($controller_name)) && $this->controller_name != "index")
 			$controller_name = $this->controller_name;
 		if(!isset($page) || !is_scalar($page))
 			$page = $this->p1;
@@ -673,7 +676,7 @@ class Controller
 			$n_get2[] = $k."=".$v;
 		foreach($n_p2 as $k=>$v)
 			if(empty($v)) unset($n_p2[$k]);
-		return 	Filter::filter("http://".$_SERVER['SERVER_NAME']."/".$controller_name."/".
+		return 	Filter::filter("http://".$_SERVER['SERVER_NAME'].((!empty($controller_name))?"/".$controller_name:"")."/".
 			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
 			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
 
@@ -698,7 +701,10 @@ class Controller
 	{
 		if(!isset($mtime)) return true;
 		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml";
-		return pageChanged($file,$mtime); 
+        if(pageChanged($file,$mtime)) return true;
+        foreach($this->ie_files as $f)
+            if(pageChanged($f,$mtime)) return true;
+        return false;
 	}
 	private function handlePOST()
 	{
@@ -709,14 +715,14 @@ class Controller
         $this->restorePageHandler();
 
 		if(!in_array($this->post->__sig,$this->form_signatures))
-			$this->gotoStep_1();
+			$this->gotoStep_0();
 
 		POSTErrors::flushErrors();
 		POSTChecker::checkByRules($this->post,$this->checker_rules);
 		if(POSTErrors::hasErrors())
 		{
 			POSTErrors::saveErrorList();
-			$this->gotoStep_1();
+			$this->gotoStep_0();
 		}
 
 		DataUpdaterPool::restorePool();
@@ -731,7 +737,7 @@ class Controller
 		if(POSTErrors::hasErrors())
 		{
 			POSTErrors::saveErrorList();
-			$this->gotoStep_1();
+			$this->gotoStep_0();
 		}
 		DataUpdaterPool::callHandlers();
 		DataUpdaterPool::callFinilze();
@@ -745,11 +751,11 @@ class Controller
         elseif(is_numeric($ret))
             $this->gotoLocation($this->navigator->getStepURL($ret));
 
-		$this->gotoStep_1();
+		$this->gotoStep_0();
 	}
-	private function gotoStep_1()
+	private function gotoStep_0()
 	{
-		$s = $this->navigator->getStep(-1);
+		$s = $this->navigator->getStep(0);
 		if(isset($s,$s['url']))
 			header("Location: ".$s['url']);
 		exit();

@@ -243,7 +243,7 @@ class Storage
 	}
 	static function createWithSession($storage_name,$ttl = null)
 	{
-		return self::create($storage_name.Session::getInstance()->getId(),$ttl);
+		return self::create($storage_name.Session::getId(),$ttl);
 	}
 }// }}}
 ?>

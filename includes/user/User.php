@@ -37,6 +37,7 @@ class User
     const GUEST = -1;
 
     const TABLE = 'user';
+    const TABLE_BAN = 'user_ban';
 
     //const REGEXP_LOGIN ='#^[a-zA-Z0-9_\\-.]{5,20}$#';
     const REGEXP_LOGIN ='/^[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+$/is'; 
@@ -45,6 +46,8 @@ class User
     const ERROR_USER_NOT_EXIST = 1;
     const ERROR_PASSWORD_INCORRECT = 2;
     const ERROR_USER_BANNED = 3;
+    const ERROR_USER_NOTACTIVE = 4;
+    const ERROR_USER_DELETED = 5;
 
 /**
     * @var      int
@@ -153,10 +156,13 @@ class User
         if (!preg_match(User::REGEXP_LOGIN, $login) && !preg_match(User::REGEXP_PASSWORD, $password))
             return false;
 
-        $r = DB::query('select id, login, email, password, sold from '.User::TABLE.' where login="'.$login.'"');
+        $r = DB::query('select id, login, email, password, sold, state from '.User::TABLE.' where login="'.$login.'"');
         if (count($r)!= 1 ) return User::ERROR_USER_NOT_EXIST;
         $r = $r[0];
 
+        if ($r['state'] == 'ban') return User::ERROR_USER_BANNED;
+        if ($r['state'] == 'notactive') return User::ERROR_USER_NOTACTIVE;
+        if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
 
         $needed_password = $password;//md5(Config::USER_SECRET.$password.$r['sold'] );
         if( $r['password'] != $needed_password ) return User::ERROR_PASSWORD_INCORRECT;

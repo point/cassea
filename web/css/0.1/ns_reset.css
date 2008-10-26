@@ -24,9 +24,10 @@ font,u,s,center,dir,menu,strike,xmp								/* depricated 	*/
 	text-decoration: none;
 	list-style-type: none;
 }
-applet,iframe,embed {
+/*applet,iframe,embed {
 	display: none;								/* remove depricated, use object instead */
 }
+*/
 hr,img,object {
 	border: 0;
 }

@@ -232,7 +232,7 @@ class WForm extends WContainer
 			foreach($this->inner_valuecheckers as $k=>$v)
 				if(($v = $controller->getValueChecker($k)) !== null)
 				{
-					$this->vc_rules .= $v->getRules();
+					$this->vc_rules .= $v->getRules().", ";
 					$this->vc_messages .= $v->getMessages();
 				}
 

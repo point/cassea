@@ -99,7 +99,6 @@ class WHTML extends WComponent
 				$this->page_text = 
 					$this->getSrc()?file_get_contents($this->getSrc()):
 						($this->getText()?$this->getText():null);
-				$storage->set($cn."_".$page."_".$this->getId(),array("text"=>$this->page_text,"cache_time"=>time()));
 			}
 			else
 			{
@@ -108,29 +107,19 @@ class WHTML extends WComponent
 				$changed = 0;
 				if($this->getSrc())
 				{
-					if(pageChanged($this->getSrc(),$p['cache_time']))
-						$changed = 1;
+                    if(pageChanged($this->getSrc(),$p['cache_time']) ||
+                        Controller::getInstance()->XMLPageChanged($p['cache_time']))
+                    {
+                        $this->page_text = $this->getSrc()?file_get_contents($this->getSrc()):"";
+				        $storage->set($cn."_".$page."_".$this->getId(),array("text"=>$this->page_text,"cache_time"=>time()));
+                    }
+                    else
+                        $this->page_text = $p['text'];
 				}
-				elseif($this->getText())
-				{
-					if(Controller::getInstance()->XMLPageChanged($p['cache_time']))
-						$changed = 1;
-				}
-				if($changed)
-				{
-					$this->page_text = 
-						$this->getSrc()?file_get_contents($this->getSrc()):
-						($this->getText()?$this->getText():null);
-					$storage->set($cn."_".$page."_".$this->getId(),array("text"=>$this->page_text,"cache_time"=>time()));
-				}
-				else 
-					$this->page_text = $p['text'];
-			}
-		}
-		else
-			$this->page_text = 
-					$this->getSrc()?file_get_contents($this->getSrc()):
-						($this->getText()?$this->getText():null);
+                else
+                    $this->page_text = $this->getText();
+            }
+        }
 		parent::buildComplete();
 	}    
 	// }}}
@@ -164,11 +153,12 @@ class WHTML extends WComponent
 		if(!isset($text) || !is_scalar($text))
 			return;
 
-		$storage = 	Storage::create("WHTML cache");
+		/*$storage = 	Storage::create("WHTML cache");
 		$page = Controller::getInstance()->getPage();
 		$cn = Controller::getInstance()->getControllerName();
 		if($storage->is_set($cn."_".$page."_".$this->getId())
-			&& ($a = $storage->get($cn."_".$page."_".$this->getId())) && $a['text'] != "") return;
+            && ($a = $storage->get($cn."_".$page."_".$this->getId())) && $a['text'] != "") return;
+        */
 		$this->text = "".$text;
     }
     // }}}

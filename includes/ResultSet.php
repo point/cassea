@@ -109,7 +109,7 @@ class ResultSet
 	}
 	function __call($name,$arguments)
 	{
-		if(!isset($arguments[0])) return;
+		if(!isset($arguments[0])) return $this;
 		if($name === 'f') return $this->f($arguments[0]);
 		return $this->set($name,$arguments[0]);
 	}

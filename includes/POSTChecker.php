@@ -42,9 +42,10 @@ class POSTChecker
 			if(isset($cr['filter']))
 				$post->bindFilter($name,$cr['filter']);
 			$p_val = $post->{$name};
+            if($p_val === "") $p_val = null;
 
 			foreach($cr as $rule=>$rule_value)
-			{
+            {
 				if($rule === 'required' && $rule_value === 'true')
 					if(!isset($p_val) ||
 						(is_string($p_val) && ($p_val === null || $p_val === "")))
@@ -56,8 +57,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && ($p_val2[0] === null || $p_val2[0] === ""))
 								POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
 
-				if($rule === 'minlength' && is_numeric($rule_value))
-					if(!isset($p_val) || is_string($p_val) && strlen($p_val) < 0+$rule_value)
+				if($rule === 'minlength' && is_numeric($rule_value) && isset($p_val))
+					if(is_string($p_val) && strlen($p_val) < 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MINLENGTH,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -66,8 +67,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen($p_val2[0]) < 0+$rule_value)
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MINLENGTH,$rule_value));
 
-				if($rule === 'maxlength' && is_numeric($rule_value))
-					if(!isset($p_val) || is_string($p_val) && strlen($p_val) > 0+$rule_value)
+				if($rule === 'maxlength' && is_numeric($rule_value) && isset($p_val))
+					if(is_string($p_val) && strlen($p_val) > 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -76,11 +77,11 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen($p_val2[0]) > 0+$rule_value)
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
 
-				if($rule === 'rangelength' && !empty($rule_value))
+				if($rule === 'rangelength' && !empty($rule_value) && isset($p_val))
 					if(preg_match("/\[\s*(\d+)\s*,\s*(\d+)\s*\]/",$rule_value,$m))
 					{
 						$range_from = $m[1];$range_to = $m[2];
-						if(!isset($p_val) || is_string($p_val) && (strlen($p_val) > 0+$rule_to || strlen($p_val) < 0+$range_from))
+						if(is_string($p_val) && (strlen($p_val) > 0+$rule_to || strlen($p_val) < 0+$range_from))
 							POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
@@ -90,8 +91,8 @@ class POSTChecker
 										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
 					}
 
-				if($rule === 'min'  && is_numeric($rule_value))
-					if(!isset($p_val) || is_numeric($p_val) && $p_val < 0+$rule_value)
+				if($rule === 'min'  && is_numeric($rule_value) && isset($p_val))
+					if(is_numeric($p_val) && $p_val < 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MIN,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -101,8 +102,8 @@ class POSTChecker
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MIN,$rule_value));
 
 				
-				if($rule === 'max' && is_numeric($rule_value))
-					if(!isset($p_val) || is_numeric($p_val) && $p_val > 0+$rule_value)
+				if($rule === 'max' && is_numeric($rule_value) && isset($p_val))
+					if(is_numeric($p_val) && $p_val > 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MAX,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -112,12 +113,14 @@ class POSTChecker
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAX,$rule_value));
 
 
-				if($rule === 'range' && !empty($rule_value))
+				if($rule === 'range' && !empty($rule_value) && isset($p_val))
 					if(preg_match("/\[\s*(\d+)\s*,\s*(\d+)\s*\]/",$rule_value,$m))
-					{
+                    {
 						$range_from = $m[1];$range_to = $m[2];
-						if(!isset($p_val) || is_numeric($p_val) && ($p_val > 0+$rule_to || $p_val < 0+$range_from))
-							POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+						if( is_numeric($p_val) && ($p_val > 0+$range_to || $p_val < 0+$range_from))
+                        {
+                            POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+                        }
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
 								if(is_numeric($p_val2) && ($p_val2 > 0+$range_to || $p_val2 < 0+$range_from) || !isset($p_val2))
@@ -125,9 +128,10 @@ class POSTChecker
 								elseif(is_array($p_val2) && count($p_val2) == 1 && 
 									is_numeric($p_val2[0]) && ($p_val2[0] > 0+$rule_to || $p_val2[0] < 0+$range_from))
 										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
-					}
-				if($rule === 'email' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && !preg_match(self::$email_regexp,$p_val))
+                    }
+
+				if($rule === 'email' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && !preg_match(self::$email_regexp,$p_val))
 						POSTErrors::addError($name,null,ErrorMsg::EMAIL);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -136,8 +140,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$email_regexp,$p_val2[0]))
 								POSTErrors::addError($name,$add_id,ErrorMsg::EMAIL);
 
-				if($rule === 'url' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && !preg_match(self::$url_regexp,$p_val))
+				if($rule === 'url' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && !preg_match(self::$url_regexp,$p_val))
 						POSTErrors::addError($name,null,ErrorMsg::URL);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -146,8 +150,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$url_regexp,$p_val2[0]))
 								POSTErrors::addError($name,$add_id,ErrorMsg::URL);
 					
-				if($rule === 'date' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && strtotime($p_val) === -1)
+				if($rule === 'date' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && strtotime($p_val) === -1)
 						POSTErrors::addError($name,null,ErrorMsg::DATE);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -156,8 +160,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strtotime($p_val2[0]) === -1)
 								POSTErrors::addError($name,$add_id,ErrorMsg::DATE);
 
-				if($rule === 'dateISO' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && !preg_match(self::$date_iso,$p_val))
+				if($rule === 'dateISO' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && !preg_match(self::$date_iso,$p_val))
 						POSTErrors::addError($name,null,ErrorMsg::DATEISO);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -166,8 +170,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$date_iso,$p_val2[0]))
 								POSTErrors::addError($name,$add_id,ErrorMsg::DATEISO);
 
-				if($rule === 'number' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && !is_numeric(str_replace(",",".",$p_val)))
+				if($rule === 'number' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && !is_numeric(str_replace(",",".",$p_val)))
 						POSTErrors::addError($name,null,ErrorMsg::NUMBER);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -176,8 +180,8 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !is_numeric(str_replace(",",".",$p_val2[0])))
 								POSTErrors::addError($name,$add_id,ErrorMsg::NUMBER);
 
-				if($rule === 'digits' && $rule_value === 'true')
-					if(!isset($p_val) || is_string($p_val) && !preg_match(self::$digits,$p_val))
+				if($rule === 'digits' && $rule_value === 'true' && isset($p_val))
+					if(is_string($p_val) && !preg_match(self::$digits,$p_val))
 						POSTErrors::addError($name,null,ErrorMsg::DIGITS);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)

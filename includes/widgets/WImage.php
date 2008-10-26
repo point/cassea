@@ -268,7 +268,7 @@ class WImage extends WComponent
 		//!!! Beware
 		if(empty($this->src)) {$this->setVisible(0);return;}
 
-		if($this->getMaxWidth() && $this->getMaxHeight())
+		if($this->getMaxWidth() || $this->getMaxHeight())
 		{
 			$a = recalcSizeArray(getImgSize($this->getSrc()),$this->getMaxWidth(),$this->getMaxHeight());
 			$this->setWidth($a['width']);

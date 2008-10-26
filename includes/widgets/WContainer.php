@@ -335,19 +335,40 @@ class MixedCollection extends WidgetCollection
 	function generateHTML($pos = 0)
 	{
 		if(isset($this->str))
-			return $this->str;
+			return Language::encodePair($this->str);
 		return parent::generateHTML($pos);
 	}
 	// }}}
-	// {{{ generateAllHTML
+	// {{{ generateAllHTML 
 	function generateAllHTML()
 	{
 		if(isset($this->str))
-			return $this->str;
+			return Language::encodePair($this->str);
 		return parent::generateAllHTML();
 	}
 	// }}}
 
+	// {{{ isEmpty
+	function isEmpty()
+	{
+        return empty($this->str) || (bool)$this->count;
+	}
+    // }}}
+
+	// {{{ setText
+	function setText($text)
+	{
+        if(!is_scalar($text)) return;
+        $this->str = $text;
+	}
+    // }}}
+    
+	// {{{ getText
+	function getText()
+	{
+        return $this->str;
+	}
+    // }}}
 }
 // }}}
 
