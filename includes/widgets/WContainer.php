@@ -28,18 +28,10 @@
 }}} -*/
 
 WidgetLoader::load("WComponent");
-
-// {{{ interface Container
-interface Container
-{
-	function setChildData(ResultSet $data);
-	function childPreRender();
-	function childPostRender();
-}
-// }}}
+WidgetLoader::load("WControl");
 
 // {{{ WContainer
-class WContainer extends WComponent 
+class WContainer extends WComponent
 {
 	// {{{
 	function __clone()
@@ -79,7 +71,51 @@ class WContainer extends WComponent
 				$this->$v->postRender();
 	}
 	// }}}
-	
+}
+//}}}
+
+
+// {{{ WControlContainer
+class WControlContainer extends WControl
+{
+	// {{{
+	function __clone()
+	{
+		foreach($this->class_vars as $v)
+			if($this->$v instanceof WidgetCollection)
+				$this->$v = clone $this->$v;
+	}
+	// }}}
+	// {{{ preRender
+	function preRender()
+	{
+		$this->childPreRender();
+		parent::preRender();
+	}
+	// }}}
+	// {{{ childPreRender
+	protected function childPreRender()
+	{
+		foreach($this->class_vars as $v)
+			if($this->$v instanceof WidgetCollection)
+				$this->$v->preRender();
+	}
+	// }}}
+	// {{{ postRender
+	function postRender()
+	{
+		$this->childPostRender();
+		parent::postRender();
+	}
+	// }}}
+	// {{{ childPostRender
+	protected function childPostRender()
+	{
+		foreach($this->class_vars as $v)
+			if($this->$v instanceof WidgetCollection)
+				$this->$v->postRender();
+	}
+	// }}}
 }
 //}}}
 
@@ -315,6 +351,7 @@ class WidgetCollection
 			$this->item_objs[$i] = clone $this->item_objs[$i];
 	}
 	// }}}
+    
 }
 // }}}
 
@@ -351,7 +388,7 @@ class MixedCollection extends WidgetCollection
 	// {{{ isEmpty
 	function isEmpty()
 	{
-        return empty($this->str) || (bool)$this->count;
+        return empty($this->str) || (bool)$this->count();
 	}
     // }}}
 

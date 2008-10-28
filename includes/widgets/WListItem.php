@@ -31,16 +31,20 @@
 //
 // $Id$
 //
-WidgetLoader::load("WComponent");
+WidgetLoader::load("WContainer");
 //{{{ WListItem
-class WListItem extends WComponent
+class WListItem extends WContainer
 {
     var
 
         /**
         * @var      string
         */
-		$text = ""
+        $text = null,
+        /**
+        * @var      MixedCollection
+        */
+        $items = null
 	;
     
     // {{{ __construct
@@ -68,7 +72,7 @@ class WListItem extends WComponent
 		if(!empty($elem['text']))
 			$this->setText((string)$elem['text']);
 		elseif(!count($elem))
-			$this->SetText((string)$elem);
+			$this->items = new MixedCollection($this->getId(),$elem);
 
 		$this->addToMemento(array("text"));
 		parent::parseParams($elem);		    	
@@ -143,9 +147,14 @@ class WListItem extends WComponent
     */
     function assignVars()
     {
-		$this->tpl->setParamsArray(array(
-			"text"=>Language::encodePair($this->getText())
-		));
+        if(isset($this->text))
+            $this->tpl->setParamsArray(array(
+                "text"=>Language::encodePair($this->getText())
+            ));
+        else
+            $this->tpl->setParamsArray(array(
+                "text"=>Language::encodePair($this->items->generateAllHTML())
+            ));
 		parent::assignVars();
     }
 	// }}}	
@@ -162,6 +171,7 @@ class WListItem extends WComponent
 		$this->restoreMemento();
 
 		$this->setText($data->get('text'));
+		$this->setText($data->getDef());
 
     	parent::setData($data);
     }

@@ -29,31 +29,26 @@
 
 
 //
-// $Id$
+// $Id: WList.php 45 2008-10-07 14:03:38Z point $
 //
 WidgetLoader::load("WContainer");
-//{{{ WList
-class WList extends WContainer
+//{{{ WSelect
+class WSelect extends WControlContainer
 {
     var
 
         /**
         * @var      boolean
         */
-        $is_ul = 1,
+        $multiple = null,
         /**
-        * @var      boolean
+        * @var      int
         */
-        $is_ol = 0,
+        $size = null,
         /**
         * @var      WidgetCollection&
         */
-		$items = null,
-        /**
-        * @var      boolean
-        */
-		$item_created = 0
-
+		$items = null
 		    ;
     
     // {{{ __construct
@@ -78,18 +73,18 @@ class WList extends WContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-       	if(!empty($elem['ul']))
-			{$this->setIsUl((string)$elem['ul']); $this->setIsOl(0);}
-		if( !empty($elem['ol']))
-			{$this->setIsOl((string)$elem['ol']); $this->setIsUl(0);}
+       	if(!empty($elem['multiple']))
+			$this->setMultiple((string)$elem['multiple']); 
+		if( !empty($elem['size']))
+			$this->setSize((string)$elem['size']); 
 		$this->items = new WidgetCollection($this->getId(),$elem);
 
-		$this->addToMemento(array("is_ul","is_ol"));
+		$this->addToMemento(array("multiple","size"));
 		
 		parent::parseParams($elem);		    	
     }
     // }}}
-    // {{{ buildComplete
+    // {{{ buildComplete 
     /**
     * Method description
     *
@@ -99,46 +94,31 @@ class WList extends WContainer
     */
 	function buildComplete()
 	{
-		if($this->getIsUl())
-			$this->setTemplate("ul");
-		if($this->getIsOl())
-			$this->setTemplate("ol");
-
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 
-		$this->items->filter(array("WListItem","WRoll"));
-		/*if(empty($this->items))
-		{
-			$b1 = new WBuilder(array(
-				"widget_name"=>"WListItem",
-				"id"=>"li".$this->id
-			));
-			$this->items = new WidgetCollection(array($b1->build()));
-			$this->item_created = 1;
-		}*/
-
+		$this->items->filter(array("WSelectOption","WRoll"));
 		parent::buildComplete();
 	}    
 	// }}}
   
-    // {{{ setIsUl 
+    // {{{ setMultiple
     /**
     * Method description
     *
     * More detailed method description
-    * @param    boolean $is_ul    
+    * @param    boolean $multiple
     * @return   void
     */
-    function setIsUl($is_ul)
+    function setMultiple($multiple)
     {
-		if(!isset($is_ul) || !is_scalar($is_ul)) return;
+		if(!isset($multiple) || !is_scalar($multiple)) return;
 
-		$this->is_ul = 0+$is_ul;
+		$this->multiple = 0+$multiple;
     }
     // }}}
     
-    // {{{ getIsUl 
+    // {{{ getMultiple
     /**
     * Method description
     *
@@ -146,42 +126,42 @@ class WList extends WContainer
     * @param    void
     * @return   boolean
     */
-    function getIsUl()
+    function getMultiple()
     {
-		return $this->is_ul;
+		return $this->multiple;
     }
-    // }}}
+    // }}} 
     
-    // {{{ setIsOl 
+    // {{{ setSize
     /**
     * Method description
     *
     * More detailed method description
-    * @param    boolean $is_ol    
+    * @param    int $size
     * @return   void
     */
-    function setIsOl($is_ol)
+    function setSize($size)
     {
-		if(!isset($is_ol) || !is_scalar($is_ol)) return;
+		if(!isset($size) || !is_scalar($size)) return;
 
-		$this->is_ol = 0 + $is_ol;
+		$this->size = 0 + $size;
     }
     // }}}
     
-    // {{{ getIsOl 
+    // {{{ getSize
     /**
     * Method description
     *
     * More detailed method description
     * @param    void
-    * @return   boolean
+    * @return   int
     */
-    function getIsOl()
+    function getSize()
     {
-		return $this->is_ol;
+		return $this->size;
     }
     // }}}
-    // {{{ preRender
+    // {{{ preRender 
     /**
     * Method description
     *
@@ -192,7 +172,6 @@ class WList extends WContainer
     function preRender()
     {
 		$this->setData(DataRetriever::getData($this->getId()));
-		//if(!$this->items->data_setted && $this->item_created) $this->items->clear();
 		parent::preRender();
     }
 	// }}}    
@@ -206,12 +185,33 @@ class WList extends WContainer
     */
     function assignVars()
     {
-			$this->tpl->setParamsArray(array(
-					"li_content"=>$this->items->generateAllHTML()
+        $this->tpl->setParamsArray(array(
+            "size"=>!empty($this->size)?"size=\"".$this->getSize()."\"":"",
+            "multiple"=>!empty($this->multiple)?"multiple=\"".$this->getMultiple()."\"":"",
+			"select_content"=>$this->items->generateAllHTML()
 				));
 		parent::assignVars();
     }
 	// }}}	
+    
+    // {{{ setData 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $data
+    * @return   void
+    */
+    function setData(WidgetResultSet $data)
+	{
+		$this->restoreMemento();
+
+        $this->setSize($data->get('size'));
+        $this->setMultiple($data->get('multiple'));
+
+    	parent::setData($data);
+    }
+    //}}}
 }
 //}}}
 

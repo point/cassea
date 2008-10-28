@@ -38,6 +38,7 @@ class User
 
     const TABLE = 'user';
     const TABLE_BAN = 'user_ban';
+    const TABLE_REGISTRATION = 'user_registration';
 
     //const REGEXP_LOGIN ='#^[a-zA-Z0-9_\\-.]{5,20}$#';
     const REGEXP_LOGIN ='/^[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+$/is'; 

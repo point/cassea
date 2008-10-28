@@ -29,32 +29,28 @@
 
 
 //
-// $Id$
+// $Id: WListItem.php 45 2008-10-07 14:03:38Z point $
 //
-WidgetLoader::load("WContainer");
-//{{{ WList
-class WList extends WContainer
+WidgetLoader::load("WComponent");
+//{{{ WSelectOption
+class WSelectOption extends WComponent
 {
     var
 
         /**
-        * @var      boolean
+        * @var      string
         */
-        $is_ul = 1,
+        $text = "",
         /**
         * @var      boolean
         */
-        $is_ol = 0,
+        $selected = null,
         /**
-        * @var      WidgetCollection&
+        * @var      string
         */
-		$items = null,
-        /**
-        * @var      boolean
-        */
-		$item_created = 0
+        $value = null
 
-		    ;
+	;
     
     // {{{ __construct
     /**
@@ -78,18 +74,112 @@ class WList extends WContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-       	if(!empty($elem['ul']))
-			{$this->setIsUl((string)$elem['ul']); $this->setIsOl(0);}
-		if( !empty($elem['ol']))
-			{$this->setIsOl((string)$elem['ol']); $this->setIsUl(0);}
-		$this->items = new WidgetCollection($this->getId(),$elem);
+		if(!empty($elem['text']))
+            $this->setText((string)$elem['text']);
+		elseif(!count($elem))
+			$this->setText((string)$elem);
+        if(!empty($elem['selected']))
+            $this->setSelected((string)$elem['selected']);
+        if(!empty($elem['value']))
+            $this->setValue((string)$elem['value']);
+        else
+            $this->setValue($this->getText());
 
-		$this->addToMemento(array("is_ul","is_ol"));
-		
+		$this->addToMemento(array("text","selected","value"));
 		parent::parseParams($elem);		    	
     }
     // }}}
-    // {{{ buildComplete
+    
+    // {{{ setText 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $text
+    * @return   void
+    */
+    function setText($text)
+    {
+		if(!isset($text) || !is_scalar($text))
+			return;
+		$this->text = "".$text;
+    }
+    // }}} 
+    
+    // {{{ getText 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getText()
+    {
+		return $this->text;
+    }
+    // }}}
+
+    // {{{ setSelected
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    boolean $selected
+    * @return   void
+    */
+    function setSelected($selected)
+    {
+		if(!isset($selected) || !is_scalar($selected))
+			return;
+		$this->selected = 0+$selected;
+    }
+    // }}} 
+    
+    // {{{ getSelected
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   boolean
+    */
+    function getSelected()
+    {
+		return $this->selected;
+    }
+    // }}}
+    
+    // {{{ setValue
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $value
+    * @return   void
+    */
+    function setValue($value)
+    {
+		if(!isset($value) || !is_scalar($value))
+			return;
+		$this->value = (string)$value;
+    }
+    // }}} 
+    
+    // {{{ getValue
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getValue()
+    {
+		return $this->value;
+    }
+    // }}}
+     // {{{ buildComplete
     /**
     * Method description
     *
@@ -99,88 +189,11 @@ class WList extends WContainer
     */
 	function buildComplete()
 	{
-		if($this->getIsUl())
-			$this->setTemplate("ul");
-		if($this->getIsOl())
-			$this->setTemplate("ol");
-
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
-
-		$this->items->filter(array("WListItem","WRoll"));
-		/*if(empty($this->items))
-		{
-			$b1 = new WBuilder(array(
-				"widget_name"=>"WListItem",
-				"id"=>"li".$this->id
-			));
-			$this->items = new WidgetCollection(array($b1->build()));
-			$this->item_created = 1;
-		}*/
-
 		parent::buildComplete();
 	}    
 	// }}}
-  
-    // {{{ setIsUl 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $is_ul    
-    * @return   void
-    */
-    function setIsUl($is_ul)
-    {
-		if(!isset($is_ul) || !is_scalar($is_ul)) return;
-
-		$this->is_ul = 0+$is_ul;
-    }
-    // }}}
-    
-    // {{{ getIsUl 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   boolean
-    */
-    function getIsUl()
-    {
-		return $this->is_ul;
-    }
-    // }}}
-    
-    // {{{ setIsOl 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $is_ol    
-    * @return   void
-    */
-    function setIsOl($is_ol)
-    {
-		if(!isset($is_ol) || !is_scalar($is_ol)) return;
-
-		$this->is_ol = 0 + $is_ol;
-    }
-    // }}}
-    
-    // {{{ getIsOl 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   boolean
-    */
-    function getIsOl()
-    {
-		return $this->is_ol;
-    }
-    // }}}
     // {{{ preRender
     /**
     * Method description
@@ -190,13 +203,12 @@ class WList extends WContainer
     * @return   void
     */
     function preRender()
-    {
+	{
 		$this->setData(DataRetriever::getData($this->getId()));
-		//if(!$this->items->data_setted && $this->item_created) $this->items->clear();
 		parent::preRender();
     }
 	// }}}    
-    // {{{ assignVars
+    //  {{{ assignVars
     /**
     * Method description
     *
@@ -206,13 +218,34 @@ class WList extends WContainer
     */
     function assignVars()
     {
-			$this->tpl->setParamsArray(array(
-					"li_content"=>$this->items->generateAllHTML()
-				));
+		$this->tpl->setParamsArray(array(
+            "text"=>Language::encodePair($this->getText()),
+            "value"=>Language::encodePair($this->getValue()),
+            "selected"=>$this->getSelected()
+		));
 		parent::assignVars();
     }
 	// }}}	
+    // {{{ setData 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $data
+    * @return   void
+    */
+    function setData(WidgetResultSet $data)
+	{
+		$this->restoreMemento();
+
+		$this->setText($data->get('text'));
+        $this->setValue($data->get('value'));
+        $this->setValue($data->getDef());
+        $this->setSelected($data->get('selected'));
+
+    	parent::setData($data);
+    }
+    //}}}
 }
 //}}}
-
 ?>

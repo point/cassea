@@ -62,6 +62,35 @@ class Config
 
 	const HTML_DIR="/usr/local/www/devel/web/html";
 
+    // MAILER
+    const MAIL_TRANSPORT = 'smtp';
+    //const MAIL_TRANSPORT = 'mail';
+    //const MAIL_TRANSPORT = 'sendmail';
+    
+    //const MAIL_DEFAULT_FROM = 'postmaster@intvideo';
+    //const MAIL_DEFAULT_FROM_NAME = 'postmaster';
+    const MAIL_DEFAULT_FROM = 'climbonn@gmail.com';
+    const MAIL_DEFAULT_FROM_NAME = 'Алексей Ковтунец';
+
+
+    //const MAIL_SMTP_HOST = 'smtp.intvideo';
+    //const MAIL_SMTP_PORT = '25';
+    const MAIL_SMTP_HOST = 'smtp.gmail.com';
+    const MAIL_SMTP_PORT = '25';
+
+    //const MAIL_SMTP_PORT = '465'; //ssl
+
+    const MAIL_SMTP_PROTO = ''; // usual tcp
+    //const MAIL_SMTP_PROTO = 'ssl'; // ssl and 465 port
+    
+    //const MAIL_SMTP_USER = 'postmaster@intvideo';
+    //const MAIL_SMTP_PASSWD = 'postmasterpass';
+    const MAIL_SMTP_USER = 'climbonn';
+    const MAIL_SMTP_PASSWD = 'climbonsight';
+    const MAIL_SENDMAIL_PATH = '/usr/sbin/sendmail';
+
+    //class.mailObject DONT FORGET TO CHAGE REGEXP!!!!!!!!!
+
 	static function get($var)
 	{
 		if(defined('self::'.$var))

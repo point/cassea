@@ -115,6 +115,7 @@ abstract class WControl extends WComponent
 		if(!empty($elem['name']))
 		{
 	       	$this->setName((string) $elem['name'] );
+            // DISALLOW. Id sets in constructor
 			/*if(!isset($elem['id']))
 				$this->setId((string)$elem['name']);*/
 		}

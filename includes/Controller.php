@@ -49,6 +49,9 @@ require("Language.php");
 require("user/Session.php");
 require("user/User.php");
 require("POSTChecker.php");
+require("markdown.php");
+//require("LTC.php");
+require("mailer/Mail.php");
 
 class ControllerException extends Exception
 {}
@@ -159,8 +162,10 @@ class Controller
 			$this->page = $ret;
 
 
-		if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml"))
+		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml")))
 			throw new ControllerException('page file '.$this->page.'.xml not found');
+        if(preg_match('/internal\s*=\s*[\'"`]\s*1\s*[\'"`]/',file_get_contents($full_path,null,null,0,100)))
+            throw new ControllerException('page '.$this->page.' is for internal use only');
 
 		$this->navigator->addStep($this->page);
 
@@ -400,8 +405,8 @@ class Controller
 
 		$widget->parseParams($elem);
 
-		if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
-			$widget->setDataSet($this->datasets[(string)$elem['dataset']]);
+		/*if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
+			$widget->setDataSet($this->datasets[(string)$elem['dataset']]);*/
 
 
 		WidgetLoader::load("WStyle");

@@ -49,7 +49,7 @@ class Navigator
 
 		$this->user_path = $this->storage->get("user_path");
 
-		if(empty($this->user_path)) $this->user_path = array();
+		if(empty($this->user_path) || $this->user_path === false) $this->user_path = array();
 	}
 	function addStep($page_name,$title = null,$description = null)
 	{
@@ -118,7 +118,7 @@ class Navigator
 	function getStep($step)
 	{
 		$step = abs($step);
-		if($step >= count($this->user_path)) return $this->user_path[0]?$this->user_path[0]:"";
+		if($step >= count($this->user_path)) return isset($this->user_path[0])?$this->user_path[0]:"";
 		return $this->user_path[$step];
 	}
     function getStepURL($step)
