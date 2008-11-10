@@ -52,12 +52,12 @@ class Session
 
         $inc_path = '../includes/';
         $sessionClassName = 'DBSession';
-        if (Config::get('SESSION_ENGINE') ==  'memcache' )
+        if (Config::getInstance()->session->engine ==  'memcache' )
             $sessionClassName = 'MemcacheSession';
 
 
         if (!class_exists('SessionBase')) require('SessionBase.php');
-        if (!class_exists($sessionClassName) && file_exists($sessionClassName.'.php')) require($sessionClassName.'.php');
+        if (/*!class_exists($sessionClassName) &&*/ file_exists(dirname(__FILE__)."/".$sessionClassName.'.php')) require($sessionClassName.'.php');
         else throw new Exception('Session: '.$sessionClassName.' not found');
         
         self::$session = new $sessionClassName();

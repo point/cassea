@@ -55,4 +55,3 @@ class MailMail extends MailTransport{
 }
 /*}}}*/
 ?>
-

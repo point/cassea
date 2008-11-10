@@ -92,8 +92,8 @@ abstract class WControl extends WComponent
 		if(isset($id))
 			$this->setName($id);
 		parent::__construct($id);
-		if(!isset($id))
-			$this->setName($this->getId());
+		/*if(!isset($id))
+            $this->setName($this->getId());*/
     }
     // }}}
     // {{{ parseParams
@@ -224,7 +224,7 @@ abstract class WControl extends WComponent
     {
 		if(!isset($value) || !is_scalar($value))
 			return;
-		$this->value = Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
+		$this->value = $value;//Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
     }
     // }}}
     
@@ -334,10 +334,26 @@ abstract class WControl extends WComponent
     }
     // }}}
     
+    // {{{ buildComplete 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+	function buildComplete()
+	{
+		/*if(POSTErrors::hasErrors())
+            $this->restorePOST();*/
+		parent::buildComplete();
+	}    
+	// }}}
     // {{{
     function preRender()
     {
-
+		if(POSTErrors::hasErrors())
+            $this->restorePOST();
     	if(isset($this->valuechecker))
     	{
 			$this->valuechecker->addWidgetId($this->getId());
@@ -346,9 +362,6 @@ abstract class WControl extends WComponent
 			$event->setParams(array('id' => $this->valuechecker->getId()));
 			Controller::getInstance()->getDispatcher()->notify($event);
 		}
-		if(POSTErrors::hasErrors())
-			$this->restorePOST();
-
 		parent::preRender();
     }
     // }}}
@@ -469,8 +482,10 @@ abstract class WControl extends WComponent
 	{
 		$errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
 		if($errors !== null)
+        {
 			$this->setFilterError(implode("<br/>",$errors));
-		$this->setValue(POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID()));
+            $this->setValue(POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID()));
+        }
     }
     // }}}
 	

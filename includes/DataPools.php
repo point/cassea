@@ -34,6 +34,7 @@
 class ResultSetPool
 {
 	static $pool = array();	
+    const SYSTEM_PRIORITY = 1000;
 	
 	static function set(ResultSet $rs,$priority = 0)
 	{

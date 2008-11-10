@@ -30,9 +30,9 @@
 // $Id$
 //
 
+require("functions.php");
 require("Config.php");
 require("Storage.php");
-require("functions.php");
 require("Filter.php");
 require("HTTPParamHolder.php");
 require("Header.php");
@@ -50,7 +50,7 @@ require("user/Session.php");
 require("user/User.php");
 require("POSTChecker.php");
 require("markdown.php");
-//require("LTC.php");
+require("LTC.php");
 require("mailer/Mail.php");
 
 class ControllerException extends Exception
@@ -78,7 +78,8 @@ class Controller
 	public	$p1 = null,
 			$p2 = array(),
 			$post = null,
-			$get = null
+            $get = null,
+            $cookie = null
 		;
 
 	protected 
@@ -105,15 +106,23 @@ class Controller
 			;
 
 
-	function __construct()
+	protected function __construct()
 	{
 		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
 			$this->controller_name = $m[1];
 		else throw new ControllerException('controller name not defined');
 
+
 		$this->get = new HTTPParamHolder($_GET,0);
-		$this->post = new HTTPParamHolder($_POST);
-        DB::init(null, 'intvideo', 'intvideo','intvideo'); 
+        $this->post = new HTTPParamHolder($_POST);
+        $this->cookie = new HTTPParamHolder($_COOKIE);
+
+        if(defined('CONFIG') && defined('CONFIG_SECTION'))
+            Config::init(new IniConfig(CONFIG,CONFIG_SECTION));
+        else Config::init(new IniConfig("config.ini","base"));
+
+        $config = Config::getInstance();
+        DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->table);
         $this->determineLanguage();
         
         $this->header = Header::get();
@@ -132,15 +141,21 @@ class Controller
 	{
 		static $instance = null;
 		
-		if(!$instance)
-			$instance = new Controller();
+        if(!isset($instance))
+        {
+            if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === "XMLHttpRequest")
+                $instance = new AjaxController();
+            else 
+                $instance = new Controller();
+        }
 		return $instance;
 	}
 	function setPageFunc($func)
 	{
 		if(is_callable($func))
 			$this->page_function = $func;
-	}
+    }
+    // static
 	function setPageClassMethod($class_name,$func)
 	{
 		if(is_callable($class_name,$func))
@@ -148,25 +163,9 @@ class Controller
 	}
 	function init()
 	{
-		$ret = null;
 		$this->parseP1P2();	
 		$this->handlePOST();
-		if(is_string($this->page_function))
-			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
-		if(!isset($ret))
-			if(!empty($this->p1))
-				$this->page = $this->p1;
-			else
-				$this->page = 'index';
-		else
-			$this->page = $ret;
-
-
-		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml")))
-			throw new ControllerException('page file '.$this->page.'.xml not found');
-        if(preg_match('/internal\s*=\s*[\'"`]\s*1\s*[\'"`]/',file_get_contents($full_path,null,null,0,100)))
-            throw new ControllerException('page '.$this->page.' is for internal use only');
-
+        $full_path = $this->findPage();
 		$this->navigator->addStep($this->page);
 
 		$this->addCSS("ns_reset.css");
@@ -184,12 +183,32 @@ class Controller
 		$this->addScript("w.js");*/
 
 		$dom = new DomDocument;
-		$dom->load(Config::get('ROOT_DIR')."/pages/".$this->controller_name."/".$this->page.".xml");
+		$dom->load($full_path);
 
 		$this->parsePage($this->processPage($dom));
 
-	}
-	private final function parseP1P2()
+    }
+    protected function findPage()
+    {
+        $ret = null;
+		if(is_string($this->page_function))
+			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
+		if(!isset($ret))
+			if(!empty($this->p1))
+				$this->page = $this->p1;
+			else
+				$this->page = 'index';
+		else
+			$this->page = $ret;
+
+		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml")))
+			throw new ControllerException('page file '.$this->page.'.xml not found');
+
+        if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
+            throw new ControllerException('page '.$this->page.' is for internal use only');
+        return $full_path;
+    }
+	protected final function parseP1P2()
 	{
 		$this->get->bindFilter('__p1',Filter::STRING_QUOTE_ENCODE);
 		$this->get->bindFilter('__p2',Filter::STRING_QUOTE_ENCODE);
@@ -208,7 +227,7 @@ class Controller
 			$this->p2 = explode("/",$this->p2);
 		}
     }
-    private final function determineLanguage()
+    protected final function determineLanguage()
     {
         $this->get->bindFilter('__lang',Filter::STRING_QUOTE_ENCODE);
         $language_final = null;
@@ -234,7 +253,7 @@ class Controller
             Language::$current_language = Language::getDefault();
         Language::getDefaultLangName();
     }
-    private function pagePath($src)
+    protected final function pagePath($src)
     {
         if(empty($src))
             throw new ControllerException('page file not found');
@@ -334,7 +353,7 @@ class Controller
         }
         return $dom;
     }
-	private function parsePage(DomDocument $dom)
+	protected function parsePage(DomDocument $dom)
 	{
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
@@ -406,7 +425,7 @@ class Controller
 		$widget->parseParams($elem);
 
 		/*if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
-			$widget->setDataSet($this->datasets[(string)$elem['dataset']]);*/
+            $widget->setDataSet($this->datasets[(string)$elem['dataset']]);*/
 
 
 		WidgetLoader::load("WStyle");
@@ -478,14 +497,14 @@ class Controller
 		$j->parseParams($elem);
 		$this->javascripts[(string)$elem['id']] = $j;
 	}	
-	function addPageHandler(SimpleXMLElement $elem)
+	protected function addPageHandler(SimpleXMLElement $elem)
 	{
 		if(WidgetLoader::load("WPageHandler") === false) return;
 
         $this->pagehandler = new WPageHandler();
         $this->pagehandler->parseParams($elem);
 	}
-	function addValueChecker(SimpleXMLElement $elem)
+	protected function addValueChecker(SimpleXMLElement $elem)
 	{
 		if(!isset($elem['id'])) return;
 		if(WidgetLoader::load("WValueChecker") === false) return;
@@ -711,7 +730,7 @@ class Controller
             if(pageChanged($f,$mtime)) return true;
         return false;
 	}
-	private function handlePOST()
+	protected function handlePOST()
 	{
 		if($this->post->isEmpty()) return;
 
@@ -758,14 +777,14 @@ class Controller
 
 		$this->gotoStep_0();
 	}
-	private function gotoStep_0()
+	protected function gotoStep_0()
 	{
 		$s = $this->navigator->getStep(0);
 		if(isset($s,$s['url']))
 			header("Location: ".$s['url']);
 		exit();
     }
-    private function gotoLocation($loc)
+    protected function gotoLocation($loc)
     {
         if(isset($loc))
             header("Location: ".$loc);
@@ -777,7 +796,7 @@ class Controller
 		if(!isset($name) || !isset($rule) || !isset($rule_value)) return;
 		$this->checker_rules[$name][$rule] = trim($rule_value);
 	}
-	private function restoreCheckers()
+	protected function restoreCheckers()
 	{
 		$storage = Storage::createWithSession("controller");
 		$this->checker_rules = $storage->get('checker_rules');
@@ -791,12 +810,12 @@ class Controller
 		if(!isset($sig)) return;
 		$this->form_signatures[] = $sig;
 	}
-	private function checkSignature($sig = null)
+	protected function checkSignature($sig = null)
 	{
 		if(!isset($sig)) return false;
 		return in_array($sig,$this->form_signatures);
 	}
-	private function restoreSignatures()
+	protected function restoreSignatures()
 	{
 		$storage = Storage::createWithSession("controller");
 		$this->form_signatures = $storage->get('signatures');
@@ -804,7 +823,7 @@ class Controller
 		if(!is_array($this->form_signatures))
 			$this->form_signatures = array();
 	}
-    private function restorePageHandler()
+    protected function restorePageHandler()
     {
         if(WidgetLoader::load("WPageHandler") === false) return;
 		$storage = Storage::createWithSession("controller");
@@ -825,7 +844,9 @@ class Controller
 class DisplayModeParams
 {
 	protected 
-		$widget_params = array();
+        $widget_params = array(),
+        $matched_index = null
+        ;
 	public 
 		$predicted_from = null,
 		$predicted_limit = null
@@ -892,6 +913,97 @@ class DisplayModeParams
 		return $this->widget_params[$widget_id]['current'] == 
 			$this->widget_params[$widget_id]['from'] + $this->widget_params[$widget_id]['limit'] -1;
 		
+    }
+    function getMatchedIndex()
+    {
+        return $this->matched_index;
+    }
+    function setMatchedIndex($ind = null)
+    {
+        if(!isset($ind)) return;
+        $this->matched_index = $ind;
+    }
+}
+class AjaxController extends Controller
+{
+
+	protected function __construct()
+	{
+		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
+			$this->controller_name = $m[1];
+		else throw new ControllerException('controller name not defined');
+
+		$this->get = new HTTPParamHolder($_GET,0);
+        $this->post = new HTTPParamHolder($_POST);
+        $this->cookie = new HTTPParamHolder($_COOKIE);
+
+        DB::init(Config::get("DB_HOST"),Config::get("DB_USER"), Config::get("DB_PASSWORD"), Config::get("DB_TABLE"));
+        $this->determineLanguage();
+        
+        $this->header = Header::get();
+		$this->dispatcher = new EventDispatcher();
+		$this->display_mode_params = new DisplayModeParams();
+		$this->adjacency_list = new WidgetAdjacencyList();
+
+		Session::init();
+        User::get();
+
+		$this->navigator = new Navigator($this->controller_name);
+	}
+
+	function init()
+	{
+		$this->parseP1P2();	
+		$this->handlePOST();
+        $full_path = $this->findPage();
+
+		$dom = new DomDocument;
+		$dom->load($full_path);
+
+		$this->parsePage($this->processPage($dom));
+    }
+
+	function head($echo = 1)
+	{
+        return "";
+	}
+	function tail($echo = 1)
+	{
+        return "";
+	}
+
+	protected function handlePOST()
+	{
+		if($this->post->isEmpty()) return;
+
+		POSTChecker::checkByRules($this->post,$this->checker_rules);
+		if(POSTErrors::hasErrors())
+		{
+            exit("");
+		}
+
+		try
+		{
+			DataUpdaterPool::callCheckers();
+		}
+		catch(CheckerException $e)
+		{
+            exit("");
+		}
+		if(POSTErrors::hasErrors())
+		{
+            exit("");
+		}
+		DataUpdaterPool::callHandlers();
+        DataUpdaterPool::callFinilze();
+
+        exit("");
+	}
+
+	// destructor
+	function __destruct()
+	{
+		DB::close();
 	}
 }
 ?>

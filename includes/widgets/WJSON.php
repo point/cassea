@@ -29,20 +29,19 @@
 
 
 //
-// $Id$
+// $Id: WBlock.php 45 2008-10-07 14:03:38Z point $
 //
-WidgetLoader::load("WObject");
-//{{{ WDataSet
-class WDataSet extends WObject
+WidgetLoader::load("WComponent");
+//{{{ WBlock
+class WJSON extends WComponent
 {
-	protected 
-		$data_object = null,
-		$priority = 0,
-		$delayed = false,
-		$is_static = false
-
-		    ;
-    // {{{ __construct 
+	protected
+		/**
+		* @var mixed
+		*/
+		$var = null
+		;
+    // {{{ __construct
     /**
     * Method description
     *
@@ -54,137 +53,110 @@ class WDataSet extends WObject
 		parent::__construct($id);
     }
     // }}}
-	// {{{ parseParams
+    // {{{ parseParams
     /**
     * Method description
     *
     * More detailed method description
-    * @param    array $params
+    * @param    array
     * @return void
     */
-    function parseParams(SimpleXMLElement $params)
-	{
-
-		if(isset($params['priority']))
-			$this->setPriority(0+$params['priority']);
-		if(isset($params['delayed']))
-			$this->setDelayed(0+$params['delayed']);
-		if(isset($params['static']))
-			$this->setStatic(0+$params['static']);
-
-		$this->data_object = new DataSourceObject($this->getStatic());
-		$this->data_object->parseParams($params);
-
-		if($this->data_object->hasDatasourceParamFrom('limit'))
-			$this->setDelayed(1);
-
-		if(!$this->getDelayed())
-			$this->manageData();
+    function parseParams(SimpleXMLElement $elem)
+    {
+		parent::parseParams($elem);		    	
     }
-    // }}} 
-	// {{{ manageData
-	private function manageData()
+    // }}}
+   
+    // {{{ buildComplete
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+	function buildComplete()
 	{
-		if($this->data_object->hasDatasourceMethod())
-		{
-            if(($v = $this->data_object->getData()) !== null)
-                foreach($v as $rs)
-                   if($rs instanceof ResultSet)
-				        ResultSetPool::set($rs,$this->getPriority());
-		}
-		else
-			DataObjectPool::set($this->data_object,$this->getPriority());
-	}
+		if(!isset($this->tpl))
+			$this->tpl = $this->createTemplate();
+		parent::buildComplete();
+	}    
 	// }}}
-
-	function loadDelayed()
+    // {{{ preRender
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function preRender()
+    {
+		$this->setData(DataRetriever::getData($this->getId()));
+		parent::preRender();
+    }
+	// }}}    
+    // {{{ assignVars
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function assignVars()
+    {
+		$this->tpl->setParamsArray(array(
+				"var"=>json_encode($this->getVar())
+			));
+		parent::assignVars();
+    }
+	// }}}	
+    // {{{ setData 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $data
+    * @return   void
+    */
+    function setData(WidgetResultSet $data)
 	{
-		if(!$this->getDelayed()) return;
-		$this->manageData();
-	}
-	
-	// {{{ setPriority
+        $this->restoreMemento();
+        $this->setVar($data->get('var'));
+        $this->setVar($data->getDef());
+        parent::setData($data);
+    }
+    //}}}
+    
+    // {{{ setVar
     /**
     * Method description
     *
     * More detailed method description
-    * @param    int $priority
+    * @param    mixed $var
     * @return   void
     */
-    function setPriority($priority = 0)
+    function setVar($var)
     {
-		if($priority < 0 || $priority > 999 || !is_numeric($priority)) return;
-		$this->priority = 0+$priority;
+		if(!isset($var) || is_resource($var))
+			return;
+		$this->var = $var;
+		
     }
     // }}}
-
-	// {{{ getPriority
+    
+    // {{{ getVar
     /**
     * Method description
     *
     * More detailed method description
     * @param    void
-    * @return   int
+    * @return   mixed
     */
-    function getPriority()
+    function getVar()
     {
-		return $this->priority;
-    }
-    // }}}
-
-	// {{{ setDelayed
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    bool $delayed
-    * @return   void
-    */
-    function setDelayed($delayed = false)
-    {
-		$this->delayed = (bool)$delayed;
-    }
-    // }}}
-
-	// {{{ getDelayed
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   bool
-    */
-    function getDelayed()
-    {
-		return $this->delayed;
-    }
-    // }}}
-	
-	// {{{ setStatic
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    bool $static
-    * @return   void
-    */
-    function setStatic($static = false)
-	{
-		$this->is_static = (bool)$static;
-    }
-    // }}}
-
-	// {{{ getStatic
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   bool
-    */
-    function getStatic()
-    {
-		return $this->is_static;
+		return $this->var;
     }
     // }}}
 }

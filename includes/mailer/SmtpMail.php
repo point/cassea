@@ -45,11 +45,11 @@ class SmtpMail extends MailTransport{
 
     function __construct()
     {
-        $this->smtpHost = Config::get("MAIL_SMTP_HOST");
-        $this->smtpPort = Config::get("MAIL_SMTP_PORT");
-        $this->smtpProto = Config::get("MAIL_SMTP_PROTO");
-        $this->smtpUser = Config::get("MAIL_SMTP_USER");
-        $this->smtpPassw = Config::get("MAIL_SMTP_PASSWD");
+        $this->smtpHost = Config::getInstance()->mail->smtp_host;
+        $this->smtpPort = Config::getInstance()->mail->smtp_port;
+        $this->smtpProto =Config::getInstance()->mail->smtp_proto;
+        $this->smtpUser = Config::getInstance()->mail->smtp_user;
+        $this->smtpPassw =Config::getInstance()->mail->smtp_passwd;
     }
     /*{{{smtpConnect
      *устанавливает соединение с smtp сервером
@@ -174,7 +174,7 @@ class SmtpMail extends MailTransport{
 			if($code != 250) {$this->errMsg('sendMerssage',' ');fclose($this->smtpCt);return false;}
 			fputs($this->smtpCt,"QUIT"."\r\n");
 			fclose($this->smtpCt);
-			$this->result();
+		    return true;
 		} catch (SmtpException $e){echo $e->getMessage();}
     }
     /*}}}*/
@@ -204,4 +204,3 @@ class SmtpMail extends MailTransport{
 }
 /*}}}*/
 ?>
-

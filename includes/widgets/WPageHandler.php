@@ -126,8 +126,8 @@ class WPageHandler extends WObject
 			return $this->getGotoURL();
         elseif(isset($this->object_from_id))
         {
-            if(($dh = DataUpdaterPool::getById($this->getObjectFrom())) != null &&
-                ($o = $dh->getObject()) != null && method_exists($o,$this->getMethod()))
+            if(($dh = DataUpdaterPool::getById($this->getObjectFrom())) !== null &&
+                ($o = $dh->getObject()) !== null && method_exists($o,$this->getMethod()))
                 return  $o->{$this->getMethod()}();
         }
         else

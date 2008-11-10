@@ -144,8 +144,8 @@ class MailObject implements IMailObject{
      */
     public function __construct(MailTransport $transport)
     {
-        $this->setFrom(Config::get('MAIL_DEFAULT_FROM'));
-        $this->setFromname(Config::get("MAIL_DEFAULT_FROM_NAME"));
+        $this->setFrom(Config::getInstance()->mail->default_from);
+        $this->setFromname(Config::getInstance()->mail->default_from_name);
         $this->transport = $transport;
     }
     /*}}}*/

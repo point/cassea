@@ -38,8 +38,9 @@ class WidgetResultSet implements IteratorAggregate
 		;
 	function merge($arr)
 	{
+        if(!is_array($arr)) return;
 		foreach($arr as $k => $v)
-			if(is_scalar($k) && is_scalar($v))
+			if(is_scalar($k) && !is_resource($v))
 				$this->properties[$k] = $v;
 	}
 	function get($key)
@@ -48,7 +49,7 @@ class WidgetResultSet implements IteratorAggregate
 	}
 	function setDef($value)
 	{
-		if(!is_scalar($value)) return;
+		if(is_resource($value)) return;
 		$this->def = $value;
 	}
 	function getDef()
@@ -77,36 +78,112 @@ class ResultSet
 		$cur_for = null,
 		$fors = array(),
 		$for_values = array(),
-		$default_values = array()
-		;
-	function f($selector = "",$index = null,$scope = "global")
-	{
+        $default_values = array(),
 
+        $types = array(),
+        $fors_array = array(),
+        $for_values_array = array(),
+        $cur_index = -1,
+        $f1s = array()
+
+		;
+	/*function f($selector = "",$index = null,$scope = "global")
+    {
 		$this->cur_for = count($this->fors);// i.e. +1
 		$this->fors[$this->cur_for] = array("selector"=>$selector,"index"=>$index,"scope"=>$scope);
 		$this->for_values[$this->cur_for] = array();
 		return $this;
-	}
-	function set($key,$value)
+    }*/
+    function f($selector = "", $index = null, $scope = "global")
+    {
+        if(isset($index))
+        {
+            //$this->cur_index++;
+            $this->cur_index = $index;
+            $this->types[$selector] = "array";
+            $this->fors_array[$selector]['index'][$this->cur_index] = $index;
+            $this->fors_array[$selector]['scope'][$this->cur_index] = $scope;
+        }
+        else
+        {
+            $this->types[$selector] = "plain";
+            $this->fors[$selector] = 1;
+            $this->cur_index = -1;
+        }
+        $this->cur_selector = $selector;
+        return $this;
+    }
+    function f1($selector = "", $index = null, $scope = "global")
+    {
+        if(strpos($selector,",") === false)
+            $this->f1s[$selector] = 1;
+        return $this->f($selector, $index, $scope);
+    }
+	/*function set($key,$value)
 	{
 		if(!isset($this->cur_for)) return $this;
 		$this->for_values[$this->cur_for][$key] = $value;
 		return $this;
-	}
-	function def($value)
+    }*/
+    function set($key,$value)
+    {
+		if(!isset($this->cur_selector)) return $this;
+        if($this->types[$this->cur_selector] == "array")
+            $this->for_values_array[$this->cur_selector][$this->cur_index][$key] = $value;
+        else
+        {
+            $this->for_values[$this->cur_selector][$key] = $value;
+        }
+        return $this;
+    }
+	/*function def($value)
 	{
 		if(!isset($this->cur_for)) return $this;
 		$this->default_values[$this->cur_for] = $value;
-	}
-	function findMatched(WidgetResultSet $wrs,WComponent $widget)
+    }*/
+    function def($value)
+    {
+        if(!isset($this->cur_selector)) return $this;
+        $this->default_values[$this->cur_selector] = $value;
+    }
+	/*function findMatched(WidgetResultSet $wrs,WComponent $widget)
 	{
 		foreach($this->fors as $ind => $selectors_a)
 			foreach(explode(",",$selectors_a['selector']) as $selector)
-				if(SelectorMatcher::matched($widget,$selector,$selectors_a['index'],$selectors_a['scope']))
+                if(SelectorMatcher::matched($widget,$selector,$selectors_a['index'],$selectors_a['scope']))
 					$wrs->merge($this->for_values[$ind]);
 
 		return $wrs;
-	}
+    }*/
+    function findMatched(WidgetResultSet $wrs, WComponent $widget)
+    {
+        foreach($this->fors as $selectors => $v)
+            foreach(explode(",",$selectors) as $selector)
+                if(SelectorMatcher::matched($widget,$selector,null,null))
+                {
+                    $wrs->merge($this->for_values[$selector]);
+                    if(isset($this->f1s[$selector]))
+                    {
+                        unset($this->fors[$selector]);
+                        unset($this->for_values[$selector]);
+                    }
+                }
+        
+        foreach($this->fors_array as $selectors => $arr)
+            foreach(explode(",", $selectors) as $selector)
+                if(SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope']))
+                {
+                    $wrs->merge($this->for_values_array[$selector][$ind = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+                    if(isset($this->f1s[$selector]))
+                    {
+                        unset($this->fors_array[$selector]['index'][$ind]);
+                        unset($this->fors_array[$selector]['scope'][$ind]);
+                        unset($this->for_values_array[$selector][$ind]);
+                    }
+                }
+
+        return $wrs;
+    }
 	function __call($name,$arguments)
 	{
 		if(!isset($arguments[0])) return $this;

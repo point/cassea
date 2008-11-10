@@ -174,7 +174,7 @@ class WSelect extends WControlContainer
 		$this->setData(DataRetriever::getData($this->getId()));
 		parent::preRender();
     }
-	// }}}    
+ 	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -211,7 +211,22 @@ class WSelect extends WControlContainer
 
     	parent::setData($data);
     }
-    //}}}
+    //}}} 
+    
+    // {{{ restorePOST
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $post
+    * @param    array $errors
+    * @return   string
+    */
+    /*function restorePOST()
+	{
+        // need to refactor
+    }*/
+    // }}}
 }
 //}}}
 

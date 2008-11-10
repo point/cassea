@@ -35,12 +35,14 @@ class SelectorMatcher
 	static $cache = array();
 	static function matched(WComponent $widget, $selector,$index,$global)
 	{
-		/*echo $widget->getId();
-		static $c = 0;
-		$c++;echo " $c ";*/
+		/*echo $id = $widget->getId();
+        static $c = 0;
+        if($id == "select2")
+        {$c++;echo " $c ";}*/
 
 		$controller = Controller::getInstance();
-		$parser = new SelectorParser($selector,$index,$global);
+        $parser = SelectorParserFactory::getSelectorParser($selector,$index,$global);
+		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
 			if(self::matchAttributes($widget,$parser->getParsedSelector(0))) return true;
@@ -112,15 +114,20 @@ class SelectorMatcher
 	}
 	static function matchAttributes(WComponent $widget, $parsed_selector)
 	{
+        //static $__c = 0;
 		if(empty($parsed_selector)) return false;
+        /*echo ++$__c." ";
+        print_pre($widget->getId());
+        print_pre($parsed_selector);
+        echo "<hr>";*/
 		$controller = Controller::getInstance();
 
 		//id, quick
-		if(isset($parsed_selector['id']) && strtolower($widget->getId()) != $parsed_selector['id']) return false;
+		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return false;
 		// *
 		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] == '*') return true;
 		// tag
-		if(isset($parsed_selector['tag']) && strtolower(get_class($widget)) != $parsed_selector['tag']) return false;
+		if(isset($parsed_selector['tag']) && $widget->getClassLower() != $parsed_selector['tag']) return false;
 		// [attribute]
 		if(isset($parsed_selector['attr']))
 		   if( !isset($parsed_selector['attr_value'])
@@ -214,30 +221,63 @@ class SelectorMatcher
 			}
 			// :index for WRoll
 			elseif($parsed_selector['pseudo'] === "index")
-			{
+            {
 				if(!isset($parsed_selector['pseudo_value'])) return false;
 				//return false;
 				$w2 = $widget;
 				$parent = null;
-				while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
-					if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
-					else $w2 = $controller->getWidget($p);
-				if($parent == null) return false;
-				if(strpos($parsed_selector['pseudo_value'],":") !== false)
-					list($parsed_selector['pseudo_value'],$parsed_selector['scope']) = explode(":",$parsed_selector['pseudo_value']); 
-				if(!isset($parsed_selector['scope']))
-					$parsed_selector['scope'] = "global";
+                if($w2 instanceof WRoll) $parent = $w2->getId();
+                else
+                    while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
+                        if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
+                        else $w2 = $controller->getWidget($p);
+                if($parent == null) return false;
+                if(!is_array($parsed_selector['pseudo_value']))
+                {
+                    if(strpos($parsed_selector['pseudo_value'],":") !== false)
+                        list($parsed_selector['pseudo_value'],$parsed_selector['scope']) = explode(":",$parsed_selector['pseudo_value']); 
+                    if(!isset($parsed_selector['scope']))
+                        $parsed_selector['scope'] = "global";
 
-				$current = $controller->getDisplayModeParams()->getCurrent($parent,$parsed_selector['scope']);
-				if(is_numeric($parsed_selector['pseudo_value']) && $parsed_selector['pseudo_value'] != $current) return false;
-				if($parsed_selector['pseudo_value'] === "odd" && $current%2 !== 1) return false;
-				if($parsed_selector['pseudo_value'] === "even" && $current%2 !== 0) return false;
+                    $current = $controller->getDisplayModeParams()->getCurrent($parent,$parsed_selector['scope']);
+                    if(is_numeric($parsed_selector['pseudo_value']) && $parsed_selector['pseudo_value'] != $current) return false;
+                    if($parsed_selector['pseudo_value'] === "odd" && $current%2 !== 1) return false;
+                    if($parsed_selector['pseudo_value'] === "even" && $current%2 !== 0) return false;
 
-				if($parsed_selector['pseudo_value'] === "first" && !$controller->getDisplayModeParams()->isFirst($parent,$parsed_selector['scope'])) return false;
-				if($parsed_selector['pseudo_value'] === "last" && !$controller->getDisplayModeParams()->isLast($parent,$parsed_selector['scope'])) return false;
+                    if($parsed_selector['pseudo_value'] === "first" && !$controller->getDisplayModeParams()->isFirst($parent,$parsed_selector['scope'])) return false;
+                    if($parsed_selector['pseudo_value'] === "last" && !$controller->getDisplayModeParams()->isLast($parent,$parsed_selector['scope'])) return false;
+                }
+                elseif(!count($parsed_selector['pseudo_value'])) return false;
+                else
+                {
+                    $current = $controller->getDisplayModeParams()->getCurrent($parent,array_shift($parsed_selector['scope']));
+                    if(!isset($parsed_selector['pseudo_value'][$current]) || $parsed_selector['pseudo_value'][$current] != $current) return false;
+                    $controller->getDisplayModeParams()->setMatchedIndex($current);
+                }
 			}
 		return true;
 	}
+}
+class SelectorParserFactory
+{
+    private static $cache = array();
+    static function getSelectorParser($selector,$index,$scope)
+    {
+        if(!isset(self::$cache[$selector]))
+        {
+            $o = new SelectorParser($selector,$index,$scope);
+            self::$cache[$selector] = $o;
+            return $o;
+        }
+        else
+        {
+            $o = self::$cache[$selector];
+            $o->setIndex($index);
+            $o->setScope($scope);
+            $o->processIndexScope();
+            return $o;
+        }
+    }
 }
 class SelectorParser
 {
@@ -265,12 +305,13 @@ class SelectorParser
 		"combined"=> $combined
 	);*/
 	private $splitters = array();
-	private $selectors = array();
+    private $splitters_count = 0;
+    private $selectors = array();
+    private $selectors_count = 0;
 	private $iter = 0;
 	private $index = null,
 			$scope = null
 			;
-	private static $cache = array();
 
 	function __construct($selectors = null,$index,$scope)
 	{
@@ -281,33 +322,34 @@ class SelectorParser
 	}
 	function parse($selector)
 	{
-		$md5 = md5($selector);
-		if(isset(self::$cache[$md5]))
-		{
-			$this->selectors = self::$cache[$md5]['selectors'] ;
-			$this->splitters = self::$cache[$md5]['splitters'];
-		}
-		else
-		{
-			$this->splitSelectors(trim($selector));
-			self::$cache[$md5] = array("selectors"=>$this->selectors,"splitters"=>$this->splitters);
-		}
-		//$this->splitSelectors(trim($selector));
-		if(($c = count($this->selectors)) > 0 &&
+		$this->splitSelectors(trim($selector));
+        $this->processIndexScope();
+
+	}
+    function processIndexScope()
+    {
+		if(($c = $this->selectors_count) > 0 &&
 			isset($this->index) && isset($this->scope))
-		{
+        {
 			$this->selectors[$c-1]['pseudo'] = 'index';
 			$this->selectors[$c-1]['pseudo_value'] = $this->index;
 			$this->selectors[$c-1]['scope'] = $this->scope;
 		}
-
-	}
+    }
+    function setIndex($index)
+    {
+        $this->index = $index;
+    }
+    function setScope($scope)
+    {
+        $this->scope = $scope;
+    }
 	private function splitSelectors($selector)
 	{
 		if(preg_match(self::pattern_quick_id,$selector,$m))
-		{$this->selectors[0]['id'] = strtolower($m[1]); return;}
+		{$this->selectors[0]['id'] = strtolower($m[1]); $this->selectors_count = 1;return;}
 		if(preg_match(self::pattern_quick_tag,$selector,$m))
-		{$this->selectors['0']['tag'] = strtolower($m[1]) ; return;}
+		{$this->selectors['0']['tag'] = strtolower($m[1]) ; $this->selectors_count = 1; return;}
 
 		$i = 0;
 		$ret = preg_match_all(SelectorParser::pattern_splitter,$selector,$matches,PREG_SET_ORDER);
@@ -342,6 +384,8 @@ class SelectorParser
 			$i++;
 		}
 		$this->selectors = array_values($this->selectors);
+        $this->selectors_count = count($this->selectors);
+        $this->splitters_count = count($this->splitters);
 	}
 	private function mylist(&$array1,$array2)
 	{
@@ -359,20 +403,20 @@ class SelectorParser
 	}
 	function getSelectorsCount()
 	{
-		return count($this->selectors);
+		return $this->selectors_count;
 	}
 	function getSplittersCount()
 	{
-		return count($this->splitters);
+		return $this->splitters_count;
 	}
 	function getParsedSelector($ind = 0)
 	{
-		if($ind >=count($this->selectors) || $ind < 0) return array();
+		if($ind >=$this->selectors_count || $ind < 0) return array();
 		return $this->selectors[$ind];
 	}
 	function getParsedSplitter($ind = 0)
 	{
-		if($ind > count($this->splitters) || $ind < 0) return array();
+		if($ind > $this->splitters_count || $ind < 0) return array();
 		return $this->splitters[$ind];
 	}
 }

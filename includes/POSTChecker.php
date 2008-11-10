@@ -222,7 +222,7 @@ class POSTErrors
 	static function saveErrorList()
 	{
 		self::savePostData();
-		$storage = Storage::createWithSession("post_errors");
+		$storage = Storage::createWithSession("post_errors",300);
 		$storage->set('errors',self::$errors);
 		$storage->set('data',self::$post_data);
 	}
@@ -255,6 +255,7 @@ class POSTErrors
 					$e2[] = $v['message'];
 		
 		if(empty($e2)) return null;
+        unset(self::$errors[$name]);
 		return $e2;
 	}
 	static function getPOSTData($name,$additional_id = null)

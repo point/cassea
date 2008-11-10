@@ -44,7 +44,7 @@ class SendmailMail extends MailTransport{
 
     function __construct()
     {
-        $this->sendmail = Config::get("MAIL_SENDMAIL_PATH");
+        $this->sendmail = Config::getInstance()->mail->sendmail_path;
     }
     /*{{{send
      *отправляет письмо с помощью внешней программы
@@ -61,7 +61,8 @@ class SendmailMail extends MailTransport{
 			fwrite($fp,$pointer->mailBody()."\r\n");
 			fwrite($fp, "\n");
 			pclose($fp);
-			$this->result();
+            $this->result();
+            return true;
 		}catch (MailException $e){echo $e->getMessage();}
     }
     /*}}}*/
@@ -69,4 +70,3 @@ class SendmailMail extends MailTransport{
 /*}}}*/
 
 ?>
-

@@ -221,7 +221,7 @@ class WSelectOption extends WComponent
 		$this->tpl->setParamsArray(array(
             "text"=>Language::encodePair($this->getText()),
             "value"=>Language::encodePair($this->getValue()),
-            "selected"=>$this->getSelected()
+            "selected"=>$this->getSelected()?"selected=\"1\"":""
 		));
 		parent::assignVars();
     }

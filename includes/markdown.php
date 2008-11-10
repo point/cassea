@@ -1765,7 +1765,9 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 		#
 		# Call the HTML-in-Markdown hasher.
 		#
-		list($text, ) = $this->_hashHTMLBlocks_inMarkdown($text);
+	// point. no need in html-in-markup
+	//		list($text, ) = $this->_hashHTMLBlocks_inMarkdown($text);
+	$text = $this->encodeAttribute($text);
 		
 		return $text;
 	}

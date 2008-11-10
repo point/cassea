@@ -68,37 +68,38 @@ http {
 		location ~* \.js$
 		{
 			root $server_root/web/js;
-			expires max;
+			#expires max;
 		}
 		location ~* \.css$
 		{
 			root $server_root/web/css;
-			expires max;
+			#expires max;
 		}
 		location ~* (\.jpg$|\.jpeg$|\.png$|\.gif$|\.bmp|\.ico$)
 		{
 			root $server_root/web/images;
 			#expires 1y;
-			expires max;
+			#expires max;
 		}
 		location ~* \.swf$
 		{
 			root $server_root/web/flash;
-			expires max;
+			#expires max;
 		}
 
 		location /
 		{
 			# KEEP ORDER!
 			rewrite '^/([A-Za-z]{2}/)?$' /controllers/index.php?__lang=$1 last;
-			rewrite '^/([A-Za-z]{2}/)?index.html$' /controllers/index.php?__lang=$1 last;
+			#rewrite '^/([A-Za-z]{2}/)?index.html$' /controllers/index.php?__lang=$1 last;
+			rewrite '^/([A-Za-z]{2}/)?([^&?#:/\.]+)\.html$' /controllers/index.php?__p1=$2&__lang=$1 last;
 
 			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/?$' /controllers/$2.php?__p1=&__p2=&__lang=$1 last;
 
-			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^&?#]+)/([^&?#]+)\.html?$' /controllers/$2.php?__p1=$4&__p2=$3&__lang=$1 last;
+			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^&?#]+)/([^&?#:/\.]+)\.html?$' /controllers/$2.php?__p1=$4&__p2=$3&__lang=$1 last;
 			
-			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^&?#]+)\.html?$' /controllers/$2.php?__p1=$3&__p2=&__lang=$1 last;
-			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^?#&\.]+)$' /controllers/$2.php?__p1=&__p2=$3&__lang=$1 last;
+			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^&?#:/\.]+)\.html?$' /controllers/$2.php?__p1=$3&__p2=&__lang=$1 last;
+			rewrite '^/([A-Za-z]{2}/)?([^/\.]{3,})/([^?#&:\.]+)/?$' /controllers/$2.php?__p1=&__p2=$3&__lang=$1 last;
 			return 404;
 		}
 		location /controllers/ 
@@ -160,6 +161,60 @@ http {
 		}
     }
 
+    server {
+		listen		 80;
+		server_name  mail.intvideo;
+
+        access_log  off;
+
+		charset utf-8;
+
+		set $server_root /usr/local/www/roundcube;
+		root $server_root;
+		index index.html index.htm ;
+		
+		location /
+		{
+			fastcgi_pass   127.0.0.1:9001;
+			fastcgi_index  index.php;
+			#fastcgi_index  index.php;
+			fastcgi_intercept_errors on;
+			#if (!-f $server_root$fastcgi_script_name)
+			#{
+			#	return 404;
+			#}
+			fastcgi_param  script_filename  $server_root$fastcgi_script_name;
+			#fastcgi_param  script_filename  /mnt/www/htdocs/phpmyadmin$fastcgi_script_name;
+			include fastcgi_params;
+		}
+    }
+    server {
+		listen		 80;
+		server_name  cacti.intvideo;
+
+        access_log  off;
+
+		charset utf-8;
+
+		set $server_root /usr/local/www/cacti;
+		root $server_root;
+		index index.html index.htm index.php;
+		
+		location /
+		{
+			fastcgi_pass   127.0.0.1:9001;
+			fastcgi_index  index.php;
+			#fastcgi_index  index.php;
+			#fastcgi_intercept_errors on;
+			if (!-f $server_root$fastcgi_script_name)
+			{
+				return 403;
+			}
+			fastcgi_param  script_filename  $server_root$fastcgi_script_name;
+			#fastcgi_param  script_filename  /mnt/www/htdocs/phpmyadmin$fastcgi_script_name;
+			include fastcgi_params;
+		}
+    }
     server {
 		listen		 80;
 		server_name  dokuwiki.intvideo;

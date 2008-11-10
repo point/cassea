@@ -168,7 +168,11 @@ class WText extends WComponent
 		$this->setTextStyle($params);
 		if((string)$params)
 	    	$this->setText((string) $params);
-		$this->addToMemento(array("text"));
+        foreach($this as $prop_name =>$prop_val)
+            if(substr($prop_name,0,3) == "is_")
+                $a[] = $prop_name;
+        $a[] = "text";
+        $this->addToMemento($a);
 		parent::parseParams($params);		
     }
     // }}}
@@ -234,6 +238,7 @@ class WText extends WComponent
     function preRender()
     {
 		$this->setData(DataRetriever::getData($this->getId()));
+        $this->setTemplate('default');
 		foreach($this->class_vars as $v)
 		{
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)

@@ -27,76 +27,14 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-
 //
-// $Id: WHyperLink.php 45 2008-10-07 14:03:38Z point $
+// $Id:$
 //
-WidgetLoader::load("WHyperLink");
-//{{{ WHyperLink 
-class WHelp extends WHyperLink
-{
-    
-    // {{{ __construct
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    */
-    function __construct($id = null)
-    {
-		parent::__construct($id);
-    }
-    // }}}
-    // {{{ parseParams
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    array
-    * @return void
-    */
-    function parseParams(SimpleXMLElement $elem)
-    {
-		parent::parseParams($elem);		    	
 
-        if(!$this->items->count())
-            $this->items->setText("[?]");
-    }
-    // }}}
-    // {{{ buildComplete
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-	function buildComplete()
-	{
-		if(!isset($this->tpl))
-			$this->tpl = $this->createTemplate();
+$data = $_POST['data'];
+if(!is_string($data)) exit("");
 
-        $controller = Controller::getInstance();
-        $this->setHREF($controller->makeURL(null,array($controller->getControllerName(),$controller->getPage()),"help"));
-        parent::buildComplete();
-	}    
-	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
-}
-//}}}
-
+require("../includes/markdown.php");
+echo Markdown($data);
+exit();
 ?>

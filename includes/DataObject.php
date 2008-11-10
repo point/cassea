@@ -236,6 +236,34 @@ abstract class DataObject
     {
         return $this->object;
     }
+
+	function finalize()
+	{
+		if(!$this->is_static)
+		{
+			if(!isset($this->object))
+				$this->createObject();
+			if(isset($this->finalize_method))
+			{
+				try{
+					$r = new ReflectionObject($this->object);
+					$r->getMethod($this->finalize_method)->invokeArgs($this->object,$this->finalize_params->getParams());
+				}catch(ReflectionException $e){ return ;}
+			}
+		}
+		else
+		{
+			if(isset($this->finalize_method))
+				try
+				{
+					$r = new ReflectionClass($this->classname);
+					if($r->getMethod($this->finalize_method)->isAbstract())
+						call_user_func_array($this->classname."::".$this->finalize_method,$this->finalize_params->getParams());
+				}
+				catch(ReflectionException $e){return; }
+		}
+		return ;
+	}
 }
 // }}} 
 
@@ -246,11 +274,11 @@ class DataSourceObject extends DataObject
 		/**
 		* @var  string
 		*/
-		$datasource_method = null,
+		$datasource_methods = array(),
 		/**
 		* @var  array
 		*/
-		$datasource_params = null
+		$datasource_params = array()
 	;
 	private
 		$cache = null
@@ -262,24 +290,22 @@ class DataSourceObject extends DataObject
 	function parseParams(SimpleXMLElement $elem)
 	{
 		parent::parseParams($elem);
+        foreach($elem->datasource as $ds)
+        {
+            if(isset($ds['method']))
+                $this->datasource_methods[] = (string)$ds['method'];
+            else
+                throw new DataObjectException("Data source method was not found");
 
-		if(isset($elem->datasource))
-		{
-
-			if(isset($elem->datasource['method']))
-				$this->datasource_method = (string)$elem->datasource['method'];
-			else
-				throw new DataObjectException("Data source method was not found");
-
-			$this->datasource_params = new DataObjectParams($elem->datasource);		
-		}
-
+            $this->datasource_params[] = new DataObjectParams($ds);		
+        }
 	}
 	function hasDatasourceParamFrom($from)
 	{
-		if(!isset($this->datasource_params)) return false;
-		foreach($this->datasource_params->getParamsFrom() as $v)
-			if($v == $from) return true;
+        if(empty($this->datasource_params)) return false;
+        foreach($this->datasource_params as $dsp)
+            foreach($dsp->getParamsFrom() as $v)
+                if($v == $from) return true;
 		return false;
 	}
 	function getData($w_id = null)
@@ -288,34 +314,46 @@ class DataSourceObject extends DataObject
 		{
 			if(!isset($this->object))
 				$this->createObject();
-			if(isset($this->datasource_params))
-				$this->datasource_params->replaceLimitParams();
-			if(isset($this->datasource_method))
-			{
-				try{
-					$r = new ReflectionObject($this->object);
-					return $r->getMethod($this->datasource_method)->invokeArgs($this->object,$this->datasource_params->getParams());
-				}catch(Exception $e){}
-			}
-			if($w_id !== null && ($v = $this->findValueInObject($w_id)) !== false && is_scalar($v))
-				return $v;
+            $ret = array();
+            if(!empty($this->datasource_methods))
+            {
+                foreach($this->datasource_params as $ind => $dsp)
+                {
+                    $dsp->replaceLimitParams();
+                    if(isset($this->datasource_methods[$ind]))
+                    {
+                        try{
+                            $r = new ReflectionObject($this->object);
+                            $ret[] = $r->getMethod($this->datasource_methods[$ind])->invokeArgs($this->object,$dsp->getParams());
+                        }catch(Exception $e){}
+                    }
+                }
+                return $ret;
+            }
+            else
+            if($w_id !== null && ($v = $this->findValueInObject($w_id)) !== false)
+                return $v;
 		}
 		else
-		{
-			if(isset($this->datasource_method))
-			{
-				try
-				{
-					$r = new ReflectionClass($this->classname);
-					if($r->getMethod($this->datasource_method)->isAbstract())
-						return call_user_func_array($this->classname."::".$this->datasource_method,$this->datasource_params->getParams());
-					else return null;
-				}
-				catch(ReflectionException $e){return null;}
-			}
+        {
+            if(!empty($this->datasource_methods))
+            {
+                $ret = array();
+                foreach($this->datasource_methods as $ind => $method)
+                {
+                    try
+                    {
+                        $r = new ReflectionClass($this->classname);
+                        if($r->getMethod($method)->isAbstract())
+                            $ret[] = call_user_func_array($this->classname."::".$method,$this->datasource_params[$ind]->getParams());
+                    }
+                    catch(ReflectionException $e){return null;}
 
-			if(($v = $this->findVlaueInStatic($w_id)) !== false)
-				return $v;
+                }
+                return $ret;
+            }
+            elseif(($v = $this->findVlaueInStatic($w_id)) !== false)
+                return $v;
 		}
 		return null;
 	}
@@ -352,7 +390,7 @@ class DataSourceObject extends DataObject
 	}
 	function hasDatasourceMethod()
 	{
-		return $this->datasource_method !== null;
+		return count($this->datasource_methods);
 	}
 }
 // }}}
@@ -388,19 +426,19 @@ class DataHandlerObject extends DataObject
 		/**
 		* @var  string
 		*/
-		$handler_method = null,
+		$handler_methods = array(),
 		/**
 		* @var  DataObjectParams
 		*/
-		$handler_params = null,
+		$handler_params = array(),
 		/**
 		* @var  string
 		*/
-		$checker_method = null,
+		$checker_methods = array(),
 		/**
 		* @var  DataObjectParams
 		*/
-		$checker_params = null
+		$checker_params = array()
 
 	;
 
@@ -412,23 +450,25 @@ class DataHandlerObject extends DataObject
 	{
 		parent::parseParams($elem);
 
-		if(isset($elem->handler))
+        foreach($elem->handler as $handler)
 		{
-			if(isset($elem->handler['method']))
-				$this->handler_method = (string)$elem->handler['method'];
+			if(isset($handler['method']))
+				$this->handler_methods[] = (string)$handler['method'];
 			else
 				throw new DataObjectException("Handler method was not found");
-		}
-		$this->handler_params = new DataObjectParams($elem->handler);		
 
-		if(isset($elem->checker))
+		    $this->handler_params[] = new DataObjectParams($handler);		
+		}
+        
+        foreach($elem->checker as $checker)
 		{
-			if(isset($elem->checker['method']))
-				$this->checker_method = (string)$elem->checker['method'];
+			if(isset($checker['method']))
+				$this->checker_methods[] = (string)$checker['method'];
 			else
 				throw new DataObjectException("Checker method was not found");
+
+			$this->checker_params[] = new DataObjectParams($checker);		
 		}
-			$this->checker_params = new DataObjectParams($elem->checker);		
 	}
 
 	function check(HTTPParamHolder $post)
@@ -437,27 +477,30 @@ class DataHandlerObject extends DataObject
 		{
 			if(!isset($this->object))
 				$this->createObject();
-			if(isset($this->checker_method))
+			foreach($this->checker_methods as $ind => $checker)
 			{
 				try{
 					$r = new ReflectionObject($this->object);
-					$arr = $this->checker_params->getParams();
+					$arr = $this->checker_params[$ind]->getParams();
 					array_unshift($arr,$post);
-					$r->getMethod($this->checker_method)->invokeArgs($this->object,$arr);
+					$r->getMethod($checker)->invokeArgs($this->object,$arr);
 				}catch(ReflectionException $e){ return ;}
 			}
 		}
 		else
-		{
-			try
-			{
-				$r = new ReflectionClass($this->classname);
-				$arr = $this->checker_params->getParams();
-				array_unshift($arr,$post);
-				if($r->getMethod($this->checker_method)->isAbstract())
-					call_user_func_array($this->classname."::".$this->checker_method,$arr);
-			}
-			catch(ReflectionException $e){return; }
+        {
+            foreach($this->checker_methods as $ind => $checker)
+            {
+                try
+                {
+                    $r = new ReflectionClass($this->classname);
+                    $arr = $this->checker_params[$ind]->getParams();
+                    array_unshift($arr,$post);
+                    if($r->getMethod($checker)->isAbstract())
+                        call_user_func_array($this->classname."::".$checker,$arr);
+                }
+                catch(ReflectionException $e){return; }
+            }
 		}
 		return ;
 	}
@@ -468,32 +511,31 @@ class DataHandlerObject extends DataObject
 		{
 			if(!isset($this->object))
                 $this->createObject();
-
-			if(isset($this->handler_method))
-			{
-				try{
-					$r = new ReflectionObject($this->object);
-					$arr = $this->handler_params->getParams();
-                    array_unshift($arr,$post);
-					$r->getMethod($this->handler_method)->invokeArgs($this->object,$arr);
-                }catch(ReflectionException $e){ return ;}
-			}
+            if(!empty($this->handler_methods))
+                foreach($this->handler_methods as $ind => $handler)
+                    try{
+                        $r = new ReflectionObject($this->object);
+                        $arr = $this->handler_params[$ind]->getParams();
+                        array_unshift($arr,$post);
+                        $r->getMethod($handler)->invokeArgs($this->object,$arr);
+                    }catch(ReflectionException $e){ return ;}
 			elseif(!empty($post))
 				foreach($post as $name=>$value)
 					$this->handleInObject($name,$value);
 		}
 		else
 		{
-			if(isset($this->handler_method))
-				try
-				{
-					$r = new ReflectionClass($this->classname);
-						$arr = $this->handler_params->getParams();
-						array_unshift($arr,$post);
-					if($r->getMethod($this->handler_method)->isAbstract())
-						call_user_func_array($this->classname."::".$this->handler_method,$arr);
-				}
-				catch(ReflectionException $e){return; }
+            if(!empty($this->handler_methods))
+                foreach($this->handler_methods as $ind => $handler)
+                    try
+                    {
+                        $r = new ReflectionClass($this->classname);
+                            $arr = $this->handler_params[$ind]->getParams();
+                            array_unshift($arr,$post);
+                        if($r->getMethod($handler)->isAbstract())
+                            call_user_func_array($this->classname."::".$handler,$arr);
+                    }
+                    catch(ReflectionException $e){return; }
 			elseif(!empty($post))
 				foreach($post as $name=>$value)
 					$this->handleInStatic($name,$value);
@@ -520,33 +562,6 @@ class DataHandlerObject extends DataObject
 			return call_user_func($this->classname,"::set_".strtolower($name),$value);
 		return;
 
-	}
-	function finalize()
-	{
-		if(!$this->is_static)
-		{
-			if(!isset($this->object))
-				$this->createObject();
-			if(isset($this->finalize_method))
-			{
-				try{
-					$r = new ReflectionObject($this->object);
-					$r->getMethod($this->finalize_method)->invokeArgs($this->object,$this->finalize_params->getParams());
-				}catch(ReflectionException $e){ return ;}
-			}
-		}
-		else
-		{
-			if(isset($this->finalize_method))
-				try
-				{
-					$r = new ReflectionClass($this->classname);
-					if($r->getMethod($this->finalize_method)->isAbstract())
-						call_user_func_array($this->classname."::".$this->finalize_method,$this->finalize_params->getParams());
-				}
-				catch(ReflectionException $e){return; }
-		}
-		return ;
 	}
 }
 // }}}

@@ -67,7 +67,7 @@ function requestURI($full = 0)
 function getImgSizeNoCache($path = null)
 {
 	if(!isset($path)) return false;
-	$full_path = Config::get("IMAGES_PATH")."/".$path;
+	$full_path = COnfig::get("root_dir").Config::get("IMAGES_PATH")."/".$path;
 	if(!file_exists($full_path)) return false;
 
 	$ret = array();
@@ -90,13 +90,12 @@ function getImgSizeNoCache($path = null)
 }
 function getImgSizeCache($path = null)
 {
-
 	$v = Storage::create("images_size");
-	if(($ret = $v->get($path)) !== false && ($stat =stat(Config::get("IMAGES_PATH")."/".$path)) !== false && $stat['mtime'] <= $ret['mtime'])
+	if(($ret = $v->get($path)) !== false && ($stat =stat(Config::get("root_dir").Config::get("IMAGES_PATH")."/".$path)) !== false && $stat['mtime'] <= $ret['mtime'])
         return $ret;
 	if(($ret = getImgSizeNoCache($path)) !== false)
     {
-        if(($stat = stat(Config::get("IMAGES_PATH")."/".$path)) !== false)
+        if(($stat = stat(Config::get("root_dir").Config::get("IMAGES_PATH")."/".$path)) !== false)
             $ret['mtime'] = $stat['mtime'];
 		$v->set($path,$ret);
 		return $ret;

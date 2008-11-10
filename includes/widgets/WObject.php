@@ -46,6 +46,7 @@ abstract class WObject
     {
     	$this->log = null; //&WLog::getInstance();
 		$this->setID($id);
+        //$this->setClassNameToLower(strtolower(get_class($this)));
     }
 	// }}}
 	

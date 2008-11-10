@@ -44,7 +44,7 @@ class MemcacheSession extends SessionBase
     */
     public function getServerSession($sid)
     {
-        $this->storage = Storage::create($this->getStorageName($sid), Config::get('SESSION_LENGTH'));
+        $this->storage = Storage::create($this->getStorageName($sid), Config::getInstance()->session->length);
         if (!isset($this->storage['cast']))
             $ss = false;
         else{
@@ -65,7 +65,7 @@ class MemcacheSession extends SessionBase
     public function updateSession($param)
     {
         parent::updateSession($param);
-        $this->storage = Storage::create($this->getStorageName($this->id), Config::get('SESSION_LENGTH'));
+        $this->storage = Storage::create($this->getStorageName($this->id), Config::getInstance()->session->length);
         foreach($param as $k => $v)
             $this->storage[$k] = $v;
     }// }}}

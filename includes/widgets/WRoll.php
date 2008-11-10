@@ -92,6 +92,8 @@ class WRoll extends WContainer
 			$this->setRuler((string)$elem['ruler']);
 
 		$this->items = new IterableCollection($this->getId(),$elem);
+		$this->addToMemento(array("count"));
+
 
 		parent::parseParams($elem);
 

@@ -117,6 +117,9 @@ class WHyperLink extends WContainer
 		$this->setAttribute('rel',$data->get('rel'));
 		$this->setAttribute('rev',$data->get('rev'));
 		$this->setAttribute('target',$data->get('target'));
+        if(($text = $data->get('text')) !== null && !$this->items->count())
+            $this->items->setText($text);
+
 
 		$href = $data->get('href');
 		if(isset($href))

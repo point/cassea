@@ -164,7 +164,7 @@ class SessionBase
     */
     protected function updateSession( $param)
     {
-        $succ =  setcookie(Session::COOKIE_NAME, $this->id, time() + Config::get('SESSION_COOKIE_LENGTH'),"/");// ,$_SERVER['HTTP_HOST']);
+        $succ =  setcookie(Session::COOKIE_NAME, $this->id, time() + Config::getInstance()->session->cookie_length,"/");// ,$_SERVER['HTTP_HOST']);
         if ( !$succ )throw new Exception('COOKIE:Unable set Session ID. Probably  headers already sent.');
         $this->userId = 0 + $param['user'];
     }//}}}
@@ -175,7 +175,7 @@ class SessionBase
     */
     public function kill(){
         // set cookie expired time in past
-        setcookie(Session::COOKIE_NAME, $this->id, time() - Config::get('SESSION_COOKIE_LENGTH'),"/");
+        setcookie(Session::COOKIE_NAME, $this->id, time() - Config::getInstance()->session->cookie_length,"/");
         $this->id = null;
         $this->userId = User::GUEST;
         $this->remoteIP = null;        

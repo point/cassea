@@ -71,8 +71,7 @@ class WListItem extends WContainer
     {
 		if(!empty($elem['text']))
 			$this->setText((string)$elem['text']);
-		elseif(!count($elem))
-			$this->items = new MixedCollection($this->getId(),$elem);
+		$this->items = new MixedCollection($this->getId(),$elem);
 
 		$this->addToMemento(array("text"));
 		parent::parseParams($elem);		    	

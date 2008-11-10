@@ -195,10 +195,10 @@ class WHTML extends WComponent
 			$this->src = $src;
 		/*elseif(file_exists(Config::get("ROOT_DIR").$src))
             $this->src = Config::get("ROOT_DIR").$src;*/
-		elseif(file_exists(Config::get("HTML_DIR").'/'.$src))
-            $this->src = Config::get("HTML_DIR").'/'.$src;
-        elseif(file_exists(Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src))
-            $this->src = Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src;
+		elseif(file_exists(Config::get("root_dir").Config::get("HTML_DIR").'/'.$src))
+            $this->src = Config::get("root_dir").Config::get("HTML_DIR").'/'.$src;
+        elseif(file_exists(Config::get('root_dir').Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src))
+            $this->src = Config::get('root_dir').Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src;
     }
     // }}}
     

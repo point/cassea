@@ -90,7 +90,7 @@ class DBSession extends SessionBase
     */
     public function deleteExpired()
     {
-        $expiry_time = time() - Config::get('SESSION_LENGTH');
+        $expiry_time = time() - Config::getInstance()->session->length;
         $sql = 'delete from ' . DBSession::TABLE . ' where time < '.$expiry_time;
         DB::query($sql);
         return DB::getMysqli()->affected_rows;

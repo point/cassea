@@ -117,7 +117,15 @@ abstract class WComponent extends WObject
 		/**
         * @var      array
         */
-		$memento_vars = array()
+        $memento_vars = array(),
+		/**
+        * @var      string
+        */
+        $id_lower = null,
+		/**
+        * @var      string
+        */
+        $class_lower = null
 		;
 
     // {{{ __construct
@@ -146,11 +154,71 @@ abstract class WComponent extends WObject
 		if(!isset($id) || !is_scalar($id) || Controller::getInstance()->getWidget($id) instanceof WObject)
 			$id = "__w".(self::$w_counter++);
 		parent::setId($id);
+        $this->setIDLower(strtolower($this->getId()));
+        $this->setClassLower(strtolower(get_class($this)));
+
 		//$this->id = "".$id;
-		$this->setHTMLId($this->getId());
+		//$this->setHTMLId($this->getId());
+    }
+    // }}}
+    
+	// {{{ setIDLowert
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $id    
+    * @return   void
+    */
+    function setIDLower($id = null)
+	{
+		if(!isset($id) || !is_scalar($id))return;
+		$this->id_lower = (string)$id;
+    }
+    // }}}
+    
+	// {{{ getIDLowert
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getIDLower()
+	{
+		return $this->id_lower;
     }
     // }}}
 
+	// {{{ setClassLowert
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $class
+    * @return   void
+    */
+    function setClassLower($class = null)
+	{
+		if(!isset($class) || !is_scalar($class))return;
+		$this->class_lower = (string)$class;
+    }
+    // }}}
+    
+	// {{{ getIDLowert
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getClassLower()
+	{
+		return $this->class_lower;
+    }
+    // }}}
     // {{{ setEnabled 
     /**
     * Method description
@@ -650,9 +718,12 @@ abstract class WComponent extends WObject
     */
     function assignVars()
     {
+
 		if(!$this->getState()) return;
 		if(!empty($this->html_id))
-			$final_html_id = $this->getHTMLId();
+        {
+            $final_html_id = $this->getHTMLId();
+        }
 		elseif($this->inside_roll || $this->do_increment)
 		{
 			$final_html_id = $this->id."_".$this->add_html_id;
@@ -785,7 +856,7 @@ EOD;
     * @return   void
     */
 	function preRender()
-	{
+    {
 		if(!empty($this->tpl))
 			$this->tpl->flushVars();
 
@@ -834,9 +905,9 @@ EOD;
     */
 	function postRender()
 	{
-		foreach($this->class_vars as $p)
+/*		foreach($this->class_vars as $p)
 			if($this->$p instanceof WidgetCollection)
-				$this->$p->postRender();
+                $this->$p->postRender();*/
 
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);

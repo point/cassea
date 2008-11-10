@@ -158,9 +158,9 @@ class FSStorage implements StorageEngine, ArrayAccess
 class MemcacheStorage implements StorageEngine, ArrayAccess
 {
 	private $storage_name = null,
-			$ttl = null,
-			$memcache = null
-            ;
+            $ttl = null,
+            $memcache = null
+        ;
     // {{{ __construct
 	function __construct($storage_name, $ttl = null)
 	{
@@ -175,16 +175,15 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
         if (!isset($ttl)) $ttl = 86400; //1day
         $this->ttl = min((int)$ttl, 2592000 );
 
-		$this->memcache = new Memcache;
-        if($this->memcache->pconnect(Config::get('MEMCACHED_HOST'),Config::get('MEMCACHED_PORT')) === false)
+        $this->memcache = new Memcache;
+        if($this->memcache->connect(Config::getInstance()->memcached->host,Config::getInstance()->memcached->port) === false)
             throw new StorageException('could not connect to server');
 	}// }}}
 
     // {{{ is_set
 	function is_set($var)
     {
-        // @ used due to strage warnings
-		@$f = $this->memcache->get(md5($this->storage_name.$var));
+		$f = $this->memcache->get(md5($this->storage_name.$var));
 		if($f === false) return false;
 		return true;
 	}// }}}
@@ -192,15 +191,14 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
     // {{{ set
     function set($var,$val)
     {
-        // @ used due to strage warnings
 		if($this->is_set($var))
-			@$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
+			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
-			@$r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
+            $r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
 		return $r;
-    }// }}}
+    }// }}} 
 
-    // {{{ get
+     // {{{ get
 	function get($var)
 	{
 		return $this->memcache->get(md5($this->storage_name.$var));
@@ -217,10 +215,11 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
     // }}} sync
 
     // {{{ __destruct
-	function __destruct()
+	/*function __destruct()
 	{
 		$this->memcache->close();
-	}// }}}
+    }*/
+    // }}}
 
     //  {{{ ArrayAccess interface
     public function offsetExists($key){ return $this->is_set($key);}
@@ -235,11 +234,16 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
 class Storage 
 {
 	static function create($storage_name,$ttl = null)
-	{
-		if(Config::get('STORAGE_ENGINE') == "memcache")
-			return new MemcacheStorage($storage_name,$ttl);
-		else 
-			return new FSStorage($storage_name,$ttl);
+    {
+        static $storage = null;
+        if(!isset($storage))
+        {
+            if(Config::get('STORAGE_ENGINE') == "memcache")
+                $storage = new MemcacheStorage($storage_name,$ttl);
+            else 
+                $storage = new FSStorage($storage_name,$ttl);
+        }
+        return $storage;
 	}
 	static function createWithSession($storage_name,$ttl = null)
 	{

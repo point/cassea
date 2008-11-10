@@ -78,14 +78,6 @@ class WContainer extends WComponent
 // {{{ WControlContainer
 class WControlContainer extends WControl
 {
-	// {{{
-	function __clone()
-	{
-		foreach($this->class_vars as $v)
-			if($this->$v instanceof WidgetCollection)
-				$this->$v = clone $this->$v;
-	}
-	// }}}
 	// {{{ preRender
 	function preRender()
 	{
@@ -344,6 +336,7 @@ class WidgetCollection
 		}
 	}
 	// }}}
+    
 	// {{{ __clone
 	function __clone()
 	{
@@ -351,7 +344,6 @@ class WidgetCollection
 			$this->item_objs[$i] = clone $this->item_objs[$i];
 	}
 	// }}}
-    
 }
 // }}}
 
@@ -406,6 +398,7 @@ class MixedCollection extends WidgetCollection
         return $this->str;
 	}
     // }}}
+    
 }
 // }}}
 
@@ -423,18 +416,18 @@ class IterableCollection extends WidgetCollection
 	// {{{ preReder
 	function preRender()
 	{
+        $this->i_elem = array();
 		$controller = Controller::getInstance();
 		for($i = 0, $c = $controller->getDisplayModeParams()->getLimit($this->parent_id);$i < $c; $i++)
 		{
 			$controller->getDispatcher()->notify(
 				new Event("increment_id",null,null,array('do_increment'=>1)));
 			parent::preRender();
-
 			for($j = 0, $c2 = $this->count();$j < $c2; $j++)
-				$this->i_elem[$i][$j] = clone $this->getItem($j);
+                $this->i_elem[$i][$j] = clone $this->getItem($j);
 
 			$controller->getDispatcher()->notify(
-				new Event("increment_id",null,null,array('do_increment'=>0)));
+                new Event("increment_id",null,null,array('do_increment'=>0)));
 
 			$controller->getDisplayModeParams()->incCurrent($this->parent_id);
 		}
@@ -481,6 +474,13 @@ class IterableCollection extends WidgetCollection
 	} 
 	// }}}
 
+	// {{{ __clone
+	function __clone()
+	{
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$this->item_objs[$i] = clone $this->item_objs[$i];
+	}
+	// }}}
 }
 // }}}
 ?>

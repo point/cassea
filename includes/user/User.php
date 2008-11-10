@@ -82,8 +82,8 @@ class User
         if ( !is_int($uid =  Session::get()->getUserId()) || $uid <= 0 ) return;
         $this->id = $uid;
         
-        if (Config::get('USER_PROXY_TIME')){
-            $this->storage = Storage::create('__UserData'.$this->id,Config::get('USER_PROXY_TIME'));
+        if (Config::getInstance()->user->proxy_time){
+            $this->storage = Storage::create('__UserData'.$this->id,Config::getInstance()->user->proxy_time);
 
             if (!$this->restoreUserData()){
                 $d = $this->getUserData();
@@ -156,7 +156,6 @@ class User
     {
         if (!preg_match(User::REGEXP_LOGIN, $login) && !preg_match(User::REGEXP_PASSWORD, $password))
             return false;
-
         $r = DB::query('select id, login, email, password, sold, state from '.User::TABLE.' where login="'.$login.'"');
         if (count($r)!= 1 ) return User::ERROR_USER_NOT_EXIST;
         $r = $r[0];
@@ -165,8 +164,9 @@ class User
         if ($r['state'] == 'notactive') return User::ERROR_USER_NOTACTIVE;
         if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
 
-        $needed_password = $password;//md5(Config::USER_SECRET.$password.$r['sold'] );
-        if( $r['password'] != $needed_password ) return User::ERROR_PASSWORD_INCORRECT;
+        if (  $r['password'] != $this->buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
+            return User::ERROR_PASSWORD_INCORRECT;
+
         $this->id = 0+$r['id'];
         $this->login = $r['login'];
         $this->email = $r['email'];
@@ -185,6 +185,7 @@ class User
     public function getId()
     {
         return $this->id;
+
     }// }}}
     
     //{{{ getLogin
@@ -195,7 +196,7 @@ class User
     {
         return $this->login;
     }// }}}
-    
+
     //{{{ getEmail
     /**
     * @return   string
@@ -212,8 +213,65 @@ class User
     public function getProfile()
     {
        // TODO: implement
+
     }// }}}
 
+
+    // {{{ checkPassword
+    /**
+     *
+     *
+     */
+    private function checkPassword($user_id, $password){
+        $r = DB::query('select  password, sold from '.User::TABLE.' where id="'.$user_id.'"');
+        $r =$r[0];
+        $dbPassword = $r['password'];
+        $dbSold = $r['sold'];
+        $serverSold = Config::getInstance()->user->secret;
+        
+        echo 
+        $neededPassword = hash('md5', $dbSold.$password.$serverSold);
+        
+
+        return $dbPassword == $neededPassword;
+    } // }}}
+
+    private function buildPasword($password, $dbSold, $serverSold){
+        echo 
+        $needed = hash('md5', $dbSold.$password.$serverSold);
+        return $needed; 
+    }
+
+
+
+    // {{{ setPassword
+    /**
+     *
+     */
+    public function setPassword($uid, $password, $sold = null){
+
+    
+    }// }}}
+
+    // {{{ generatePassword
+    /**
+     *
+     */
+    private function generatePassword(  )
+    {
+       $str='123456789QWERTYUIPASDFGHJKLZXCVBNM';
+        $res='';
+        for($i=0;$i<$length;$i++)
+            $res.=$str[mt_rand(0,strlen($str)-1)];
+        return $res;
+
+    }//}}}
+
+    // {{{ generateSold
+    private function generateSold(){
+
+    }//}}}
+    
 }// }}}
 
 ?>

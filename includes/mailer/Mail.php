@@ -49,7 +49,7 @@ class Mail{
     *
     */
     public static function createMail(){
-        $className=Config::get("MAIL_TRANSPORT")."Mail";
+        $className=Config::getInstance()->mail->transport."Mail";
         try{
 				if (!class_exists($className))
 	        		throw new Exception("<b>Cannot find class {$className}!!!!</b> ");
@@ -83,4 +83,3 @@ class Mail{
     $a->send();
 */
 ?>
-

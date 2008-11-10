@@ -70,4 +70,3 @@ interface IMailObject{
     public function getBcc();
 }
 ?>
-

@@ -27,75 +27,192 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-class Config
+class ConfigException extends Exception {}
+interface SaveableConfig
 {
-	const ROOT_DIR = "/usr/local/www/devel";
+	function save();
+}
+class ConfigBase implements IteratorAggregate
+{
+	const CONFIG_DIR = "/config";
 
-	const STORAGE_ENGINE = "memcache";
-//	const STORAGE_ENGINE = "filesystem";
+    protected $allow_modifications = true,
+			 $data = array(),
+			 $section = null,
+			 $extends = array()
+			 ;
 
-    const MEMCACHED_HOST = 'localhost';
-    const MEMCACHED_PORT = '11211';
-
-    const STORAGE_PATH = "/cache/storage";
-
-    const SESSION_ENGINE='memcache';
-    //const SESSION_ENGINE='database';
-
-    const SESSION_LENGTH=3600; //length of server-side session
-    const SESSION_COOKIE_LENGTH = 315360000; // 10 years
-
-    /*** User ***/ 
-    //time to cache some user profile data
-    const USER_PROXY_TIME = 86400; // 0 - disabled; 
-    const USER_SECRET = 'It may or may not be worthwhile, but it still has to be done.';
-	
-	const XMLPAGES_PATH = "/pages";
-
-	const IMAGES_PATH = "/usr/local/www/devel/web/images";
-	const USE_IMAGES_CACHE = true;
-
-	const JS_VER = "0.1";
-	const CSS_VER = "0.1";
-
-	const CACHE_STATIC_PAGES = true;
-
-	const HTML_DIR="/usr/local/www/devel/web/html";
-
-    // MAILER
-    const MAIL_TRANSPORT = 'smtp';
-    //const MAIL_TRANSPORT = 'mail';
-    //const MAIL_TRANSPORT = 'sendmail';
-    
-    //const MAIL_DEFAULT_FROM = 'postmaster@intvideo';
-    //const MAIL_DEFAULT_FROM_NAME = 'postmaster';
-    const MAIL_DEFAULT_FROM = 'climbonn@gmail.com';
-    const MAIL_DEFAULT_FROM_NAME = 'Алексей Ковтунец';
-
-
-    //const MAIL_SMTP_HOST = 'smtp.intvideo';
-    //const MAIL_SMTP_PORT = '25';
-    const MAIL_SMTP_HOST = 'smtp.gmail.com';
-    const MAIL_SMTP_PORT = '25';
-
-    //const MAIL_SMTP_PORT = '465'; //ssl
-
-    const MAIL_SMTP_PROTO = ''; // usual tcp
-    //const MAIL_SMTP_PROTO = 'ssl'; // ssl and 465 port
-    
-    //const MAIL_SMTP_USER = 'postmaster@intvideo';
-    //const MAIL_SMTP_PASSWD = 'postmasterpass';
-    const MAIL_SMTP_USER = 'climbonn';
-    const MAIL_SMTP_PASSWD = 'climbonsight';
-    const MAIL_SENDMAIL_PATH = '/usr/sbin/sendmail';
-
-    //class.mailObject DONT FORGET TO CHAGE REGEXP!!!!!!!!!
-
-	static function get($var)
+    function __construct(array $array = array(), $allow_modifications = true)
+    {
+        $this->allow_modifications = $allow_modifications;
+		$this->data['root_dir'] = dirname(dirname(__FILE__));
+		$this->parseArray($array);
+	}
+	protected final function parseArray(array $array = array())
 	{
-		if(defined('self::'.$var))
-			return constant('self::'.$var);
-		return null;
+        foreach ($array as $key => $value) 
+            if (is_array($value)) 
+                $this->data[$key] = new self($value, $this->allow_modifications);
+             else 
+                $this->data[$key] = $value;
+	}
+    function get($name)
+    {
+		$name = strtolower($name);
+        if(isset($this->data[$name]))
+            return $this->data[$name];
+        else
+            throw new ConfigException("Config value ".$name." doesn't exists");
+    }
+    function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    function __set($name, $value)
+    {
+		if (!$this->allow_modifications) 
+			throw new ConfigException("Config is read only");
+		
+		$this->parseArray(array($name=>$value));
+    }
+
+    function __isset($name)
+    {
+        return isset($this->data[$name]);
+    }
+
+    function __unset($name)
+    {
+		if (!$this->allow_modifications) 
+			throw new ConfigException("Config is read only");
+
+		if(isset($this->data[$name]))
+			unset($this->data[$name]);
+    }
+	
+    function setReadOnly()
+    {
+        $this->allow_modifications = false;
+    }
+
+    function toArray()
+    {
+        $array = array();
+        foreach ($this->data as $key => $value)
+            if ($value instanceof ConfigBase) 
+                $array[$key] = $value->toArray();
+             else 
+                $array[$key] = $value;
+
+        return $array;
+    }
+	function getIterator()
+	{
+		return t(new ArrayObject($this->data))->getIterator();
+	}
+
+    function getSectionName()
+    {
+        return $this->section;
+    }
+
+    function merge(ConfigBase $merge)
+    {
+		foreach($merge as $key => $item) 
+			if(isset($this->data[$key]))
+                if($item instanceof ConfigBase && $this->$key instanceof ConfigBase) 
+                    $this->$key = $this->$key->merge($item);
+                 else 
+                    $this->$key = $item;
+                
+             else 
+                 $this->$key = $item;
+            
+        return $this;
+    }
+}
+class IniConfig extends ConfigBase implements SaveableConfig
+{
+	protected
+		$filename = null,
+		$inherit_separator = ":";
+
+	function __construct($filename, $section = null, $allow_modifications = true, $inherit_separator = ":")
+	{
+		if(empty($filename) || !file_exists($_SERVER['DOCUMENT_ROOT']) || !file_exists($this->filename = $_SERVER['DOCUMENT_ROOT'].self::CONFIG_DIR."/".$filename))
+			throw new ConfigException("Config file ".$this->filename." doesn't exists");
+
+		$this->section = $section;
+		$this->allow_modifications = (bool)$this->allow_modifications;
+		$this->inherit_separator = (string)$inherit_separator;
+
+		$parsed_ini = parse_ini_file($this->filename,true);
+		list($sect_key,$sect_val) = $this->findSection($parsed_ini,$this->section);
+		if(!isset($sect_key, $sect_val)) return;
+
+
+		if(count(($expl = explode($this->inherit_separator,$sect_key))) == 2) 
+		{
+			list($inh_key,$inh_val) = $this->findSection($parsed_ini,
+				trim($expl[1]));
+			if(isset($inh_key,$inh_val))
+			{
+				$arr_to_parent = array();
+				foreach($inh_val as $ik => $iv)
+					$arr_to_parent = array_merge_recursive($arr_to_parent,$this->processKeys(explode(".",$ik),$iv));
+				$this->merge(new ConfigBase($arr_to_parent));
+			}
+		}
+		elseif(count($expl) > 2)
+			throw new ConfigException("Multiple inheritance not allowed");
+
+		$arr_to_parent = array();
+		foreach($sect_val as $vk => $vv)
+			$arr_to_parent = array_merge_recursive($arr_to_parent,$this->processKeys(explode(".",$vk),$vv));
+        //parent::__construct($arr_to_parent);
+        $this->merge(new configBase($arr_to_parent));
+
+		
+	}
+	protected final function findSection($arr,$sect_name)
+	{
+		foreach(array_keys($arr) as $key)
+			if(($kp = explode($this->inherit_separator,$key)) && trim($kp[0]) == $sect_name)
+				return array($key,$arr[$key]);
+		return array(null,null);
+	}
+	protected final function processKeys($arr,$value)
+	{
+		if(empty($arr)) return $value;
+		$el = array_pop($arr);
+		return $this->processKeys($arr,array($el=>$value));
+	}
+	function save()
+	{
+		if(!$this->allow_modifications) 
+			throw new ConfigException("Config is read only");
+		throw new ConfigException("Not implemented yet :)");
 	}
 }
+class Config
+{
+	private static $instance = null;
+	static function init(ConfigBase $config)
+	{
+		if(!isset(self::$instance))
+			self::$instance = $config;
+	}
+	static function get($parameter)
+	{
+		return self::$instance->$parameter;
+	}
+	static function getInstance()
+	{
+		return self::$instance;
+	}
+}
+
+/*$config = new IniConfig("config.ini","intvideo");
+print_pre($config);*/
 ?>
