@@ -149,6 +149,7 @@ class WTab extends WContainer
     {
 		$this->restoreMemento();
 		
+        $this->setTabTitle($data->getDef());
 		$this->setTabTitle($data->get('tab_title'));
 		$this->setHref($data->get('href'));
 		$this->setSelected($data->get('selected'));

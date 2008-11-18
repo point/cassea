@@ -52,6 +52,8 @@ require("POSTChecker.php");
 require("markdown.php");
 require("LTC.php");
 require("mailer/Mail.php");
+require("ACL.php");
+require("StringProcessor.php");
 
 class ControllerException extends Exception
 {}
@@ -119,7 +121,7 @@ class Controller
 
         if(defined('CONFIG') && defined('CONFIG_SECTION'))
             Config::init(new IniConfig(CONFIG,CONFIG_SECTION));
-        else Config::init(new IniConfig("config.ini","base"));
+        else Config::init(new IniConfig("config.ini","config"));
 
         $config = Config::getInstance();
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->table);
@@ -206,6 +208,7 @@ class Controller
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
             throw new ControllerException('page '.$this->page.' is for internal use only');
+        //{header("HTTP/1.0 404 Not Found");exit();}
         return $full_path;
     }
 	protected final function parseP1P2()
@@ -233,7 +236,7 @@ class Controller
         $language_final = null;
         if(!empty($this->get->__lang))
             Language::$current_language = Language::getLangIdByName(substr($this->get->__lang,0,2));
-        elseif(is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+        elseif(isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
         {
             $languages = strtolower(Filter::filter($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
 
@@ -270,6 +273,12 @@ class Controller
     }
     protected function processPage(DomDocument $dom)
     {
+        // check rights
+        $a = $dom->firstChild->getAttribute('allow');
+        $d = $dom->firstChild->getAttribute('deny');
+       if(!ACL::check($a,$d))
+        {header("HTTP/1.0 403 Forbidden");exit();}
+
         // extends
         $adj_list = array($dom);
         $included_pages = array($this->page.".xml");
@@ -342,6 +351,11 @@ class Controller
             catch(ControllerException $e){ throw new ControllerException('include page file '.$src.' not found');}
             $d = new DomDocument;
             $d->load($src);
+
+            $_a = $d->firstChild->getAttribute('allow');
+            $_d = $d->firstChild->getAttribute('deny');
+            if(!ACL::check($_a,$_d)) continue;
+
             $imported_node = $dom->importNode($d->firstChild,true);
             if($imported_node->hasChildNodes())
                 for($node_list = $imported_node->childNodes,$j = 0, $c2 = $node_list->length; $j < $c2;$j++)
@@ -765,6 +779,7 @@ class Controller
 		}
 		DataUpdaterPool::callHandlers();
 		DataUpdaterPool::callFinilze();
+        $ret = null;
         if(isset($this->pagehandler))
             $ret = $this->pagehandler->handle();
 

@@ -80,7 +80,7 @@ class SessionBase
             $param['ip'] = $this->remoteIP;
             $param['cast'] = $cs['cast'];
             $param['user'] = User::GUEST;
-            $this->id =  md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
+            @$this->id =  md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
             
         }
 
@@ -145,7 +145,7 @@ class SessionBase
     */
     private function makeCast()
     {
-        $str = $_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING'];
+        @$str = $_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING'];
         return md5($str);
     }// }}}
     

@@ -165,6 +165,7 @@ class WFieldSet extends WContainer
     function setData(WidgetResultSet $data)
     {
 		$this->restoreMemento();
+        $this->setLegend($data->getDef());
 		$this->setLegend($data->get('legend'));
     	parent::setData($data);
     }

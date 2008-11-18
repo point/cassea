@@ -372,7 +372,9 @@ class MixedCollection extends WidgetCollection
 	function generateAllHTML()
 	{
 		if(isset($this->str))
-			return Language::encodePair($this->str);
+            if(($p = Controller::getInstance()->getWidget($this->parent_id)) instanceof StringProcessable)
+                return StringProcessorFactory::create($p->getStringProcess())->process(Language::encodePair($this->str));
+            else return Language::encodePair($this->str);
 		return parent::generateAllHTML();
 	}
 	// }}}
@@ -387,7 +389,7 @@ class MixedCollection extends WidgetCollection
 	// {{{ setText
 	function setText($text)
 	{
-        if(!is_scalar($text)) return;
+        if(!isset($text) || !is_scalar($text)) return;
         $this->str = $text;
 	}
     // }}}

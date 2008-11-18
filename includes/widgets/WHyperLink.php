@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WHyperLink
-class WHyperLink extends WContainer
+class WHyperLink extends WContainer implements StringProcessable
 {
     
 	protected
@@ -97,6 +97,8 @@ class WHyperLink extends WContainer
 		if(!empty($elem['target']))
 			$this->setAttribute('target',(string)$elem['target']);
 		$this->items = new MixedCollection($this->getId(),$elem);
+        if($this->items->isEmpty())
+            $this->items->setText($this->getHREF());
 		$this->addToMemento(array("href","baseurl","label","rel","rev","target"));
 
 		parent::parseParams($elem);		    	

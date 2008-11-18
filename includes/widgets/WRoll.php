@@ -240,6 +240,7 @@ class WRoll extends WContainer
 	{
 		$this->restoreMemento();
 
+        $this->setCount($data->getDef());
 		$this->setCount($data->get('count'));
 		parent::setData($data);
     }

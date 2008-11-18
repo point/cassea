@@ -434,6 +434,12 @@ abstract class WControl extends WComponent
 			"readonly"=>($this->readonly)?('readonly="'.$this->readonly.'"'):'',
 			"disabled"=>($this->disabled)?('disabled="'.$this->disabled.'"'):''
 			));
+        if($this instanceof StringProcessable)
+            $this->tpl->setParams(t(new TemplateParams)->set('value',
+                StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->value))));
+        else
+            $this->tpl->setParams(t(new TemplateParams)->set('value',Language::encodePair($this->value)));
+
 		if(isset($this->filter_error_string))
 			$this->tpl->setParamsArray(array("error_string"=>
 			"<span class=\"widget_error\">".$this->getFilterError()."</span>"));

@@ -32,7 +32,7 @@
 //
 WidgetLoader::load("WComponent");
 //{{{ WText
-class WText extends WComponent
+class WText extends WComponent implements StringProcessable
 {
     protected
 
@@ -263,7 +263,7 @@ class WText extends WComponent
     {
 		if($this->is_h)
 			$this->tpl->setParamsArray(array("heading"=>$this->heading));
-		$this->tpl->setParamsArray(array('value'=>Language::encodePair($this->text)));
+		$this->tpl->setParamsArray(array('value'=>StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->text))));
 		parent::assignVars();
     }
 	// }}}	

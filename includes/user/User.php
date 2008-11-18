@@ -229,7 +229,7 @@ class User
         $dbSold = $r['sold'];
         $serverSold = Config::getInstance()->user->secret;
         
-        echo 
+        //echo 
         $neededPassword = hash('md5', $dbSold.$password.$serverSold);
         
 
@@ -237,7 +237,7 @@ class User
     } // }}}
 
     private function buildPasword($password, $dbSold, $serverSold){
-        echo 
+        //echo 
         $needed = hash('md5', $dbSold.$password.$serverSold);
         return $needed; 
     }

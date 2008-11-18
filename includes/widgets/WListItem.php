@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WListItem
-class WListItem extends WContainer
+class WListItem extends WContainer implements StringProcessable
 {
     var
 
@@ -148,7 +148,7 @@ class WListItem extends WContainer
     {
         if(isset($this->text))
             $this->tpl->setParamsArray(array(
-                "text"=>Language::encodePair($this->getText())
+                "text"=>StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->getText()))
             ));
         else
             $this->tpl->setParamsArray(array(

@@ -94,7 +94,12 @@ abstract class WComponent extends WObject
 		/**
         * @var      string
         */
-		$hide_if_hidden_id = null;
+        $hide_if_hidden_id = null,
+		/**
+        * @var      string
+        */
+        $string_process = null
+        ;
 		
 		private static $w_counter = 0;
 		private
@@ -273,8 +278,6 @@ abstract class WComponent extends WObject
 			preg_match("/(\S*)\/([^\/]{1,})$/",$template_name,$m);
 			$this->template_path = $m[1];
 			$this->template_name = $m[2];
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				'Setting custom template: '.$template_name),LOG_LEVEL_INFO);
 		}*/
 		else
 		{
@@ -559,7 +562,14 @@ abstract class WComponent extends WObject
     */
     function parseParams(SimpleXMLElement $params)
 	{
-		if(isset($params['enabled'])) $this->setState(0+$params['enabled']);
+        if(isset($params['enabled'])) $this->setState(0+$params['enabled']);
+        $a = $d = null;
+        if(isset($params['allow']))
+            $a = (string)$params['allow'];
+        if(isset($params['deny']))
+            $d = (string)$params['deny'];
+        if(!ACL::check($a,$d))
+            $this->setState(0);
 		if(isset($params['title'])) $this->setTitle((string)$params['title']);
 		if(isset($params['visible'])) $this->setVisible(0+$params['visible']);
 		if(isset($params['html_id'])) $this->setHTMLId((string)$params['html_id']);
@@ -576,12 +586,16 @@ abstract class WComponent extends WObject
 		if(isset($params['hide_if_hidden']))
 			$this->setHideIfHidden((string)$params['hide_if_hidden']);
 
+        if(isset($params['process']))
+            $this->setStringProcess((string)$params['process']);
+
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
 		$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
 		$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
-		$this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript","javascript_before","javascript_after"));
+        $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
+            "javascript_before","javascript_after","hide_if_hidden","hide_if_empty"));
 
     }
     // }}}
@@ -939,11 +953,7 @@ EOD;
     function setHideIfHidden($hidden_id)
     {
 		if(!isset($hidden_id)) 
-		{
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				"Enable parameter is empty"),LOG_LEVEL_WARNING);
 			return;
-		}	
 		$this->hide_if_hidden_id = "".$hidden_id;
     }
     // }}}
@@ -993,6 +1003,34 @@ EOD;
     function getHideIfEmpty()
     {
     	return $this->hide_if_empty_id;
+    }
+    // }}}
+	// {{{ setStringProcess
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    boolean $empty_id
+    * @return   void
+    */
+    function setStringProcess($str)
+    {
+		if(empty($str) || !is_string($str)) return;
+		$this->string_process = "".$str;
+    }
+    // }}}
+    
+    // {{{ getStringProcess
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    null
+    * @return   string
+    */
+    function getStringProcess()
+    {
+    	return $this->string_process;
     }
     // }}}
 	
