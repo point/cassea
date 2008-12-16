@@ -89,7 +89,7 @@ class TemplateParams
 	}
 	function set($name = null,$val = null)
 	{
-		if(!isset($val) || empty($name)) return;
+		if(!isset($val) || empty($name)) return $this;
 
 		if(!isset($this->properties[$name]))
 			$this->properties[$name] = new TemplateParam($val);

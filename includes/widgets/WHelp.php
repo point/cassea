@@ -29,7 +29,7 @@
 
 
 //
-// $Id: WHyperLink.php 45 2008-10-07 14:03:38Z point $
+// $Id$
 //
 WidgetLoader::load("WHyperLink");
 //{{{ WHyperLink 
