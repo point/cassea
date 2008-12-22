@@ -577,7 +577,7 @@ class Controller
 		foreach($this->scripts as $v)
 			$h->addScript($v['src'],$v['cond']);
 		foreach($this->css as $v)
-			$h->addCSS($v['src'],$v['cond']);
+			$h->addCSS($v['src'],$v['cond'],$v['media']);
 		$v = $h->send();
 		$v .= "<body>\n";
 		if($echo)
@@ -619,13 +619,13 @@ class Controller
 			$src = "/way_scripts/".$src;*/
 		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".$src,'cond'=>$cond);
 	}
-	function addCSS($src = null,$cond = null)
+	function addCSS($src = null,$cond = null,$media = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->css)) return;
 		/*if(strpos($src,"/") === false)
 			$src = "/way_admin/css/".$src;*/
-		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".$src,'cond'=>$cond);
+		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".$src,'cond'=>$cond, 'media'=>$media);
 	}
 	function getNavigator()
 	{

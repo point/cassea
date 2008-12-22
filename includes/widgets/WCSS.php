@@ -29,11 +29,11 @@
 
 
 //
-// $Id$
+// $Id: WHTML.php 56 2008-11-10 00:20:48Z point $
 //
 WidgetLoader::load("WComponent");
-//{{{ WHTML
-class WHTML extends WComponent
+//{{{ WCSS
+class WCSS extends WComponent
 {
 	protected
 		/**
@@ -43,9 +43,17 @@ class WHTML extends WComponent
 		/**
 		* @var string
 		*/
+        $condition = null,
+		/**
+		* @var string
+		*/
+        $media = null,
+		/**
+		* @var string
+		*/
 		$text = null
+
 		;
-	private $page_text;
     // {{{ __construct
     /**
     * Method description
@@ -69,14 +77,20 @@ class WHTML extends WComponent
     function parseParams(SimpleXMLElement $elem)
     {
 		if(isset($elem['src']))
+        {
 			$this->setSrc((string)$elem['src']);
-		else
+		    if(isset($elem['condition']))
+			    $this->setCond((string)$elem['condition']);
+        }
+        elseif((string)$elem)
 			$this->setText(trim((string)$elem));
-		$this->addToMemento(array("src","text"));
+        if(isset($elem['media']))
+            $this->setMedia((string)$elem['media']);
+		$this->addToMemento(array("src","condition","media"));
 		parent::parseParams($elem);		    	
     }
     // }}}
-   
+
     // {{{ buildComplete
     /**
     * Method description
@@ -87,42 +101,13 @@ class WHTML extends WComponent
     */
 	function buildComplete()
 	{
-		if(!isset($this->tpl))
-			$this->tpl = $this->createTemplate();
-		if(Config::get("CACHE_STATIC_PAGES"))
-		{
-			$page = Controller::getInstance()->getPage();
-			$cn = Controller::getInstance()->getControllerName();
-			$storage = 	Storage::create("WHTML cache");
-			if(!$storage->is_set($cn."_".$page."_".$this->getId()))
-			{
-				$this->page_text = 
-					$this->getSrc()?file_get_contents($this->getSrc()):
-						($this->getText()?$this->getText():null);
-			}
-			else
-			{
-				$p = $storage->get($cn."_".$page."_".$this->getId());
-				$mtime = 0;
-				$changed = 0;
-				if($this->getSrc())
-				{
-                    if(pageChanged($this->getSrc(),$p['cache_time']) ||
-                        Controller::getInstance()->XMLPageChanged($p['cache_time']))
-                    {
-                        $this->page_text = $this->getSrc()?file_get_contents($this->getSrc()):"";
-				        $storage->set($cn."_".$page."_".$this->getId(),array("text"=>$this->page_text,"cache_time"=>time()));
-                    }
-                    else
-                        $this->page_text = $p['text'];
-				}
-                else
-                    $this->page_text = $this->getText();
-            }
-        }
-		parent::buildComplete();
-	}    
-	// }}}
+        if(isset($this->src))
+            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getMedia());
+
+        parent::buildComplete();
+    }
+	// }}}    
+   
     // {{{ assignVars
     /**
     * Method description
@@ -133,12 +118,142 @@ class WHTML extends WComponent
     */
     function assignVars()
     {
-		$this->tpl->setParamsArray(array(
-				"content"=>$this->page_text
-			));
+        if(!isset($this->src))
+		    $this->tpl->setParamsArray(array(
+                "content"=>$this->getText(),
+                "media"=>$this->getMedia()
+			    ));
 		parent::assignVars();
     }
 	// }}}	
+    
+    // {{{ preRender
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function preRender()
+    {
+		$this->setData(DataRetriever::getData($this->getId()));
+
+		if(!isset($this->tpl) && !isset($this->src))
+			$this->tpl = $this->createTemplate();
+		parent::preRender();
+
+    }
+	// }}}    
+    
+    // {{{ setData 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $data
+    * @return   void
+    */
+    function setData(WidgetResultSet $data)
+    {
+		$this->restoreMemento();
+
+        $this->setText($data->get('text'));
+        $this->setText($data->getDef());
+		parent::setData($data);
+    }
+    //}}}
+    // {{{ setSrc 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $src    
+    * @return   void
+    */
+    function setSrc($src)
+    {
+		if(!isset($src) || !is_scalar($src)) 
+            return ;
+        if(substr($src,-4) != ".css")
+            $src .= ".css";
+        $this->src = (string)$src;
+    }
+    // }}}
+    
+    // {{{ getSrc 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getSrc()
+    {
+		return $this->src;
+    }
+    // }}}
+    
+    // {{{ setCond
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $cond
+    * @return   void
+    */
+    function setCond($cond)
+    {
+		if(!isset($cond) || !is_scalar($cond)) 
+            return ;
+        $this->condition = (string)$cond;
+    }
+    // }}}
+    
+    // {{{ getCond
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getCond()
+    {
+		return $this->condition;
+    }
+    // }}}
+    
+    // {{{ setMedia
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $media
+    * @return   void
+    */
+    function setMedia($media)
+    {
+		if(!isset($media) || !is_scalar($media)) 
+            return ;
+        $this->media = (string)$media;
+    }
+    // }}}
+    
+    // {{{ getMedia
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getMedia()
+    {
+		return $this->media;
+    }
+    // }}}
 
     // {{{ setText 
     /**
@@ -153,12 +268,6 @@ class WHTML extends WComponent
 		if(!isset($text) || !is_scalar($text))
 			return;
 
-		/*$storage = 	Storage::create("WHTML cache");
-		$page = Controller::getInstance()->getPage();
-		$cn = Controller::getInstance()->getControllerName();
-		if($storage->is_set($cn."_".$page."_".$this->getId())
-            && ($a = $storage->get($cn."_".$page."_".$this->getId())) && $a['text'] != "") return;
-        */
 		$this->text = "".$text;
     }
     // }}}
@@ -177,44 +286,6 @@ class WHTML extends WComponent
     }
     // }}}
 	
-    // {{{ setSrc 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $src    
-    * @return   void
-    */
-    function setSrc($src)
-    {
-		if(!isset($src) || !is_scalar($src)) 
-            return ;
-        if($src{0} == "/")
-            $src = substr($src,1);
-		if(file_exists($src))
-			$this->src = $src;
-		/*elseif(file_exists(Config::get("ROOT_DIR").$src))
-            $this->src = Config::get("ROOT_DIR").$src;*/
-		elseif(file_exists(Config::get("root_dir").Config::get("HTML_DIR").'/'.$src))
-            $this->src = Config::get("root_dir").Config::get("HTML_DIR").'/'.$src;
-        elseif(file_exists(Config::get('root_dir').Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src))
-            $this->src = Config::get('root_dir').Config::get("HTML_DIR").'/'.Language::$current_language_name.'/'.$src;
-    }
-    // }}}
-    
-    // {{{ getSrc 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getSrc()
-    {
-		return $this->src;
-    }
-    // }}}
 }
 //}}}
 ?>

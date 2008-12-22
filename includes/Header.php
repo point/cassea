@@ -249,6 +249,7 @@ class Header
         if (isset ($attr['rev'])) $ar['rev'] = $attr['rev'];
 		if (isset ($attr['title'])) $ar['title'] = $attr['title'];
 		if (isset ($attr['cond'])) $ar['cond'] = $attr['cond'];
+		if (isset ($attr['media'])) $ar['media'] = $attr['media'];
 
 		if(!empty($ar))
 			$this->links[] = $ar;
@@ -259,7 +260,7 @@ class Header
     * @param    string $src    
     * @return   void
     */
-    function addCSS($src,$cond = null)
+    function addCSS($src,$cond = null,$media)
 	{
 		static $ccss = array();
 		if(empty($src) || !is_string($src)) return;
@@ -268,8 +269,9 @@ class Header
 		$this->addLink(array(
 			'href' => $src,
 			'type' => 'text/css',
-			'rel'  => 'StyleSheet',
-			'cond' => $cond
+			'rel'  => 'stylesheet',
+            'cond' => $cond,
+            'media' => $media
 		));
     }// }}}
 
@@ -352,7 +354,7 @@ class Header
 			if($f)
 				$res .= "<!--[if ".$f."]>\n";
 			$res .= "<link ";
-			foreach($v as $k2 => $v2) $res .= " $k2=\"$v2\"";
+			foreach($v as $k2 => $v2) $res .= (isset($v2))?" $k2=\"$v2\"":"";
 			$res .= "/>\n";
 			if($f)
 				$res .= "<![endif]-->\n";

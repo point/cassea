@@ -252,7 +252,7 @@ abstract class WComponent extends WObject
     {
    		if(!$this->getState()) return "";
        	$this->assignVars();
-		if($this->visible) return $this->tpl->getHTML();
+		if($this->visible && isset($this->tpl)) return $this->tpl->getHTML();
 		else return "";
 
 	}
@@ -760,16 +760,19 @@ EOD;
 			$this->setTitle($this->getTooltip());
 		}
 
-        $this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".Language::encodePair($this->getTitle())."\" ":"",
-            "id"=>$this->getHTMLId()));
-		if(!empty($this->style_class)) 
-			$this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
-		if(isset($this->style) && !$this->style->isEmpty()) 
-			$this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
-		if(!empty($this->javascript)) 
-			$this->tpl->setParamsArray(array("javascript"=>Language::encodePair($this->javascript->generateJS()),
-				"javascript_before"=>Language::encodePair($this->javascript->getBeforeWidget()),
-				"javascript_after"=>Language::encodePair($this->javascript->getAfterWidget())));
+        if(isset($this->tpl))
+        {
+            $this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".Language::encodePair($this->getTitle())."\" ":"",
+                "id"=>$this->getHTMLId()));
+            if(!empty($this->style_class)) 
+                $this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
+            if(isset($this->style) && !$this->style->isEmpty()) 
+                $this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
+            if(!empty($this->javascript)) 
+                $this->tpl->setParamsArray(array("javascript"=>Language::encodePair($this->javascript->generateJS()),
+                    "javascript_before"=>Language::encodePair($this->javascript->getBeforeWidget()),
+                    "javascript_after"=>Language::encodePair($this->javascript->getAfterWidget())));
+        }
     }
 	// }}}
     
