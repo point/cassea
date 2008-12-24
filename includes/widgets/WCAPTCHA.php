@@ -31,39 +31,32 @@
 //
 // $Id$
 //
-WidgetLoader::load("WComponent");
-//{{{ WCSS
-class WCSS extends WComponent
+WidgetLoader::load("WImage");
+//{{{ WCAPTCHA
+class WCAPTCHA extends WImage
 {
-	protected
-		/**
-		* @var string
-		*/
-		$src = null,
-		/**
-		* @var string
-		*/
-        $condition = null,
-		/**
-		* @var string
-		*/
-        $media = null,
-		/**
-		* @var string
-		*/
-		$text = null
-
+    protected 
+        $text = null;
+    private 
+        $rand_num = 0,
+        $error_str = null
 		;
+    
     // {{{ __construct
     /**
     * Method description
     *
     * More detailed method description
-    * @param    void
+    * @param    array $params
     */
     function __construct($id = null)
     {
 		parent::__construct($id);
+
+        $this->use_cache = 0;
+        $this->rand_num = mt_rand(0,1000);
+        $this->text = Language::getLangConst("WIDGET_CAPTCHA_TEXT");
+        $this->height = 60;
     }
     // }}}
     // {{{ parseParams
@@ -76,21 +69,14 @@ class WCSS extends WComponent
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(isset($elem['src']))
-        {
-			$this->setSrc((string)$elem['src']);
-		    if(isset($elem['condition']))
-			    $this->setCond((string)$elem['condition']);
-        }
-        elseif((string)$elem)
-			$this->setText(trim((string)$elem));
-        if(isset($elem['media']))
-            $this->setMedia((string)$elem['media']);
-		$this->addToMemento(array("src","condition","media"));
+		if(isset($elem['text']))
+			$this->setText((string)$elem['text']);
+
+		$this->addToMemento(array("text"));
+
 		parent::parseParams($elem);		    	
     }
     // }}}
-
     // {{{ buildComplete
     /**
     * Method description
@@ -101,32 +87,14 @@ class WCSS extends WComponent
     */
 	function buildComplete()
 	{
-        if(isset($this->src))
-            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getMedia());
+		if(!isset($this->tpl))
+			$this->tpl = $this->createTemplate();
 
-        parent::buildComplete();
-    }
-	// }}}    
-   
-    // {{{ assignVars
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function assignVars()
-    {
-        if(!isset($this->src))
-		    $this->tpl->setParamsArray(array(
-                "content"=>$this->getText(),
-                "media"=>$this->getMedia()
-			    ));
-		parent::assignVars();
-    }
-	// }}}	
-    
+        $this->setSrc("/captcha/".Controller::getInstance()->getPage()."/".$this->rand_num."/");
+        Controller::getInstance()->setCAPTCHA($this->getId());
+		parent::buildComplete();
+	}    
+	// }}}
     // {{{ preRender
     /**
     * Method description
@@ -137,15 +105,16 @@ class WCSS extends WComponent
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
-
-		if(!isset($this->tpl) && !isset($this->src))
-			$this->tpl = $this->createTemplate();
+        if(POSTErrors::hasErrors())
+        {
+            $errors = POSTErrors::getErrorFor($this->getId());
+            if($errors !== null)
+                $this->error_str = implode("<br/>",$errors);
+        }
 		parent::preRender();
-
     }
+
 	// }}}    
-    
     // {{{ setData 
     /**
     * Method description
@@ -155,106 +124,32 @@ class WCSS extends WComponent
     * @return   void
     */
     function setData(WidgetResultSet $data)
-    {
+	{
 		$this->restoreMemento();
+		$this->setText($data->getDef());
+		$this->setText($data->get('data'));
 
-        $this->setText($data->get('text'));
-        $this->setText($data->getDef());
 		parent::setData($data);
     }
     //}}}
-    // {{{ setSrc 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $src    
-    * @return   void
-    */
-    function setSrc($src)
-    {
-		if(!isset($src) || !is_scalar($src)) 
-            return ;
-        if(substr($src,-4) != ".css")
-            $src .= ".css";
-        $this->src = (string)$src;
-    }
-    // }}}
-    
-    // {{{ getSrc 
+    // {{{ assignVars
     /**
     * Method description
     *
     * More detailed method description
     * @param    void
-    * @return   string
-    */
-    function getSrc()
-    {
-		return $this->src;
-    }
-    // }}}
-    
-    // {{{ setCond
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $cond
     * @return   void
     */
-    function setCond($cond)
+    function assignVars()
     {
-		if(!isset($cond) || !is_scalar($cond)) 
-            return ;
-        $this->condition = (string)$cond;
+		$this->tpl->setParamsArray(array(
+            "text"=> Language::encodePair($this->getText()),
+            "error_string"=>$this->error_str
+        ));
+		parent::assignVars();
     }
-    // }}}
+	// }}}	
     
-    // {{{ getCond
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getCond()
-    {
-		return $this->condition;
-    }
-    // }}}
-    
-    // {{{ setMedia
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $media
-    * @return   void
-    */
-    function setMedia($media)
-    {
-		if(!isset($media) || !is_scalar($media)) 
-            return ;
-        $this->media = (string)$media;
-    }
-    // }}}
-    
-    // {{{ getMedia
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getMedia()
-    {
-		return $this->media;
-    }
-    // }}}
-
     // {{{ setText 
     /**
     * Method description
@@ -267,7 +162,6 @@ class WCSS extends WComponent
     {
 		if(!isset($text) || !is_scalar($text))
 			return;
-
 		$this->text = "".$text;
     }
     // }}}
@@ -285,7 +179,7 @@ class WCSS extends WComponent
 		return $this->text;
     }
     // }}}
-	
 }
 //}}}
+
 ?>

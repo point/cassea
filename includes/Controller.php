@@ -85,6 +85,7 @@ class Controller
 		;
 
 	protected 
+            $inited = false,
 			$header = null,
 			$page = "index",
 			$page_function = null,
@@ -104,7 +105,8 @@ class Controller
 			$form_signatures = array(),
 			$checker_rules = array(),
             $pagehandler = null,
-            $ie_files = array() //included and extending files
+            $ie_files = array(), //included and extending files
+            $captcha_name = null
 			;
 
 
@@ -119,25 +121,27 @@ class Controller
         $this->post = new HTTPParamHolder($_POST);
         $this->cookie = new HTTPParamHolder($_COOKIE);
 
+		$this->parseP1P2();	
+
         if(defined('CONFIG') && defined('CONFIG_SECTION'))
             Config::init(new IniConfig(CONFIG,CONFIG_SECTION));
         else Config::init(new IniConfig("config.ini","config"));
 
         $config = Config::getInstance();
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->table);
-        $this->determineLanguage();
+        /*$this->determineLanguage();
         
         $this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
-		$this->adjacency_list = new WidgetAdjacencyList();
+        $this->adjacency_list = new WidgetAdjacencyList();*/
 
 		Session::init();
         User::get();
 
-		POSTErrors::restoreErrorList();
+		/*POSTErrors::restoreErrorList();
 
-		$this->navigator = new Navigator($this->controller_name);
+        $this->navigator = new Navigator($this->controller_name);*/
 	}
 	static function getInstance()
 	{
@@ -164,10 +168,22 @@ class Controller
 			$this->page_function = $class_name."::".$func;
 	}
 	function init()
-	{
-		$this->parseP1P2();	
-		$this->handlePOST();
+    {
+
+        $this->determineLanguage();
+        
+        $this->header = Header::get();
+		$this->dispatcher = new EventDispatcher();
+		$this->display_mode_params = new DisplayModeParams();
+		$this->adjacency_list = new WidgetAdjacencyList();
+
+
+		POSTErrors::restoreErrorList();
+
+		$this->navigator = new Navigator($this->controller_name);
+
         $full_path = $this->findPage();
+		$this->handlePOST();
 		$this->navigator->addStep($this->page);
 
 		$this->addCSS("ns_reset.css");
@@ -187,7 +203,9 @@ class Controller
 		$dom = new DomDocument;
 		$dom->load($full_path);
 
-		$this->parsePage($this->processPage($dom));
+        $this->parsePage($this->processPage($dom));
+        
+        $this->inited = true;
 
     }
     protected function findPage()
@@ -749,16 +767,25 @@ class Controller
 		if($this->post->isEmpty()) return;
 
 		$this->restoreSignatures();
-		$this->restoreCheckers();
-        $this->restorePageHandler();
-
 		if(!in_array($this->post->__sig,$this->form_signatures))
 			$this->gotoStep_0();
 
+
 		POSTErrors::flushErrors();
+		$this->restoreCheckers();
+        $this->restorePageHandler();
+
+        $checked_by_captcha = 1;
+        $this->restoreCAPTCHA();
+        if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
+        {
+            $checked_by_captcha = 0;
+            POSTErrors::addError($this->captcha_name,null,Language::getLangConst("WIDGET_CAPTCHA_ERROR"));
+        }
+
 		POSTChecker::checkByRules($this->post,$this->checker_rules);
-		if(POSTErrors::hasErrors())
-		{
+		if(POSTErrors::hasErrors() || !$checked_by_captcha)
+        {
 			POSTErrors::saveErrorList();
 			$this->gotoStep_0();
 		}
@@ -830,6 +857,17 @@ class Controller
 		if(!isset($sig)) return false;
 		return in_array($sig,$this->form_signatures);
 	}
+    function setCAPTCHA($captcha_input_name = null)
+    {
+        if(empty($captcha_input_name)) return;
+        $this->captcha_name = (string)$captcha_input_name;
+    }
+    protected function restoreCAPTCHA()
+    {
+		$storage = Storage::createWithSession("controller");
+        $this->captcha_name = $storage->get('captcha_name');
+		$storage->un_set('captcha_name');
+    }
 	protected function restoreSignatures()
 	{
 		$storage = Storage::createWithSession("controller");
@@ -847,12 +885,18 @@ class Controller
     }
 	// destructor
 	function __destruct()
-	{
-		$storage = Storage::createWithSession("controller");
-		$storage->set('signatures',$this->form_signatures);
-		$storage->set('checker_rules',$this->checker_rules);
-		DataUpdaterPool::savePool();
-        $storage->set('pagehandler',$this->pagehandler);
+    {
+        //do it only if was init
+        if($this->inited)
+        {
+		    $storage = Storage::createWithSession("controller");
+		    $storage->set('signatures',$this->form_signatures);
+		    $storage->set('checker_rules',$this->checker_rules);
+		    $storage->set('captcha_name',$this->captcha_name);
+		    DataUpdaterPool::savePool();
+            $storage->set('pagehandler',$this->pagehandler);
+            POSTErrors::flushErrors();
+        }
 		DB::close();
 	}
 }
@@ -969,8 +1013,8 @@ class AjaxController extends Controller
 	function init()
 	{
 		$this->parseP1P2();	
-		$this->handlePOST();
         $full_path = $this->findPage();
+		$this->handlePOST();
 
 		$dom = new DomDocument;
 		$dom->load($full_path);

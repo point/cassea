@@ -42,7 +42,8 @@ interface StorageEngine
 	function get($var);
 	function is_set($var);
 	function un_set($var);
-	function sync();
+    function sync();
+    function close();
 }
 
 // {{{ StorageException
@@ -133,7 +134,7 @@ class FSStorage implements StorageEngine, ArrayAccess
 			$this->vars[basename($f,".cache")] = unserialize($f);
     }// }}}
 
-    // {{{ cleanup
+    // {{{ cleanup 
 	static function cleanup()
 	{
 		$dir = Config::get('ROOT_DIR').self::STORAGE_PATH;
@@ -142,6 +143,11 @@ class FSStorage implements StorageEngine, ArrayAccess
 				deltree(dirname($f));
     }// }}}
 
+    // {{{ close
+	function close()
+	{
+    }
+    // }}}
     //  {{{ ArrayAccess interface
     public function offsetExists($key){ return $this->is_set($key);}
     public function offsetGet($key){ return $this->get($key);}
@@ -191,6 +197,7 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
     // {{{ set
     function set($var,$val)
     {
+        //echo $var." ".$this->storage_name." ".md5($this->storage_name.$var)." ".$val."<br>";
 		if($this->is_set($var))
 			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
 		else
@@ -201,24 +208,32 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
      // {{{ get
 	function get($var)
 	{
+        //echo $var." ".$this->storage_name." ".md5($this->storage_name.$var)."<br>";
 		return $this->memcache->get(md5($this->storage_name.$var));
     }// }}}
 
     // {{{ un_set
 	function un_set($var)
-	{
+    {
 		$this->memcache->delete(md5($this->storage_name.$var));
-    }// }}}
+    }// }}} 
 
     // {{{ sync
     function sync(){}
     // }}} sync
 
     // {{{ __destruct
-	/*function __destruct()
+	function __destruct()
 	{
 		$this->memcache->close();
-    }*/
+    }
+    // }}}
+    
+    // {{{ close
+	function close()
+	{
+		$this->memcache->close();
+    }
     // }}}
 
     //  {{{ ArrayAccess interface
@@ -235,15 +250,11 @@ class Storage
 {
 	static function create($storage_name,$ttl = null)
     {
-        static $storage = null;
-        if(!isset($storage))
-        {
-            if(Config::get('STORAGE_ENGINE') == "memcache")
-                $storage = new MemcacheStorage($storage_name,$ttl);
-            else 
-                $storage = new FSStorage($storage_name,$ttl);
-        }
-        return $storage;
+        if(Config::get('STORAGE_ENGINE') == "memcache")
+            return new MemcacheStorage($storage_name,$ttl);
+        else 
+            return new FSStorage($storage_name,$ttl);
+        return $null;
 	}
 	static function createWithSession($storage_name,$ttl = null)
 	{

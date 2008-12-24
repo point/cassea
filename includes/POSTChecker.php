@@ -306,4 +306,29 @@ class ErrorMsg
 	const EQUALTO = "Пожалуйста, введите такое же значение ещё раз.";
 }
 
+//{{{ CheckerException
+class CheckerException extends Exception
+{
+	protected 
+			$widget_name = null,
+			$additional_id = null
+			;
+	function __construct($message = null, $widget_name = null,$additional_id = null)
+	{
+		parent::__construct($message,1);
+		$this->widget_name = $widget_name;
+		$this->additional_id = $additional_id;
+	}
+	function getWidgetName()
+	{
+		return $this->widget_name;
+	}
+	function getAdditionalId()
+	{
+		return $this->additional_id;
+	}
+}
+//}}}
+
+
 ?>

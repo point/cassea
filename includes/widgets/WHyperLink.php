@@ -56,7 +56,7 @@ class WHyperLink extends WContainer implements StringProcessable
         /**
         * @var      string
         */
-		$text = "link",
+		$text = null,
         /**
         * @var      string
         */
@@ -95,10 +95,16 @@ class WHyperLink extends WContainer implements StringProcessable
 		if(!empty($elem['rev']))
 			$this->setAttribute('rev',(string)$elem['rev']);
 		if(!empty($elem['target']))
-			$this->setAttribute('target',(string)$elem['target']);
+            $this->setAttribute('target',(string)$elem['target']);
+        if(!empty($elem['text']))
+            $this->setText((string)$elem['text']);
+
 		$this->items = new MixedCollection($this->getId(),$elem);
         if($this->items->isEmpty())
-            $this->items->setText($this->getHREF());
+            if(isset($this->text))
+                $this->items->setText($this->getText());
+            else
+                $this->items->setText($this->getHREF());
 		$this->addToMemento(array("href","baseurl","label","rel","rev","target"));
 
 		parent::parseParams($elem);		    	
@@ -217,6 +223,36 @@ class WHyperLink extends WContainer implements StringProcessable
     function getHREF()
     {
 		return $this->href;
+    }
+    // }}}
+    
+    // {{{ setText 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $text
+    * @return   void
+    */
+    function setText($text)
+    {
+		if(!isset($text) || !is_scalar($text))
+			return;
+		$this->text = "".$text;
+    }
+    // }}}
+    
+    // {{{ getText
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getText()
+    {
+		return $this->text;
     }
     // }}}
 }

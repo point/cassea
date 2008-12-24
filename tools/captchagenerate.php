@@ -27,19 +27,26 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-function page($p1,$p2)
-{
-	return "index";
-}
+//
 require("../includes/Controller.php");
-$c = Controller::getInstance();
-$c->setPageFunc('page');
-$c->init();
-$c->addCSS("main.css");
-$c->head();
-//echo $c->allHTML();
-include("index.html");
-$c->tail();
+//Controller::getInstance();
+Config::init(new IniConfig("config.ini","config"));
 
+umask(0);
+$str = null;
+$s=Storage::create("__CAPTCHALIST__",2592000);
+if(file_exists($c_dir = Config::get('root_dir').Config::getInstance()->captcha->dir))
+    deltree($c_dir);
+mkdir($c_dir);
+for($d = 1;$d < Config::getInstance()->captcha->dirs_count + 1;$d++)
+{
+    mkdir($d);
+    for($f = 1;$f < Config::getInstance()->captcha->files_count + 1;$f++)
+    {
+        generateCAPTCHA($str)->writeImage ($d.'/'.$str.'.png');
+        var_dump($str);
+        $filenames[$d][$f] = $str;
+    }
+}
+$s->set("files",$filenames);
 ?>
-

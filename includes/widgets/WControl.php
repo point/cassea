@@ -486,12 +486,12 @@ abstract class WControl extends WComponent
     */
     function restorePOST()
 	{
-		$errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
-		if($errors !== null)
+        $errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
+    	if($errors !== null)
         {
 			$this->setFilterError(implode("<br/>",$errors));
-            $this->setValue(POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID()));
         }
+        $this->setValue(POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID()));
     }
     // }}}
 	

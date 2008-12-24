@@ -104,3 +104,12 @@ th > img
 {
 	background-color:gray;
 }
+.captcha .captcha_reload
+{
+	font-size: 85%;
+	text-decoration: none;
+	color: #666666;
+	border-bottom: #000000 1px dashed;
+	cursor:pointer;
+	text-align:center;
+}

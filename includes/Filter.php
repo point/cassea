@@ -51,6 +51,7 @@ class Filter
 	function __construct(){}	
 	static function getFilter($type)
 	{
+        if(is_int($type)) return $type;
 		$c = new ReflectionClass('Filter');
 		$c = $c->getConstants();
 		$type = strtoupper($type);

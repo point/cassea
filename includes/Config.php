@@ -139,8 +139,9 @@ class IniConfig extends ConfigBase implements SaveableConfig
 		$inherit_separator = ":";
 
 	function __construct($filename, $section = null, $allow_modifications = true, $inherit_separator = ":")
-	{
-		if(empty($filename) || !file_exists($_SERVER['DOCUMENT_ROOT']) || !file_exists($this->filename = $_SERVER['DOCUMENT_ROOT'].self::CONFIG_DIR."/".$filename))
+    {
+        $_r = (!empty($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
+		if(empty($filename) || !file_exists($_r) || !file_exists($this->filename = $_r.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
 		$this->section = $section;
