@@ -74,7 +74,8 @@ class ConfigBase implements IteratorAggregate
 		if (!$this->allow_modifications) 
 			throw new ConfigException("Config is read only");
 		
-		$this->parseArray(array($name=>$value));
+        if(isset($name,$value))
+		    $this->parseArray(array($name=>$value));
     }
 
     function __isset($name)
@@ -195,6 +196,62 @@ class IniConfig extends ConfigBase implements SaveableConfig
 			throw new ConfigException("Config is read only");
 		throw new ConfigException("Not implemented yet :)");
 	}
+}
+class IniDBConfig extends IniConfig
+{
+    protected $table_name = null;
+    private $table_data = array();
+
+	function __construct($filename, $section = null, $allow_modifications = true, $inherit_separator = ":")
+    {
+        parent::__construct($filename,$section,$allow_modifications,$inherit_separator);
+        $this->table_name = $this->get("config_table");
+        if(isset($this->table_name))
+            foreach(DB::query("select * from ".$this->table_name) as $v)
+                $this->table_data[$v['key']] = $v['value'];
+    }
+    function get($name)
+    {
+		$name = strtolower($name);
+        if(isset($this->table_data[$name]))
+            return $this->table_data[$name];
+        else
+            return parent::get($name);
+    }
+    function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    function __set($name, $value)
+    {
+		if (!$this->allow_modifications) 
+			throw new ConfigException("Config is read only");
+        if(isset($this->table_data[$name],$name,$value))
+        {
+            $this->table_data[$name] = $value;
+            DB::query("update ".$this->config_table." set ".Filter::filter($name,'STRING_QUOTE')."='".
+                Filter::filter($value,'STRING_QUOTE')."' limit 1");
+        }
+        else $this->parseArray(array($name=>$value));
+    }
+    function __isset($name)
+    {
+        return isset($this->table_data[$name]) || parent::__isset($name);
+    }
+
+    function __unset($name)
+    {
+		if (!$this->allow_modifications) 
+			throw new ConfigException("Config is read only");
+
+		if(isset($this->table_data[$name]))
+        {
+            unset($this->table_data[$name]);
+            DB::query("delete from ".$this->config_table." where key='".Filter::filter($name,'STRING_QUOTE')."' limit 1");
+        }
+        else parent::__unset($name);
+    }
 }
 class Config
 {
