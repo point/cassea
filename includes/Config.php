@@ -27,24 +27,20 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+
 class ConfigException extends Exception {}
-interface SaveableConfig
-{
-	function save();
-}
 class ConfigBase implements IteratorAggregate
 {
 	const CONFIG_DIR = "/config";
 
-    protected $allow_modifications = true,
+    protected 
 			 $data = array(),
 			 $section = null,
 			 $extends = array()
 			 ;
 
-    function __construct(array $array = array(), $allow_modifications = true)
+    function __construct(array $array = array())
     {
-        $this->allow_modifications = $allow_modifications;
 		$this->data['root_dir'] = dirname(dirname(__FILE__));
 		$this->parseArray($array);
 	}
@@ -52,13 +48,13 @@ class ConfigBase implements IteratorAggregate
 	{
         foreach ($array as $key => $value) 
             if (is_array($value)) 
-                $this->data[$key] = new self($value, $this->allow_modifications);
+                $this->data[$key] = new self($value);
              else 
                 $this->data[$key] = $value;
 	}
     function get($name)
     {
-		$name = strtolower($name);
+        $name = strtolower($name);
         if(isset($this->data[$name]))
             return $this->data[$name];
         else
@@ -71,11 +67,8 @@ class ConfigBase implements IteratorAggregate
 
     function __set($name, $value)
     {
-		if (!$this->allow_modifications) 
-			throw new ConfigException("Config is read only");
-		
         if(isset($name,$value))
-		    $this->parseArray(array($name=>$value));
+            $this->parseArray(array($name=>$value));
     }
 
     function __isset($name)
@@ -85,18 +78,10 @@ class ConfigBase implements IteratorAggregate
 
     function __unset($name)
     {
-		if (!$this->allow_modifications) 
-			throw new ConfigException("Config is read only");
-
-		if(isset($this->data[$name]))
-			unset($this->data[$name]);
+        if(isset($this->data[$name]))
+            unset($this->data[$name]);
     }
 	
-    function setReadOnly()
-    {
-        $this->allow_modifications = false;
-    }
-
     function toArray()
     {
         $array = array();
@@ -133,20 +118,19 @@ class ConfigBase implements IteratorAggregate
         return $this;
     }
 }
-class IniConfig extends ConfigBase implements SaveableConfig
+class IniConfig extends ConfigBase
 {
 	protected
 		$filename = null,
 		$inherit_separator = ":";
 
-	function __construct($filename, $section = null, $allow_modifications = true, $inherit_separator = ":")
+	function __construct($filename, $section = null,  $inherit_separator = ":")
     {
         $_r = (!empty($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
 		if(empty($filename) || !file_exists($_r) || !file_exists($this->filename = $_r.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
 		$this->section = $section;
-		$this->allow_modifications = (bool)$this->allow_modifications;
 		$this->inherit_separator = (string)$inherit_separator;
 
 		$parsed_ini = parse_ini_file($this->filename,true);
@@ -190,28 +174,27 @@ class IniConfig extends ConfigBase implements SaveableConfig
 		$el = array_pop($arr);
 		return $this->processKeys($arr,array($el=>$value));
 	}
-	function save()
-	{
-		if(!$this->allow_modifications) 
-			throw new ConfigException("Config is read only");
-		throw new ConfigException("Not implemented yet :)");
-	}
 }
 class IniDBConfig extends IniConfig
 {
-    protected $table_name = null;
-    private $table_data = array();
+    private $table_data = null;
+    const TABLE_NAME = 'config';
 
-	function __construct($filename, $section = null, $allow_modifications = true, $inherit_separator = ":")
+	function __construct($filename, $section = null, $inherit_separator = ":")
     {
-        parent::__construct($filename,$section,$allow_modifications,$inherit_separator);
-        $this->table_name = $this->get("config_table");
-        if(isset($this->table_name))
-            foreach(DB::query("select * from ".$this->table_name) as $v)
-                $this->table_data[$v['key']] = $v['value'];
+        parent::__construct($filename,$section, $inherit_separator);
+    }
+    protected function lazyLoad()
+    {
+        if( DB::getMysqli() === null) return;
+        $this->table_data = array();
+        foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
+            $this->table_data[$v['key']] = $v['value'];
     }
     function get($name)
     {
+        if(!isset($this->table_data))
+            $this->lazyLoad();
 		$name = strtolower($name);
         if(isset($this->table_data[$name]))
             return $this->table_data[$name];
@@ -225,13 +208,12 @@ class IniDBConfig extends IniConfig
 
     function __set($name, $value)
     {
-		if (!$this->allow_modifications) 
-			throw new ConfigException("Config is read only");
         if(isset($this->table_data[$name],$name,$value))
         {
+            $name = Filter::filter($name,'STRING_QUOTE');
+            $value = Filter::filter($value,'STRING_QUOTE');
             $this->table_data[$name] = $value;
-            DB::query("update ".$this->config_table." set ".Filter::filter($name,'STRING_QUOTE')."='".
-                Filter::filter($value,'STRING_QUOTE')."' limit 1");
+            DB::query("update ".self::TABLE_NAME." set value='".$value."' where `key`='".$name."' limit 1");
         }
         else $this->parseArray(array($name=>$value));
     }
@@ -242,13 +224,10 @@ class IniDBConfig extends IniConfig
 
     function __unset($name)
     {
-		if (!$this->allow_modifications) 
-			throw new ConfigException("Config is read only");
-
 		if(isset($this->table_data[$name]))
         {
             unset($this->table_data[$name]);
-            DB::query("delete from ".$this->config_table." where key='".Filter::filter($name,'STRING_QUOTE')."' limit 1");
+            DB::query("delete from ".self::TABLE_NAME." where `key`='".Filter::filter($name,'STRING_QUOTE')."' limit 1");
         }
         else parent::__unset($name);
     }
