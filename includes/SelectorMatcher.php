@@ -137,7 +137,7 @@ class SelectorMatcher
 			elseif(isset($parsed_selector['attr_value']) && isset($parsed_selector['attr_quant']))
 				if($parsed_selector['attr_quant']  === "=" && 
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					$widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return false;
+                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return false;
 			// [attr!=val]
 				elseif($parsed_selector['attr_quant']  === "!=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||

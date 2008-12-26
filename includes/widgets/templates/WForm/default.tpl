@@ -27,5 +27,6 @@ $p->javascript_before,"<form ",$p->javascript, $p->class, $p->style, $p->title, 
 $p->id,"\" action=\"",$p->action,"\" enctype=\"",$p->enctype,"\" method=\"",$p->method,"\">",
 	$p->form_content,
 (isset($p->signature))?"<input type=\"hidden\" name=\"{$p->signature_name}\" value=\"{$p->signature}\"/>":"",
+(isset($p->formid_name))?"<input type=\"hidden\" name=\"{$p->formid_name}\" value=\"{$p->id}\"/>":"",
 "</form>",$p->javascript_after;
 ?>

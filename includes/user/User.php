@@ -164,7 +164,7 @@ class User
         if ($r['state'] == 'notactive') return User::ERROR_USER_NOTACTIVE;
         if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
 
-        if (  $r['password'] != $this->buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
+        if (  $r['password'] != self::buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
             return User::ERROR_PASSWORD_INCORRECT;
 
         $this->id = 0+$r['id'];
@@ -177,7 +177,12 @@ class User
         return true;        
     }// }}}
 
-    
+    // {{{ buildPasword
+    static function buildPasword($password, $dbSold, $serverSold){
+        $needed = hash('md5', $dbSold.$password.$serverSold);
+        return $needed; 
+    }// }}}
+
     //{{{ getId
     /**
     * @return   int

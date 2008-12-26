@@ -161,20 +161,6 @@ class WSelect extends WControlContainer
 		return $this->size;
     }
     // }}}
-    // {{{ preRender 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
- 	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -204,8 +190,6 @@ class WSelect extends WControlContainer
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
-
         $this->setSize($data->get('size'));
         $this->setMultiple($data->get('multiple'));
 
@@ -222,10 +206,25 @@ class WSelect extends WControlContainer
     * @param    array $errors
     * @return   string
     */
-    /*function restorePOST()
+    function restorePOST()
 	{
-        // need to refactor
-    }*/
+        $errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
+    	if($errors !== null)
+        {
+			$this->setFilterError(implode("<br/>",$errors));
+        }
+        $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
+        if(isset($post_data))
+        {
+            //echo "<br>restore ".$this->getName()." value=".$post_data."<br>";
+            ResultSetPool::set(
+                t(new ResultSet())
+                //->f("wselect[name=".$this->getName()."] > wselectoption")->selected(0)
+                ->f("wselect[name=".$this->getName()."]  wselectoption[value=".$post_data."]")
+                ->set('selected',1),ResultSetPool::SYSTEM_PRIORITY,true);
+            $this->childPreRender();
+        }
+    }
     // }}}
 }
 //}}}

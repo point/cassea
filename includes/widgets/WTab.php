@@ -105,20 +105,6 @@ class WTab extends WContainer
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars 
     /**
     * Method description
@@ -147,8 +133,6 @@ class WTab extends WContainer
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
-		
         $this->setTabTitle($data->getDef());
 		$this->setTabTitle($data->get('tab_title'));
 		$this->setHref($data->get('href'));

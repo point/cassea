@@ -113,7 +113,7 @@ class WValueChecker extends WObject
     * @param    void
     * @return   string
     */
-    function getRules()
+    function getRules($form_id)
     {
         if(/*empty($this->rules) ||*/ empty($this->widget_ids)) return "";
 
@@ -122,7 +122,7 @@ class WValueChecker extends WObject
 		foreach($this->getWidgetFullNames() as $i => $w_name)
 		{
 			$w = Controller::getInstance()->getWidget($this->widget_ids[$i])->getName();
-			Controller::getInstance()->setChecker($w,'filter',$this->filter);
+			Controller::getInstance()->setChecker($form_id,$w,'filter',$this->filter);
 			$t1 = "'".$w_name."'".": {\n";
 			foreach($this->rules as $i=>$r)
 			{
@@ -140,7 +140,7 @@ class WValueChecker extends WObject
 				}
 				else
 					$t2 .= "true";
-				Controller::getInstance()->setChecker($w,$r,isset($this->values[$i])?$this->values[$i]:"true");
+				Controller::getInstance()->setChecker($form_id,$w,$r,isset($this->values[$i])?$this->values[$i]:"true");
 				$ta2[] = $t2;
 			}
 			$t1 .= implode(",\n",$ta2)."\n}";

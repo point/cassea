@@ -237,7 +237,7 @@ class WText extends WComponent implements StringProcessable
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
         $this->setTemplate('default');
 		foreach($this->class_vars as $v)
 		{
@@ -277,7 +277,6 @@ class WText extends WComponent implements StringProcessable
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
 		$this->setTextStyle($data);
 		$this->setText($data->getDef());
 		$this->setText($data->get('text'));

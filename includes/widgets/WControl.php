@@ -344,16 +344,23 @@ abstract class WControl extends WComponent
     */
 	function buildComplete()
 	{
-		/*if(POSTErrors::hasErrors())
-            $this->restorePOST();*/
+		if(POSTErrors::hasErrors())
+            $this->restorePOST();
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{
+    // {{{ preRender
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
     function preRender()
     {
-		if(POSTErrors::hasErrors())
-            $this->restorePOST();
+		/*if(POSTErrors::hasErrors())
+            $this->restorePOST();*/
     	if(isset($this->valuechecker))
     	{
 			$this->valuechecker->addWidgetId($this->getId());

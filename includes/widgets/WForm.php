@@ -61,7 +61,8 @@ class WForm extends WContainer
 		$vc_messages = null,
 		$form_signature = null
 		;
-	const signature_name = "__sig";
+    const signature_name = "__sig";
+    const formid_name = "__formname";
     
     // {{{ __construct
     /**
@@ -224,7 +225,7 @@ class WForm extends WContainer
 		$controller->getDispatcher()->
 			addSubscriber("have_valuechecker",$this->getId());
 
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 		parent::preRender();
 
@@ -232,7 +233,7 @@ class WForm extends WContainer
 			foreach($this->inner_valuecheckers as $k=>$v)
 				if(($v = $controller->getValueChecker($k)) !== null)
 				{
-					$this->vc_rules .= $v->getRules().", ";
+					$this->vc_rules .= $v->getRules($this->getId()).", ";
 					$this->vc_messages .= $v->getMessages();
 				}
 
@@ -272,9 +273,10 @@ class WForm extends WContainer
 			"method"=>$this->getMethod(),
 			"form_content" =>$this->items->generateAllHTML(),
 			"vc_rules"=>$this->vc_rules,
-			"vc_messages"=>Language::encodePair($this->vc_messages),
+            "vc_messages"=>Language::encodePair($this->vc_messages),
 			"signature"=>$this->form_signature,
-			"signature_name"=>self::signature_name		
+			"signature_name"=>self::signature_name,
+            "formid_name" => self::formid_name
 		));
 		
 		parent::assignVars();
@@ -305,7 +307,6 @@ class WForm extends WContainer
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
 		$this->setAction($data->get('action'));
 		$this->setEnctype($data->get('enctype'));
 		$this->setMethod($data->get('method'));

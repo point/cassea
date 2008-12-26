@@ -129,8 +129,6 @@ anything else - literal text
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
-
 		$this->setDateFormat($data->get('dateformat'));
 
 		parent::setData($data);
@@ -159,21 +157,6 @@ anything else - literal text
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		if(isset($this->dataset))
-			$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

@@ -130,7 +130,11 @@ abstract class WComponent extends WObject
 		/**
         * @var      string
         */
-        $class_lower = null
+        $class_lower = null,
+		/**
+        * @var      string
+        */
+        $data_setted = false
 		;
 
     // {{{ __construct
@@ -465,7 +469,7 @@ abstract class WComponent extends WObject
     * @param    void
     * @return   WJavaScript&
     */
-    function &getJavaScript()
+    function getJavaScript()
     {
 		return $this->javascript;
     }
@@ -522,6 +526,56 @@ abstract class WComponent extends WObject
     }
     // }}}
     
+    // {{{ getDataSetted
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   bool
+    */
+    function getDataSetted()
+    {
+		return $this->data_setted;
+    }
+    // }}}
+    
+    // {{{ setDataSetted
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    bool $setted
+    * @return   void
+    */
+    function setDataSetted($setted)
+    {
+        if(!isset($setted)) return;
+        $this->data_setted = (bool)$setted;
+    }
+    // }}}
+
+    // {{{ checkAndSetData
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function checkAndSetData()
+    {
+        if(!$this->getDataSetted())
+        {
+		    $this->restoreMemento();
+		    $this->setData(DataRetriever::getData($this->getId()));
+		    $this->setData(DataRetriever::getData($this->getId(),true));
+        }
+    }
+    // }}}
+
+
+
     // {{{ getDataSet 
     /**
     * Method description
@@ -529,11 +583,12 @@ abstract class WComponent extends WObject
     * More detailed method description
     * @param    void
     * @return   WDataSet
-    */
-    function getDataSet()
+     */
+    // DEPRECATED
+    /*function getDataSet()
     {
 		return $this->dataset;
-    }
+    }*/
     // }}}
     
     // {{{ setDataSet 
@@ -544,12 +599,13 @@ abstract class WComponent extends WObject
     * @param    WDataSet& $dataset    
     * @return   void
     */
-    function setDataSet(DataSet $dataset)
+    // DEPRECATED
+    /*function setDataSet(DataSet $dataset)
     {
 		if(!isset($this->dataset))
 			$this->dataset = new DataSetAggregator();
 		$this->dataset->addDataSet($dataset);
-    }
+    }*/
     // }}}
     
     // {{{ parseParams 
@@ -608,10 +664,11 @@ abstract class WComponent extends WObject
     * @param    string $value  
     * @return   string
     */
-    function replaceWithLangConst($value)
+    // DEPRECATED
+    /*function replaceWithLangConst($value)
     {
 		return $value;//Language::encode_admin_pair($value);
-    }
+    }*/
     // }}}
     
 	// {{{ setData
@@ -654,6 +711,8 @@ abstract class WComponent extends WObject
 
 		if(isset($data->hide_if_hidden))
 			$this->setHideIfHidden($data->get('hide_if_hidden'));
+
+        $this->setDataSetted(true);
     }
 	// }}}
     
@@ -874,6 +933,8 @@ EOD;
     */
 	function preRender()
     {
+        $this->checkAndSetData();
+
 		if(!empty($this->tpl))
 			$this->tpl->flushVars();
 
@@ -909,6 +970,7 @@ EOD;
 		}
 		if($this->do_increment)
 			$this->add_html_id++;
+        $this->setDataSetted(false);
 	}
 	//}}}	
 

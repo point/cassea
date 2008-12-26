@@ -137,7 +137,7 @@ class WCSS extends WComponent
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 		if(!isset($this->tpl) && !isset($this->src))
 			$this->tpl = $this->createTemplate();
@@ -156,8 +156,6 @@ class WCSS extends WComponent
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
-
         $this->setText($data->get('text'));
         $this->setText($data->getDef());
 		parent::setData($data);

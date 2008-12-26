@@ -696,6 +696,7 @@ class DB{
         if (is_object(self::$mysqli)) return;
         self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
         if ( mysqli_connect_errno()) throw ( new DBException(mysqli_connect_error(), mysqli_connect_errno()));
+        if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 
     }// }}}
 
 

@@ -55,10 +55,11 @@ class Session
         if (Config::getInstance()->session->engine ==  'memcache' )
             $sessionClassName = 'MemcacheSession';
 
-
         if (!class_exists('SessionBase')) require('SessionBase.php');
-        if (/*!class_exists($sessionClassName) &&*/ file_exists(dirname(__FILE__)."/".$sessionClassName.'.php')) require($sessionClassName.'.php');
-        else throw new Exception('Session: '.$sessionClassName.' not found');
+
+        if (!class_exists($sessionClassName)) 
+            if (file_exists(dirname(__FILE__)."/".$sessionClassName.'.php')) require($sessionClassName.'.php');
+            else throw new Exception('Session: '.$sessionClassName.' not found');
         
         self::$session = new $sessionClassName();
         self::$session->init();

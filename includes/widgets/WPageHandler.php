@@ -87,14 +87,15 @@ class WPageHandler extends WObject
     * Method description
     *
     * More detailed method description
-    * @param    string $goto_url
+    * @param    mixed $goto_url
     * @return   void
     */
     function setGotoURL($goto_url)
     {
-    	if(!is_numeric($goto_url) || abs($goto_url) == 0)
-			return;
-		$this->goto_url = abs($goto_url);
+    	//if(!is_numeric($goto_url) || abs($goto_url) == 0)
+	    //		return;
+        if(!is_scalar($goto_url)) return;
+		$this->goto_url = $goto_url;
     }
     // }}}
     

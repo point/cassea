@@ -147,7 +147,6 @@ class WTextarea extends WControl
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
 		$this->setCols($data->get('cols'));
 		$this->setRows($data->get('rows'));
 
@@ -170,20 +169,6 @@ class WTextarea extends WControl
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

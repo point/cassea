@@ -131,7 +131,7 @@ class WRoll extends WContainer
     {
 		$controller = Controller::getInstance();
 
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 
 		if($this->getRuler())
@@ -238,8 +238,6 @@ class WRoll extends WContainer
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
-
         $this->setCount($data->getDef());
 		$this->setCount($data->get('count'));
 		parent::setData($data);

@@ -181,21 +181,6 @@ class WList extends WContainer
 		return $this->is_ol;
     }
     // }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		//if(!$this->items->data_setted && $this->item_created) $this->items->clear();
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

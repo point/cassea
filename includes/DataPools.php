@@ -36,20 +36,21 @@ class ResultSetPool
 	static $pool = array();	
     const SYSTEM_PRIORITY = 1000;
 	
-	static function set(ResultSet $rs,$priority = 0)
+	static function set(ResultSet $rs,$priority = 0,$is_system = false)
 	{
 		self::$pool[] = array('priority'=>$priority,
-			'result_set'=>$rs);
+			'result_set'=>$rs,'is_system'=>$is_system);
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
-	static function findMatched($widget_id)
+	static function findMatched($widget_id,$is_system = false)
 	{
 		$wrs = new WidgetResultSet;
 		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
 
 		foreach(self::$pool as $v)
-		{
+        {
+            if($is_system && !$v['is_system']) continue;
 			$rs = $v['result_set'];
 			$wrs = $rs->findMatched($wrs,$widget);
 		}
@@ -87,9 +88,9 @@ class DataObjectPool
 
 class DataRetriever
 {
-	static function getData($widget_id)
+	static function getData($widget_id,$fetch_system = false)
 	{
-		$wrs = ResultSetPool::findMatched($widget_id);
+		$wrs = ResultSetPool::findMatched($widget_id,$fetch_system);
 		if($wrs->isEmpty())
 			$wrs = DataObjectPool::findDefault($widget_id);
 		return $wrs;
@@ -101,10 +102,11 @@ class DataUpdaterPool
 {
 	static $pool = array();
 
-	static function set(DataHandlerObject $dho, $priority = 0,$id = null)
+	static function set(DataHandlerObject $dho, $priority = 0,$id = null,$form_ids = null)
 	{
 		self::$pool[] = array('priority'=>$priority,
-			'data_handler_object'=>$dho,'id'=>$id);
+            'data_handler_object'=>$dho,'id'=>$id,
+            'form_ids' => $form_ids);
 
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
@@ -126,31 +128,40 @@ class DataUpdaterPool
 		$storage = Storage::createWithSession("DataUpdaterPool");
 		self::$pool = $storage->get('pool');
 	}
-	static function callCheckers()
+	static function callCheckers($form_id = null)
 	{
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
-		{
-			if($dho = $p['data_handler_object'])
-				$dho->check($controller->post);
+        {
+            $flag = true;
+            if(isset($form_id) && !empty($p['form_ids']))
+                $flag = in_array($form_id,$p['form_ids']);
+			if(($dho = $p['data_handler_object']) && $flag)
+			    $dho->check($controller->post);
 		}
 	}
-	static function callHandlers()
+	static function callHandlers($form_id = null)
 	{
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
 		{	
-			if($dho = $p['data_handler_object'])
-				$dho->handle($controller->post);
+            $flag = true;
+            if(isset($form_id) && !empty($p['form_ids']))
+                $flag = in_array($form_id,$p['form_ids']);
+            if(($dho = $p['data_handler_object']) && $flag)
+                $dho->handle($controller->post);
 		}
 	}
-	static function callFinilze()
+	static function callFinilze($form_id = null)
 	{
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
 		{	
-			if($dho = $p['data_handler_object'])
-				$dho->finalize();
+            $flag = true;
+            if(isset($form_id) && !empty($p['form_ids']))
+                $flag = in_array($form_id,$p['form_ids']);
+            if(($dho = $p['data_handler_object']) && $flag)
+                $dho->finalize();
 		}
     }
 }

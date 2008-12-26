@@ -197,20 +197,6 @@ class WSpinner extends WEdit
 	}    
 	// }}}
 
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
    // {{{ setData 
     /**
     * Method description

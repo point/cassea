@@ -82,20 +82,6 @@ class WJSON extends WComponent
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -122,7 +108,6 @@ class WJSON extends WComponent
     */
     function setData(WidgetResultSet $data)
 	{
-        $this->restoreMemento();
         $this->setVar($data->get('var'));
         $this->setVar($data->getDef());
         parent::setData($data);

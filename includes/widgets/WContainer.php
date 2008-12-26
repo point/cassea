@@ -81,7 +81,7 @@ class WControlContainer extends WControl
 	// {{{ preRender
 	function preRender()
 	{
-		$this->childPreRender();
+        $this->childPreRender();
 		parent::preRender();
 	}
 	// }}}
@@ -90,7 +90,7 @@ class WControlContainer extends WControl
 	{
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
-				$this->$v->preRender();
+                $this->$v->preRender();
 	}
 	// }}}
 	// {{{ postRender
@@ -227,7 +227,7 @@ class WidgetCollection
 		for($i = 0, $c = $this->count();$i < $c; $i++)
 			$this->getItem($i)->preRender();
 	}
-	// }}}
+    // }}}
 	// {{{ generateHTML
 	function generateHTML($pos = 0)
 	{
@@ -254,32 +254,6 @@ class WidgetCollection
 	} 
 	// }}}
 
-	// {{{ setData
-	/*function setData(ResultSet $data)
-	{
-		$child_data = $data->getAnonChild();
-		if($this->count()  == 1 && isset($child_data))
-		{
-			$child_data->setForId($this->getItemId(0));
-			$this->getItem(0)->setDataset(new SurrogateDataSet($child_data));
-		}
-		else
-		{
-			for($i = 0, $c = $this->count(); $i < $c; $i++)
-				if(($child_data = $data->getChild($this->getItemId($i))) != null)
-					$this->getItem($i)->setDataset(new SurrogateDataSet($child_data));
-		}
-		for($i = 0, $c = $this->count(); $i < $c;$i++)
-			if(($desc = $data->shiftDescent($this->getItemId($i))) != null)
-				$this->getItem($i)->setDataset(new SurrogateDataSet($desc));
-
-		
-		if($data->hasDescent())
-			for($i = 0, $c = $this->count(); $i < $c;$i++)
-				if(($desc = $data->getDescentResultSet($this->getItemId($i))) != null)
-					$this->getItem($i)->setDataset(new SurrogateDataSet($desc));
-	}*/
-	// }}}
 	// {{{ getItem
 	function getItem($position = 0)
 	{
@@ -382,7 +356,7 @@ class MixedCollection extends WidgetCollection
 	// {{{ isEmpty
 	function isEmpty()
 	{
-        return empty($this->str) || (bool)$this->count();
+        return empty($this->str) && !(bool)$this->count();
 	}
     // }}}
 
@@ -417,23 +391,24 @@ class IterableCollection extends WidgetCollection
 	// }}}
 	// {{{ preReder
 	function preRender()
-	{
+    {
+        $controller = Controller::getInstance();
+        // not initialized items
         $this->i_elem = array();
-		$controller = Controller::getInstance();
-		for($i = 0, $c = $controller->getDisplayModeParams()->getLimit($this->parent_id);$i < $c; $i++)
-		{
-			$controller->getDispatcher()->notify(
-				new Event("increment_id",null,null,array('do_increment'=>1)));
-			parent::preRender();
-			for($j = 0, $c2 = $this->count();$j < $c2; $j++)
+        for($i = 0, $c = $controller->getDisplayModeParams()->getLimit($this->parent_id);$i < $c; $i++)
+        {
+            $controller->getDispatcher()->notify(
+                new Event("increment_id",null,null,array('do_increment'=>1)));
+            parent::preRender();
+            for($j = 0, $c2 = $this->count();$j < $c2; $j++)
                 $this->i_elem[$i][$j] = clone $this->getItem($j);
 
-			$controller->getDispatcher()->notify(
+            $controller->getDispatcher()->notify(
                 new Event("increment_id",null,null,array('do_increment'=>0)));
 
-			$controller->getDisplayModeParams()->incCurrent($this->parent_id);
-		}
-		$controller->getDisplayModeParams()->resetCurrent($this->parent_id);
+            $controller->getDisplayModeParams()->incCurrent($this->parent_id);
+        }
+        $controller->getDisplayModeParams()->resetCurrent($this->parent_id);
 
 	}
 	// }}}

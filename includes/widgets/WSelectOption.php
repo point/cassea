@@ -80,10 +80,11 @@ class WSelectOption extends WComponent
 			$this->setText((string)$elem);
         if(!empty($elem['selected']))
             $this->setSelected((string)$elem['selected']);
-        if(!empty($elem['value']))
+        if(isset($elem['value']))
             $this->setValue((string)$elem['value']);
         else
             $this->setValue($this->getText());
+
 
 		$this->addToMemento(array("text","selected","value"));
 		parent::parseParams($elem);		    	
@@ -194,20 +195,6 @@ class WSelectOption extends WComponent
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-	{
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     //  {{{ assignVars
     /**
     * Method description
@@ -236,8 +223,6 @@ class WSelectOption extends WComponent
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
-
 		$this->setText($data->get('text'));
         $this->setValue($data->get('value'));
         $this->setValue($data->getDef());

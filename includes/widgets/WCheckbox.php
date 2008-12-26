@@ -156,20 +156,6 @@ class WCheckbox extends WControl
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -197,7 +183,6 @@ class WCheckbox extends WControl
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
 		$this->setChecked($data->get('checked'));
 		$this->setText($data->get('text'));
 

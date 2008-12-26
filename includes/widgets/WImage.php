@@ -263,7 +263,7 @@ class WImage extends WComponent
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 		
 		//!!! Beware
 		if(empty($this->src)) {$this->setVisible(0);return;}
@@ -318,7 +318,6 @@ EOD;
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
 		$this->setSrc($data->getDef());
 		$this->setSrc($data->get('src'));
 		$this->setWidth($data->get('width'));

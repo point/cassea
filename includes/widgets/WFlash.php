@@ -220,7 +220,6 @@ class WFlash extends WComponent
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
 		$this->setSrc($data->getDef());
 		$this->setSrc($data->get('src'));
 		$this->setWidth($data->get('width'));
@@ -248,20 +247,6 @@ class WFlash extends WComponent
 		$controller->addScript("swfobject.js");
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

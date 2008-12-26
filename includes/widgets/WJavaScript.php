@@ -163,9 +163,12 @@ class WJavaScript extends WObject
 			!property_exists_safe(get_class($this),$attribute)) 
 			return;
 		if($attribute == "src" )
-		{
+        {
+            if(substr($value,-3) != ".js")
+                $value .= ".js";
+            $this->src = $value;
 			$controller = Controller::getInstance();
-			$controller->addScript($value);
+			$controller->addScript($this->src);
 			return;
 		}	
 		if(!isset($this->$attribute))

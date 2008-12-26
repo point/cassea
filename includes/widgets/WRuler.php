@@ -144,21 +144,6 @@ class WRuler extends WContainer
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		if(!isset($this->tpl))
-			$this->tpl = $this->createTemplate();
-		parent::preRender();
-    }
-	// }}}    
 
     // {{{ assignVars
     /**

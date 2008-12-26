@@ -73,6 +73,19 @@ class Language{
     /** {{{ getLangNameById
     * Получаем id языка по короткому названию
     * 
+    * @param string $lang_name - короткое название языка
+    * @return int 
+    */
+    public static function getLangNameById($lang_id){
+        if (empty($lang_id)) return null;
+        $r = DB::query('select short_name from '.self::LANGUAGE_TABLE.' where id='.$lang_id);
+        return empty($r[0]['short_name'])?null:$r[0]['short_name'];
+    }
+	// }}}
+
+   /** {{{ getDefaultLangNameById
+    * Получаем id языка по короткому названию
+    * 
     * @param string $lang_id
     * @return string
     */
@@ -133,9 +146,8 @@ class Language{
      * @return void
      */
     public static function setLangConst($key, $val, $package='common', $lang_id=0){
-            $lang_id = self::validate($lang_id);
-            $r = DB::query('replace into '.self::LANG_CONST_TABLE.' (`k`, `v`, `package`, `lang_id`) VALUES ("'.$key.'", "'.$val.'", "'.$package.'" ,'.$lang_id.')');
-            self::$__cacheLang[$lang_id][$package][$key] = $val;
+        $r = DB::query('replace into '.self::LANG_CONST_TABLE.' (`k`, `v`, `package`, `lang_id`) VALUES ("'.$key.'", "'.$val.'", "'.$package.'" ,'.$lang_id.')');
+        self::$__cacheLang[$lang_id][$package][$key] = $val;
     }// }}}
     
 	// {{{ encodePair
@@ -168,6 +180,50 @@ class Language{
         return  self::getDefault();
 
     }///}
+
+    // {{{ getLangConst
+    /**
+     * По ключу и id языка получаем языковую константу.
+     *
+     *
+     * @param int $lang_id id языка
+     * @return void
+     */
+	public static function getModelLangConst($package='common'){
+        $r = DB::query("select `k`, `v`, `lang_id` from ".self::LANG_CONST_TABLE." where  `package`='".$package."' ORDER by `k`");
+        if (empty($r)) return '';
+        foreach($r as $k => $v)
+            $ret[$v['k']][$v['lang_id']] = $v['v'];
+        return $ret;
+    }// }}}
+   
+    // {{{ updateLangConst
+    /**
+     * Обновить языковую константу
+     *
+     * @param int $key ключ константы
+     * @param int $val значение константы
+     * @param int $lang_id id языка
+     * @return void
+     */
+    public static function updateLangConst($oldkey, $key, $val, $package='common', $lang_id=0){
+        $r = DB::query('delete from '.self::LANG_CONST_TABLE.' where lang_id=' .$lang_id.' AND `k`="'.$oldkey.'" AND `package`="'.$package.'"');
+        $r = DB::query('replace into '.self::LANG_CONST_TABLE.' (`k`, `v`, `package`, `lang_id`) VALUES ("'.$key.'", "'.$val.'", "'.$package.'" ,'.$lang_id.')');
+    }// }}}
+
+    // {{{ deleteLangConst
+    /**
+     * Удалить языковую константу
+     *
+     * @param int $key ключ константы
+     * @param int $val значение константы
+     * @param int $lang_id id языка
+     * @return void
+     */
+    public static function deleteLangConst($key, $package='common'){
+        $r = DB::query('delete from '.self::LANG_CONST_TABLE.' where package="' .$package.'" AND `k`="'.$key.'"');
+    }// }}}
+
 
 } // }}}
 

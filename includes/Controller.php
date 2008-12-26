@@ -54,6 +54,7 @@ require("LTC.php");
 require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
+require("Stat.php");
 
 class ControllerException extends Exception
 {}
@@ -124,8 +125,8 @@ class Controller
 		$this->parseP1P2();	
 
         if(defined('CONFIG') && defined('CONFIG_SECTION'))
-            Config::init(new IniConfig(CONFIG,CONFIG_SECTION));
-        else Config::init(new IniConfig("config.ini","config"));
+            Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
+        else Config::init(new IniDBConfig("config.ini","config"));
 
         $config = Config::getInstance();
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->table);
@@ -221,7 +222,7 @@ class Controller
 		else
 			$this->page = $ret;
 
-		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml")))
+		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml")))
 			throw new ControllerException('page file '.$this->page.'.xml not found');
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
@@ -280,13 +281,13 @@ class Controller
             throw new ControllerException('page file not found');
         $src = str_replace('.xml','',$src);
         if($src{0} == "/") 
-            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml'))
+            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src.'.xml'))
                 throw new ControllerException('page file '.$src.'.xml not found');
-            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").$src.'.xml';
+            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src.'.xml';
         else
-            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml'))
+            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").'/'.$this->controller_name.'/'.$src.'.xml'))
                 throw new ControllerException('page file '.$src.'.xml not found');
-            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH").'/'.$this->controller_name.'/'.$src.'.xml';
+            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").'/'.$this->controller_name.'/'.$src.'.xml';
         return $src;
     }
     protected function processPage(DomDocument $dom)
@@ -295,7 +296,8 @@ class Controller
         $a = $dom->firstChild->getAttribute('allow');
         $d = $dom->firstChild->getAttribute('deny');
        if(!ACL::check($a,$d))
-        {header("HTTP/1.0 403 Forbidden");exit();}
+           {header("HTTP/1.0 403 Forbidden");exit();}
+           //die("ACL!");
 
         // extends
         $adj_list = array($dom);
@@ -523,11 +525,10 @@ class Controller
 	}
 	protected function addJS(SimpleXMLElement $elem)
 	{
-		if(empty($elem['id'])) return;
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
-		$j = new $c_name($elem['id']);
+		$j = new $c_name((string)$elem['id']);
 		$j->parseParams($elem);
-		$this->javascripts[(string)$elem['id']] = $j;
+		$this->javascripts[$j->getId()] = $j;
 	}	
 	protected function addPageHandler(SimpleXMLElement $elem)
 	{
@@ -577,6 +578,10 @@ class Controller
 		{
 			if(!$widget->getState()) continue;
 			$this->widgets[$name]->preRender();
+        }
+        foreach($this->widgets as $name => $widget)
+        {
+            if(!$widget->getState()) continue;
 			$this->final_html .= $this->widgets[$name]->generateHTML();
 			$this->widgets[$name]->postRender();				
 		}
@@ -604,7 +609,8 @@ class Controller
 	}
 	function tail($echo = 1)
 	{
-		$v = "\n</body></html>";
+        $v = "\n</body></html>";
+        Stat::event('pages')->time()->sid()->user_id()->set('controller', $this->getControllerName())->set('page', $this->getPage())->set('p2', $this->get->__p2)->commit();
 		if($echo)
 			echo $v;
 		else return $v; 
@@ -756,7 +762,7 @@ class Controller
 	function XMLPageChanged($mtime)
 	{
 		if(!isset($mtime)) return true;
-		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_PATH")."/".$this->controller_name."/".$this->page.".xml";
+		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml";
         if(pageChanged($file,$mtime)) return true;
         foreach($this->ie_files as $f)
             if(pageChanged($f,$mtime)) return true;
@@ -767,9 +773,9 @@ class Controller
 		if($this->post->isEmpty()) return;
 
 		$this->restoreSignatures();
-		if(!in_array($this->post->__sig,$this->form_signatures))
-			$this->gotoStep_0();
-
+        WidgetLoader::load("WForm");
+		if(!in_array($this->post->{WForm::signature_name},$this->form_signatures))
+            $this->gotoStep_0();
 
 		POSTErrors::flushErrors();
 		$this->restoreCheckers();
@@ -783,17 +789,18 @@ class Controller
             POSTErrors::addError($this->captcha_name,null,Language::getLangConst("WIDGET_CAPTCHA_ERROR"));
         }
 
-		POSTChecker::checkByRules($this->post,$this->checker_rules);
+        $formid_name = $this->post->{WForm::formid_name};
+        if(isset($formid_name))
+		    POSTChecker::checkByRules($this->post,$formid_name,$this->checker_rules);
 		if(POSTErrors::hasErrors() || !$checked_by_captcha)
         {
 			POSTErrors::saveErrorList();
 			$this->gotoStep_0();
 		}
-
 		DataUpdaterPool::restorePool();
 		try
 		{
-			DataUpdaterPool::callCheckers();
+			DataUpdaterPool::callCheckers($formid_name);
 		}
 		catch(CheckerException $e)
 		{
@@ -804,11 +811,12 @@ class Controller
 			POSTErrors::saveErrorList();
 			$this->gotoStep_0();
 		}
-		DataUpdaterPool::callHandlers();
-		DataUpdaterPool::callFinilze();
+		DataUpdaterPool::callHandlers($formid_name);
+		DataUpdaterPool::callFinilze($formid_name);
         $ret = null;
         if(isset($this->pagehandler))
             $ret = $this->pagehandler->handle();
+
 
         /*var_dump($ret);
         die("BBBBBBBBB");*/
@@ -833,10 +841,10 @@ class Controller
         exit();
     }
 	// checkers
-	function setChecker($name,$rule,$rule_value)
+	function setChecker($form_id,$name,$rule,$rule_value)
 	{
-		if(!isset($name) || !isset($rule) || !isset($rule_value)) return;
-		$this->checker_rules[$name][$rule] = trim($rule_value);
+		if(!isset($form_id,$name,$rule,$rule_value)) return;
+		$this->checker_rules[$form_id][$name][$rule] = trim($rule_value);
 	}
 	protected function restoreCheckers()
 	{
@@ -904,7 +912,8 @@ class DisplayModeParams
 {
 	protected 
         $widget_params = array(),
-        $matched_index = null
+        $matched_index = null,
+        $collection_prerender_existent = false
         ;
 	public 
 		$predicted_from = null,

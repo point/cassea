@@ -88,8 +88,6 @@ class WNavigator extends WComponent
     */
     function setData(WidgetResultSet $data)
     {
-
-		$this->restoreMemento();
 		$this->setText($data->getDef());
 		$this->setText($data->get('text'));
 		parent::setData($data);
@@ -122,7 +120,7 @@ class WNavigator extends WComponent
     function preRender()
     {
 		
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 		$controller = Controller::getInstance();
 		$this->steps = $controller->getNavigator()->getSteps();

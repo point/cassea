@@ -102,20 +102,6 @@ class WTableRow extends WContainer
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -205,8 +191,6 @@ class WTableRow extends WContainer
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
-
 		$this->setAlign($data->get('align'));
 		$this->setValign($data->get('valign'));
 

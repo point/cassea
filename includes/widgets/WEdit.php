@@ -184,7 +184,6 @@ class WEdit extends WControl
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
 		$this->setMaxLength($data->get('maxlength'));
 		$this->setSize($data->get('size'));
 		$this->setType($data->get('type'));
@@ -208,20 +207,6 @@ class WEdit extends WControl
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

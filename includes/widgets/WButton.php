@@ -173,7 +173,7 @@ class WButton extends WControl
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 		if($this->getType() == "image")
 		{
@@ -217,8 +217,6 @@ class WButton extends WControl
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
-
 		$this->setSrc($data->get('src'));
 		$this->setAlt($data->get('alt'));
 		$this->setType($data->get('type'));

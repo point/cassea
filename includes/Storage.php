@@ -74,10 +74,10 @@ class FSStorage implements StorageEngine, ArrayAccess
 			throw(new StorageException('storage name is empty'));
         $this->storage_name = $storage_name;
         
-        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH')))
-            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_PATH'));
+        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_DIR')))
+            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_DIR'));
 
-		$this->real_storage_path = Config::get('ROOT_DIR').self::STORAGE_PATH."/".md5($storage_name);
+		$this->real_storage_path = Config::get('ROOT_DIR').Config::get('STORAGE_DIR')."/".md5($storage_name);
 		
 		if(!is_dir($this->real_storage_path))
 			mkdir($this->real_storage_path);
@@ -137,7 +137,7 @@ class FSStorage implements StorageEngine, ArrayAccess
     // {{{ cleanup 
 	static function cleanup()
 	{
-		$dir = Config::get('ROOT_DIR').self::STORAGE_PATH;
+		$dir = Config::get('ROOT_DIR').Config::get('STORAGE_DIR');
 		foreach(glob($dir."/*/*.ttl") as $f)
 			if(intval(file_get_contents($f)) < time())
 				deltree(dirname($f));

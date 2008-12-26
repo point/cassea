@@ -164,21 +164,6 @@ class WTable extends WContainer
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -445,9 +430,6 @@ class WTable extends WContainer
     */
     function setData(WidgetResultSet $data)
 	{
-
-		$this->restoreMemento();
-
 		$this->setCellspacing($data->get('cellspacing'));
 		$this->setCellpadding($data->get('cellpadding'));
 		$this->setFrame($data->get('frame'));

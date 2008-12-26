@@ -36,6 +36,7 @@ WidgetLoader::load("WObject");
 class WDataHandler extends WObject
 {
 	protected 
+        $form_ids = array(),
 		$handler_object = null,
 		$priority = 0
 		;
@@ -64,8 +65,10 @@ class WDataHandler extends WObject
 		$this->handler_object = new DataHandlerObject();
 		$this->handler_object->parseParams($params);
 		if(isset($params['priority']))
-			$this->setPriority(0+$params['priority']);
-		DataUpdaterPool::set($this->handler_object,$this->getPriority(),$this->getId());
+            $this->setPriority(0+$params['priority']);
+        if(isset($params['forms']))
+            $this->setFormIds((string)$params['forms']);
+		DataUpdaterPool::set($this->handler_object,$this->getPriority(),$this->getId(),$this->getFormIds());
     }
     // }}}
 	// {{{ setPriority
@@ -94,6 +97,35 @@ class WDataHandler extends WObject
     function getPriority()
     {
 		return $this->priority;
+    }
+    // }}}
+    
+	// {{{ setFormIds
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $ids
+    * @return   void
+    */
+    function setFormIds($ids)
+    {
+        if(!is_scalar($ids)) return;
+        $this->form_ids = array_map('trim',explode(",",$ids));
+    }
+    // }}}
+
+	// {{{ getPriority
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getFormIds()
+    {
+		return $this->form_ids;
     }
     // }}}
 }

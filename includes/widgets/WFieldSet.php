@@ -123,20 +123,6 @@ class WFieldSet extends WContainer
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -164,7 +150,6 @@ class WFieldSet extends WContainer
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
         $this->setLegend($data->getDef());
 		$this->setLegend($data->get('legend'));
     	parent::setData($data);

@@ -122,20 +122,6 @@ class WListItem extends WContainer implements StringProcessable
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-	{
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description
@@ -167,8 +153,6 @@ class WListItem extends WContainer implements StringProcessable
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->restoreMemento();
-
 		$this->setText($data->get('text'));
 		$this->setText($data->getDef());
 

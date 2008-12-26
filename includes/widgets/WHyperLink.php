@@ -120,7 +120,6 @@ class WHyperLink extends WContainer implements StringProcessable
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
 		$this->setHREF($data->getDef());
 		$this->setAttribute('rel',$data->get('rel'));
 		$this->setAttribute('rev',$data->get('rev'));
@@ -160,20 +159,6 @@ class WHyperLink extends WContainer implements StringProcessable
 		parent::buildComplete();
 	}    
 	// }}}
-    // {{{ preRender
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function preRender()
-    {
-		$this->setData(DataRetriever::getData($this->getId()));
-		parent::preRender();
-    }
-	// }}}    
     // {{{ assignVars
     /**
     * Method description

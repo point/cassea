@@ -98,7 +98,7 @@ class WTableHeader extends WTableColumn
     */
     function preRender()
     {
-		$this->setData(DataRetriever::getData($this->getId()));
+        $this->checkAndSetData();
 
 		parent::preRender();
 
@@ -154,7 +154,6 @@ class WTableHeader extends WTableColumn
     */
     function setData(WidgetResultSet $data)
     {
-		$this->restoreMemento();
 		$this->setSorter($data->get('sorter'));
 
 		parent::setData($data);

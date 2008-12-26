@@ -115,23 +115,6 @@ class WCAPTCHA extends WImage
     }
 
 	// }}}    
-    // {{{ setData 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    mixed $data
-    * @return   void
-    */
-    function setData(WidgetResultSet $data)
-	{
-		$this->restoreMemento();
-		$this->setText($data->getDef());
-		$this->setText($data->get('data'));
-
-		parent::setData($data);
-    }
-    //}}}
     // {{{ assignVars
     /**
     * Method description
