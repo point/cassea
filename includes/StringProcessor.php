@@ -241,6 +241,8 @@ class StringProcessor
     {return substr_replace($string, $ends, $max - strlen($ends)); }
     protected function nl2br($string) 
     {return nl2br($string);}
+    protected function decode_ip($long_ip)
+    {return long2ip($long_ip);}
 }
 // }}}
 ?>

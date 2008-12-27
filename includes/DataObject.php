@@ -230,7 +230,8 @@ abstract class DataObject
 				else
 					call_user_func_array(array($this->object,$this->init_method),array());
 			}
-		}catch(Exception $e){}
+        }catch(Exception $e){ return false;}
+        return $this->object !== null;
     }
     function getObject()
     {
@@ -241,8 +242,7 @@ abstract class DataObject
 	{
 		if(!$this->is_static)
 		{
-			if(!isset($this->object))
-				$this->createObject();
+			if(!isset($this->object) && !$this->createObject()) return;
 			if(isset($this->finalize_method))
 			{
 				try{
@@ -312,8 +312,7 @@ class DataSourceObject extends DataObject
 	{
 		if(!$this->is_static)
 		{
-			if(!isset($this->object))
-				$this->createObject();
+			if(!isset($this->object) && !$this->createObject()) return null;
             $ret = array();
             if(!empty($this->datasource_methods))
             {
@@ -450,8 +449,7 @@ class DataHandlerObject extends DataObject
 	{
 		if(!$this->is_static)
 		{
-			if(!isset($this->object))
-				$this->createObject();
+			if(!isset($this->object) && !$this->createObject()) return null;
 			foreach($this->checker_methods as $ind => $checker)
 			{
 				try{
@@ -484,8 +482,7 @@ class DataHandlerObject extends DataObject
 	{
 		if(!$this->is_static)
 		{
-			if(!isset($this->object))
-                $this->createObject();
+			if(!isset($this->object) && !$this->createObject()) return null;
             if(!empty($this->handler_methods))
                 foreach($this->handler_methods as $ind => $handler)
                     try{
@@ -578,8 +575,7 @@ class PageHandlerObject extends DataObject
 	{
 		if(!$this->is_static)
 		{
-			if(!isset($this->object))
-                $this->createObject();
+			if(!isset($this->object) && !$this->createObject()) return null;
             
 			if(isset($this->handler_method))
 			{
