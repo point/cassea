@@ -76,13 +76,13 @@ class WFlash extends WComponent
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['height']))
+		if(isset($elem['height']))
 	       	$this->setHeight((string)$elem['height']);
-		if(!empty($elem['width']))
+		if(isset($elem['width']))
 	       	$this->setWidth((string)$elem['width']);
-		if(!empty($elem['src']))
+		if(isset($elem['src']))
 			$this->setSrc((string)$elem['src']);       	
-		if(!empty($elem['bgcolor']))
+		if(isset($elem['bgcolor']))
 			$this->setBgColor((string)$elem['bgcolor']);
 
 		$this->addToMemento(array("height","width","src", "bgcolor"));

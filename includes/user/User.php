@@ -241,42 +241,6 @@ class User
         return $dbPassword == $neededPassword;
     } // }}}
 
-    private function buildPasword($password, $dbSold, $serverSold){
-        //echo 
-        $needed = hash('md5', $dbSold.$password.$serverSold);
-        return $needed; 
-    }
-
-
-
-    // {{{ setPassword
-    /**
-     *
-     */
-    public function setPassword($uid, $password, $sold = null){
-
-    
-    }// }}}
-
-    // {{{ generatePassword
-    /**
-     *
-     */
-    private function generatePassword(  )
-    {
-       $str='123456789QWERTYUIPASDFGHJKLZXCVBNM';
-        $res='';
-        for($i=0;$i<$length;$i++)
-            $res.=$str[mt_rand(0,strlen($str)-1)];
-        return $res;
-
-    }//}}}
-
-    // {{{ generateSold
-    private function generateSold(){
-
-    }//}}}
-    
 }// }}}
 
 ?>

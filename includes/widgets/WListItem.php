@@ -69,7 +69,7 @@ class WListItem extends WContainer implements StringProcessable
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['text']))
+		if(isset($elem['text']))
 			$this->setText((string)$elem['text']);
 		$this->items = new MixedCollection($this->getId(),$elem);
 

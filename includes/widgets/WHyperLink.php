@@ -85,18 +85,18 @@ class WHyperLink extends WContainer implements StringProcessable
     */
     function parseParams(SimpleXMLElement $elem)
     {
-    	if(!empty($elem['href']))
+    	if(isset($elem['href']))
 			$this->setHREF((string)$elem['href']);
-		if(!empty($elem['baseurl']))
+		if(isset($elem['baseurl']))
 			$this->setBaseURL((string)$elem['baseurl']);
 
-		if(!empty($elem['rel']))
+		if(isset($elem['rel']))
 			$this->setAttribute('rel',(string)$elem['rel']);
-		if(!empty($elem['rev']))
+		if(isset($elem['rev']))
 			$this->setAttribute('rev',(string)$elem['rev']);
-		if(!empty($elem['target']))
+		if(isset($elem['target']))
             $this->setAttribute('target',(string)$elem['target']);
-        if(!empty($elem['text']))
+        if(isset($elem['text']))
             $this->setText((string)$elem['text']);
 
 		$this->items = new MixedCollection($this->getId(),$elem);

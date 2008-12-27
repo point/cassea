@@ -113,17 +113,17 @@ class WTable extends WContainer
 	        $this->setCellpadding((string)$elem['cellpadding']);
 		if(isset($elem['cellspacing']))
 	       	$this->setCellspacing ((string)$elem['cellspacing']);
-		if(!empty($elem['frame']))
+		if(isset($elem['frame']))
 	       	$this->setFrame((string)$elem['frame']);
-		if(!empty($elem['rules']))
+		if(isset($elem['rules']))
 	       	$this->setRules((string)$elem['rules']);
-		if(!empty($elem['border']))
+		if(isset($elem['border']))
 	       	$this->setBorder((string)$elem['border']);
-		if(!empty($elem['width']))
+		if(isset($elem['width']))
 	       	$this->setWidth((string)$elem['width']);
-		if(!empty($elem['summary']))
+		if(isset($elem['summary']))
 	       	$this->setSummary((string)$elem['summary']);
-		if(!empty($elem['table_sorter']))
+		if(isset($elem['table_sorter']))
 	       	$this->setTableSorter((string)$elem['table_sorter']);
 
 		if(isset($elem['odd']))

@@ -74,11 +74,11 @@ class WSelectOption extends WComponent
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['text']))
+		if(isset($elem['text']))
             $this->setText((string)$elem['text']);
 		elseif(!count($elem))
 			$this->setText((string)$elem);
-        if(!empty($elem['selected']))
+        if(isset($elem['selected']))
             $this->setSelected((string)$elem['selected']);
         if(isset($elem['value']))
             $this->setValue((string)$elem['value']);

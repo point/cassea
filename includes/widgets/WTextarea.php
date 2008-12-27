@@ -68,9 +68,9 @@ class WTextarea extends WControl
     */
     function parseParams(SimpleXMLElement $elem)
 	{
-		if(!empty($elem['cols']))
+		if(isset($elem['cols']))
 			$this->setCols((string)$elem['cols']);
-		if(!empty($elem['rows']))
+		if(isset($elem['rows']))
 	       	$this->setRows((string)$elem['rows']);
 
 		$this->addToMemento(array("cols","rows"));

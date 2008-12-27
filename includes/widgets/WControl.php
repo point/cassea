@@ -107,12 +107,12 @@ abstract class WControl extends WComponent
     function parseParams(SimpleXMLElement $elem)
 	{
 		$val = (string)$elem;
-		if(!empty($val))
+		if(isset($val))
 			$this->setValue($val);
 		if(isset($elem['value']))
 			$this->setValue((string)$elem['value']);
 
-		if(!empty($elem['name']))
+		if(isset($elem['name']))
 		{
 	       	$this->setName((string) $elem['name'] );
             // DISALLOW. Id sets in constructor

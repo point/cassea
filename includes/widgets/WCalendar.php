@@ -81,7 +81,7 @@ anything else - literal text
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['dateformat']))
+		if(isset($elem['dateformat']))
 	       	$this->setDateFormat((string)$elem['dateformat']);
 
 		$this->addToMemento(array("dateformat"));

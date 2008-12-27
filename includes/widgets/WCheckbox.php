@@ -70,9 +70,9 @@ class WCheckbox extends WControl
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['checked']))
+		if(isset($elem['checked']))
 	       	$this->setChecked((string)$elem['checked']);
-		if(!empty($elem['text']))
+		if(isset($elem['text']))
 			$this->setText((string)$elem['text']);
 
 		$this->addToMemento(array("checked","text"));
@@ -189,6 +189,33 @@ class WCheckbox extends WControl
 		parent::setData($data);
     }
     //}}}
+    
+    // {{{ restorePOST
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $post
+    * @param    array $errors
+    * @return   string
+    */
+    function restorePOST()
+	{
+        $errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
+    	if($errors !== null)
+        {
+			$this->setFilterError(implode("<br/>",$errors));
+        }
+        $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
+        if(isset($post_data))
+        {
+            ResultSetPool::set(
+                t(new ResultSet())
+                ->f("wcheckbox[name=".$this->getName()."]")->set('checked',1),ResultSetPool::SYSTEM_PRIORITY,true);
+            echo 1;
+        }
+    }
+    // }}}
 }
 //}}}
 

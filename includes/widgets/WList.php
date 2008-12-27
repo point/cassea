@@ -78,9 +78,9 @@ class WList extends WContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-       	if(!empty($elem['ul']))
+       	if(isset($elem['ul']))
 			{$this->setIsUl((string)$elem['ul']); $this->setIsOl(0);}
-		if( !empty($elem['ol']))
+		if( isset($elem['ol']))
 			{$this->setIsOl((string)$elem['ol']); $this->setIsUl(0);}
 		$this->items = new WidgetCollection($this->getId(),$elem);
 

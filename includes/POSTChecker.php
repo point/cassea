@@ -255,7 +255,7 @@ class POSTErrors
 					$e2[] = $v['message'];
 		
 		if(empty($e2)) return null;
-        unset(self::$errors[$name]);
+        //unset(self::$errors[$name]);
 		return $e2;
 	}
 	static function getPOSTData($name,$additional_id = null)

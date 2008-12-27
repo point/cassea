@@ -73,9 +73,9 @@ class WSelect extends WControlContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-       	if(!empty($elem['multiple']))
+       	if(isset($elem['multiple']))
 			$this->setMultiple((string)$elem['multiple']); 
-		if( !empty($elem['size']))
+		if( isset($elem['size']))
 			$this->setSize((string)$elem['size']); 
 		$this->items = new WidgetCollection($this->getId(),$elem);
 
@@ -216,13 +216,11 @@ class WSelect extends WControlContainer
         $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
         if(isset($post_data))
         {
-            //echo "<br>restore ".$this->getName()." value=".$post_data."<br>";
             ResultSetPool::set(
                 t(new ResultSet())
                 //->f("wselect[name=".$this->getName()."] > wselectoption")->selected(0)
                 ->f("wselect[name=".$this->getName()."]  wselectoption[value=".$post_data."]")
                 ->set('selected',1),ResultSetPool::SYSTEM_PRIORITY,true);
-            $this->childPreRender();
         }
     }
     // }}}

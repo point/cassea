@@ -159,7 +159,7 @@ class ResultSet
     {
         foreach($this->fors as $selectors => $v)
             foreach(explode(",",$selectors) as $selector)
-                if(SelectorMatcher::matched($widget,$selector,null,null))
+                if(SelectorMatcher::matched($widget,$selector,null,null) && isset($this->for_values[$selector]))
                 {
                     $wrs->merge($this->for_values[$selector]);
                     if(isset($this->f1s[$selector]))

@@ -77,7 +77,7 @@ class WSpinner extends WEdit
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(!empty($elem['step']))
+		if(isset($elem['step']))
 	       	$this->setStep((int)$elem['step']);
 		if(isset($elem['min'])) 
 			$this->setMin((int)$elem['min']);
