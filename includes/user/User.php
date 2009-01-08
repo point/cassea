@@ -156,12 +156,16 @@ class User
     {
         if (!preg_match(User::REGEXP_LOGIN, $login) && !preg_match(User::REGEXP_PASSWORD, $password))
             return false;
+        // nonactive
+        $sql = 'select login from '.User::TABLE_REGISTRATION.' where login="'.$login.'"';
+        $r = DB::query($sql);
+        if (count($r) == 1) return User::ERROR_USER_NOTACTIVE;
+        
         $r = DB::query('select id, login, email, password, sold, state from '.User::TABLE.' where login="'.$login.'"');
         if (count($r)!= 1 ) return User::ERROR_USER_NOT_EXIST;
         $r = $r[0];
 
         if ($r['state'] == 'ban') return User::ERROR_USER_BANNED;
-        if ($r['state'] == 'notactive') return User::ERROR_USER_NOTACTIVE;
         if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
 
         if (  $r['password'] != self::buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )

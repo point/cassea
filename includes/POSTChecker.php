@@ -37,6 +37,7 @@ class POSTChecker
 	{
 		if(empty($rules) || empty($rules[$formid_name])) return;
 
+        $rules = $rules[$formid_name];
 		foreach($rules as $name => $cr)
 		{
 			if(isset($cr['filter']))
@@ -48,14 +49,14 @@ class POSTChecker
             {
 				if($rule === 'required' && $rule_value === 'true')
 					if(!isset($p_val) ||
-						(is_string($p_val) && ($p_val === null || $p_val === "")))
+                        (/*is_string($p_val) &&*/ ($p_val === null || $p_val === "")))
 						POSTErrors::addError($name,null,ErrorMsg::REQUIRED);
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && $p_val2 == "" || $p_val2 === null)
 								POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
 							elseif(is_array($p_val2) && count($p_val2) == 1 && ($p_val2[0] === null || $p_val2[0] === ""))
-								POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
+                                POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
 
 				if($rule === 'minlength' && is_numeric($rule_value) && isset($p_val))
 					if(is_string($p_val) && strlen($p_val) < 0+$rule_value)

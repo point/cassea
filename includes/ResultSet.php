@@ -72,6 +72,56 @@ class WidgetResultSet implements IteratorAggregate
 	function getIterator(){	return t(new ArrayObject($this->properties))->getIterator();}
 
 }
+class RSIndexer
+{
+    static $_cache = array();
+    static function index($inp)
+    {
+        if(is_numeric($inp))
+            return $inp;
+        if(is_array($inp) && count($inp) == 1)
+            return $inp[0];
+        if(is_array($inp) && count($inp) > 1)
+            return serialize($inp);
+        return null;
+    }
+    static function getLastIndex($s_index)
+    {
+        if(!isset($s_index)) return null;
+        if(is_numeric($s_index))
+            return $s_index;
+        
+        if(isset(self::$_cache[$s_index]))
+        {
+            $a = self::$_cache[$s_index];
+            return array_pop($a);
+        }
+
+        $us_index = unserialize($s_index);
+        if($us_index === false || !is_array($us_index) || empty($us_index))
+            $ret = array();
+        else
+            $ret = $us_index;
+        self::$_cache[$s_index] = $ret;
+        return array_pop($ret);
+    }
+    static function toArray($s_index)
+    {
+        if(!isset($s_index)|| is_numeric($s_index)) return array();
+
+        if(isset(self::$_cache[$s_index]))
+            return array_slice(array_reverse(self::$_cache[$s_index]),1);
+
+        $us_index = unserialize($s_index);
+        if($us_index === false || !is_array($us_index) || empty($us_index))
+            $ret = array();
+        else
+            $ret = $us_index;
+        self::$_cache[$s_index] = $ret;
+        return array_slice(array_reverse($ret),1);
+    }
+
+}
 class ResultSet
 {
 	private 
@@ -98,10 +148,10 @@ class ResultSet
     {
         if(isset($index))
         {
-            //$this->cur_index++;
-            $this->cur_index = $index;
+            //$this->cur_index = $index;
+            $this->cur_index = (($ind = RSIndexer::index($index)) === null)?0:$ind;
             $this->types[$selector] = "array";
-            $this->fors_array[$selector]['index'][$this->cur_index] = $index;
+            $this->fors_array[$selector]['index'][$this->cur_index] = 1;
             $this->fors_array[$selector]['scope'][$this->cur_index] = $scope;
         }
         else
@@ -173,12 +223,12 @@ class ResultSet
             foreach(explode(",", $selectors) as $selector)
                 if(SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope']))
                 {
-                    $wrs->merge($this->for_values_array[$selector][$ind = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+                    $wrs->merge($this->for_values_array[$selector][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
                     if(isset($this->f1s[$selector]))
                     {
-                        unset($this->fors_array[$selector]['index'][$ind]);
-                        unset($this->fors_array[$selector]['scope'][$ind]);
-                        unset($this->for_values_array[$selector][$ind]);
+                        unset($this->fors_array[$selector]['index'][$matched]);
+                        unset($this->fors_array[$selector]['scope'][$matched]);
+                        unset($this->for_values_array[$selector][$matched]);
                     }
                 }
 

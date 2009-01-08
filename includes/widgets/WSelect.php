@@ -219,7 +219,7 @@ class WSelect extends WControlContainer
             ResultSetPool::set(
                 t(new ResultSet())
                 //->f("wselect[name=".$this->getName()."] > wselectoption")->selected(0)
-                ->f("wselect[name=".$this->getName()."]  wselectoption[value=".$post_data."]")
+                ->f1("wselect[name=".$this->getName()."]  wselectoption[value=".$post_data."]")
                 ->set('selected',1),ResultSetPool::SYSTEM_PRIORITY,true);
         }
     }

@@ -250,9 +250,35 @@ class SelectorMatcher
                 elseif(!count($parsed_selector['pseudo_value'])) return false;
                 else
                 {
-                    $current = $controller->getDisplayModeParams()->getCurrent($parent,array_shift($parsed_selector['scope']));
-                    if(!isset($parsed_selector['pseudo_value'][$current]) || $parsed_selector['pseudo_value'][$current] != $current) return false;
-                    $controller->getDisplayModeParams()->setMatchedIndex($current);
+                    $controller->getDisplayModeParams()->setMatchedIndex(-1);
+                    $cur_scope = array_shift($parsed_selector['scope']);
+                    $matched = $current = $controller->getDisplayModeParams()->getCurrent($parent,$cur_scope);
+                    foreach($parsed_selector['pseudo_value'] as $k => $v)
+                    {
+                        if($current != RSIndexer::getLastIndex($k)) continue;
+                        else
+                        {
+                            $_w2 = $controller->getWidget($parent);
+                            $flag = true;
+                            foreach(RSIndexer::toArray($k) as $next_index)
+                            {
+                                while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
+                                    if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
+                                    else  $_w2 = $controller->getWidget($_p);
+                                if($_parent && $controller->getDisplayModeParams()->getCurrent($_parent,$cur_scope) != $next_index)
+                                {$flag = false;break;}
+                            }
+                            if($flag)
+                            {
+                                $controller->getDisplayModeParams()->setMatchedIndex($k);
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                    //if(!isset($parsed_selector['pseudo_value'][$current]) || $parsed_selector['pseudo_value'][$current] != $current) return false;
+                    //$matched = $current;
+                    //$controller->getDisplayModeParams()->setMatchedIndex($current);
                 }
 			}
 		return true;

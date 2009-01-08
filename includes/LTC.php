@@ -61,7 +61,6 @@ class LTC{
         if ($lang_id == 0) $lang_id = Language::$current_language;
 
         if (isset(self::$__LTCCache[$oid][($quote?1:2)][$lang_id])){
-            echo "cache <br>";
             return self::$__LTCCache[$oid][($quote?1:2)][$lang_id];
         }
 

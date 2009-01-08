@@ -9,9 +9,13 @@ $(document).ready(function() {
 	rules:{
 	<?php echo $p->vc_rules?>
 	},
+<?php $messages = (string)$p->vc_messages;if(!empty($messages))
+{?>
 	messages:{
-	<?php echo $p->vc_messages?>
+	<?php echo $p->vc_messages;?>
 	},
+<?php
+} ?>
 	onsubmit:true,
 	onkeyup:false,
 	focusInvalid:true

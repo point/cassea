@@ -214,7 +214,12 @@ abstract class DataObject
 	}
 	function createObject()
 	{
-		require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
+        if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
+            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
+
+        if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
+            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");
+
 		try{
 			$r = new ReflectionClass($this->classname);
 			if(!isset($this->init_method))
@@ -365,11 +370,15 @@ class DataSourceObject extends DataObject
 		if(method_exists($this->object,"get".ucfirst(strtolower($w_id))))
 			return call_user_func(array($this->object,"get".ucfirst(strtolower($w_id))));
 		if(method_exists($this->object,"get_".strtolower($w_id)))
-			return call_user_func(array($this->object,"get_".strtolower($w_id)));
+            return call_user_func(array($this->object,"get_".strtolower($w_id)));
 		if(method_exists($this->object,$w_id))
 			return call_user_func(array($this->object,$w_id));
 		if(method_exists($this->object,ucfirst(strtolower($w_id))))
-			return call_user_func(array($this->object,ucfirst(strtolower($w_id))));
+            return call_user_func(array($this->object,ucfirst(strtolower($w_id))));
+        if(method_exists($this->object,"__get"))
+            return $this->object->$w_id;
+        if(method_exists($this->object,"__call"))
+            return call_user_func(array($this->object,strtolower($w_id)));
 		return false;
 	}
 	function findValueInStatic($w_id)

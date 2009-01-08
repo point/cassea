@@ -79,8 +79,8 @@ class DataObjectPool
 		foreach(self::$pool as $v)
 		{
 			$d_o = $v['data_object'];
-			if(($def = $d_o->getData($widget_id)) !== null)
-				$wrs->setDef($def);
+			if(($def = $d_o->getData($widget_id)) !== null && is_scalar($def))
+		        $wrs->setDef($def);
 		}
 		return $wrs;
 	}

@@ -107,7 +107,7 @@ class Language{
 		static $__default = null;
 		if(isset($__default)) return $__default;
         $r = DB::query('select id from '.self::LANGUAGE_TABLE.' where `default`="1"');
-        return $__default = $r[0]['id'];
+        return $__default = (count($r))?$r[0]['id']:null ;
     }
 	// }}}
  

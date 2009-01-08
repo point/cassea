@@ -188,8 +188,11 @@ class IniDBConfig extends IniConfig
     {
         if( DB::getMysqli() === null) return;
         $this->table_data = array();
-        foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
-            $this->table_data[$v['key']] = $v['value'];
+        try
+        {
+            foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
+                $this->table_data[$v['key']] = $v['value'];
+        }catch(DBException $e){}
     }
     function get($name)
     {

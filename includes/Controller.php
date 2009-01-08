@@ -129,7 +129,7 @@ class Controller
         else Config::init(new IniDBConfig("config.ini","config"));
 
         $config = Config::getInstance();
-        DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->table);
+        DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
         /*$this->determineLanguage();
         
         $this->header = Header::get();
@@ -475,7 +475,7 @@ class Controller
 		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
 					$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
 
-		if($widget instanceof WControl && isset($elem['datahandler']) && isset($this->datahandlers[(string)$elem['datahandler']]))
+		/*if($widget instanceof WControl && isset($elem['datahandler']) && isset($this->datahandlers[(string)$elem['datahandler']]))
 		{
 			$this->corresp_map[$widget->getName()]['dh'] = (string)$elem['datahandler'];
 			$widget->setDataHandler((string)$elem['datahandler']);
@@ -483,7 +483,7 @@ class Controller
 				$this->corresp_map[$widget->getName()]['filter'] = (string)$elem['filter'];
 			if(!empty($elem['apply_filter']))
 				$this->corresp_map[$widget->getName()]['apply_filter'] = (string)$elem['apply_filter'];
-		}
+        }*/
 		if($widget instanceof WComponent && $widget->getState())
 			$widget->buildComplete();
 		if($system)
@@ -995,17 +995,12 @@ class DisplayModeParams
 class AjaxController extends Controller
 {
 
-	protected function __construct()
-	{
-		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
-			$this->controller_name = $m[1];
-		else throw new ControllerException('controller name not defined');
-
-		$this->get = new HTTPParamHolder($_GET,0);
-        $this->post = new HTTPParamHolder($_POST);
-        $this->cookie = new HTTPParamHolder($_COOKIE);
-
-        DB::init(Config::get("DB_HOST"),Config::get("DB_USER"), Config::get("DB_PASSWORD"), Config::get("DB_TABLE"));
+    protected function __construct()
+    {
+        parent::__construct();
+    }
+	function init()
+    {
         $this->determineLanguage();
         
         $this->header = Header::get();
@@ -1013,22 +1008,17 @@ class AjaxController extends Controller
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetAdjacencyList();
 
-		Session::init();
-        User::get();
 
-		$this->navigator = new Navigator($this->controller_name);
-	}
+        try{
+            $full_path = $this->findPage();
+            $this->handlePOST();
 
-	function init()
-	{
-		$this->parseP1P2();	
-        $full_path = $this->findPage();
-		$this->handlePOST();
+            $dom = new DomDocument;
+            $dom->load($full_path);
 
-		$dom = new DomDocument;
-		$dom->load($full_path);
-
-		$this->parsePage($this->processPage($dom));
+            $this->parsePage($this->processPage($dom));
+        }catch(Exception $e){}
+        
     }
 
 	function head($echo = 1)

@@ -153,6 +153,8 @@ class WCheckbox extends WControl
 			$this->tpl = $this->createTemplate();
 		if(!isset($this->text))
 			$this->setText($this->getValue());
+        if(empty($this->value))
+            $this->setValue('checkbox');
 		parent::buildComplete();
 	}    
 	// }}}
@@ -208,12 +210,9 @@ class WCheckbox extends WControl
         }
         $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
         if(isset($post_data))
-        {
             ResultSetPool::set(
                 t(new ResultSet())
                 ->f("wcheckbox[name=".$this->getName()."]")->set('checked',1),ResultSetPool::SYSTEM_PRIORITY,true);
-            echo 1;
-        }
     }
     // }}}
 }
