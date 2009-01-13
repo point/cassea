@@ -214,10 +214,14 @@ class SessionBase
     */
     public function setUserId( $id)
     {
-        // проверить вызывающего.
-
-        $this->userId = (int)$id;
-        return true;
+        // проверить вызывающего. 
+        // Функция должна вызыватся тoлько из User:auth()
+        $ar = debug_backtrace(); $caller = $ar[2];
+        if ( strtoupper($caller['class']) == 'USER' && strtoupper($caller['function']) == 'AUTH'){
+            $this->userId = (int)$id;
+            return true;
+        }
+        throw new Exception('Method setUserId');
     }// }}}
 
 }// }}}

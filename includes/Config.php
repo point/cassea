@@ -184,25 +184,25 @@ class IniDBConfig extends IniConfig
     {
         parent::__construct($filename,$section, $inherit_separator);
     }
-    protected function lazyLoad()
+    protected function loadData()
     {
-        if( DB::getMysqli() === null) return;
         $this->table_data = array();
-        try
-        {
-            foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
-                $this->table_data[$v['key']] = $v['value'];
-        }catch(DBException $e){}
+        foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
+            $this->table_data[$v['key']] = $v['value'];
     }
     function get($name)
     {
-        if(!isset($this->table_data))
-            $this->lazyLoad();
-		$name = strtolower($name);
-        if(isset($this->table_data[$name]))
-            return $this->table_data[$name];
-        else
-            return parent::get($name);
+        try{
+            return  parent::get($name);
+        }catch(ConfigException $e){
+            if(!isset($this->table_data))
+                $this->loadData();
+            $name = strtolower($name);
+            if(isset($this->table_data[$name]))
+                return $this->table_data[$name];
+            else
+                throw new ConfigException("Config value ".$name." doesn't exists");
+        }
     }
     function __get($name)
     {

@@ -69,7 +69,6 @@ class MemcacheSession extends SessionBase
         $this->storage = Storage::create($this->getStorageName($this->id), 0+Config::getInstance()->session->length);
         foreach($param as $k => $v)
             $this->storage[$k] = $v;
-        unset($this->storage);
     }// }}}
     
     //{{{ setUserId

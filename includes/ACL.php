@@ -35,18 +35,21 @@ class ACL
     const ACL_TABLE = "acl";
 
     static protected 
-        $groups  = array()
+        $groups  = null
     ;
 
     static function init()
     {
-        if(Config::getInstance()->acl->cache_groups && $g = Storage::create('acl_groups')->get(User::get()->getId()))
+        if(Config::getInstance()->acl->cache_groups && is_array($g = Storage::create('acl_groups')->get(User::get()->getId())))
             self::$groups = $g;
         else
         {
             $res = DB::query("select groups from ".self::ACL_TABLE." where user_id='".User::get()->getId()."' limit 1");
             if(count($res))
                 self::$groups = array_map('trim',explode(":",$res[0]['groups']));
+            else 
+                // there's no group for user.
+                self::$groups = array();
 
             if(Config::getInstance()->acl->cache_groups)
                 Storage::create('acl_groups')->set(User::get()->getId(),self::$groups);
@@ -55,9 +58,8 @@ class ACL
     static function check($allows = "", $denies = "", $delimiter = ",")
     {
         if(!Config::getInstance()->acl->use_acl) return true;
-        if(empty(self::$groups))
+        if( self::$groups === null)
             self::init();
-        //var_dump(self::$groups);
 
         if(empty($denies) && empty($allows))
             return true;

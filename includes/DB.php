@@ -40,6 +40,8 @@
 
 
 error_reporting(E_ALL | E_STRICT);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+//mysqli_report(MYSQLI_REPORT_OFF);
 //mysqli_report(MYSQLI_REPORT_ALL);
 
 // {{{ DBException
@@ -561,6 +563,35 @@ class DBMysqliFake{
     }
 }// }}}
 
+// {{{ DBMysqliLazyLoad
+/**
+ *
+ * @package Database
+ */
+class DBMysqliLazyLoad{
+
+    private $host, $username, $password, $dbname, $port, $socket;
+
+
+    public function __construct($host, $username, $password, $dbname, $port = NULL, $socket = NULL){
+        $this->host = $host;
+        $this->username = $username;
+        $this->password = $password;
+        $this->dbname = $dbname;
+        $this->port = $port;
+        $this->socket = $socket;
+    }
+
+    public function __call($name, $arguments) {
+        DB::init($this->host, $this->username, $this->password, $this->dbname, $this->port, $this->socket, false);
+        $mysqli = DB::getMysqli();
+        if (count($arguments)) $param ="'".implode("', ", $arguments)."'";
+        else $param = ''; 
+        $proxy = create_function('$o, $m', 'return  $o->$m('.$param.');');
+        return $proxy($mysqli, $name);
+    }
+}// }}}
+
 // {{{ DB
 /**
  * Статический класс для работы с базой данных Mysql 5.0.50+ 
@@ -692,13 +723,19 @@ class DB{
      * @param string $socket сокет сервера
      * @return void
      */
-    static public function init( $host, $username, $password, $dbname, $port = NULL, $socket = NULL ){
-        if (is_object(self::$mysqli)) return;
-        self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
-        if ( mysqli_connect_errno()) throw ( new DBException(mysqli_connect_error(), mysqli_connect_errno()));
-        if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 
-    }// }}}
+    static public function init( $host, $username, $password, $dbname, $port = NULL, $socket = NULL, $lazyLoad = true ){
+        if ($lazyLoad){
+            self::$mysqli = new DBMysqliLazyLoad($host, $username, $password, $dbname, $port, $socket);
+            return;
+        }
 
+        if (self::$mysqli instanceof DBMysqliLazyLoad){
+//            print_pre('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+            self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
+            if ( mysqli_connect_errno()) throw ( new DBException(mysqli_connect_error(), mysqli_connect_errno()));
+            if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 
+        }
+    }// }}}
 
     // {{{ close
     /**
@@ -718,6 +755,16 @@ class DB{
      */
     static public function &getMysqli(){
         return self::$mysqli;
+    }// }}}
+
+    // {{{ setMysqli
+    /**
+     * Set-метод для установки объекта {@link DB::mysqli DB::mysqli}.
+     *
+     * @return mysqli
+     */
+    static public function setMysqli($mysqli){
+        self::$mysqli = $mysqli;
     }// }}}
 
     // {{{ query
