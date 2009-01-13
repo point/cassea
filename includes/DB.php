@@ -588,6 +588,7 @@ class DBMysqliLazyLoad{
         if (count($arguments)) $param ="'".implode("', ", $arguments)."'";
         else $param = ''; 
         $proxy = create_function('$o, $m', 'return  $o->$m('.$param.');');
+        //print_pre("\r\nMethod: ".$name."( ". implode(', ', $arguments). " )\n");
         return $proxy($mysqli, $name);
     }
 }// }}}
@@ -786,6 +787,7 @@ class DB{
      * @return mixed массив результатов; affected_rows  в случает успешного запроса без результатов.
      */
     static public function query( $query, $flags = null){
+        //print_pre('==============================mysql:<b>'.$query.'</b>' );
         $r = self::$mysqli->real_query($query);
         if ( $r === true ){
             // process flags
