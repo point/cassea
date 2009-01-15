@@ -57,8 +57,8 @@ class WForm extends WContainer
         * @var     string
         */
 		$inner_valuecheckers = array(),
-		$vc_rules = null,
-		$vc_messages = null,
+		$vc_rules = array(),
+		$vc_messages = array(),
 		$form_signature = null
 		;
     const signature_name = "__sig";
@@ -235,8 +235,12 @@ class WForm extends WContainer
 				{
                     $r = $v->getRules($this->getId());
                     if(!empty($r))
-					    $this->vc_rules .= $r.", ";
-					$this->vc_messages .= $v->getMessages();
+					    //$this->vc_rules .= $r.", ";
+					    $this->vc_rules[] = $r;
+                    $m = $v->getMessages();
+                    if(!empty($m))
+					//$this->vc_messages .= $v->getMessages();
+					    $this->vc_messages[] = $v->getMessages();
 				}
 
 		if(strpos($this->getAction(),"http://") === false)
@@ -274,8 +278,8 @@ class WForm extends WContainer
 			"enctype"=>$this->getEnctype(),
 			"method"=>$this->getMethod(),
 			"form_content" =>$this->items->generateAllHTML(),
-			"vc_rules"=>$this->vc_rules,
-            "vc_messages"=>Language::encodePair($this->vc_messages),
+			"vc_rules"=>!empty($this->vc_rules)?implode(", ",$this->vc_rules):null,
+            "vc_messages"=>!empty($this->vc_messages)?Language::encodePair(implode(", ",$this->vc_messages)):null,
 			"signature"=>$this->form_signature,
 			"signature_name"=>self::signature_name,
             "formid_name" => self::formid_name

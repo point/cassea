@@ -129,11 +129,7 @@ class WValueChecker extends WObject
 				$t2 = $r.": ";
 				if(isset($this->values[$i]))
 				{
-					/*if($this->values[$i] == "true")
-						$t2 .= 'true';
-					elseif($this->values[$i] == "false")
-						$t2 .= 'false';
-					else*/if(is_string($this->values[$i]))
+	                if(is_string($this->values[$i]))
 						if(strpos($this->values[$i],"\"") !== false || strpos($this->values[$i],"[") !== false)
 							$t2 .= $this->values[$i];
 						else $t2 .= "\"".$this->values[$i]."\"";

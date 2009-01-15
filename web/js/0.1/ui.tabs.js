@@ -1,1 +1,599 @@
-(function(A){A.widget("ui.tabs",{init:function(){this.options.event+=".tabs";this.tabify(true)},setData:function(B,C){if((/^selected/).test(B)){this.select(C)}else{this.options[B]=C;this.tabify()}},length:function(){return this.$tabs.length},tabId:function(B){return B.title&&B.title.replace(/\s/g,"_").replace(/[^A-Za-z0-9\-_:\.]/g,"")||this.options.idPrefix+A.data(B)},ui:function(C,B){return{options:this.options,tab:C,panel:B,index:this.$tabs.index(C)}},tabify:function(O){this.$lis=A("li:has(a[href])",this.element);this.$tabs=this.$lis.map(function(){return A("a",this)[0]});this.$panels=A([]);var P=this,D=this.options;this.$tabs.each(function(R,Q){if(Q.hash&&Q.hash.replace("#","")){P.$panels=P.$panels.add(Q.hash)}else{if(A(Q).attr("href")!="#"){A.data(Q,"href.tabs",Q.href);A.data(Q,"load.tabs",Q.href);var T=P.tabId(Q);Q.href="#"+T;var S=A("#"+T);if(!S.length){S=A(D.panelTemplate).attr("id",T).addClass(D.panelClass).insertAfter(P.$panels[R-1]||P.element);S.data("destroy.tabs",true)}P.$panels=P.$panels.add(S)}else{D.disabled.push(R+1)}}});if(O){this.element.addClass(D.navClass);this.$panels.each(function(){var Q=A(this);Q.addClass(D.panelClass)});if(D.selected===undefined){if(location.hash){this.$tabs.each(function(S,Q){if(Q.hash==location.hash){D.selected=S;if(A.browser.msie||A.browser.opera){var R=A(location.hash),T=R.attr("id");R.attr("id","");setTimeout(function(){R.attr("id",T)},500)}scrollTo(0,0);return false}})}else{if(D.cookie){var J=parseInt(A.cookie("ui-tabs"+A.data(P.element)),10);if(J&&P.$tabs[J]){D.selected=J}}else{if(P.$lis.filter("."+D.selectedClass).length){D.selected=P.$lis.index(P.$lis.filter("."+D.selectedClass)[0])}}}}D.selected=D.selected===null||D.selected!==undefined?D.selected:0;D.disabled=A.unique(D.disabled.concat(A.map(this.$lis.filter("."+D.disabledClass),function(R,Q){return P.$lis.index(R)}))).sort();if(A.inArray(D.selected,D.disabled)!=-1){D.disabled.splice(A.inArray(D.selected,D.disabled),1)}this.$panels.addClass(D.hideClass);this.$lis.removeClass(D.selectedClass);if(D.selected!==null){this.$panels.eq(D.selected).show().removeClass(D.hideClass);this.$lis.eq(D.selected).addClass(D.selectedClass);var K=function(){A(P.element).triggerHandler("tabsshow",[P.fakeEvent("tabsshow"),P.ui(P.$tabs[D.selected],P.$panels[D.selected])],D.show)};if(A.data(this.$tabs[D.selected],"load.tabs")){this.load(D.selected,K)}else{K()}}A(window).bind("unload",function(){P.$tabs.unbind(".tabs");P.$lis=P.$tabs=P.$panels=null})}for(var G=0,N;N=this.$lis[G];G++){A(N)[A.inArray(G,D.disabled)!=-1&&!A(N).hasClass(D.selectedClass)?"addClass":"removeClass"](D.disabledClass)}if(D.cache===false){this.$tabs.removeData("cache.tabs")}var C,I,B={"min-width":0,duration:1},E="normal";if(D.fx&&D.fx.constructor==Array){C=D.fx[0]||B,I=D.fx[1]||B}else{C=I=D.fx||B}var H={display:"",overflow:"",height:""};if(!A.browser.msie){H.opacity=""}function M(R,Q,S){Q.animate(C,C.duration||E,function(){Q.addClass(D.hideClass).css(H);if(A.browser.msie&&C.opacity){Q[0].style.filter=""}if(S){L(R,S,Q)}})}function L(R,S,Q){if(I===B){S.css("display","block")}S.animate(I,I.duration||E,function(){S.removeClass(D.hideClass).css(H);if(A.browser.msie&&I.opacity){S[0].style.filter=""}A(P.element).triggerHandler("tabsshow",[P.fakeEvent("tabsshow"),P.ui(R,S[0])],D.show)})}function F(R,T,Q,S){T.addClass(D.selectedClass).siblings().removeClass(D.selectedClass);M(R,Q,S)}this.$tabs.unbind(".tabs").bind(D.event,function(){var T=A(this).parents("li:eq(0)"),Q=P.$panels.filter(":visible"),S=A(this.hash);if((T.hasClass(D.selectedClass)&&!D.unselect)||T.hasClass(D.disabledClass)||A(this).hasClass(D.loadingClass)||A(P.element).triggerHandler("tabsselect",[P.fakeEvent("tabsselect"),P.ui(this,S[0])],D.select)===false){this.blur();return false}P.options.selected=P.$tabs.index(this);if(D.unselect){if(T.hasClass(D.selectedClass)){P.options.selected=null;T.removeClass(D.selectedClass);P.$panels.stop();M(this,Q);this.blur();return false}else{if(!Q.length){P.$panels.stop();var R=this;P.load(P.$tabs.index(this),function(){T.addClass(D.selectedClass).addClass(D.unselectClass);L(R,S)});this.blur();return false}}}if(D.cookie){A.cookie("ui-tabs"+A.data(P.element),P.options.selected,D.cookie)}P.$panels.stop();if(S.length){var R=this;P.load(P.$tabs.index(this),Q.length?function(){F(R,T,Q,S)}:function(){T.addClass(D.selectedClass);L(R,S)})}else{throw"jQuery UI Tabs: Mismatching fragment identifier."}if(A.browser.msie){this.blur()}return false});if(!(/^click/).test(D.event)){this.$tabs.bind("click.tabs",function(){return false})}},add:function(E,D,C){if(C==undefined){C=this.$tabs.length}var G=this.options;var I=A(G.tabTemplate.replace(/#\{href\}/g,E).replace(/#\{label\}/g,D));I.data("destroy.tabs",true);var H=E.indexOf("#")==0?E.replace("#",""):this.tabId(A("a:first-child",I)[0]);var F=A("#"+H);if(!F.length){F=A(G.panelTemplate).attr("id",H).addClass(G.hideClass).data("destroy.tabs",true)}F.addClass(G.panelClass);if(C>=this.$lis.length){I.appendTo(this.element);F.appendTo(this.element[0].parentNode)}else{I.insertBefore(this.$lis[C]);F.insertBefore(this.$panels[C])}G.disabled=A.map(G.disabled,function(K,J){return K>=C?++K:K});this.tabify();if(this.$tabs.length==1){I.addClass(G.selectedClass);F.removeClass(G.hideClass);var B=A.data(this.$tabs[0],"load.tabs");if(B){this.load(C,B)}}this.element.triggerHandler("tabsadd",[this.fakeEvent("tabsadd"),this.ui(this.$tabs[C],this.$panels[C])],G.add)},remove:function(B){var D=this.options,E=this.$lis.eq(B).remove(),C=this.$panels.eq(B).remove();if(E.hasClass(D.selectedClass)&&this.$tabs.length>1){this.select(B+(B+1<this.$tabs.length?1:-1))}D.disabled=A.map(A.grep(D.disabled,function(G,F){return G!=B}),function(G,F){return G>=B?--G:G});this.tabify();this.element.triggerHandler("tabsremove",[this.fakeEvent("tabsremove"),this.ui(E.find("a")[0],C[0])],D.remove)},enable:function(B){var C=this.options;if(A.inArray(B,C.disabled)==-1){return }var D=this.$lis.eq(B).removeClass(C.disabledClass);if(A.browser.safari){D.css("display","inline-block");setTimeout(function(){D.css("display","block")},0)}C.disabled=A.grep(C.disabled,function(F,E){return F!=B});this.element.triggerHandler("tabsenable",[this.fakeEvent("tabsenable"),this.ui(this.$tabs[B],this.$panels[B])],C.enable)},disable:function(C){var B=this,D=this.options;if(C!=D.selected){this.$lis.eq(C).addClass(D.disabledClass);D.disabled.push(C);D.disabled.sort();this.element.triggerHandler("tabsdisable",[this.fakeEvent("tabsdisable"),this.ui(this.$tabs[C],this.$panels[C])],D.disable)}},select:function(B){if(typeof B=="string"){B=this.$tabs.index(this.$tabs.filter("[href$="+B+"]")[0])}this.$tabs.eq(B).trigger(this.options.event)},load:function(G,K){var L=this,D=this.options,E=this.$tabs.eq(G),J=E[0],H=K==undefined||K===false,B=E.data("load.tabs");K=K||function(){};if(!B||!H&&A.data(J,"cache.tabs")){K();return }var M=function(N){var O=A(N),P=O.find("*:last");return P.length&&P.is(":not(img)")&&P||O};var C=function(){L.$tabs.filter("."+D.loadingClass).removeClass(D.loadingClass).each(function(){if(D.spinner){M(this).parent().html(M(this).data("label.tabs"))}});L.xhr=null};if(D.spinner){var I=M(J).html();M(J).wrapInner("<em></em>").find("em").data("label.tabs",I).html(D.spinner)}var F=A.extend({},D.ajaxOptions,{url:B,success:function(O,N){A(J.hash).html(O);C();if(D.cache){A.data(J,"cache.tabs",true)}A(L.element).triggerHandler("tabsload",[L.fakeEvent("tabsload"),L.ui(L.$tabs[G],L.$panels[G])],D.load);D.ajaxOptions.success&&D.ajaxOptions.success(O,N);K()}});if(this.xhr){this.xhr.abort();C()}E.addClass(D.loadingClass);setTimeout(function(){L.xhr=A.ajax(F)},0)},url:function(C,B){this.$tabs.eq(C).removeData("cache.tabs").data("load.tabs",B)},destroy:function(){var B=this.options;this.element.unbind(".tabs").removeClass(B.navClass).removeData("tabs");this.$tabs.each(function(){var C=A.data(this,"href.tabs");if(C){this.href=C}var D=A(this).unbind(".tabs");A.each(["href","load","cache"],function(E,F){D.removeData(F+".tabs")})});this.$lis.add(this.$panels).each(function(){if(A.data(this,"destroy.tabs")){A(this).remove()}else{A(this).removeClass([B.selectedClass,B.unselectClass,B.disabledClass,B.panelClass,B.hideClass].join(" "))}})},fakeEvent:function(B){return A.event.fix({type:B,target:this.element[0]})}});A.ui.tabs.defaults={unselect:false,event:"click",disabled:[],cookie:null,spinner:"Loading&#8230;",cache:false,idPrefix:"ui-tabs-",ajaxOptions:{},fx:null,tabTemplate:'<li><a href="#{href}"><span>#{label}</span></a></li>',panelTemplate:"<div></div>",navClass:"ui-tabs-nav",selectedClass:"ui-tabs-selected",unselectClass:"ui-tabs-unselect",disabledClass:"ui-tabs-disabled",panelClass:"ui-tabs-panel",hideClass:"ui-tabs-hide",loadingClass:"ui-tabs-loading"};A.ui.tabs.getter="length";A.extend(A.ui.tabs.prototype,{rotation:null,rotate:function(C,F){F=F||false;var B=this,E=this.options.selected;function G(){B.rotation=setInterval(function(){E=++E<B.$tabs.length?E:0;B.select(E)},C)}function D(H){if(!H||H.clientX){clearInterval(B.rotation)}}if(C){G();if(!F){this.$tabs.bind(this.options.event,D)}else{this.$tabs.bind(this.options.event,function(){D();E=B.options.selected;G()})}}else{D();this.$tabs.unbind(this.options.event,D)}}})})(jQuery)
+/*
+ * jQuery UI Tabs
+ *
+ * Copyright (c) 2007, 2008 Klaus Hartl (stilbuero.de)
+ * Dual licensed under the MIT (MIT-LICENSE.txt)
+ * and GPL (GPL-LICENSE.txt) licenses.
+ *
+ * http://docs.jquery.com/UI/Tabs
+ *
+ * Depends:
+ *	ui.core.js
+ */
+(function($) {
+
+$.widget("ui.tabs", {
+	init: function() {
+		this.options.event += '.tabs'; // namespace event
+		
+		// create tabs
+		this.tabify(true);
+	},
+	setData: function(key, value) {
+		if ((/^selected/).test(key))
+			this.select(value);
+		else {
+			this.options[key] = value;
+			this.tabify();
+		}
+	},
+	length: function() {
+		return this.$tabs.length;
+	},
+	tabId: function(a) {
+		return a.title && a.title.replace(/\s/g, '_').replace(/[^A-Za-z0-9\-_:\.]/g, '')
+			|| this.options.idPrefix + $.data(a);
+	},
+	ui: function(tab, panel) {
+		return {
+			options: this.options,
+			tab: tab,
+			panel: panel,
+			index: this.$tabs.index(tab)
+		};
+	},
+	tabify: function(init) {
+
+		this.$lis = $('li:has(a[href])', this.element);
+		this.$tabs = this.$lis.map(function() { return $('a', this)[0]; });
+		this.$panels = $([]);
+
+		var self = this, o = this.options;
+
+		this.$tabs.each(function(i, a) {
+			// inline tab
+			if (a.hash && a.hash.replace('#', '')) // Safari 2 reports '#' for an empty hash
+				self.$panels = self.$panels.add(a.hash);
+			// remote tab
+			else if ($(a).attr('href') != '#') { // prevent loading the page itself if href is just "#"
+				$.data(a, 'href.tabs', a.href); // required for restore on destroy
+				$.data(a, 'load.tabs', a.href); // mutable
+				var id = self.tabId(a);
+				a.href = '#' + id;
+				var $panel = $('#' + id);
+				if (!$panel.length) {
+					$panel = $(o.panelTemplate).attr('id', id).addClass(o.panelClass)
+						.insertAfter( self.$panels[i - 1] || self.element );
+					$panel.data('destroy.tabs', true);
+				}
+				self.$panels = self.$panels.add( $panel );
+			}
+			// invalid tab href
+			else
+				o.disabled.push(i + 1);
+		});
+
+		if (init) {
+
+			// attach necessary classes for styling if not present
+			this.element.addClass(o.navClass);
+			this.$panels.each(function() {
+				var $this = $(this);
+				$this.addClass(o.panelClass);
+			});
+
+			// Selected tab
+			// use "selected" option or try to retrieve:
+			// 1. from fragment identifier in url
+			// 2. from cookie
+			// 3. from selected class attribute on <li>
+			if (o.selected === undefined) {
+				if (location.hash) {
+					this.$tabs.each(function(i, a) {
+						if (a.hash == location.hash) {
+							o.selected = i;
+							// prevent page scroll to fragment
+							if ($.browser.msie || $.browser.opera) { // && !o.remote
+								var $toShow = $(location.hash), toShowId = $toShow.attr('id');
+								$toShow.attr('id', '');
+								setTimeout(function() {
+									$toShow.attr('id', toShowId); // restore id
+								}, 500);
+							}
+							scrollTo(0, 0);
+							return false; // break
+						}
+					});
+				}
+				else if (o.cookie) {
+					var index = parseInt($.cookie('ui-tabs' + $.data(self.element)),10);
+					if (index && self.$tabs[index])
+						o.selected = index;
+				}
+				else if (self.$lis.filter('.' + o.selectedClass).length)
+					o.selected = self.$lis.index( self.$lis.filter('.' + o.selectedClass)[0] );
+			}
+			o.selected = o.selected === null || o.selected !== undefined ? o.selected : 0; // first tab selected by default
+
+			// Take disabling tabs via class attribute from HTML
+			// into account and update option properly.
+			// A selected tab cannot become disabled.
+			o.disabled = $.unique(o.disabled.concat(
+				$.map(this.$lis.filter('.' + o.disabledClass),
+					function(n, i) { return self.$lis.index(n); } )
+			)).sort();
+			if ($.inArray(o.selected, o.disabled) != -1)
+				o.disabled.splice($.inArray(o.selected, o.disabled), 1);
+			
+			// highlight selected tab
+			this.$panels.addClass(o.hideClass);
+			this.$lis.removeClass(o.selectedClass);
+			if (o.selected !== null) {
+				this.$panels.eq(o.selected).show().removeClass(o.hideClass); // use show and remove class to show in any case no matter how it has been hidden before
+				this.$lis.eq(o.selected).addClass(o.selectedClass);
+				
+				// seems to be expected behavior that the show callback is fired
+				var onShow = function() {
+					$(self.element).triggerHandler('tabsshow',
+						[self.fakeEvent('tabsshow'), self.ui(self.$tabs[o.selected], self.$panels[o.selected])], o.show);
+				}; 
+
+				// load if remote tab
+				if ($.data(this.$tabs[o.selected], 'load.tabs'))
+					this.load(o.selected, onShow);
+				// just trigger show event
+				else
+					onShow();
+				
+			}
+			
+			// clean up to avoid memory leaks in certain versions of IE 6
+			$(window).bind('unload', function() {
+				self.$tabs.unbind('.tabs');
+				self.$lis = self.$tabs = self.$panels = null;
+			});
+
+		}
+
+		// disable tabs
+		for (var i = 0, li; li = this.$lis[i]; i++)
+			$(li)[$.inArray(i, o.disabled) != -1 && !$(li).hasClass(o.selectedClass) ? 'addClass' : 'removeClass'](o.disabledClass);
+
+		// reset cache if switching from cached to not cached
+		if (o.cache === false)
+			this.$tabs.removeData('cache.tabs');
+		
+		// set up animations
+		var hideFx, showFx, baseFx = { 'min-width': 0, duration: 1 }, baseDuration = 'normal';
+		if (o.fx && o.fx.constructor == Array)
+			hideFx = o.fx[0] || baseFx, showFx = o.fx[1] || baseFx;
+		else
+			hideFx = showFx = o.fx || baseFx;
+
+		// reset some styles to maintain print style sheets etc.
+		var resetCSS = { display: '', overflow: '', height: '' };
+		if (!$.browser.msie) // not in IE to prevent ClearType font issue
+			resetCSS.opacity = '';
+
+		// Hide a tab, animation prevents browser scrolling to fragment,
+		// $show is optional.
+		function hideTab(clicked, $hide, $show) {
+			$hide.animate(hideFx, hideFx.duration || baseDuration, function() { //
+				$hide.addClass(o.hideClass).css(resetCSS); // maintain flexible height and accessibility in print etc.
+				if ($.browser.msie && hideFx.opacity)
+					$hide[0].style.filter = '';
+				if ($show)
+					showTab(clicked, $show, $hide);
+			});
+		}
+
+		// Show a tab, animation prevents browser scrolling to fragment,
+		// $hide is optional.
+		function showTab(clicked, $show, $hide) {
+			if (showFx === baseFx)
+				$show.css('display', 'block'); // prevent occasionally occuring flicker in Firefox cause by gap between showing and hiding the tab panels
+			$show.animate(showFx, showFx.duration || baseDuration, function() {
+				$show.removeClass(o.hideClass).css(resetCSS); // maintain flexible height and accessibility in print etc.
+				if ($.browser.msie && showFx.opacity)
+					$show[0].style.filter = '';
+
+				// callback
+				$(self.element).triggerHandler('tabsshow',
+					[self.fakeEvent('tabsshow'), self.ui(clicked, $show[0])], o.show);
+
+			});
+		}
+
+		// switch a tab
+		function switchTab(clicked, $li, $hide, $show) {
+			/*if (o.bookmarkable && trueClick) { // add to history only if true click occured, not a triggered click
+				$.ajaxHistory.update(clicked.hash);
+			}*/
+			$li.addClass(o.selectedClass)
+				.siblings().removeClass(o.selectedClass);
+			hideTab(clicked, $hide, $show);
+		}
+
+		// attach tab event handler, unbind to avoid duplicates from former tabifying...
+		this.$tabs.unbind('.tabs').bind(o.event, function() {
+
+			//var trueClick = e.clientX; // add to history only if true click occured, not a triggered click
+			var $li = $(this).parents('li:eq(0)'),
+				$hide = self.$panels.filter(':visible'),
+				$show = $(this.hash);
+
+			// If tab is already selected and not unselectable or tab disabled or 
+			// or is already loading or click callback returns false stop here.
+			// Check if click handler returns false last so that it is not executed
+			// for a disabled or loading tab!
+			if (($li.hasClass(o.selectedClass) && !o.unselect)
+				|| $li.hasClass(o.disabledClass) 
+				|| $(this).hasClass(o.loadingClass)
+				|| $(self.element).triggerHandler('tabsselect', [self.fakeEvent('tabsselect'), self.ui(this, $show[0])], o.select) === false
+				) {
+				this.blur();
+				return false;
+			}
+
+			self.options.selected = self.$tabs.index(this);
+
+			// if tab may be closed
+			if (o.unselect) {
+				if ($li.hasClass(o.selectedClass)) {
+					self.options.selected = null;
+					$li.removeClass(o.selectedClass);
+					self.$panels.stop();
+					hideTab(this, $hide);
+					this.blur();
+					return false;
+				} else if (!$hide.length) {
+					self.$panels.stop();
+					var a = this;
+					self.load(self.$tabs.index(this), function() {
+						$li.addClass(o.selectedClass).addClass(o.unselectClass);
+						showTab(a, $show);
+					});
+					this.blur();
+					return false;
+				}
+			}
+
+			if (o.cookie)
+				$.cookie('ui-tabs' + $.data(self.element), self.options.selected, o.cookie);
+
+			// stop possibly running animations
+			self.$panels.stop();
+
+			// show new tab
+			if ($show.length) {
+
+				// prevent scrollbar scrolling to 0 and than back in IE7, happens only if bookmarking/history is enabled
+				/*if ($.browser.msie && o.bookmarkable) {
+					var showId = this.hash.replace('#', '');
+					$show.attr('id', '');
+					setTimeout(function() {
+						$show.attr('id', showId); // restore id
+					}, 0);
+				}*/
+
+				var a = this;
+				self.load(self.$tabs.index(this), $hide.length ? 
+					function() {
+						switchTab(a, $li, $hide, $show);
+					} :
+					function() {
+						$li.addClass(o.selectedClass);
+						showTab(a, $show);
+					}
+				);
+
+				// Set scrollbar to saved position - need to use timeout with 0 to prevent browser scroll to target of hash
+				/*var scrollX = window.pageXOffset || document.documentElement && document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+				var scrollY = window.pageYOffset || document.documentElement && document.documentElement.scrollTop || document.body.scrollTop || 0;
+				setTimeout(function() {
+					scrollTo(scrollX, scrollY);
+				}, 0);*/
+
+			} else
+				throw 'jQuery UI Tabs: Mismatching fragment identifier.';
+
+			// Prevent IE from keeping other link focussed when using the back button
+			// and remove dotted border from clicked link. This is controlled in modern
+			// browsers via CSS, also blur removes focus from address bar in Firefox
+			// which can become a usability and annoying problem with tabsRotate.
+			if ($.browser.msie)
+				this.blur();
+
+			//return o.bookmarkable && !!trueClick; // convert trueClick == undefined to Boolean required in IE
+			return false;
+
+		});
+
+		// disable click if event is configured to something else
+		if (!(/^click/).test(o.event))
+			this.$tabs.bind('click.tabs', function() { return false; });
+
+	},
+	add: function(url, label, index) {
+		if (index == undefined) 
+			index = this.$tabs.length; // append by default
+
+		var o = this.options;
+		var $li = $(o.tabTemplate.replace(/#\{href\}/g, url).replace(/#\{label\}/g, label));
+		$li.data('destroy.tabs', true);
+
+		var id = url.indexOf('#') == 0 ? url.replace('#', '') : this.tabId( $('a:first-child', $li)[0] );
+
+		// try to find an existing element before creating a new one
+		var $panel = $('#' + id);
+		if (!$panel.length) {
+			$panel = $(o.panelTemplate).attr('id', id)
+				.addClass(o.hideClass)
+				.data('destroy.tabs', true);
+		}
+		$panel.addClass(o.panelClass);
+		if (index >= this.$lis.length) {
+			$li.appendTo(this.element);
+			$panel.appendTo(this.element[0].parentNode);
+		} else {
+			$li.insertBefore(this.$lis[index]);
+			$panel.insertBefore(this.$panels[index]);
+		}
+		
+		o.disabled = $.map(o.disabled,
+			function(n, i) { return n >= index ? ++n : n });
+			
+		this.tabify();
+
+		if (this.$tabs.length == 1) {
+			$li.addClass(o.selectedClass);
+			$panel.removeClass(o.hideClass);
+			var href = $.data(this.$tabs[0], 'load.tabs');
+			if (href)
+				this.load(index, href);
+		}
+
+		// callback
+		this.element.triggerHandler('tabsadd',
+			[this.fakeEvent('tabsadd'), this.ui(this.$tabs[index], this.$panels[index])], o.add
+		);
+	},
+	remove: function(index) {
+		var o = this.options, $li = this.$lis.eq(index).remove(),
+			$panel = this.$panels.eq(index).remove();
+
+		// If selected tab was removed focus tab to the right or
+		// in case the last tab was removed the tab to the left.
+		if ($li.hasClass(o.selectedClass) && this.$tabs.length > 1)
+			this.select(index + (index + 1 < this.$tabs.length ? 1 : -1));
+
+		o.disabled = $.map($.grep(o.disabled, function(n, i) { return n != index; }),
+			function(n, i) { return n >= index ? --n : n });
+
+		this.tabify();
+
+		// callback
+		this.element.triggerHandler('tabsremove',
+			[this.fakeEvent('tabsremove'), this.ui($li.find('a')[0], $panel[0])], o.remove
+		);
+	},
+	enable: function(index) {
+		var o = this.options;
+		if ($.inArray(index, o.disabled) == -1)
+			return;
+			
+		var $li = this.$lis.eq(index).removeClass(o.disabledClass);
+		if ($.browser.safari) { // fix disappearing tab (that used opacity indicating disabling) after enabling in Safari 2...
+			$li.css('display', 'inline-block');
+			setTimeout(function() {
+				$li.css('display', 'block');
+			}, 0);
+		}
+
+		o.disabled = $.grep(o.disabled, function(n, i) { return n != index; });
+
+		// callback
+		this.element.triggerHandler('tabsenable',
+			[this.fakeEvent('tabsenable'), this.ui(this.$tabs[index], this.$panels[index])], o.enable
+		);
+
+	},
+	disable: function(index) {
+		var self = this, o = this.options;
+		if (index != o.selected) { // cannot disable already selected tab
+			this.$lis.eq(index).addClass(o.disabledClass);
+
+			o.disabled.push(index);
+			o.disabled.sort();
+
+			// callback
+			this.element.triggerHandler('tabsdisable',
+				[this.fakeEvent('tabsdisable'), this.ui(this.$tabs[index], this.$panels[index])], o.disable
+			);
+		}
+	},
+	select: function(index) {
+		if (typeof index == 'string')
+			index = this.$tabs.index( this.$tabs.filter('[href$=' + index + ']')[0] );
+		this.$tabs.eq(index).trigger(this.options.event);
+	},
+	load: function(index, callback) { // callback is for internal usage only
+		
+		var self = this, o = this.options, $a = this.$tabs.eq(index), a = $a[0],
+				bypassCache = callback == undefined || callback === false, url = $a.data('load.tabs');
+
+		callback = callback || function() {};
+		
+		// no remote or from cache - just finish with callback
+		if (!url || !bypassCache && $.data(a, 'cache.tabs')) {
+			callback();
+			return;
+		}
+
+		// load remote from here on
+		
+		var inner = function(parent) {
+			var $parent = $(parent), $inner = $parent.find('*:last');
+			return $inner.length && $inner.is(':not(img)') && $inner || $parent;
+		};
+		var cleanup = function() {
+			self.$tabs.filter('.' + o.loadingClass).removeClass(o.loadingClass)
+						.each(function() {
+							if (o.spinner)
+								inner(this).parent().html(inner(this).data('label.tabs'));
+						});
+			self.xhr = null;
+		};
+		
+		if (o.spinner) {
+			var label = inner(a).html();
+			inner(a).wrapInner('<em></em>')
+				.find('em').data('label.tabs', label).html(o.spinner);
+		}
+
+		var ajaxOptions = $.extend({}, o.ajaxOptions, {
+			url: url,
+			success: function(r, s) {
+				$(a.hash).html(r);
+				cleanup();
+				
+				if (o.cache)
+					$.data(a, 'cache.tabs', true); // if loaded once do not load them again
+
+				// callbacks
+				$(self.element).triggerHandler('tabsload',
+					[self.fakeEvent('tabsload'), self.ui(self.$tabs[index], self.$panels[index])], o.load
+				);
+				o.ajaxOptions.success && o.ajaxOptions.success(r, s);
+				
+				// This callback is required because the switch has to take
+				// place after loading has completed. Call last in order to 
+				// fire load before show callback...
+				callback();
+			}
+		});
+		if (this.xhr) {
+			// terminate pending requests from other tabs and restore tab label
+			this.xhr.abort();
+			cleanup();
+		}
+		$a.addClass(o.loadingClass);
+		setTimeout(function() { // timeout is again required in IE, "wait" for id being restored
+			self.xhr = $.ajax(ajaxOptions);
+		}, 0);
+
+	},
+	url: function(index, url) {
+		this.$tabs.eq(index).removeData('cache.tabs').data('load.tabs', url);
+	},
+	destroy: function() {
+		var o = this.options;
+		this.element.unbind('.tabs')
+			.removeClass(o.navClass).removeData('tabs');
+		this.$tabs.each(function() {
+			var href = $.data(this, 'href.tabs');
+			if (href)
+				this.href = href;
+			var $this = $(this).unbind('.tabs');
+			$.each(['href', 'load', 'cache'], function(i, prefix) {
+				$this.removeData(prefix + '.tabs');
+			});
+		});
+		this.$lis.add(this.$panels).each(function() {
+			if ($.data(this, 'destroy.tabs'))
+				$(this).remove();
+			else
+				$(this).removeClass([o.selectedClass, o.unselectClass,
+					o.disabledClass, o.panelClass, o.hideClass].join(' '));
+		});
+	},
+	fakeEvent: function(type) {
+		return $.event.fix({
+			type: type,
+			target: this.element[0]
+		});
+	}
+});
+
+$.ui.tabs.defaults = {
+	// basic setup
+	unselect: false,
+	event: 'click',
+	disabled: [],
+	cookie: null, // e.g. { expires: 7, path: '/', domain: 'jquery.com', secure: true }
+	// TODO history: false,
+
+	// Ajax
+	spinner: 'Loading&#8230;',
+	cache: false,
+	idPrefix: 'ui-tabs-',
+	ajaxOptions: {},
+
+	// animations
+	fx: null, // e.g. { height: 'toggle', opacity: 'toggle', duration: 200 }
+
+	// templates
+	tabTemplate: '<li><a href="#{href}"><span>#{label}</span></a></li>',
+	panelTemplate: '<div></div>',
+
+	// CSS classes
+	navClass: 'ui-tabs-nav',
+	selectedClass: 'ui-tabs-selected',
+	unselectClass: 'ui-tabs-unselect',
+	disabledClass: 'ui-tabs-disabled',
+	panelClass: 'ui-tabs-panel',
+	hideClass: 'ui-tabs-hide',
+	loadingClass: 'ui-tabs-loading'
+};
+
+$.ui.tabs.getter = "length";
+
+/*
+ * Tabs Extensions
+ */
+
+/*
+ * Rotate
+ */
+$.extend($.ui.tabs.prototype, {
+	rotation: null,
+	rotate: function(ms, continuing) {
+		
+		continuing = continuing || false;
+		
+		var self = this, t = this.options.selected;
+		
+		function start() {
+			self.rotation = setInterval(function() {
+				t = ++t < self.$tabs.length ? t : 0;
+				self.select(t);
+			}, ms); 
+		}
+		
+		function stop(e) {
+			if (!e || e.clientX) { // only in case of a true click
+				clearInterval(self.rotation);
+			}
+		}
+		
+		// start interval
+		if (ms) {
+			start();
+			if (!continuing)
+				this.$tabs.bind(this.options.event, stop);
+			else
+				this.$tabs.bind(this.options.event, function() {
+					stop();
+					t = self.options.selected;
+					start();
+				});
+		}
+		// stop interval
+		else {
+			stop();
+			this.$tabs.unbind(this.options.event, stop);
+		}
+	}
+});
+
+})(jQuery);
