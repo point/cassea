@@ -64,14 +64,16 @@ class ACL
         if(empty($denies) && empty($allows))
             return true;
 
-        if(!empty($denies) &&
-           ($_d = explode($delimiter,$denies)) && count(array_intersect(array_map('trim',$_d),self::$groups))) return false;
+        if(!empty($denies))
+            if(($_d = explode($delimiter,$denies)) && count(array_intersect(array_map('trim',$_d),self::$groups))) return false;
+            else return true;
 
-        if(!empty($allows) &&  
-           ($_a = explode($delimiter,$allows)) && count(array_intersect(array_map('trim',$_a),self::$groups))) return true;
+        if(!empty($allows))
+            if(($_a = explode($delimiter,$allows)) && count(array_intersect(array_map('trim',$_a),self::$groups))) return true;
+            else return false;
 
-        if(!empty($denies) || !empty($allows))
-            return false;
+        /*if(!empty($denies) || !empty($allows))
+            return false;*/
         return true;
 
     }

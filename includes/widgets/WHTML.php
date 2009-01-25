@@ -99,6 +99,7 @@ class WHTML extends WComponent
 				$this->page_text = 
 					$this->getSrc()?file_get_contents($this->getSrc()):
 						($this->getText()?$this->getText():null);
+				$storage->set($cn."_".$page."_".$this->getId(),array("text"=>$this->page_text,"cache_time"=>time()));
 			}
 			else
 			{
@@ -120,6 +121,10 @@ class WHTML extends WComponent
                     $this->page_text = $this->getText();
             }
         }
+        else
+            $this->page_text = 
+                $this->getSrc()?file_get_contents($this->getSrc()):
+                    ($this->getText()?$this->getText():null);
 		parent::buildComplete();
 	}    
 	// }}}

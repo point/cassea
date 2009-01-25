@@ -115,6 +115,8 @@ class WSelect extends WControlContainer
 		if(!isset($multiple) || !is_scalar($multiple)) return;
 
 		$this->multiple = 0+$multiple;
+        if($this->multiple)
+            $this->name_w_braces = 1;
     }
     // }}}
     

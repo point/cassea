@@ -297,6 +297,8 @@ class WForm extends WContainer
 	function postRender()
 	{
 		$controller = Controller::getInstance();
+	    Controller::getInstance()->getDispatcher()->deleteEvent("have_valuechecker");
+	    Controller::getInstance()->getDispatcher()->deleteSubscriber("have_valuechecker",$this->getId());
 		//$controller->dispatcher->deleteSubscriber("valuechecker_puttosubmit",$this->id);
 		
 		//$controller->getDispatcher->deleteEvent("valuechecker_getfunc");

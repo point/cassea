@@ -828,7 +828,7 @@ EOD;
             if(isset($this->style) && !$this->style->isEmpty()) 
                 $this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
             if(!empty($this->javascript)) 
-                $this->tpl->setParamsArray(array("javascript"=>Language::encodePair($this->javascript->generateJS()),
+                $this->tpl->setParamsArray(array("javascript"=>Language::encodePair(" ".$this->javascript->generateJS()),
                     "javascript_before"=>Language::encodePair($this->javascript->getBeforeWidget()),
                     "javascript_after"=>Language::encodePair($this->javascript->getAfterWidget())));
         }

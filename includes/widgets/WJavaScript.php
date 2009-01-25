@@ -31,6 +31,7 @@
 //
 // $Id$
 //
+WidgetLoader::load("WObject");
 WidgetLoader::load("WJSEvent");
 //{{{ WJavaScript
 class WJavaScript extends WObject

@@ -40,8 +40,8 @@
 
 
 error_reporting(E_ALL | E_STRICT);
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-//mysqli_report(MYSQLI_REPORT_OFF);
+//mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+mysqli_report(MYSQLI_REPORT_OFF);
 //mysqli_report(MYSQLI_REPORT_ALL);
 
 // {{{ DBException
@@ -784,7 +784,7 @@ class DB{
      * @param string $query SQL запрос
      * @param int $flags флаги для обработки результатов доступны следующие  флаги: {@link DB::USE_RESULT DB::USE_RESULT}, {@link DB::STORE_RESULT},
      *                      {@link DB::FETCH_NUM  DB::FETCH_NUM }, {@link DB::FETCH_ASSOC  DB::FETCH_ASSOC }, {@link DB::FETCH_BOTH  DB::FETCH_BOTH };
-     * @return mixed массив результатов; affected_rows  в случает успешного запроса без результатов.
+     * @return mixed массив результатов; affected_rows  в случает успешного "UPDATE"-одобного запроса; lastInsertedId в случае insert запроса.
      */
     static public function query( $query, $flags = null){
         //print_pre('==============================mysql:<b>'.$query.'</b>' );
@@ -805,7 +805,11 @@ class DB{
                         $data[] = $d;
                 }
             }
-            else $data = self::$mysqli->affected_rows;
+           else{
+               if ( strcmp(strtolower(substr(ltrim($query),6)), 'insert'))
+                   $data = self::$mysqli->insert_id;
+               else  $data = self::$mysqli->affected_rows;
+            }
 
             self::clearResultset($res);
 
@@ -975,7 +979,7 @@ class DB{
      * @return object DBTransaction
      */
     static public function getTransaction($useException = true, $lockDB = true ){
-        var_dump(self::$mysqli);
+        //var_dump(self::$mysqli);
         if ((self::$mysqli instanceof DBMysqliFake) )
             throw new DBException('Only one Transaction my be executed at time');
 

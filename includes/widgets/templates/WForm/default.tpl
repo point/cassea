@@ -1,5 +1,5 @@
 <?php 
-if(isset($p->vc_rules) && isset($p->vc_messages)) 
+if(isset($p->vc_rules)) 
 {?>
 <script type="text/javascript">
 
@@ -18,7 +18,12 @@ $(document).ready(function() {
 } ?>
 	onsubmit:true,
 	onkeyup:false,
-	focusInvalid:true
+	onfocusout: false,
+	errorElement: "div",
+	focusInvalid:true,
+	errorPlacement: function(error, element) {
+		element.after(error);
+	}
 });
 	$("#<?php echo $p->id?>").submit(function(){
 		$(".widget_error").remove();

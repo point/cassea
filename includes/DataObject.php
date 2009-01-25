@@ -159,7 +159,15 @@ abstract class DataObject
 		/**
 		* @var  array
 		*/
-		$init_params = array(),
+		$init_params = null,
+		/**
+		* @var  string
+		*/
+		$factory_method = null,
+		/**
+		* @var  array
+		*/
+		$factory_params = null,
 		/**
 		* @var  string
 		*/
@@ -167,7 +175,7 @@ abstract class DataObject
 		/**
 		* @var  array
 		*/
-		$finalize_params = array(),
+		$finalize_params = null,
 		/**
 		* @var  stdClass&
 		*/
@@ -178,6 +186,7 @@ abstract class DataObject
 	{
 		$this->is_static = 0+$is_static;
 		$this->init_params = new DataObjectParams();		
+		$this->factory_params = new DataObjectParams();		
 		$this->finalize_params = new DataObjectParams();		
 	}
 	function parseParams(SimpleXMLElement $elem)
@@ -203,6 +212,13 @@ abstract class DataObject
 
 			$this->init_params = new DataObjectParams($elem->init);		
 		}
+        elseif(isset($elem->factory))
+        {
+			if(isset($elem->factory['method']))
+				$this->factory_method = (string)$elem->factory['method'];
+
+			$this->factory_params = new DataObjectParams($elem->factory);		
+        }
 
 		if(isset($elem->finalize))
 		{
@@ -212,30 +228,48 @@ abstract class DataObject
 			$this->finalize_params = new DataObjectParams($elem->finalize);		
 		}
 	}
-	function createObject()
-	{
+    protected function requireClasses()
+    {
         if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
             require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
 
         if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
             require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");
+    }
+	function createObject()
+	{
+        /*if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
+            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
+
+        if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
+            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");*/
+        $this->requireClasses();
 
 		try{
 			$r = new ReflectionClass($this->classname);
-			if(!isset($this->init_method))
-				if($this->init_params->getParams())
-					$this->object = $r->newInstanceArgs($this->init_params->getParams());
-				else 
-					$this->object = $r->newInstance();
-			else
+			if(isset($this->init_method))
 			{	
 				$this->object = $r->newInstance();
 				if($this->init_params->getParams())
 					call_user_func_array(array($this->object,$this->init_method),$this->init_params->getParams());
 				else
 					call_user_func_array(array($this->object,$this->init_method),array());
-			}
-        }catch(Exception $e){ return false;}
+            }
+            elseif(isset($this->factory_method))
+            {
+                if($this->factory_params->getParams())
+                    $this->object = call_user_func_array(array($r->newInstance(),$this->factory_method),$this->factory_params->getParams());
+                else 
+                    $this->object = call_user_func(array($r->newInstance(),$this->factory_method));
+                if(!is_object($this->object))
+                {$this->object = null;return false;}
+            }
+            else
+				if($this->init_params->getParams())
+					$this->object = $r->newInstanceArgs($this->init_params->getParams());
+				else 
+					$this->object = $r->newInstance();
+        }catch(ReflectionException $e){ return false;}
         return $this->object !== null;
     }
     function getObject()
@@ -262,7 +296,7 @@ abstract class DataObject
 				try
 				{
 					$r = new ReflectionClass($this->classname);
-					if($r->getMethod($this->finalize_method)->isAbstract())
+					if(!$r->getMethod($this->finalize_method)->isAbstract())
 						call_user_func_array($this->classname."::".$this->finalize_method,$this->finalize_params->getParams());
 				}
 				catch(ReflectionException $e){return; }
@@ -342,13 +376,15 @@ class DataSourceObject extends DataObject
         {
             if(!empty($this->datasource_methods))
             {
+                $this->requireClasses();
+
                 $ret = array();
                 foreach($this->datasource_methods as $ind => $method)
                 {
                     try
                     {
                         $r = new ReflectionClass($this->classname);
-                        if($r->getMethod($method)->isAbstract())
+                        if(!$r->getMethod($method)->isAbstract())
                             $ret[] = call_user_func_array($this->classname."::".$method,$this->datasource_params[$ind]->getParams());
                     }
                     catch(ReflectionException $e){return null;}
@@ -478,7 +514,7 @@ class DataHandlerObject extends DataObject
                     $r = new ReflectionClass($this->classname);
                     $arr = $this->checker_params[$ind]->getParams();
                     array_unshift($arr,$post);
-                    if($r->getMethod($checker)->isAbstract())
+                    if(!$r->getMethod($checker)->isAbstract())
                         call_user_func_array($this->classname."::".$checker,$arr);
                 }
                 catch(ReflectionException $e){return; }
@@ -506,6 +542,7 @@ class DataHandlerObject extends DataObject
 		}
 		else
 		{
+            $this->requireClasses();
             if(!empty($this->handler_methods))
                 foreach($this->handler_methods as $ind => $handler)
                     try
@@ -513,7 +550,7 @@ class DataHandlerObject extends DataObject
                         $r = new ReflectionClass($this->classname);
                             $arr = $this->handler_params[$ind]->getParams();
                             array_unshift($arr,$post);
-                        if($r->getMethod($handler)->isAbstract())
+                        if(!$r->getMethod($handler)->isAbstract())
                             call_user_func_array($this->classname."::".$handler,$arr);
                     }
                     catch(ReflectionException $e){return; }
@@ -600,7 +637,7 @@ class PageHandlerObject extends DataObject
 				try
 				{
 					$r = new ReflectionClass($this->classname);
-					if($r->getMethod($this->handler_method)->isAbstract())
+					if(!$r->getMethod($this->handler_method)->isAbstract())
 						return call_user_func_array($this->classname."::".$this->handler_method,$this->handler_params->getParams());
 				}
 				catch(ReflectionException $e){return; }

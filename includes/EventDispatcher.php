@@ -55,7 +55,7 @@ class EventDispatcher
 	}
 	function deleteEvent($event_name)
 	{
-		if(!isset($event_name))
+		if(!isset($event_name) || !is_string($event_name))
 			return;
 		if(isset($this->events[$event_name]))
 			unset($this->events[$event_name]);
@@ -86,14 +86,12 @@ class EventDispatcher
 		if(!isset($this->events[$event]))
 			return;
 		if(!empty($this->subscribers[$event]))
-			for($i = 0; $i < count($this->subscribers[$event]); $i++)
+			for($i = 0, $c = count($this->subscribers[$event]); $i <$c; $i++)
 			{
 				$id = $this->subscribers[$event][$i];
 				if(!isset($id)) continue;
 				if(!$event_obj->inDst($id) || (($src_id = $event_obj->getSrc()) && $src_id == $id)) continue;
-				$w = $controller->getWidget($id);
-				if(isset($w) && method_exists($w,"handleEvent"))
-					$w->handleEvent($event_obj);
+				$controller->getWidget($id)->handleEvent($event_obj);
 			}
 	}
 }

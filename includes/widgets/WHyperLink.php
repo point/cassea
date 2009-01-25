@@ -100,11 +100,6 @@ class WHyperLink extends WContainer implements StringProcessable
             $this->setText((string)$elem['text']);
 
 		$this->items = new MixedCollection($this->getId(),$elem);
-        if($this->items->isEmpty())
-            if(isset($this->text))
-                $this->items->setText($this->getText());
-            else
-                $this->items->setText($this->getHREF());
 		$this->addToMemento(array("href","baseurl","label","rel","rev","target"));
 
 		parent::parseParams($elem);		    	
@@ -153,6 +148,12 @@ class WHyperLink extends WContainer implements StringProcessable
     */
 	function buildComplete()
 	{
+        if($this->items->isEmpty())
+            if(isset($this->text))
+                $this->items->setText($this->getText());
+            else
+                $this->items->setText($this->getHREF());
+
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 

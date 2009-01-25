@@ -113,3 +113,10 @@ th > img
 	cursor:pointer;
 	text-align:center;
 }
+.widget_error, .error{
+    font-size:9px;
+    color: red;
+    /*border:1px solid red;*/
+    /*float:right;*/
+	clear:both;
+}

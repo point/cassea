@@ -63,7 +63,7 @@ class WRoll extends WContainer
 	    /**
         * @var		int
 		*/
-		$count = 1
+		$count = 0
 
 		;
     // {{{ WRoll 
@@ -90,6 +90,8 @@ class WRoll extends WContainer
     {
 		if(isset($elem['ruler']))
 			$this->setRuler((string)$elem['ruler']);
+        if(isset($elem['count']))
+            $this->setCount((string)$elem['count']);
 
 		$this->items = new IterableCollection($this->getId(),$elem);
 		$this->addToMemento(array("count"));

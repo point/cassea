@@ -62,6 +62,11 @@ class HTTPParamHolder implements IteratorAggregate
 	{
 		return isset($this->checked_vars[$var_name]);
 	}
+    function cleanStrings()
+    {
+        foreach($this->checked_vars as $k => $v)
+            if($v === "") unset($this->checked_vars[$k]);
+    }
 	function bindFilter($var_name,$type)
 	{
 		if(!isset($this->checked_vars[$var_name])) return;

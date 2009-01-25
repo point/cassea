@@ -153,7 +153,7 @@ class WCheckbox extends WControl
 			$this->tpl = $this->createTemplate();
 		if(!isset($this->text))
 			$this->setText($this->getValue());
-        if(empty($this->value))
+        if(empty($this->value) && !is_numeric($this->value))
             $this->setValue('checkbox');
 		parent::buildComplete();
 	}    

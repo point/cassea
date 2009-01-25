@@ -65,7 +65,7 @@ class WidgetLoader
 	static function load($name = null)
 	{
 		if(!isset($name))
-			return null;
+			return false;
 		if(isset(self::$cache[$name]))
 			return self::$cache[$name];
 		if(file_exists(Config::get("ROOT_DIR")."/includes/widgets/".$name.".php"))
@@ -120,6 +120,7 @@ class Controller
 
 		$this->get = new HTTPParamHolder($_GET,0);
         $this->post = new HTTPParamHolder($_POST);
+        $this->post->cleanStrings();
         $this->cookie = new HTTPParamHolder($_COOKIE);
 
 		$this->parseP1P2();	
@@ -202,7 +203,8 @@ class Controller
 		$this->addScript("w.js");*/
 
 		$dom = new DomDocument;
-		$dom->load($full_path);
+        if($dom->load($full_path) === false)
+            throw new ControllerException("Can not load XML ".$full_path);
 
         $this->parsePage($this->processPage($dom));
         
@@ -292,6 +294,8 @@ class Controller
     }
     protected function processPage(DomDocument $dom)
     {
+        if(! $dom instanceof DOMNode || !isset($dom->firstChild))
+            throw new ControllerException("XML document not valid");
         // check rights
         $a = $dom->firstChild->getAttribute('allow');
         $d = $dom->firstChild->getAttribute('deny');
@@ -309,6 +313,11 @@ class Controller
             try { $t_dom->load(($pp = $this->pagePath($e_src))); }
             catch(ControllerException $e) { throw new ControllerException('extends page not found');}
             //$included_pages[] = $e_src;
+            $_a = $t_dom->firstChild->getAttribute('allow');
+            $_d = $t_dom->firstChild->getAttribute('deny');
+            if(!ACL::check($_a,$_d))
+               {header("HTTP/1.0 403 Forbidden");exit();}
+           //die("ACL!");
             array_unshift($included_pages,$e_src);
             array_unshift($adj_list,$t_dom);
             $this->ie_files[] = $pp;
@@ -769,7 +778,7 @@ class Controller
         return false;
 	}
 	protected function handlePOST()
-	{
+    {
 		if($this->post->isEmpty()) return;
 
 		$this->restoreSignatures();
@@ -820,10 +829,10 @@ class Controller
 
         /*var_dump($ret);
         die("BBBBBBBBB");*/
-        if(is_string($ret))
-            $this->gotoLocation($ret);
-        elseif(is_numeric($ret))
+        if(is_numeric($ret))
             $this->gotoLocation($this->navigator->getStepURL($ret));
+        elseif(is_string($ret))
+            $this->gotoLocation($ret);
 
 		$this->gotoStep_0();
 	}
@@ -894,7 +903,7 @@ class Controller
 	// destructor
 	function __destruct()
     {
-        //do it only if was init
+        //do it only if init was completed
         if($this->inited)
         {
 		    $storage = Storage::createWithSession("controller");

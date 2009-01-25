@@ -44,7 +44,7 @@ class WEdit extends WControl
         /**
         * @var      int
         */
-        $size = 60,
+        $size = 40,
         /**
         * @var      string
         */

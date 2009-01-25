@@ -49,7 +49,7 @@ class WidgetResultSet implements IteratorAggregate
 	}
 	function setDef($value)
 	{
-		if(is_resource($value)) return;
+		if(!isset($value) || is_resource($value)) return;
 		$this->def = $value;
 	}
 	function getDef()
@@ -129,6 +129,7 @@ class ResultSet
 		$fors = array(),
 		$for_values = array(),
         $default_values = array(),
+        $default_values_array = array(),
 
         $types = array(),
         $fors_array = array(),
@@ -181,9 +182,7 @@ class ResultSet
         if($this->types[$this->cur_selector] == "array")
             $this->for_values_array[$this->cur_selector][$this->cur_index][$key] = $value;
         else
-        {
             $this->for_values[$this->cur_selector][$key] = $value;
-        }
         return $this;
     }
 	/*function def($value)
@@ -194,7 +193,11 @@ class ResultSet
     function def($value)
     {
         if(!isset($this->cur_selector)) return $this;
-        $this->default_values[$this->cur_selector] = $value;
+        if($this->types[$this->cur_selector] == "array")
+            $this->default_values_array[$this->cur_selector][$this->cur_index] = $value;
+        else
+            $this->default_values[$this->cur_selector] = $value;
+        return $this;
     }
 	/*function findMatched(WidgetResultSet $wrs,WComponent $widget)
 	{
@@ -209,13 +212,15 @@ class ResultSet
     {
         foreach($this->fors as $selectors => $v)
             foreach(explode(",",$selectors) as $selector)
-                if(SelectorMatcher::matched($widget,$selector,null,null) && isset($this->for_values[$selector]))
+                if(SelectorMatcher::matched($widget,$selector,null,null) && 
+                    (isset($this->for_values[$selectors]) || isset($this->default_values[$selectors])))
                 {
-                    $wrs->merge($this->for_values[$selector]);
-                    if(isset($this->f1s[$selector]))
+                    @$wrs->merge($this->for_values[$selectors]);
+                    @$wrs->setDef($this->default_values[$selectors]);
+                    if(isset($this->f1s[$selectors]))
                     {
-                        unset($this->fors[$selector]);
-                        unset($this->for_values[$selector]);
+                        unset($this->fors[$selectors]);
+                        unset($this->for_values[$selectors]);
                     }
                 }
         
@@ -223,12 +228,13 @@ class ResultSet
             foreach(explode(",", $selectors) as $selector)
                 if(SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope']))
                 {
-                    $wrs->merge($this->for_values_array[$selector][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
-                    if(isset($this->f1s[$selector]))
+                    @$wrs->merge($this->for_values_array[$selectors][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+                    @$wrs->setDef($this->default_values_array[$selectors][$matched]);
+                    if(isset($this->f1s[$selectors]))
                     {
-                        unset($this->fors_array[$selector]['index'][$matched]);
-                        unset($this->fors_array[$selector]['scope'][$matched]);
-                        unset($this->for_values_array[$selector][$matched]);
+                        unset($this->fors_array[$selectors]['index'][$matched]);
+                        unset($this->fors_array[$selectors]['scope'][$matched]);
+                        unset($this->for_values_array[$selectors][$matched]);
                     }
                 }
 

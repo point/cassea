@@ -231,7 +231,7 @@ class User
      *
      *
      */
-    private function checkPassword($user_id, $password){
+    public static function checkPassword($user_id, $password){
         $r = DB::query('select  password, sold from '.User::TABLE.' where id="'.$user_id.'"');
         $r =$r[0];
         $dbPassword = $r['password'];

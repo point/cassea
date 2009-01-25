@@ -95,6 +95,7 @@ class Filter
 					$ret = $var;
 					foreach($ret as $k => &$v)
 						$v = self::filter($v,self::INT);
+                    $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
 				break;
 			case self::ARRAY_STRING_QUOTE:
@@ -102,18 +103,21 @@ class Filter
 				$ret = $var;
 				foreach($ret as $k => &$v)
 					 $v = self::quote($v);
+                $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				break;
 			case self::ARRAY_STRING_ENCODE:
 				if(!is_array($var) || empty($var)) break;
 				$ret = $var;
 				foreach($ret as $k => &$v)
 					 $v = self::encode($v);
+                $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				break;
 			case self::ARRAY_STRING_QUOTE_ENCODE:
 				if(!is_array($var) || empty($var)) break;
 				$ret = $var;
 				foreach($ret as $k => &$v)
 					 $v = self::quote(self::encode($v));
+                $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				break;
 			case self::STRING_QUOTE:
 				if(!is_string((string)$var)) break;
