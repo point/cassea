@@ -38,8 +38,8 @@ class WContainer extends WComponent
 	{
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
-				$this->$v = clone $this->$v;
-	}
+                $this->$v = clone $this->$v;
+    }
 	// }}}
 	// {{{ preRender
 	function preRender()
@@ -220,7 +220,10 @@ class WidgetCollection
 	// }}}
 	// {{{ preReder
 	function preRender()
-	{
+    {
+        $controller = Controller::getInstance();
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+            $controller->getDispatcher()->addSubscriber("increment_id", $this->getItemId($i));
 		for($i = 0, $c = $this->count(); $i < $c; $i++)
 			$this->getItem($i)->messageInterchange();
 
@@ -249,8 +252,12 @@ class WidgetCollection
 	// {{{ postRender
 	function postRender()
 	{
+        $controller = Controller::getInstance();
 		for($i = 0, $c = $this->count();$i < $c; $i++)
-			$this->getItem($i)->postRender();
+        {
+            $this->getItem($i)->postRender();
+		    $controller->getDispatcher()->deleteSubscriber("increment_id", $this->getItem($i)->getId());
+        }
 	} 
 	// }}}
 
@@ -310,6 +317,13 @@ class WidgetCollection
 		}
 	}
 	// }}}
+    
+	// {{{ isEmpty
+	function isEmpty()
+	{
+        return empty($this->item_ids);
+	}
+    // }}}
     
 	// {{{ __clone
 	function __clone()
@@ -451,6 +465,12 @@ class IterableCollection extends WidgetCollection
 	} 
 	// }}}
 
+	// {{{ isEmpty
+	function isEmpty()
+    {
+        return  empty($this->i_elem) || parent::isEmpty();
+	}
+    // }}}
 	// {{{ __clone
 	function __clone()
 	{

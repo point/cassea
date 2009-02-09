@@ -188,7 +188,7 @@ function CAPTCHACheckAnswer($str)
 }
 function getMime($file)
 {
-    if(!file_exists($fil)) return null;
+    if(!file_exists($file)) return null;
     if(!extension_loaded('fileinfo') && !@dl('fileinfo')) return null;
     
     $finfo = finfo_open(FILEINFO_MIME);

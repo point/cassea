@@ -165,6 +165,10 @@ abstract class DataObject
 		*/
 		$factory_method = null,
 		/**
+		* @var  boolean
+		*/
+		$factory_method_static = false,
+		/**
 		* @var  array
 		*/
 		$factory_params = null,
@@ -216,6 +220,8 @@ abstract class DataObject
         {
 			if(isset($elem->factory['method']))
 				$this->factory_method = (string)$elem->factory['method'];
+            if(isset($elem->factory['static']))
+                $this->factory_method_static = (string)$elem->factory['static'];
 
 			$this->factory_params = new DataObjectParams($elem->factory);		
         }
@@ -226,7 +232,7 @@ abstract class DataObject
 				$this->finalize_method = (string)$elem->finalize['method'];
 
 			$this->finalize_params = new DataObjectParams($elem->finalize);		
-		}
+        }
 	}
     protected function requireClasses()
     {
@@ -258,17 +264,23 @@ abstract class DataObject
             elseif(isset($this->factory_method))
             {
                 if($this->factory_params->getParams())
-                    $this->object = call_user_func_array(array($r->newInstance(),$this->factory_method),$this->factory_params->getParams());
+                    if($this->factory_method_static && $r->getMethod($this->factory_method)->isStatic())
+                        $this->object = call_user_func_array($this->classname."::".$this->factory_method,$this->factory_params->getParams());
+                    else
+                        $this->object = call_user_func_array(array($r->newInstance(),$this->factory_method),$this->factory_params->getParams());
                 else 
-                    $this->object = call_user_func(array($r->newInstance(),$this->factory_method));
+                    if($this->factory_method_static && $r->getMethod($this->factory_method)->isStatic())
+                        $this->object = call_user_func($this->classname."::".$this->factory_method);
+                    else
+                        $this->object = call_user_func(array($r->newInstance(),$this->factory_method));
                 if(!is_object($this->object))
                 {$this->object = null;return false;}
             }
             else
 				if($this->init_params->getParams())
-					$this->object = $r->newInstanceArgs($this->init_params->getParams());
+                    $this->object = $r->newInstanceArgs($this->init_params->getParams());
 				else 
-					$this->object = $r->newInstance();
+                    $this->object = $r->newInstance();
         }catch(ReflectionException $e){ return false;}
         return $this->object !== null;
     }
@@ -363,7 +375,7 @@ class DataSourceObject extends DataObject
                         try{
                             $r = new ReflectionObject($this->object);
                             $ret[] = $r->getMethod($this->datasource_methods[$ind])->invokeArgs($this->object,$dsp->getParams());
-                        }catch(Exception $e){}
+                        }catch(ReflectionException $e){}
                     }
                 }
                 return $ret;

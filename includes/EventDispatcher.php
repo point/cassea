@@ -62,7 +62,7 @@ class EventDispatcher
 	}
 	function deleteSubscriber($event,$widget_id = null)
 	{
-		if(!isset($event, $widget_id))
+		if(!isset($event, $widget_id, $this->subscribers[$event]))
 			return;
 		$flag = 0;
 		$count = count($this->subscribers[$event]);
@@ -71,8 +71,11 @@ class EventDispatcher
 			{
 				for($i = 0; $i < $count; $i++)
 					if($this->subscribers[$event][$i] == $widget_id)
-						unset($this->subscribers[$event][$i]);
-				$this->subscribers[$event]  = array_values($this->subscribers[$event]);
+                    {
+                        unset($this->subscribers[$event][$i]);
+				        $this->subscribers[$event]  = array_values($this->subscribers[$event]);
+                        break;
+                    }
 			}
 			else
 				for($i = 0; $i < count($this->subscribers[$event]); $i++)

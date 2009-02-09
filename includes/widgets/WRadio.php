@@ -163,11 +163,11 @@ class WRadio extends WControl
     */
     function assignVars()
     {
+		parent::assignVars();
 		$this->tpl->setParamsArray(array(
 			"checked"=>$this->getChecked()?"checked=\"1\"":"",
-			"label"=>!empty($this->text)?"<label for=\"".$this->getId()."\">&nbsp;".Language::encodePair($this->getText())."</label>":""
+			"label"=>!empty($this->text)?"<label for=\"".$this->getHTMLId()."\">&nbsp;".Language::encodePair($this->getText())."</label>":""
 		));
-		parent::assignVars();
     }
 	// }}}	
     // {{{ setData 

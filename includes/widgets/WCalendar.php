@@ -40,7 +40,7 @@ class WCalendar extends WEdit
         /**
         * @var      string
         */
-        $date_format = "dd-mm-yy"
+        $date_format = "yy-mm-dd"
 /*
 From v3.1, the format is combinations of the following: 
 d - day of month (no leading zero) 

@@ -116,7 +116,7 @@ class WStyle extends WObject
 	{
 		if(isset($params))
 			foreach($params->attributes() as $k => $v)
-				if(strpos("-",$k) !== false)
+				if(strpos($k,"-") !== false)
 					$this->setAttribute(str_replace("-","_",$k),$v);
 				else $this->setAttribute($k,$v);
     }

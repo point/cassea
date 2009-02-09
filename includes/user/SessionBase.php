@@ -70,7 +70,6 @@ class SessionBase
         $cs = $this->getClientSession();
         $ss = $this->getServerSession($cs['sid']);
 
-
         $param = array();
         if (is_array($ss) && $this->remoteIP == $ss['ip'] && $cs['cast'] =  $ss['cast'] ){
             $param = $ss;
@@ -81,13 +80,9 @@ class SessionBase
             $param['cast'] = $cs['cast'];
             $param['user'] = User::GUEST;
             @$this->id =  md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
-            
         }
 
         $this->updateSession($param);
-
-        //echo 'Session id:'.$this->id;
-        //print_r($param);
     }// }}}
     
     //{{{ getClientSession

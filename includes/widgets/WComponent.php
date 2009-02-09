@@ -1,5 +1,5 @@
 <?php
-/*- vim:expandtab:shiftwidth=4:tabstop=4: 
+/*- vim:noet:shiftwidth=4:tabstop=4: 
 {{{ LICENSE  
 * Copyright (c) 2008, Cassea Project
 * All rights reserved.
@@ -255,7 +255,7 @@ abstract class WComponent extends WObject
     function generateHTML()
     {
    		if(!$this->getState()) return "";
-       	$this->assignVars();
+		$this->assignVars();
 		if($this->visible && isset($this->tpl)) return $this->tpl->getHTML();
 		else return "";
 
@@ -345,7 +345,7 @@ abstract class WComponent extends WObject
     * @param    string $style_class
     * @return   void
     */
-    function setStyleClass($style_class)
+    function setStyleClass($style_class = null)
     {
 		if(!isset($style_class)) 
 			return;
@@ -648,7 +648,7 @@ abstract class WComponent extends WObject
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
 		$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
-		$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
+		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
         $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
             "javascript_before","javascript_after","hide_if_hidden","hide_if_empty"));
@@ -757,7 +757,7 @@ abstract class WComponent extends WObject
     */
     function setHTMLId($html_id)
     {
-		if(empty($html_id) || !is_scalar($html_id)) 
+		if(!isset($html_id) || !is_scalar($html_id)) 
 			return;
 
 		if(strpos($html_id,'[') !== false || strpos($html_id,']') !== false)
@@ -845,13 +845,9 @@ EOD;
     */
     function handleEvent($event)
     {
-		/*if($event->getName() == "roll_inside" )
-			$this->inside_roll = 0 + $event->event_params['inside'];*/
-		if($event->getName() == "increment_id" && $event->inDst($this->getId()))
+		if($event->getName() === "increment_id" /*&& $event->inDst($this->getId())*/)
 		{
 			$this->do_increment = 0 + $event->getParam('do_increment');
-			/*if($this->do_increment)
-				$this->add_html_id++;*/
 		}
     }
 	//}}}
@@ -964,7 +960,7 @@ EOD;
 					if(empty($v))
 						$this->setVisible(0);
 				}
-				if(isset($w->items) && $w instanceof WidgetCollection && empty($w->items))
+				if(isset($w->items) && $w->items instanceof WidgetCollection && $w->items->isEmpty())
 					$this->setVisible(0);
 			}
 		}
@@ -990,7 +986,7 @@ EOD;
 
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
-		$controller->getDispatcher()->deleteSubscriber("increment_id", $this->id);
+		//$controller->getDispatcher()->deleteSubscriber("increment_id", $this->id);
 	}
 	//}}}	
     

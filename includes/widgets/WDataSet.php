@@ -37,7 +37,7 @@ class WDataSet extends WObject
 {
 	protected 
 		$data_object = null,
-		$priority = 0,
+		$priority = 1,
 		$delayed = false,
 		$is_static = false
 
@@ -75,8 +75,12 @@ class WDataSet extends WObject
 		$this->data_object = new DataSourceObject($this->getStatic());
 		$this->data_object->parseParams($params);
 
-		if($this->data_object->hasDatasourceParamFrom('limit'))
-			$this->setDelayed(1);
+        if($this->data_object->hasDatasourceParamFrom('limit'))
+        {
+            $this->setDelayed(1);
+            if($this->priority == 1) //default priority
+                $this->setPriority(0);
+        }
 
 		if(!$this->getDelayed())
 			$this->manageData();

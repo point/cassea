@@ -98,7 +98,8 @@ class UploadedFiles
                                 "tmp_name"=>$v['tmp_name'][$key],
                                 "error"=>$error);
                     else
-                        $this->http_error_files["{$name}\{$key}"] = self::$upload_errors[$error];
+                        $this->http_error_files["{$name}\\{$key}"] = self::$upload_errors[$error];
+    
 
     }
     function isEmpty()
@@ -210,13 +211,15 @@ class UploadedFiles
     function allowedSize($min = null, $max = null)
     {
         if($min === null && $max === null) return $this;
-        
+
+        $min = $this->sizeFromString($min);
+        $max = $this->sizeFromString($max);
         $min = abs($min);$max = abs($max);
         if($max - $min <= 0) return $this;
 
         foreach($this->http_files as $k => $v)
         {
-            $size = sprintf("%u", @filesize($value));
+            $size = sprintf("%u", @filesize($v['tmp_name']));
             if($min && $size < $min)
             {
                 $this->http_error_files[$k] = sprintf(self::$filter_errors['min_size'],$v['name'],$min,$size);

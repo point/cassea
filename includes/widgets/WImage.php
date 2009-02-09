@@ -220,7 +220,7 @@ class WImage extends WComponent
 		if(!isset($src) || !is_scalar($src)) 
 			return ;
 		if(strpos($src,"/") !== 0)
-			$src = "/".$src;
+            $src = "/".$src;
 		$this->src = $src;
     }
     // }}}
@@ -265,13 +265,20 @@ class WImage extends WComponent
     {
         $this->checkAndSetData();
 		
-		//!!! Beware
-		if(empty($this->src)) {$this->setVisible(0);return;}
+        //!!! Beware
+        //!!! Dont be arfaid :)
+        if(empty($this->src)) {
+            $this->setVisible(0);
+       		parent::preRender();
+            return;
+        }
 
 		if($this->getMaxWidth() || $this->getMaxHeight())
-		{
-			$a = recalcSizeArray(getImgSize($this->getSrc()),$this->getMaxWidth(),$this->getMaxHeight());
-			$this->setWidth($a['width']);
+        {
+            $url = 'http://'.$_SERVER['HTTP_HOST'].$this->getSrc();
+            list($width, $height) = getimagesize($url);
+			$a = recalcSize($width, $height,$this->getMaxWidth(),$this->getMaxHeight());
+            $this->setWidth($a['width']);
 			$this->setHeight($a['height']);
 		}
 
@@ -317,7 +324,7 @@ EOD;
     * @return   void
     */
     function setData(WidgetResultSet $data)
-	{
+    {
 		$this->setSrc($data->getDef());
 		$this->setSrc($data->get('src'));
 		$this->setWidth($data->get('width'));

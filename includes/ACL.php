@@ -40,7 +40,7 @@ class ACL
 
     static function init()
     {
-        if(Config::getInstance()->acl->cache_groups && is_array($g = Storage::create('acl_groups')->get(User::get()->getId())))
+        if(Config::getInstance()->acl->cache_groups && is_array($g = Storage::create('acl_groups')->get(User::get()->getId())) &&!empty($g))
             self::$groups = $g;
         else
         {

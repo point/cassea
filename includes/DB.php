@@ -948,7 +948,7 @@ class DB{
             return $data;   
         }
         else{ 
-             throw (new DBException(self::$mysqli->error,self::$mysqli->errno,"subuery ".($i)."\r\n".$query));
+             throw (new DBException(self::$mysqli->error,self::$mysqli->errno,"subquery ".($i)."\r\n".$query));
         }
     }// }}}
 

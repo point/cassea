@@ -41,8 +41,8 @@ class MailMail extends MailTransport{
     public function Send($pointer){
         $header=$pointer->createHeader();
         $body=$pointer->mailBody();
-        echo $header;
-        echo $body;
+        //echo $header;
+        //echo $body;
         if (mail(implode(",",$pointer->getTo()),$pointer->getSubject(),$body,$header))
             {
                 $this->result();

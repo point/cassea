@@ -31,7 +31,6 @@
 //
 
 // {{{ Navigator
-define('MAX_PATH',20);
 
 class Navigator
 {
@@ -39,6 +38,7 @@ class Navigator
 			$user_path = array(),
 			$controller_name = null
 			;
+    const MAX_PATH = 20;
 	function Navigator($controller_name)
 	{
 		$this->storage = Storage::createWithSession('AdminNavigator');
@@ -51,6 +51,7 @@ class Navigator
 
 		if(empty($this->user_path) || $this->user_path === false) $this->user_path = array();
 	}
+
 	function addStep($page_name,$title = null,$description = null)
 	{
 		if(!isset($page_name)) return;
@@ -58,7 +59,7 @@ class Navigator
 		if(!isset($title))
 			$title = requestURI();
 		if((isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
-			|| empty($this->user_path))
+			|| empty($this->user_path) || ($this->user_path[0]['controller'] == $this->controller_name && $page_name == "index"))
 		{
 			$this->user_path = array();
 			$this->user_path[0]['url'] = requestURI(1);
@@ -67,53 +68,27 @@ class Navigator
 				$this->user_path[0]['desription'] = $description;
 			$this->user_path[0]['page'] = $page_name;
 			$this->user_path[0]['controller'] = $this->controller_name;
-			$this->storage->set("user_path",$this->user_path);
-			return;
 		}
-		if($this->user_path[0]['page'] == $page_name)
-		{
-			$this->user_path[0]['url'] = requestURI(1);
-			$this->user_path[0]['title'] = $title;
-			if(isset($description))
-				$this->user_path[0]['desription'] = $description;
-			$this->user_path[0]['page'] = $page_name;
-			$this->user_path[0]['controller'] = $this->controller_name;
-			$this->storage->set("user_path",$this->user_path);
-			return;
-		}
-		for($i = count($this->user_path) - 1; $i >= 0 ; $i--)
-		{
-			if($this->user_path[$i]['page'] == $page_name)
-			{
-				$this->user_path[$i]['url'] = requestURI(1);
-				if(isset($title))
-					$this->user_path[$i]['title'] = $title;
-				if(isset($description))
-					$this->user_path[$i]['desription'] = $description;
-				$this->user_path[$i]['page'] = $page_name;
-				$this->user_path[$i]['controller'] = $this->controller_name;
-				for($j = $i-1; $j >= 0; $j--)
-					unset($this->user_path[$j]);
-				$this->user_path = array_values($this->user_path);
-				$this->storage->set("user_path",$this->user_path);
-				return;
-			}
-		}
-		if(count($this->user_path) == MAX_PATH)
-		{
-			unset($this->user_path[MAX_PATH - 1]);
-			$this->user_path=array_values($this->user_path);
-		}
-
-		array_unshift($this->user_path,
-			array(
-				"url" => requestURI(1),
-				"title" => isset($title)?$title:null,
-				"description" => isset($description)?$description:null,
-				"page"=>$page_name,
-				"controller"=>$this->controller_name));
-
-		$this->storage->set("user_path",$this->user_path);
+        else
+        {
+            $to_add = 1;
+            for($i = 0, $c = count($this->user_path); $i < $c; $i++)
+                if(isset($this->user_path[$i]) && $this->user_path[$i]['page'] == $page_name)
+                    $this->user_path = array_slice($this->user_path,$i) and $to_add = false;
+            if($to_add)
+            {
+                if(count($this->user_path) == self::MAX_PATH)
+                    $this->user_path = array_slice($this->user_path,0,-1);
+                array_unshift($this->user_path,array(
+                    "url"=>requestURI(1),
+                    "title"=>$title,
+                    "desription"=>$description,
+                    "page"=>$page_name,
+                    "controller"=>$this->controller_name
+                ));
+            }
+        }
+        $this->storage->set("user_path",$this->user_path);
 	}
 	function getStep($step)
 	{

@@ -47,235 +47,118 @@ http {
 	open_file_cache_min_uses 2;
 	open_file_cache_errors on;
 
-    server {
-        listen       80;
-        server_name  devel;
+    }
 
-        charset utf-8;
+	server {
+		expires       -1;
+		add_header  Cache-Control: no-cache;
+		listen		 80;
+		server_name  intvideo;
 
-        #access_log  /var/log/nginx/host.access.log  main;
-		#access_log /var/log/nginx-access.log main;
+        access_log  /var/log/nginx/intvideo.access.log  main;
 
-		root /usr/local/www/devel;
-		
-		
-		location ~* \.js$
-		{
-			root /usr/local/www/devel/web/js;
-			#expires 1y;
-		}
-		location ~* \.css$
-		{
-			root /usr/local/www/devel/web/css;
-			#expires 1y;
-		}
-		location ~* (\.jpg$|\.jpeg$|\.png$|\.gif$|\.bmp$)
-		{
-			root /usr/local/www/devel/web/images;
-		}
-		location ~* \.swf$
-		{
-			root /usr/local/www/devel/web/flash;
-		}
+		charset utf-8;
 
-		location /
-		{
-			rewrite ^/$ /controllers/index.php last;
-			rewrite ^/index.html$ /controllers/index.php last;
+		set $server_root /usr/local/www/intvideo;
+		root $server_root;
+        client_max_body_size 8m;
 
-			rewrite ^/([^/\.]+)/?$ /controllers/$1.php?__p1=&__p2= last;
-
-			rewrite ^/([^/\.]+)/([^&?#]+)/([^&?#]+)\.html?$ /controllers/$1.php?__p1=$3&__p2=$2 last;
-			rewrite ^/([^/\.]+)/([^&?#]+)\.html?$ /controllers/$1.php?__p1=$2&__p2= last;
-
-			rewrite ^/([^/\.]+)/([^?#&\.]+)$ /controllers/$1.php?__p1=&__p2=$2 last;
-			return 404;
-		}
-        location /controllers/ {
-		internal;
-	    fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-		fastcgi_intercept_errors on;
-		root /usr/local/www/devel;
-        #fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-		if (!-f /usr/local/www/devel$fastcgi_script_name)
-		{
-			return 404;
-		}
-        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/devel$fastcgi_script_name;
-        #fastcgi_param  SCRIPT_FILENAME  $fastcgi_script_name;
-		fastcgi_param  REQUEST_METHOD   $request_method;
-		fastcgi_param  CONTENT_TYPE     $content_type;
-		fastcgi_param  CONTENT_LENGTH   $content_length;
-		fastcgi_param  QUERY_STRING     $query_string;
-		fastcgi_param  DOCUMENT_ROOT     $document_root;
-
-		fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
-		fastcgi_param  REQUEST_URI        $request_uri;
-		fastcgi_param  DOCUMENT_URI       $document_uri;
-		fastcgi_param  DOCUMENT_ROOT      $document_root;
-		fastcgi_param  SERVER_PROTOCOL    $server_protocol;
-
-		fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
-		fastcgi_param  SERVER_SOFTWARE    nginx;
-
-		fastcgi_param  REMOTE_ADDR        $remote_addr;
-		fastcgi_param  REMOTE_PORT        $remote_port;
-		fastcgi_param  SERVER_ADDR        $server_addr;
-		fastcgi_param  SERVER_PORT        $server_port;
-		fastcgi_param  SERVER_NAME        $server_name;
-
-#fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
-#fastcgi_param  REQUEST_URI        $request_uri;
-#fastcgi_param  DOCUMENT_URI       $document_uri;
-#fastcgi_param  DOCUMENT_ROOT      $document_root;
-#fastcgi_param  SERVER_PROTOCOL    $server_protocol;
-
-#fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
-#fastcgi_param  SERVER_SOFTWARE    nginx;
-
-#fastcgi_param  REMOTE_ADDR        $remote_addr;
-#fastcgi_param  REMOTE_PORT        $remote_port;
-#fastcgi_param  SERVER_ADDR        $server_addr;
-#fastcgi_param  SERVER_PORT        $server_port;
-#fastcgi_param  SERVER_NAME        $server_name;
-
-# PHP only, required if PHP was built with --enable-force-cgi-redirect
-#fastcgi_param  REDIRECT_STATUS    200;
-
-
-        #root   /usr/local/www/nginx;
-            #index  index.html index.htm;
-        }
+        index index.php index.html;
 
         #error_page  404              /404.html;
 
         # redirect server error pages to the static page /50x.html
         #
-        error_page   500 502 503 504  /50x.html;
+        error_page   403 500 502 503 504  /50x.html;
         location = /50x.html {
-            root   /usr/local/www/nginx-dist;
+		    root $server_root/web/error_pages;
         }
 
-        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-        #
-        #location ~ \.php$ {
-        #    proxy_pass   http://127.0.0.1;
+  
+        location /
+        {
+            rewrite '^/(robots.txt|sitemap[^\.]*.xml(.gz)?)$' /web/$1 last;
+
+            set $controller index;
+            # добавляем последний слеш к контроллеру или p2 или языку            
+            rewrite  '^([^\.?&]*[^/])([?&#].*)?$' $1/$2;
+            # language
+            rewrite '^/([a-z]{2})(/.*)$' $2?__lang=$1;
+            # добавлем страницу по умолчанию после /
+            rewrite  '^(.*)/([?&#].*)?$' $1/index.xml$2;
+
+             #controller 
+            if ($uri ~* '^/([^/\.]{3,})(/.*)$' ){
+                set $controller $1;
+            }
+               
+
+            #  нет контроллера - идем папку в /web
+            if (!-f  $server_root/controllers/$controller.php){
+                rewrite ^(.*)$ /web$1 last;
+            }
+            # конролеер есть, но страница имеет расширение отличное от html, htm, xml
+            if ($uri !~* '^.*\.(htm|html|xml)$'){
+                rewrite ^(.*)$ /web$1 last;
+            }
+            if ($uri ~* '^/([^/\.]{1,2})/.*$' )
+			{
+				return 404;
+			}
+            
+            # дописываем контроллер index, 
+            if ($uri !~* '^/([^/\.]{3,})(/.*)$' ){
+                rewrite ^(.*)$ /$controller$1;
+            }
+           
+            rewrite  '^/([^/\.]{3,})(/([^\.]+))?(/([^/]+)\.(htm|html|xml)?)?$'  /controllers/$controller.php?__p1=$5&__p2=$3 last;
+            return 404;
+        }
+
+        location /web{
+            internal;
+            if (-f $server_root$uri){
+                rewrite ^(.*)$ $1 break;
+            }
+            rewrite '^/web/(.*\.(jpg$|jpeg$|png$|gif$|ico))$' /web/images/$1 break;
+            rewrite ^/web/(.*\.js)$ /web/js/$1 break;
+            rewrite ^/web/(.*\.css)$ /web/css/$1 break;
+            rewrite ^/web/(.*\.swf)$ /web/flash/$1 break;
+            return 404;
+        }
+
+
+
+        location /controllers/{ 
+            internal;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_intercept_errors on;
+            if (!-f $server_root$fastcgi_script_name)
+            {
+                return 401;
+            }
+            fastcgi_param  SCRIPT_FILENAME  $server_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+
+        #location ~* (\.jpg$|\.jpeg$|\.png$|\.gif$|\.bmp|\.ico$)
+        #{
+        #    root $server_root/web/images;
+            #expires 1y;
+            #expires max;
         #}
+ 
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         #
-        #location ~ \.php$ {
-        #    fastcgi_pass   127.0.0.1:9000;
-        #    fastcgi_index  index.php;
-        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        #    include        conf/fastcgi_params;
-        #}
 
         # deny access to .htaccess files, if Apache's document root
         # concurs with nginx's one
         #
-        #location ~ /\.ht {
-        #    deny  all;
-        #}
+        location ~ /\.ht {
+            deny  all;
+        }
     }
-	server {
-        listen       80;
-        server_name  phpma;
-		#access_log /var/log/nginx-access.log main;
-
-        charset utf-8;
-
-        location / {
-	    fastcgi_pass   127.0.0.1:9001;
-        fastcgi_index  index.php;
-        #fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/phpma$fastcgi_script_name;
-		fastcgi_param  REQUEST_METHOD   $request_method;
-		fastcgi_param  CONTENT_TYPE     $content_type;
-		fastcgi_param  CONTENT_LENGTH   $content_length;
-		fastcgi_param  QUERY_STRING     $query_string;
-		}
-	}
-	server {
-        listen       80;
-        server_name  cachestat;
-		#access_log /var/log/nginx-access.log main;
-
-        charset utf-8;
-
-        location / {
-	    fastcgi_pass   127.0.0.1:9001;
-        fastcgi_index  index.php;
-        #fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/cachestat$fastcgi_script_name;
-		fastcgi_param  REQUEST_METHOD   $request_method;
-		fastcgi_param  CONTENT_TYPE     $content_type;
-		fastcgi_param  CONTENT_LENGTH   $content_length;
-		fastcgi_param  QUERY_STRING     $query_string;
-		}
-	}
-	server {
-        listen       80;
-        server_name  way;
-		#access_log /var/log/nginx-access.log main;
-
-        charset utf-8;
-
-        location / {
-	    fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-        #fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        fastcgi_param  SCRIPT_FILENAME  /usr/local/www/way$fastcgi_script_name;
-		fastcgi_param  REQUEST_METHOD   $request_method;
-		fastcgi_param  CONTENT_TYPE     $content_type;
-		fastcgi_param  CONTENT_LENGTH   $content_length;
-		fastcgi_param  QUERY_STRING     $query_string;
-		}
-	}
-
-	server {
-        listen       80 default;
-        location / {
-			empty_gif;
-       }
-    }
-
-
-    # another virtual host using mix of IP-, name-, and port-based configuration
-    #
-    #server {
-    #    listen       8000;
-    #    listen       somename:8080;
-    #    server_name  somename  alias  another.alias;
-
-    #    location / {
-    #        root   html;
-    #        index  index.html index.htm;
-    #    }
-    #}
-
-
-    # HTTPS server
-    #
-    #server {
-    #    listen       443;
-    #    server_name  localhost;
-
-    #    ssl                  on;
-    #    ssl_certificate      cert.pem;
-    #    ssl_certificate_key  cert.key;
-
-    #    ssl_session_timeout  5m;
-
-    #    ssl_protocols  SSLv2 SSLv3 TLSv1;
-    #    ssl_ciphers  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
-    #    ssl_prefer_server_ciphers   on;
-
-    #    location / {
-    #        root   html;
-    #        index  index.html index.htm;
-    #    }
-    #}
 
 }

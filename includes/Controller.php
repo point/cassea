@@ -385,6 +385,22 @@ class Controller
             $_d = $d->firstChild->getAttribute('deny');
             if(!ACL::check($_a,$_d)) continue;
 
+            if($el && ($block_id = $el->getAttribute("block")) !== "")
+            {
+                $block = t(new DOMXPath($d))->query("//block[@id='".$block_id."']");
+                if(!$block->length) continue;
+                else
+                {
+                    $n_d = new DOMDocument('1.0', 'utf-8');
+                    $n_el = $n_d->createElement('root');
+                    $n_block = $n_d->importNode($block->item(0),true);
+                    $n_el->appendChild($n_block);
+                    $n_d->appendChild($n_el);
+                    $d = $n_d;
+                }
+            }
+            $d = $this->processPage($d);
+
             $imported_node = $dom->importNode($d->firstChild,true);
             if($imported_node->hasChildNodes())
                 for($node_list = $imported_node->childNodes,$j = 0, $c2 = $node_list->length; $j < $c2;$j++)
@@ -846,7 +862,10 @@ class Controller
     protected function gotoLocation($loc)
     {
         if(isset($loc))
-            header("Location: ".$loc);
+            if(strpos($loc,"/") !== false)
+                header("Location: ".$loc);
+            else
+                header("Location: ".$this->makeURL($loc)); //suggest $loc is a page to which redirect to.
         exit();
     }
 	// checkers

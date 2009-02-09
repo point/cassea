@@ -67,7 +67,7 @@ class StringProcessor
     }
     function process($string)
     {
-        if(empty($this->processors)) return $string;
+        if(empty($this->processors) || $string === "") return $string;
         $s = $string;
         foreach($this->processors as $p)
         {
@@ -96,7 +96,8 @@ class StringProcessor
         return (substr($text, 0, $pos[$min_p]).$ends);
     }
 
-    protected function filesize ($bytes, $round = 1) 
+    //deprecated
+    protected function filesize_old ($bytes, $round = 1) 
     {
         if ($bytes==0)
             return '0 bytes';
@@ -217,6 +218,13 @@ class StringProcessor
             return self::relative_time($time,$locale);
         return $date;
     }
+    protected function filesize($size)
+    {
+        $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        for ($i=0; $size >= 1024 && $i < 9; $i++) 
+            $size /= 1024;
+        return round($size, 2) . ' '.$sizes[$i];
+    }
     protected function md5($string)
     {return md5($string);}
     protected function sha1($string)
@@ -238,11 +246,15 @@ class StringProcessor
     protected function escape($string, $quotes = 1) 
     { return htmlspecialchars($string, $quotes ? ENT_QUOTES : ENT_NOQUOTES); }
     protected function truncate ($string, $max = 50, $ends = '...') 
-    {return substr_replace($string, $ends, $max - strlen($ends)); }
+    {return substr($string,0,abs($max - strlen($ends))).$ends; }
     protected function nl2br($string) 
     {return nl2br($string);}
     protected function decode_ip($long_ip)
     {return long2ip($long_ip);}
+    protected function append($string, $str2append, $insert_whitespace = false)
+    {return $string.($insert_whitespace?"&nbsp;":"").$str2append;}
+    protected function prepend($string, $str2prepend, $insert_whitespace = false)
+    {return $str2prepend.($insert_whitespace?"&nbsp;":"").$string;}
 }
 // }}}
 ?>
