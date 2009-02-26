@@ -54,7 +54,6 @@ require("LTC.php");
 require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
-require("Stat.php");
 
 class ControllerException extends Exception
 {}
@@ -634,7 +633,6 @@ class Controller
 	function tail($echo = 1)
 	{
         $v = "\n</body></html>";
-        Stat::event('pages')->time()->sid()->user_id()->set('controller', $this->getControllerName())->set('page', $this->getPage())->set('p2', $this->get->__p2)->commit();
 		if($echo)
 			echo $v;
 		else return $v; 
