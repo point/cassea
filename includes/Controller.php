@@ -29,7 +29,7 @@
 
 // $Id$
 //
-
+set_include_path(".");
 require("functions.php");
 require("Config.php");
 require("Storage.php");
@@ -118,8 +118,8 @@ class Controller
 		else throw new ControllerException('controller name not defined');
 
 
-		$this->get = new HTTPParamHolder($_GET,0);
-        $this->post = new HTTPParamHolder($_POST);
+		$this->get = new HTTPParamHolder($_GET);
+        $this->post = new HTTPParamHolder($_POST,1);
         $this->post->cleanStrings();
         $this->cookie = new HTTPParamHolder($_COOKIE);
 
@@ -172,7 +172,7 @@ class Controller
 	function init()
     {
 
-        $this->determineLanguage();
+        Language::Init();
         
         $this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();
@@ -185,7 +185,8 @@ class Controller
 		$this->navigator = new Navigator($this->controller_name);
 
         $full_path = $this->findPage();
-		$this->handlePOST();
+        if($_SERVER['REQUEST_METHOD'] == "POST")
+		    $this->handlePOST();
 		$this->navigator->addStep($this->page);
 
 		$this->addCSS("ns_reset.css");
@@ -251,32 +252,6 @@ class Controller
 			$this->p2 = explode("/",$this->p2);
 		}
     }
-    protected final function determineLanguage()
-    {
-        $this->get->bindFilter('__lang',Filter::STRING_QUOTE_ENCODE);
-        $language_final = null;
-        if(!empty($this->get->__lang))
-            Language::$current_language = Language::getLangIdByName(substr($this->get->__lang,0,2));
-        elseif(isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-        {
-            $languages = strtolower(Filter::filter($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
-
-            // $languages = ' fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
-            // need to remove spaces from strings to avoid error
-            $languages = str_replace( ' ', '', $languages );
-            $languages = explode( ",", $languages );
-            $parsed_short_langs = array();
-            $parsed_long_langs = array();
-            foreach ( $languages as $language_list )
-                $parsed_long_langs[] = substr( $language_list, 0, strcspn( $language_list, ';' )) and
-                $parsed_short_langs[] = substr( $language_list, 0, 2 );
-            
-            Language::$current_language = Language::getEnableLang($parsed_short_langs);
-        }
-        else
-            Language::$current_language = Language::getDefault();
-        Language::getDefaultLangName();
-    }
     protected final function pagePath($src)
     {
         if(empty($src))
@@ -341,7 +316,7 @@ class Controller
         }
         // extending
 
-        $dom = $adj_list[0];
+        /*$dom = $adj_list[0];
         $blocks = t(new DOMXPath($dom))->query("//block[@id]");
         for($i = 0, $c = $blocks->length;$i < $c;$i++)
         {
@@ -358,8 +333,32 @@ class Controller
                 $el->parentNode->replaceChild($el2,$el);
                 break;
             }
-        }
+        }*/
 
+        if(count($adj_list) > 1)
+            for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
+            {
+
+                $dom = $adj_list[$adj_i];
+                $blocks = t(new DOMXPath($dom))->query("//block[@id]");
+                for($i = 0, $c = $blocks->length;$i < $c;$i++)
+                {
+                    if(($id = $blocks->item($i)->getAttribute("id")) == "") continue;
+                    for($j = count($adj_list)-1; $j > $adj_i; $j--)
+                    {
+                        $subst_blocks = t(new DOMXPath($adj_list[$j]))->query("//block[@id='".$id."']");
+                        if(!$subst_blocks->length) continue;
+
+                        $el = $blocks->item($i);
+                        $el2 = $subst_blocks->item(0);
+
+                        $el2 = $dom->importNode($el2,true);
+                        $el->parentNode->replaceChild($el2,$el);
+                        break;
+                    }
+                }
+
+            }
 
         // clean up from <block>
         $node_list = $dom->getElementsByTagName('block');
@@ -763,7 +762,11 @@ class Controller
 			$n_get2[] = $k."=".$v;
 		foreach($n_p2 as $k=>$v)
 			if(empty($v)) unset($n_p2[$k]);
-		return 	Filter::filter("http://".$_SERVER['SERVER_NAME'].((!empty($controller_name))?"/".$controller_name:"")."/".
+	/*	return 	Filter::filter("http://".$_SERVER['SERVER_NAME'].((!empty($controller_name))?"/".$controller_name:"")."/".
+			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
+            (!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);*/
+        return 	Filter::filter($this->makeHTTPHost().
+            ((!empty($controller_name))?"/".$controller_name:"")."/".
 			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
 			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
 
@@ -772,6 +775,12 @@ class Controller
 		//var_dump($this->makeURL('nnn',array("c"=>"c2",'bb'=>'bb')));
 		//var_dump($this->makeURL(null,array('p1','p2')));
 	}
+    private final function makeHTTPHost()
+    {
+        return (empty($_SERVER['HTTPS'])?'http://':'https://').
+            $_SERVER['HTTP_HOST'].
+            (($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
+    }
 	function getDisplayModeParams()
 	{
 		return $this->display_mode_params;
@@ -811,7 +820,7 @@ class Controller
         if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
         {
             $checked_by_captcha = 0;
-            POSTErrors::addError($this->captcha_name,null,Language::getLangConst("WIDGET_CAPTCHA_ERROR"));
+            POSTErrors::addError($this->captcha_name,null,Language::getConst("WIDGET_CAPTCHA_ERROR"));
         }
 
         $formid_name = $this->post->{WForm::formid_name};
@@ -855,8 +864,8 @@ class Controller
 	protected function gotoStep_0()
 	{
 		$s = $this->navigator->getStep(0);
-		if(isset($s,$s['url']))
-			header("Location: ".$s['url']);
+		if(isset($s,$s['url'])) header("Location: ".$s['url']);
+        else header("Location: ".$this->makeHTTPHost()."/");
 		exit();
     }
     protected function gotoLocation($loc)
@@ -1039,7 +1048,8 @@ class AjaxController extends Controller
 
         try{
             $full_path = $this->findPage();
-            $this->handlePOST();
+            if($_SERVER['REQUEST_METHOD'] == "POST")
+                $this->handlePOST();
 
             $dom = new DomDocument;
             $dom->load($full_path);

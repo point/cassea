@@ -147,6 +147,19 @@ class User
                 self::$user = new User();
         return self::$user;
     }// }}}
+
+     //{{{ dropUser
+    /**
+    * @return   void
+    */
+    public static function dropUser()
+    {
+        // проверить вызывающего. 
+        // Функция должна вызыватся тoлько из User:auth()
+        $ar = debug_backtrace();$caller = $ar[1];
+        if ( strtoupper($caller['class']) == 'SESSIONBASE' && strtoupper($caller['function']) == 'RESTORESESSION') self::$user = null;
+        else throw new Exception('Bad Caller');
+    }// }}}
     
     //{{{ auth
     /**
@@ -160,7 +173,6 @@ class User
         $sql = 'select login from '.User::TABLE_REGISTRATION.' where login="'.$login.'"';
         $r = DB::query($sql);
         if (count($r) == 1) return User::ERROR_USER_NOTACTIVE;
-        
         $r = DB::query('select id, login, email, password, sold, state from '.User::TABLE.' where login="'.$login.'"');
         if (count($r)!= 1 ) return User::ERROR_USER_NOT_EXIST;
         $r = $r[0];
@@ -168,7 +180,7 @@ class User
         if ($r['state'] == 'ban') return User::ERROR_USER_BANNED;
         if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
 
-        if (  $r['password'] != self::buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
+        if ($r['password'] != self::buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
             return User::ERROR_PASSWORD_INCORRECT;
 
         $this->id = 0+$r['id'];

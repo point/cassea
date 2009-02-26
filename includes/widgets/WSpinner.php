@@ -85,6 +85,7 @@ class WSpinner extends WEdit
 			$this->setMax((int)$elem['max']);
 		if(isset($elem['text']))
 			$this->setText((string)$elem['text']);
+        $this->setSize(5);
 		$this->addToMemento(array("step","min","max","text"));
 		parent::parseParams($elem);		    	
     }

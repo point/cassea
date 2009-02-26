@@ -27,11 +27,26 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/* Some code parts based on CodeIgnitier 
+ * author	ExpressionEngine Dev Team
+ * link		http://codeigniter.com/user_guide/libraries/input.html
+*/
+
+// Clean $_COOKIE Data
+// Also get rid of specially treated cookies that might be set by a server
+// or silly application, that are of no use to a CI application anyway
+// but that when present will trip our 'Disallowed Key Characters' alarm
+// http://www.ietf.org/rfc/rfc2109.txt
+// note that the key names below are single quoted strings, and are not PHP variables
+unset($_COOKIE['$Version']);
+unset($_COOKIE['$Path']);
+unset($_COOKIE['$Domain']);
+
 class HTTPParamHolder implements IteratorAggregate
 {
 	private $vars = array(),
 		$checked_vars = array();
-	function __construct(array $vars,$allow_array = true)
+	function __construct(array $vars,$allow_array = false)
 	{
 		if(!empty($this->vars) || !empty($this->checked_vars)) return;
 		if(!empty($vars))
@@ -41,7 +56,7 @@ class HTTPParamHolder implements IteratorAggregate
             if($k{0} === "_" && $k{1} !== "_") continue;
 			if((is_scalar($v) && mb_check_encoding($k,"UTF8") && mb_check_encoding($v,"UTF8"))||
 				$allow_array &&!is_scalar($v) && mb_check_encoding($k,"UTF8"))
-                $this->checked_vars[$k] = &$v;
+                $this->checked_vars[$k] = $this->sanitizeVars($v);
         }
 	}
 	function getAll()
@@ -85,5 +100,16 @@ class HTTPParamHolder implements IteratorAggregate
 		if(!isset($this->checked_vars[$var_name])) return;
 		unset($this->checked_vars[$var_name]);
 	}
+    private function sanitizeVars($str)
+    {
+        if(is_array($str))
+        {
+            $new_vals = array();
+            foreach($str as $k=>$v)
+                $new_vals[$k] = $this->sanitizeVars($v);
+            return $new_vals;
+        }
+        return Filter::sanitizeVars($str);
+    }
 }
 ?>

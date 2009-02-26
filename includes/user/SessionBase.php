@@ -219,6 +219,27 @@ class SessionBase
         throw new Exception('Method setUserId');
     }// }}}
 
+
+    public function restoreSession($sid){
+        //if (User::get()->getId() == User::GUEST) return false;
+        if (! preg_match('/^[A-Za-z0-9]{32}$/',$sid)) return false;
+        //$this->kill();
+        $this->remoteIP  = $this->getUserIP();
+        $ss = $this->getServerSession($sid);
+        $cs = $this->getClientSession();
+
+        $param = array();
+        if (is_array($ss) && $this->remoteIP == $ss['ip'] ){
+            $param = $ss;
+            $this->id = $sid;
+            $this->updateSession($param);
+            User::dropUser();
+            User::get();
+            return true;
+        }
+        return false;
+    }
+
 }// }}}
 
 ?>

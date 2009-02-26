@@ -404,12 +404,12 @@ class DataSourceObject extends DataObject
                 }
                 return $ret;
             }
-            elseif(($v = $this->findVlaueInStatic($w_id)) !== false)
+            elseif(($v = $this->findValueInStatic($w_id)) !== false)
                 return $v;
 		}
 		return null;
 	}
-	function findValueInObject($w_id)
+	/*function findValueInObject($w_id)
 	{
 		if(!isset($w_id) || !isset($this->object)) return false;
 
@@ -428,8 +428,55 @@ class DataSourceObject extends DataObject
         if(method_exists($this->object,"__call"))
             return call_user_func(array($this->object,strtolower($w_id)));
 		return false;
-	}
-	function findValueInStatic($w_id)
+    }*/
+    function findValueInObject($w_id)
+    {
+		if(!isset($w_id) || !isset($this->object)) return false;
+        try
+        {
+            $w_id = strtolower($w_id);
+            $ro = new ReflectionObject($this->object);
+            if($ro->hasProperty($w_id) && t($p = $ro->getProperty($w_id))->isPublic())
+                return $p->getValue($this->object);
+            if($ro->hasMethod("get".$w_id) && t($m = $ro->getMethod("get".$w_id))->isPublic())
+                return $m->invoke($this->object);
+            if($ro->hasMethod("get_".$w_id) && t($m = $ro->getMethod("get_".$w_id))->isPublic())
+                return $m->invoke($this->object);
+            if($ro->hasMethod($w_id) && t($m = $ro->getMethod($w_id))->isPublic())
+                return $m->invoke($this->object);
+            if($ro->hasMethod("__get"))
+                return $ro->getMethod("__get")->invoke($this->object,$w_id);
+            if($ro->hasMethod("__call"))
+                return $ro->getMethod("__call")->invoke($this->object,$w_id);
+
+            
+        }
+        catch(ReflectionException $e){ return false;}
+
+        return false;
+    }
+
+    function findValueInStatic($w_id)
+    {
+		if(!isset($w_id) || !isset($this->object)) return false;
+        try
+        {
+            $w_id = strtolower($w_id);
+            $ro = new ReflectionClass($this->classname);
+            if($ro->hasProperty($w_id) && t($p = $ro->getProperty($w_id))->isPublic() && $p->isStatic())
+                return $p->getValue(null);
+            if($ro->hasMethod("get".$w_id) && t($m = $ro->getMethod("get".$w_id))->isPublic() && $m->isStatic())
+                return $m->invoke(null);
+            if($ro->hasMethod("get_".$w_id) && t($m = $ro->getMethod("get_".$w_id))->isPublic() && $m->isStatic())
+                return $m->invoke(null);
+            if($ro->hasMethod($w_id) && t($m = $ro->getMethod($w_id))->isPublic() && $m->isStatic())
+                return $m->invoke(null);
+        }
+        catch(ReflectionException $e){ return false;}
+
+        return false;
+    }
+	/*function findValueInStatic($w_id)
 	{
 		if(!isset($w_id) || !$this->is_static) return false;
 
@@ -443,7 +490,7 @@ class DataSourceObject extends DataObject
 			return call_user_func($this->classname."::".ucfirst(strtolower($w_id)));
 		return false;
 
-	}
+    }*/
 	function hasDatasourceMethod()
 	{
 		return count($this->datasource_methods);

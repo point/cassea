@@ -344,8 +344,8 @@ abstract class WControl extends WComponent
     */
 	function buildComplete()
 	{
-		if(POSTErrors::hasErrors())
-            $this->restorePOST();
+		/*if(POSTErrors::hasErrors())
+            $this->restorePOST();*/
 		parent::buildComplete();
 	}    
 	// }}}
@@ -359,8 +359,6 @@ abstract class WControl extends WComponent
     */
     function preRender()
     {
-		/*if(POSTErrors::hasErrors())
-            $this->restorePOST();*/
     	if(isset($this->valuechecker))
     	{
 			$this->valuechecker->addWidgetId($this->getId());
@@ -370,6 +368,8 @@ abstract class WControl extends WComponent
 			Controller::getInstance()->getDispatcher()->notify($event);
 		}
 		parent::preRender();
+		if(POSTErrors::hasErrors())
+            $this->restorePOST();
     }
     // }}}
     // {{{ setAdditionalID

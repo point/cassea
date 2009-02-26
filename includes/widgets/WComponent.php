@@ -656,21 +656,6 @@ abstract class WComponent extends WObject
     }
     // }}}
     
-    // {{{ replaceWithLangConst
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $value  
-    * @return   string
-    */
-    // DEPRECATED
-    /*function replaceWithLangConst($value)
-    {
-		return $value;//Language::encode_admin_pair($value);
-    }*/
-    // }}}
-    
 	// {{{ setData
     /**
     * Method description

@@ -27,7 +27,7 @@ class LTC{
     */
     static public function setVals($oid, $values, $lang_id = 0)//{{{
     {
-        if ($lang_id == 0) $lang_id = Language::$current_language;
+        if ($lang_id == 0) $lang_id = Language::current();
         if ($lang_id == -1) $langs = Language::getLangList();
         else $langs = array($lang_id);
         if (count ($values) == 0) return 0;
@@ -58,7 +58,7 @@ class LTC{
     */
     static public function getVals($oid, $quote = false, $lang_id = 0)//{{{
     {
-        if ($lang_id == 0) $lang_id = Language::$current_language;
+        if ($lang_id == 0) $lang_id = Language::current();
 
         if (isset(self::$__LTCCache[$oid][($quote?1:2)][$lang_id])){
             return self::$__LTCCache[$oid][($quote?1:2)][$lang_id];
@@ -113,7 +113,7 @@ class LTC{
     function preload_objects($oids, $lang_id = 0)//{{{
     {
         if (!is_array($oids) || empty($oids)) return;
-        if ($lang_id == 0) $lang_id = Language::$current_language;
+        if ($lang_id == 0) $lang_id = Language::current();
         $res = DB::query('select oid, k , v from '.self::TABLE.' where oid in ( '.implode(', ', $oids ).') and lang_id='.$lang_id);
         if ( count($res) == 0 ) return 0;
         foreach ($res as $val){

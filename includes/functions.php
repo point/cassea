@@ -197,4 +197,51 @@ function getMime($file)
     finfo_close($finfo);
     return $mime;
 }
+function sizeFromString($size)
+{
+    if (is_numeric($size)) 
+        return (integer) $size;
+
+    $size = trim($size);
+    $value = substr($size, 0, -2);
+    switch (strtoupper(substr($size, -2))) 
+    {
+        case 'YB':
+            $value *= 1208925819614629174706176;
+            break;
+        case 'ZB':
+            $value *= 1180591620717411303424;
+            break;
+        case 'EB':
+            $value *= 1152921504606846976;
+            break;
+        case 'PB':
+            $value *= 1125899906842624;
+            break;
+        case 'TB':
+            $value *= 1099511627776;
+            break;
+        case 'GB':
+            $value *= 1073741824;
+            break;
+        case 'MB':
+            $value *= 1048576;
+            break;
+        case 'KB':
+            $value *= 1024;
+            break;
+    }
+    return $value;
+}
+
+function sizeToString($size)
+{
+    $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    for ($i=0; $size >= 1024 && $i < 9; $i++) 
+        $size /= 1024;
+    return round($size, 2) . $sizes[$i];
+}
+
+
+
 ?>

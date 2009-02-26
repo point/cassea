@@ -146,10 +146,10 @@ class StringProcessor
     {
         $d = $number%10;
         if($d == 1)
-            return Language::getLangConst($lang_const_base.'_1');
+            return Language::getConst($lang_const_base.'_1');
         if($d >=2 && $d <=4)
-            return Language::getLangConst($lang_const_base.'_2');
-        return Language::getLangConst($lang_const_base.'_3');
+            return Language::getConst($lang_const_base.'_2');
+        return Language::getConst($lang_const_base.'_3');
     }
     protected function relative_time($time, $locale = "ru_RU.UTF8") 
     {
@@ -164,21 +164,21 @@ class StringProcessor
             return strftime("%B %e, %Y, %R:%M", $timestamp);
 
         if ($delta > 86400 && $timestamp < $time) 
-            return Language::getLangConst("Yesterday_at")." " .strftime("%R:%M", $timestamp);
+            return Language::getConst("Yesterday_at")." " .strftime("%R:%M", $timestamp);
 
         if ($delta > 7200)
             $string .= ($f = floor($delta / 3600))." ".$this->timelang($f,"hour").", ";
         else if ($delta > 3660)
-            $string .= "1 ".Language::getLangConst("hour").", ";
+            $string .= "1 ".Language::getConst("hour").", ";
         else if ($delta >= 3600)
-            $string .= "1 ".Language::getLangConst("hour")." ";
+            $string .= "1 ".Language::getConst("hour")." ";
         $delta  %= 3600;
         
         if ($delta > 60)
             $string .= ($f = floor($delta / 60)) . " ".$this->timelang($f,"minutes")." ";
         else
             $string .= abs($delta)." ".$this->timelang($delta,"seconds")." ";
-        return ($delta > 0)?($string." ".Language::getLangConst("ago")):(Language::getLangConst("date_in")." ".$string);
+        return ($delta > 0)?($string." ".Language::getConst("ago")):(Language::getConst("date_in")." ".$string);
     }
 
     protected function relative_date($time,$locale = "ru_RU.UTF8") 
@@ -187,18 +187,18 @@ class StringProcessor
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
         if ($reldays >= 0 && $reldays < 1) 
-            return Language::getLangConst("today");
+            return Language::getConst("today");
          else if ($reldays >= 1 && $reldays < 2) 
-            return Language::getLangConst("tomorrow");
+            return Language::getConst("tomorrow");
          else if ($reldays >= -1 && $reldays < 0) 
-            return Language::getLangConst("yesterday");
+            return Language::getConst("yesterday");
         
         
         if (abs($reldays) < 7) 
             if ($reldays > 0) 
-                return Language::getLangConst('date_in').' '.($reldays = floor($reldays)).$this->timelang($reldays,' day') ;
+                return Language::getConst('date_in').' '.($reldays = floor($reldays)).$this->timelang($reldays,' day') ;
              else 
-                return ($reldays = abs(floor($reldays)))." ".$this->timelang($reldays,"day")." ".Language::getLangConst("ago");
+                return ($reldays = abs(floor($reldays)))." ".$this->timelang($reldays,"day")." ".Language::getConst("ago");
             
         
         setlocale(LC_TIME,$locale);
@@ -214,7 +214,7 @@ class StringProcessor
     protected function relative_datetime($time, $locale = "ru_RU.UTF8") 
     {
         $date = self::relative_date($time,$locale);
-        if ($date == Language::getLangConst("today")) 
+        if ($date == Language::getConst("today")) 
             return self::relative_time($time,$locale);
         return $date;
     }

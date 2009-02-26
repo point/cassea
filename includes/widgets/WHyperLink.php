@@ -100,7 +100,7 @@ class WHyperLink extends WContainer implements StringProcessable
             $this->setText((string)$elem['text']);
 
 		$this->items = new MixedCollection($this->getId(),$elem);
-		$this->addToMemento(array("href","baseurl","label","rel","rev","target"));
+        $this->addToMemento(array("href","baseurl","label","rel","rev","target"));
 
 		parent::parseParams($elem);		    	
     }
