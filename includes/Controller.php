@@ -116,6 +116,13 @@ class Controller
 			$this->controller_name = $m[1];
 		else throw new ControllerException('controller name not defined');
 
+        //some browsers (ie) have bugs, if host contains underscore
+        if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
+        {
+            header("HTTP/1.1 301 Moved Permanently");
+            header("Location: ".str_replace("_","-",requestURI(1)));
+            exit();
+        }
 
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
@@ -130,19 +137,10 @@ class Controller
 
         $config = Config::getInstance();
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
-        /*$this->determineLanguage();
-        
-        $this->header = Header::get();
-		$this->dispatcher = new EventDispatcher();
-		$this->display_mode_params = new DisplayModeParams();
-        $this->adjacency_list = new WidgetAdjacencyList();*/
 
 		Session::init();
         User::get();
 
-		/*POSTErrors::restoreErrorList();
-
-        $this->navigator = new Navigator($this->controller_name);*/
 	}
 	static function getInstance()
 	{
@@ -195,12 +193,7 @@ class Controller
 		$this->addScript("jquery.tooltip.js");
 		$this->addCSS("jquery.tooltip.css");
 		$this->addScript("jquery.treeview.js");
-		//$this->addScript("IE8.js","IE");
 		$this->addCSS("default.css");
-		/*$this->addScript("php_serialize.js");
-		$this->addScript("swfobject.js");
-		$this->addScript("formatDate.js");
-		$this->addScript("w.js");*/
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)
@@ -314,25 +307,6 @@ class Controller
                 }
         }
         // extending
-
-        /*$dom = $adj_list[0];
-        $blocks = t(new DOMXPath($dom))->query("//block[@id]");
-        for($i = 0, $c = $blocks->length;$i < $c;$i++)
-        {
-            if(($id = $blocks->item($i)->getAttribute("id")) == "") continue;
-            for($j = count($adj_list)-1; $j > 0; $j--)
-            {
-                $subst_blocks = t(new DOMXPath($adj_list[$j]))->query("//block[@id='".$id."']");
-                if(!$subst_blocks->length) continue;
-
-                $el = $blocks->item($i);
-                $el2 = $subst_blocks->item(0);
-
-                $el2 = $dom->importNode($el2,true);
-                $el->parentNode->replaceChild($el2,$el);
-                break;
-            }
-        }*/
 
         if(count($adj_list) > 1)
             for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
@@ -534,9 +508,6 @@ class Controller
 		$dh->parseParams($elem);
 		$this->datahandlers[] = $dh;
 
-		/*$this->datahandlers[] = array("id"=>$dh->getId(),'priority'=>$dh->getPriority(),"object"=>$dh); 
-		usort($this->datahandlers,create_function('$a,$b',
-			'return ($a["priority"] < $b["priority"])?-1:1;'));*/
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{
@@ -608,12 +579,6 @@ class Controller
 			$this->final_html .= $this->widgets[$name]->generateHTML();
 			$this->widgets[$name]->postRender();				
 		}
-	//	$this->saveCorrespMap();
-	/*	$h = &CHeader::get();
-		for($i = 0, $c = count($this->scripts); $i < $c; $i++)
-			$h->add_script('',array('src'=>$this->scripts[$i],'type'=>"text/javascript"));
-		for($i = 0, $c = count($this->css); $i < $c; $i++)
-			$h->add_css($this->css[$i]);*/
 		return $this->final_html;
 	}
 
@@ -661,16 +626,12 @@ class Controller
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->scripts))return;
-		/*if(strpos($src,"/") === false)
-			$src = "/way_scripts/".$src;*/
 		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".$src,'cond'=>$cond);
 	}
 	function addCSS($src = null,$cond = null,$media = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->css)) return;
-		/*if(strpos($src,"/") === false)
-			$src = "/way_admin/css/".$src;*/
 		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".$src,'cond'=>$cond, 'media'=>$media);
 	}
 	function getNavigator()

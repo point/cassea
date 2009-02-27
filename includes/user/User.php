@@ -147,19 +147,6 @@ class User
                 self::$user = new User();
         return self::$user;
     }// }}}
-
-     //{{{ dropUser
-    /**
-    * @return   void
-    */
-    public static function dropUser()
-    {
-        // проверить вызывающего. 
-        // Функция должна вызыватся тoлько из User:auth()
-        $ar = debug_backtrace();$caller = $ar[1];
-        if ( strtoupper($caller['class']) == 'SESSIONBASE' && strtoupper($caller['function']) == 'RESTORESESSION') self::$user = null;
-        else throw new Exception('Bad Caller');
-    }// }}}
     
     //{{{ auth
     /**

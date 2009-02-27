@@ -58,11 +58,11 @@ function &t(&$o)
 {return $o;}
 function requestURI($full = 0)
 {	
-	$s = $full?"http://".$_SERVER['SERVER_NAME']:"";
+	$s = $full?"http://".$_SERVER['HTTP_HOST']:"";
 	$uri = $_SERVER['REQUEST_URI'];
 	if(strpos($uri,"javascript:") !== false)
 		$uri = str_replace("javascript:","",$uri);
-	return $s.Filter::filter($uri,Filter::STRING_QUOTE_ENCODE);
+	return $s.Filter::filter(Filter::sanitizeVars($uri),Filter::STRING_QUOTE_ENCODE);
 }
 function getImgSizeNoCache($path = null)
 {
