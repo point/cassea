@@ -113,6 +113,13 @@ class DBException extends Exception
     }// }}}
 }// }}}
 
+// {{{ DBConnectException
+/**
+ * Исключение выбрасывается при ошибке соединения с базой данныйх.
+ */
+class DBConnectException extends Exception{}
+// }}}
+
 // {{{ DBStmt
 /**
  * "Подготовленные выражения"
