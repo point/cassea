@@ -40,6 +40,7 @@ class Language{
 
     // {{{ init
     public static function init(){
+        if(!Config::getInstance()->language->use) return;
         if (Config::getInstance()->language->cache_langs)
             self::$langs_cache = Storage::create('__Language::list__');
         if (Config::getInstance()->language->cache_consts)
@@ -115,6 +116,7 @@ class Language{
 
     // {{{ getConst
 	public static function getConst($key, $model = 'common'){
+        if(!Config::getInstance()->language->use) return $key;
         $lang = self::current();
         $cacheKey = $model.'.'.$key.'.'.$lang;
         
@@ -123,7 +125,10 @@ class Language{
             static $stmt;
             if (!is_object($stmt)) $stmt = DB::getStmt('select `v` from '.self::LANG_CONST_TABLE.' where `lang_id`=? AND  `package`=? AND `k`=?','iss');
             $r = $stmt->execute(array($lang,$model,$key));
-            $val =  self::$const_cache[$cacheKey] = (count($r) == 1) ? $r[0]['v'] : '{'.$model.'.'.$key.'}';
+            if (count($r) == 1)
+                $val =  self::$const_cache[$cacheKey] = $r[0]['v'];
+            else 
+                return self::$const_cache[$cacheKey] = '{'.$model.'.'.$key.'}';
         } 
         if (strpos( $val, '%') !== false){
             $args = array_slice(func_get_args(),1);
@@ -132,6 +137,92 @@ class Language{
         }
         return $val;
     }// }}}
+
+    // {{{ getPluralForm
+    /**
+     * В соотвествии с числом $n и языком выбирает соответствующую форму множественного числа.
+     *
+     * Правила получений формы и дополнительная информация: 
+     * http://www.gnu.org/software/gettext/manual/gettext.html.gz#Plural-forms
+     * http://translate.sourceforge.net/wiki/l10n/pluralforms
+     *
+     *
+     * @param int $n множественное число
+     * @param string{2} $lang двухбуквенное сокращение языка
+     * @return int номер формы
+     */
+    static private function getPluralForm($n, $lang){
+        if (!is_numeric($n) || $n < 0 ) return 0;
+        switch($lang){
+        // Croatian, Serbian, Russian, Ukrainian
+        case 'hr':
+        case 'sr':
+        case 'ru':
+        case 'ua':
+            $f = ($n%10 == 1 && $n%100 != 11) ? 0 :
+            ( ($n%10 >= 2 && $n %10 <= 4 && ($n % 100 < 10 || $n %100 >=20 ) )? 1: 2);
+        break; 
+        // Danish, Dutch, English, Faroese, German, Norwegian, Swedish
+        // Estonian, Finnish
+        // Greek
+        // Hebrew
+        // Italian, Portuguese, Spanish 
+        case 'en':
+        case 'de':
+            $f = ($n != 1)?1:0;
+            break;
+        default: $f = 0;
+        }
+        return $f;
+    }//}}}
+
+    // {{{ getPluralConst
+    /**
+     * 
+     *
+     * Пример:
+     * <code>
+     *  Language::getPluralConst($i, 'video_count', 'video', $i);
+     * </code>
+     * последний аргумент функции $i будет передан в функцию Language::getConst 
+     * в качестве аргументя для подстановки.
+     *
+     * Константы для обозначения множественного числа имееют суффикс вида "-[число]",
+     * где число обозначает форму.
+     * В примере значения языковых констант такие:
+     * video_count-0 = %s ролик (1, 51 ролик)
+     * video_count-1 = %s ролика (2, 24 ролика)
+     * video_count-2 = %s роликов  (10, 100 роликов)
+     * 
+     * Для различных языков количество форм различное, это необходимо 
+     * учитывать при локализации.
+     */
+    static function getPluralConst($n, $key, $model = 'common'){
+        $f= self::getPluralForm($n,self::currentName());
+        $args = array_slice(func_get_args(),1); $args[0] = $key.'-'.$f;
+        return  call_user_func_array(array('self','getConst'), $args);
+    }// }}}
+
+    // {{{ getPluralStatic
+    /**
+     * По заданному числу $n возвращает соотвествующую форму из масива $forms
+     *
+     * Результирующую строку пропускает через printf, с параметрами следующими за $forms
+     *
+     * @param int $n
+     * @param array $forms
+     * @param .... sprintf argumetns.
+     */
+    static function getPluralStatic($n, $forms){
+        $f= self::getPluralForm($n, 'ru');
+        $str = $forms[$f];
+        if (strpos( $str, '%') !== false){
+            $args = array_slice(func_get_args(),1); 
+            $args[0] = $str;
+            $str = call_user_func_array('sprintf', $args);
+        }
+        return $str;
+    }//}}}
 
     // {{{ ===== Admin ==== 
     // }}}

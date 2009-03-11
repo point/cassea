@@ -996,7 +996,6 @@ class DB{
         return $t;
     }// }}}
 
-
     // {{{ closeTransaction
     /**
      * Закрытие транзакции

@@ -150,8 +150,8 @@ anything else - literal text
 		if($this->getState() && $this->getVisible())
 		{
 			$controller = Controller::getInstance();
-			$controller->addCSS("ui.datepicker.css");
-			$controller->addScript("ui.datepicker.js");
+			$controller->addCSS("jquery-ui.css");
+			$controller->addScript("jquery.ui.js");
 			$controller->addScript("ui.datepicker-ru.js");
 		}
 		parent::buildComplete();

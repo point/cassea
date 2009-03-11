@@ -32,6 +32,37 @@
 // {{{ Header
 class Header
 {
+        /* Redirection 3xx */
+        const MULTIPLE_CHOICES = 300;
+        const MOVED_PERMANENTLY = 301;
+        const FOUND = 302;
+        const SEE_OTHER = 303;
+
+        /* Client Error 4xx */
+        const BAD_REQUEST = 400;
+        const UNAUTHORIZED = 401;
+        const PAYMENT_REQUIRED = 402;
+        const FORBIDDEN = 403;
+        const NOT_FOUND = 404;
+
+        /* Title build order */
+        const TITLE_BUILD_ORDER_NATIVE = 0;
+        const TITLE_BUILD_ORDER_REVERSE = 1;
+
+        private static $statusText =  array(
+            300 => 'Multiple Choices',
+            301 => 'Moved Permanently',
+            302 => 'Found',
+            303 => 'See Other',
+
+            400 => 'Bad Request',
+            401 => 'Unauthorized',
+            402 => 'Payment Required',
+            403 => 'Forbidden',
+            404 => 'Not Found'
+        );
+
+
         /**
         * Заголовки по умолчанию.
         * В данной версии используются заголовки против кэширования страницы
@@ -58,6 +89,14 @@ class Header
         * @var      string
         */
         private $title = null;
+        private $titleStart = null;
+        private $titleEnd = null;
+        private $titleSeparator = ' ';
+        private $titleItems = array();
+        /**
+         * Порядок формирования заголовка документа из елементов
+         */
+        private $titleBuildOrder = Header::TITLE_BUILD_ORDER_NATIVE;
         
         /**
         * Описание документа
@@ -118,15 +157,48 @@ class Header
 		if(!isset($header)) return;
 		$this->headers[] = $header;
     }// }}}
+    
     /** {{{ redirect
     * Переадресация клиента
+    *
+    * RFC 2616, 10.3.4
+    * RFC 2616, 10.3.3
+    *
     * @param    string $url    Адрес пересылки
     * @return   void
     */
-    function redirect( $url)
+    static function redirect( $url, $code = 302 )
     {
-		header('Location: '.$url);
+        Header($_SERVER['SERVER_PROTOCOL'].' '.$code.' '.self::$statusText[$code]); 
+        if (!strpos($url, '://'))  $url = Header::makeHTTPHost().$url;
+        header('Location: '.$url);
+
+        echo <<<GO
+            <html><head><title>Redirect</title></head><body><p><p> 
+            HTTP redirect (status code: $code ).<br> 
+            Follow the <a href="$url">"White Rabbit"</a>. 
+            </body></html> 
+GO;
         die();
+    }// }}}
+
+    /** {{{ makeHTTPHost
+     * Определение baseUrl: протокол, хост, порт
+     * @return string
+     */
+    static private function makeHTTPHost(){
+        return (empty($_SERVER['HTTPS'])?'http://':'https://').
+            $_SERVER['HTTP_HOST'].
+            (($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
+    }// }}}
+
+    /** {{{ error
+     * Генерация заголовков ошибок.
+     */
+    static function error($err = Header::NOT_FOUND){
+        header("HTTP/1.0 ".$err." ".self::$statusText[$err]);
+        if ( $err >=400 ) for ( $i = 0; $i< 20; $i++) echo '<!--=================================IE Pad=========================================-->';
+        exit(); 
     }// }}}
 
     /** {{{ setDoctype
@@ -144,6 +216,8 @@ class Header
         $this->doctype = $type;
     }// }}}
 
+    // {{{ ==== Title ====
+
     /** {{{ setTitle
     * Функция устанавливает поле title в заголовке
     * @param    string $title    
@@ -153,22 +227,88 @@ class Header
 	{
 		if(is_string($title)  && !empty($title) && strlen($title) <= 255)
 			$this->title = $title;
+    }// }}}
+
+    function getTitle(){
+        if (!empty($this->title)) return $this->title;;
+        $t = $this->generateTitle();
+        if (!empty($t)) return $t;
+        return null;
+    }
+
+    function generateTitle(){
+        $arr = $this->titleItems;
+        if (!is_null($this->titleStart))array_unshift($arr, $this->titleStart);
+        if (!is_null($this->titleEnd))array_push($arr, $this->titleEnd);
+        if ($this->titleBuildOrder == Header::TITLE_BUILD_ORDER_REVERSE) $arr = array_reverse($arr);
+        return implode($this->titleSeparator, $arr);
+    }
+
+
+
+    /** {{{ setTitleStart
+    * Функция устанавливает первый елемент заголовка страницы
+    * @param    string $titleStart
+    * @return   void
+    */
+    function setTitleStart($titleStart = "")
+	{
+		if(is_string($titleStart)  && !empty($titleStart) && strlen($titleStart) <= 255)
+			$this->titleStart = $titleStart;
           
     }// }}}
 
-    /** {{{ addToTitle
-    * Функция добавляет в заголовок заданную строку.
+    /** {{{ setTitleEnd
+    * Функция устанавливает последний елемент заголовка страницы
+    * @param    string $titleEnd
+    * @return   void
+    */
+    function setTitleEnd($titleEnd = "")
+	{
+		if(is_string($titleEnd)  && !empty($titleEnd) && strlen($titleEnd) <= 255)
+			$this->titleEnd = $titleEnd;
+          
+    }// }}}
+
+    /** {{{ setTitleSeparator
+    * Функция устанавливает разделитель между елементами заголовка старницы
+    * @param    string $titleSeparator 
+    * @return   void
+    */
+    function setTitleSeparator($titleSeparator = "")
+	{
+		if(is_string($titleSeparator)  && !empty($titleSeparator) && strlen($titleSeparator) <= 255)
+			$this->titleSeparator = $titleSeparator;
+          
+    }// }}}
+
+    /** {{{ setTitleBuildOrder
+    * Функция устанавливает порядок формирования заголовка страницы из елементов 
+    * @param    string $titleSeparator 
+    * @return   void
+    */
+    function setTitleBuildOrder($order = Header::TITLE_BUILD_ORDER_REVERSE)
+    {
+        if ($order == Header::TITLE_BUILD_ORDER_REVERSE || $order == Header::TITLE_BUILD_ORDER_NATIVE)
+			$this->titleBuildOrder = $order;
+    }// }}}
+
+
+    /** {{{ addTitleItem
+    * Функция добавляет в конец списка елементов заголовока заданную строку.
     * 
     * Функция необходима для создания заголовка страницы по типу:
     * :: главная :: каталог :: мобильные телефоны ::
-    * @param    string $title   
+    * @param    string $item  
     * @return   void
     */
-    function addToTitle($title)
-	{
-		if(is_string($title)  && !empty($title))
-			$this->title .= (" ".$str);
+    function addTitleItem($item = "")
+    {
+		if(is_string($item)  && !empty($item))
+			$this->titleItems[] = $item;
     }// }}}
+
+    // }}} ==== Title ====
 
     /** {{{ setDescription
     * Устанавливает описание документа
@@ -381,8 +521,9 @@ class Header
         $r.= "<html><head>\n";        
 
         // title
-        if ( isset($this->title))
-			$r .= "<title>$this->title</title>\n";
+        $t = $this->getTitle();
+        if ( !empty($t))
+			$r .= "<title>$t</title>\n";
 		
 		// description
 		if (isset($this->description))
@@ -415,17 +556,5 @@ class Header
 
         return $r;
     }// }}}
-    /** {{{ footer
-    * Возвращает закрывающий </html> и генерирует событие OutputEnd
-    * @return   string
-    */
-    /*function footer()
-    {
-        echo "</html>";
-        $d = DB::get();
-        $d->sql_close();
-          
-	}*/// }}}
 }   
 // }}}
-?>

@@ -226,8 +226,12 @@ class SelectorMatcher
 				//return false;
 				$w2 = $widget;
 				$parent = null;
-                if($w2 instanceof WRoll) $parent = $w2->getId();
-                else
+                
+                // inconvinient in case of nested rolls
+                // to select odd rows, for example, "wroll > wtablerow:odd" syntax should be used
+
+                /*if($w2 instanceof WRoll) $parent = $w2->getId();
+                else*/
                     while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
                         if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
                         else $w2 = $controller->getWidget($p);

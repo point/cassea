@@ -58,6 +58,10 @@ class WImage extends WComponent
         */
         $max_width = null,
         /**
+        * @var      File 
+        */
+		$file =  null,
+        /**
         * @var      string
         */
 		$src = "",
@@ -207,6 +211,36 @@ class WImage extends WComponent
 		return $this->width;
     }
     // }}}
+
+    // {{{ setFile
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $width    
+    * @return   void
+    */
+    function setFile($file)
+    {
+        if(!isset($file) || !is_object($file) || !($file instanceof iFile)) return;
+        $this->file = $file;
+        $this->setSrc( ($this->file->exists())?$this->file->getURL():null ) ;
+    }
+    // }}}
+    
+    // {{{ getFile
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getFile()
+    {
+		return $this->file;
+    }
+    // }}}
     // {{{ setSrc 
     /**
     * Method description
@@ -273,13 +307,14 @@ class WImage extends WComponent
             return;
         }
 
-		if($this->getMaxWidth() || $this->getMaxHeight())
+		if(($this->getMaxWidth() || $this->getMaxHeight()) && !is_null($this->file))
         {
-            $url = 'http://'.$_SERVER['HTTP_HOST'].$this->getSrc();
-            list($width, $height) = getimagesize($url);
-			$a = recalcSize($width, $height,$this->getMaxWidth(),$this->getMaxHeight());
-            $this->setWidth($a['width']);
-			$this->setHeight($a['height']);
+
+            list($width, $height) = getimagesize($this->file->getPath());
+
+            $a = recalcSize($width, $height,$this->getMaxWidth(),$this->getMaxHeight());
+            $this->setWidth($a['0']);
+			$this->setHeight($a['1']);
 		}
 
 		if($this->getWithPreview())
@@ -332,7 +367,9 @@ EOD;
 		$this->setAlt($data->get('alt'));
 		$this->setMaxWidth($data->get('max_width'));
 		$this->setMaxHeight($data->get('max_height'));
-		$this->setWithPreview($data->get('with_preview'));
+        $this->setWithPreview($data->get('with_preview'));
+        $this->setFile($data->get('file'));
+
 
 		parent::setData($data);
     }

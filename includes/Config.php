@@ -187,8 +187,11 @@ class IniDBConfig extends IniConfig
     protected function loadData()
     {
         $this->table_data = array();
+        try
+        {
         foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
             $this->table_data[$v['key']] = $v['value'];
+        }catch(DBConnectException $e) {}
     }
     function get($name)
     {

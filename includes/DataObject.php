@@ -79,7 +79,7 @@ class DataObjectParams
 						$p[$i] = Filter::filter($p[$i],(string)$param->filter[$i]);
 				}
 				if(isset($param['as']) && $param['as'] == "array")
-					$this->params[] = $p;
+					$this->params[] = array_filter($p);
 				else
 					foreach($p as $_p)
 						$this->params[] = $_p;
@@ -396,7 +396,7 @@ class DataSourceObject extends DataObject
                     try
                     {
                         $r = new ReflectionClass($this->classname);
-                        if(!$r->getMethod($method)->isAbstract())
+                        if(!$r->getMethod($method)->isAbstract() && $r->getMethod($method)->isStatic())
                             $ret[] = call_user_func_array($this->classname."::".$method,$this->datasource_params[$ind]->getParams());
                     }
                     catch(ReflectionException $e){return null;}
@@ -409,26 +409,7 @@ class DataSourceObject extends DataObject
 		}
 		return null;
 	}
-	/*function findValueInObject($w_id)
-	{
-		if(!isset($w_id) || !isset($this->object)) return false;
-
-		if(property_exists($this->object,$w_id))
-			return $this->object->$w_id;
-		if(method_exists($this->object,"get".ucfirst(strtolower($w_id))))
-			return call_user_func(array($this->object,"get".ucfirst(strtolower($w_id))));
-		if(method_exists($this->object,"get_".strtolower($w_id)))
-            return call_user_func(array($this->object,"get_".strtolower($w_id)));
-		if(method_exists($this->object,$w_id))
-			return call_user_func(array($this->object,$w_id));
-		if(method_exists($this->object,ucfirst(strtolower($w_id))))
-            return call_user_func(array($this->object,ucfirst(strtolower($w_id))));
-        if(method_exists($this->object,"__get"))
-            return $this->object->$w_id;
-        if(method_exists($this->object,"__call"))
-            return call_user_func(array($this->object,strtolower($w_id)));
-		return false;
-    }*/
+	
     function findValueInObject($w_id)
     {
 		if(!isset($w_id) || !isset($this->object)) return false;
@@ -436,13 +417,15 @@ class DataSourceObject extends DataObject
         {
             $w_id = strtolower($w_id);
             $ro = new ReflectionObject($this->object);
-            if($ro->hasProperty($w_id) && t($p = $ro->getProperty($w_id))->isPublic())
+            if($ro->hasProperty($w_id) && @t($p = $ro->getProperty($w_id))->isPublic())
                 return $p->getValue($this->object);
-            if($ro->hasMethod("get".$w_id) && t($m = $ro->getMethod("get".$w_id))->isPublic())
+            if($ro->hasMethod("get".$w_id) && @t($m = $ro->getMethod("get".$w_id))->isPublic())
                 return $m->invoke($this->object);
-            if($ro->hasMethod("get_".$w_id) && t($m = $ro->getMethod("get_".$w_id))->isPublic())
+            if($ro->hasMethod("get".str_replace("_","",$w_id)) && t($m = $ro->getMethod("get".str_replace("_","",$w_id)))->isPublic())
                 return $m->invoke($this->object);
-            if($ro->hasMethod($w_id) && t($m = $ro->getMethod($w_id))->isPublic())
+            if($ro->hasMethod("get_".$w_id) && @t($m = $ro->getMethod("get_".$w_id))->isPublic())
+                return $m->invoke($this->object);
+            if($ro->hasMethod($w_id) && @t($m = $ro->getMethod($w_id))->isPublic())
                 return $m->invoke($this->object);
             if($ro->hasMethod("__get"))
                 return $ro->getMethod("__get")->invoke($this->object,$w_id);
@@ -463,34 +446,22 @@ class DataSourceObject extends DataObject
         {
             $w_id = strtolower($w_id);
             $ro = new ReflectionClass($this->classname);
-            if($ro->hasProperty($w_id) && t($p = $ro->getProperty($w_id))->isPublic() && $p->isStatic())
+            if($ro->hasProperty($w_id) && @t($p = $ro->getProperty($w_id))->isPublic() && $p->isStatic())
                 return $p->getValue(null);
-            if($ro->hasMethod("get".$w_id) && t($m = $ro->getMethod("get".$w_id))->isPublic() && $m->isStatic())
+            if($ro->hasMethod("get".$w_id) && @t($m = $ro->getMethod("get".$w_id))->isPublic() && $m->isStatic())
                 return $m->invoke(null);
-            if($ro->hasMethod("get_".$w_id) && t($m = $ro->getMethod("get_".$w_id))->isPublic() && $m->isStatic())
+            if($ro->hasMethod("get".str_replace("_","",$w_id)) && @t($m = $ro->getMethod("get".str_replace("_","",$w_id)))->isStatic())
+                return $m->invoke($this->object);
+            if($ro->hasMethod("get_".$w_id) && @t($m = $ro->getMethod("get_".$w_id))->isPublic() && $m->isStatic())
                 return $m->invoke(null);
-            if($ro->hasMethod($w_id) && t($m = $ro->getMethod($w_id))->isPublic() && $m->isStatic())
+            if($ro->hasMethod($w_id) && @t($m = $ro->getMethod($w_id))->isPublic() && $m->isStatic())
                 return $m->invoke(null);
         }
         catch(ReflectionException $e){ return false;}
 
         return false;
     }
-	/*function findValueInStatic($w_id)
-	{
-		if(!isset($w_id) || !$this->is_static) return false;
 
-		if(method_exists($this->classname,"get".ucfirst(strtolower($w_id))))
-			return call_user_func($this->classname."::get".ucfirst(strtolower($w_id)));
-		if(method_exists($this->classname,"get_".strtolower($w_id)))
-			return call_user_func($this->classname,"::get_".strtolower($w_id));
-		if(method_exists($this->classname,$w_id))
-			return call_user_func($this->classname."::".$w_id);
-		if(method_exists($this->classname,ucfirst(strtolower($w_id))))
-			return call_user_func($this->classname."::".ucfirst(strtolower($w_id)));
-		return false;
-
-    }*/
 	function hasDatasourceMethod()
 	{
 		return count($this->datasource_methods);

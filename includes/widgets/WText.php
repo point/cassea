@@ -30,9 +30,9 @@
 
 // $Id$
 //
-WidgetLoader::load("WComponent");
+WidgetLoader::load("WContainer");
 //{{{ WText
-class WText extends WComponent implements StringProcessable
+class WText extends WContainer implements StringProcessable
 {
     protected
 
@@ -132,7 +132,8 @@ class WText extends WComponent implements StringProcessable
         /**
         * @var      string
         */
-        $text = "",
+        $text = null,
+        $items = null,
         /**
         * @var      boolean
         */
@@ -166,8 +167,10 @@ class WText extends WComponent implements StringProcessable
     function parseParams(SimpleXMLElement $params)
     {
 		$this->setTextStyle($params);
-		if((string)$params)
+		if(!count($params->children()))
 	    	$this->setText((string) $params);
+        else
+            $this->items = new WidgetCollection($this->getId(),$params);
         foreach($this as $prop_name =>$prop_val)
             if(substr($prop_name,0,3) == "is_")
                 $a[] = $prop_name;
@@ -249,6 +252,8 @@ class WText extends WComponent implements StringProcessable
 		}		
 		$this->tpl = $this->createTemplate();
 		parent::preRender();
+        if(!isset($this->text))
+            $this->setText($this->items->generateAllHTML());
     }
 	// }}}    
     // {{{ assignVars

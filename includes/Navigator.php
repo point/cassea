@@ -76,7 +76,7 @@ class Navigator
                 if(isset($this->user_path[$i]) && isset($this->user_path[$i]['page']) &&  $this->user_path[$i]['page'] == $page_name){
                     $this->user_path = array_slice($this->user_path,$i);
                     $this->user_path[$i]['url'] = requestURI(1);
-                    $this->user_path[$i]['page'] == $page_name;
+                    $this->user_path[$i]['page'] = $page_name;
                     $to_add = false;
                 }
             if($to_add)
@@ -91,7 +91,6 @@ class Navigator
                     "controller"=>$this->controller_name
                 ));
             }
-
         }
         $this->storage->set("user_path",$this->user_path);
 	}

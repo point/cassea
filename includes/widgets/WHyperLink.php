@@ -60,7 +60,12 @@ class WHyperLink extends WContainer implements StringProcessable
         /**
         * @var      string
         */
-		$target = null
+        $target = null,
+        /**
+        * @var      string
+        */
+        $name = null
+
   	;
     
     // {{{ __construct
@@ -98,9 +103,11 @@ class WHyperLink extends WContainer implements StringProcessable
             $this->setAttribute('target',(string)$elem['target']);
         if(isset($elem['text']))
             $this->setText((string)$elem['text']);
+        if(isset($elem['name']))
+            $this->setName((string)$elem['name']);
 
 		$this->items = new MixedCollection($this->getId(),$elem);
-        $this->addToMemento(array("href","baseurl","label","rel","rev","target"));
+        $this->addToMemento(array("href","baseurl","label","rel","rev","target","name"));
 
 		parent::parseParams($elem);		    	
     }
@@ -148,6 +155,8 @@ class WHyperLink extends WContainer implements StringProcessable
     */
 	function buildComplete()
 	{
+        if(isset($this->name))
+            $this->setHREF("");
         if($this->items->isEmpty())
             if(isset($this->text))
                 $this->items->setText($this->getText());
@@ -172,9 +181,10 @@ class WHyperLink extends WContainer implements StringProcessable
     {
 		$this->tpl->setParamsArray(array(
 			'href'=> $this->getHREF(), 
-			"rev"=> (!empty($this->rev))?('rev="'.$this->rev.'"'):'',
-			"rel" => (!empty($this->rel))?('rel="'.$this->rel.'"'):'',
-			"target"=>(!empty($this->target))?('target="'.$this->target.'"'):'',
+            'name' => (!empty($this->name))?(" name=\"".$this->getName()."\" "):'',
+			"rev"=> (!empty($this->rev))?(' rev="'.$this->rev.'" '):'',
+			"rel" => (!empty($this->rel))?(' rel="'.$this->rel.'" '):'',
+			"target"=>(!empty($this->target))?(' target="'.$this->target.'" '):'',
 			"text"=>Language::encodePair($this->items->generateAllHTML())
 		));
 		parent::assignVars();
@@ -239,6 +249,35 @@ class WHyperLink extends WContainer implements StringProcessable
     function getText()
     {
 		return $this->text;
+    }
+    // }}}
+    
+    // {{{ setName 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $name    
+    * @return   void
+    */
+    function setName($name = null)
+    {
+		if(!isset($name) || !is_scalar($name)) return ;
+		$this->name = (string)$name;
+    }
+    // }}}
+    
+    // {{{ getName 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getName()
+    {
+		return $this->name;
     }
     // }}}
 }

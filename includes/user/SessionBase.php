@@ -33,7 +33,7 @@
 * Базовый Класса для Сессий
 * @author       billy
 */
-class SessionBase
+abstract class SessionBase
 {
    
     /**
@@ -219,7 +219,12 @@ class SessionBase
         throw new Exception('Method setUserId');
     }// }}}
 
+    //{{{ getOnlineUsers
+    /**
+    * @return   array
+    */
+    abstract public function getOnlineUsers( );
+    // }}}
 
 }// }}}
 
-?>

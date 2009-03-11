@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root allow="admin">
+	<WDataSet static="1">
+		<model>markdownmedia</model>
+		<classname>Browser</classname>
+		<datasource method="ls">
+			<param from="p2" as="array"/>
+		</datasource>
+	</WDataSet>
+	<WCSS>
+img {border:0px;}
+.df {width:100%;}
+.dir , .file
+{
+position:relative;
+width:138px; 
+height:180px;
+padding:5px; 
+border:1px solid #DFDFDF; 
+float:left;
+margin-right:5px;
+margin-bottom:5px;
+}
+.dir a.t , .file a.t
+{
+position:absolute;
+bottom:5px;
+left:5px;
+width:128px;
+text-align:center; 
+border:1px solid #DFDFDF; 
+padding:5px;
+margin-bottom:0px;
+overflow:hidden;
+}
+
+.dir input , .file input
+{
+position:absolute;
+top:5px;
+right:5px;
+z-index:100;
+}
+.file a 
+{ font-size:80%;}
+
+hr {background:#ddd;color:#ddd;clear:both;float:none;width:100%;height:.1em;margin:0 0 1.45em;border:none;}
+hr.space {background:#fff;color:#fff;}
+
+fieldset 
+{border:none; margin-top:20px;width:400px;}
+	</WCSS>
+
+
+	<WJavaScript id="confirm" onclick="return confirm('Удалить?')"/>
+	<WJavaScript id="insertPicture" onclick="return insertPicture(this)"/>
+	<WJavaScript id="insertPictureImpl" >
+		<before>
+			<![CDATA[
+function insertPicture(o)
+{
+name = o.href.substring(o.href.lastIndexOf("/")+1);
+try{
+parent.$.markItUp({replaceWith:'![[![Alt Text:!:'+name+']!]]('+o.href+')'});
+parent.$(".markdownmedia").dialog('destroy');
+}catch(e){alert('error');return false;}
+return false;	
+}
+
+]]>
+		</before>
+	</WJavaScript>
+
+	<WDataHandler static="1" forms="mkdir">
+		<model>markdownmedia</model>
+		<classname>Browser</classname>
+		<handler method="mkdir">
+			<param from="p2" as="array"/>
+		</handler>
+	</WDataHandler>
+
+	<WDataHandler static="1" forms="delete">
+		<model>markdownmedia</model>
+		<classname>Browser</classname>
+		<handler method="delete">
+			<param from="p2" as="array"/>
+		</handler>
+	</WDataHandler>
+	<WDataHandler static="1" forms="upload">
+		<model>markdownmedia</model>
+		<classname>Browser</classname>
+		<handler method="upload">
+			<param from="p2" as="array"/>
+		</handler>
+	</WDataHandler>
+
+
+	<WText br="1"/>
+	<WForm id="delete" javascript="insertPictureImpl">
+	<WBlock class="df">
+		<WBlock class="dir" id="parent">
+			<WHyperLink class="i"><WImage src="/w_images/folder-128.png"/></WHyperLink>
+			<WHyperLink class="t"><WText>Parent</WText></WHyperLink>
+		</WBlock>
+		<WRoll id="dirs" >
+			<WBlock class="dir" id="cd">
+				<WHyperLink class="i"><WImage src="/w_images/folder-128.png"/></WHyperLink>
+				<WHyperLink class="t"><WText></WText></WHyperLink>
+				<WButton id="ddel" src="/w_images/delete-32.png" alt="DELETE" tooltip="Удалить?" javascript="confirm"/>
+			</WBlock>
+		</WRoll>
+		<WRoll id="files">
+			<WBlock class="file" id="choose">
+				<WHyperLink class="i" javascript="insertPicture"><WImage id="preview" max_height="128" max_width="128" alt="preview"/></WHyperLink>
+				<WHyperLink class="t" javascript="insertPicture"><WText id="fname"/><WText id="stat" process="prepend ( true | append ) true"/></WHyperLink>
+				<WButton id="fdel" src="/w_images/delete-32.png" alt="DELETE" tooltip="Удалить?" javascript="confirm"/>
+			</WBlock>
+		</WRoll>
+	</WBlock>
+	</WForm>
+	<WText hr="1" class="space"/>
+	<WForm id="upload">
+		<WFieldSet legend="Загрузить">
+			<WFile name="uploaded_file"/><WText br="1"/>
+			<WText>Переименовать </WText><WEdit name="upload_rename" size="23"/>
+			<WButton value="Загрузить"></WButton>
+		</WFieldSet>
+	</WForm>
+
+
+		<WValueChecker id="r">
+			<check rule="required"/>
+		</WValueChecker>
+
+	<WForm id="mkdir">
+		<WFieldSet legend="Создать папку">
+			<WEdit name="dirname" size="20" valuechecker="r"/>
+			<WButton value="Создать"></WButton>
+		</WFieldSet>
+	</WForm>
+</root>

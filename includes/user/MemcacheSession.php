@@ -94,6 +94,13 @@ class MemcacheSession extends SessionBase
     private function getStorageName($sid){
         return 'session:'.$sid;
     }
-}// }}}
 
-?>
+    //{{{ getOnlineUsers
+    /**
+    * @return   array
+    */
+    public function getOnlineUsers( )
+    {
+        return array();
+    }// }}}
+}// }}}

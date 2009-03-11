@@ -125,7 +125,6 @@ class SmtpMail extends MailTransport{
                 if($code!= 250) {$this->errMsg('ehlo',' ');fclose($this->smtpCt);return false;}
             }
 
-
    			fputs($this->smtpCt,"AUTH LOGIN\r\n");
 			$code = substr($this->getData($this->smtpCt),0,3);
 			if($code != 334) {$this->errMsg('authLogin',' ');fclose($this->smtpCt);return false;}
@@ -171,7 +170,7 @@ class SmtpMail extends MailTransport{
 			if($code != 354) {$this->errMsg('data',' ');fclose($this->smtpCt);return false;}
 	        fputs($this->smtpCt,$pointer->createHeader()."\r\n".$pointer->mailBody()."\r\n.\r\n");
 			$code = substr($this->getData($this->smtpCt),0,3);
-			if($code != 250) {$this->errMsg('sendMerssage',' ');fclose($this->smtpCt);return false;}
+			if($code != 250) {$this->errMsg('sendMessage',' ');fclose($this->smtpCt);return false;}
 			fputs($this->smtpCt,"QUIT"."\r\n");
 			fclose($this->smtpCt);
 		    return true;

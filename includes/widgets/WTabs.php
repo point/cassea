@@ -82,9 +82,8 @@ class WTabs extends WContainer
 			$this->tpl = $this->createTemplate();
 
 		$controller = Controller::getInstance();
-		$controller->addScript("ui.core.js");
-		$controller->addScript("ui.tabs.js");
-		$controller->addCSS("ui.tabs.css");
+		$controller->addScript("jquery.ui.js");
+		$controller->addCSS("jquery.ui.css");
 
 		$this->tabs->filter("WTab");
 		parent::buildComplete();

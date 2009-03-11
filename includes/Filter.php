@@ -162,7 +162,6 @@ class Filter
 	{
 		return str_replace(self::$encode_original,self::$encode_replacement,trim($var));
 	}
-
     static function sanitizeVars($str)
     {
 		/*

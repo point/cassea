@@ -96,6 +96,16 @@ class DBSession extends SessionBase
         return DB::getMysqli()->affected_rows;
     }// }}}
     
+    //{{{ getOnlineUsers
+    /**
+    * @return   array
+    */
+    public function getOnlineUsers( )
+    {
+        $r = DB::query('select distinct user_id from '.self::TABLE.' where user_id != '.User::GUEST );
+        for ($i =0, $c = count($r); $i < $c; $i++)
+            $r[$i] = $r[$i]['user_id'];
+        return $r;
+    }// }}}
 }// }}}
 
-?>

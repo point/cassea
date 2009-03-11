@@ -80,9 +80,12 @@ class UploadedFiles
                 'application/x-gzip'=>null,
                 'application/x-bzip2'=>null
             );
-    function __construct()
+    function __construct($names = null)
     {
-        foreach($_FILES as $name => $v)
+        if (is_null($names)) $httpFiles = $_FILES;
+        else $httpFiles = array_intersect_key($_FILES, array_flip(is_scalar($names)? array($names): $names));
+        print_pre($httpFiles);
+        foreach($httpFiles as $name => $v)
             if(is_scalar($v['error']))
                 if($v['error']  === UPLOAD_ERR_OK && is_uploaded_file($v['tmp_name']) && $v['size'] !== 0)
                     $this->http_files[$name] = $v;
@@ -110,6 +113,21 @@ class UploadedFiles
     {
         $name = isset($additional_id)?$w_name."\\".$additional_id:$w_name;
         return (isset($this->http_files[$name]))?$this->http_files[$name]:null;
+    }
+    function setFileName($newFileName, $w_name, $additional_id = null)
+    {
+        $name = isset($additional_id)?$w_name."\\".$additional_id:$w_name;
+        if (isset($this->http_files[$name])) $this->http_files[$name]['name'] = $newFileName;
+
+        return (isset($this->http_error_files[$name]))?$this->http_error_files[$name]:null;
+
+    }
+
+    function getUploaded(){
+        $uploaded = array();
+        foreach($this->http_files as $name => $info)
+            if (!isset($this->http_error_files[$name])) $uploaded[] = $info;
+        return $uploaded;
     }
     function hasErrors()
     {
@@ -211,7 +229,6 @@ class UploadedFiles
     function allowedSize($min = null, $max = null)
     {
         if($min === null && $max === null) return $this;
-
         $min = $this->sizeFromString($min);
         $max = $this->sizeFromString($max);
         $min = abs($min);$max = abs($max);

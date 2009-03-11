@@ -29,6 +29,4 @@
 require("../includes/Controller.php");
 $c = Controller::getInstance();
 $c->init();
-$c->head();
-echo $c->allHTML();
-$c->tail();
+$c->getHeadBodyTail(1);

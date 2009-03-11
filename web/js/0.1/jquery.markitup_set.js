@@ -34,7 +34,17 @@ mySettings = {
 			return markItUp.line+'. ';
 		}},
 		{separator:'---------------' },
-		{name:'Picture', key:'P', replaceWith:'![[![Alternative text]!]]([![Url:!:http://]!] "[![Title]!]")'},
+		/*{name:'Picture', key:'P', replaceWith:'![[![Alternative text]!]]([![Url:!:http://]!] "[![Title]!]")'},*/
+		{name:'Picture', beforeInsert:function(){
+				$('<iframe class="markdownmedia" src="/markdownmedia/" frameborder="0" scrolling="auto"></iframe>').dialog({
+				bgiframe:true,
+				height:400,
+				width:600,
+				modal:true
+				});
+				$(".markdownmedia").width("570");
+			}
+		},
 		{name:'Link', key:'L', openWith:'[', closeWith:']([![Url:!:http://]!] "[![Title]!]")', placeHolder:'Your text to link here...' },
 		{separator:'---------------'},	
 		{name:'Quotes', openWith:'> '},

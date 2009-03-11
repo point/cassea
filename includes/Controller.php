@@ -29,12 +29,13 @@
 
 // $Id$
 //
-set_include_path(".");
+set_include_path('.');
 require("functions.php");
 require("Config.php");
 require("Storage.php");
 require("Filter.php");
 require("HTTPParamHolder.php");
+require("FileStorage.php");
 require("Header.php");
 require("Navigator.php");
 require("Template.php");
@@ -106,7 +107,8 @@ class Controller
 			$checker_rules = array(),
             $pagehandler = null,
             $ie_files = array(), //included and extending files
-            $captcha_name = null
+            $captcha_name = null,
+            $notifyStorage = null
 			;
 
 
@@ -118,11 +120,7 @@ class Controller
 
         //some browsers (ie) have bugs, if host contains underscore
         if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
-        {
-            header("HTTP/1.1 301 Moved Permanently");
-            header("Location: ".str_replace("_","-",requestURI(1)));
-            exit();
-        }
+            Header::redirect(str_replace("_","-",requestURI(1)), 301);
 
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
@@ -192,7 +190,7 @@ class Controller
 		$this->addScript("jquery.bgiframe.js");
 		$this->addScript("jquery.tooltip.js");
 		$this->addCSS("jquery.tooltip.css");
-		$this->addScript("jquery.treeview.js");
+		//$this->addScript("jquery.treeview.js");
 		$this->addCSS("default.css");
 
 		$dom = new DomDocument;
@@ -222,7 +220,7 @@ class Controller
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
             throw new ControllerException('page '.$this->page.' is for internal use only');
-        //{header("HTTP/1.0 404 Not Found");exit();}
+        //Header::error();
         return $full_path;
     }
 	protected final function parseP1P2()
@@ -234,14 +232,18 @@ class Controller
 			
 		if(isset($this->get->__p2))
 		{
-			$this->p2 = $this->get->__p2;
-			if ( strpos($this->p2,'/') === 0 ) 
+			$this->p2 = urldecode($this->get->__p2);
+			/*if ( strpos($this->p2,'/') === 0 ) 
 				$this->p2 = substr($this->p2, 1);
 
 			if ( strlen($this->p2) -1 ===  strrpos($this->p2,'/'))		
-				$this->p2 = substr($this->p2, 0, -1);
+                $this->p2 = substr($this->p2, 0, -1);*/
 
-			$this->p2 = explode("/",$this->p2);
+            $this->p2 = trim($this->p2,"/");
+
+            if(!empty($this->p2))
+                $this->p2 = explode("/",$this->p2);
+            else $this->p2 = array();
 		}
     }
     protected final function pagePath($src)
@@ -266,8 +268,7 @@ class Controller
         // check rights
         $a = $dom->firstChild->getAttribute('allow');
         $d = $dom->firstChild->getAttribute('deny');
-       if(!ACL::check($a,$d))
-           {header("HTTP/1.0 403 Forbidden");exit();}
+        if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
            //die("ACL!");
 
         // extends
@@ -282,8 +283,7 @@ class Controller
             //$included_pages[] = $e_src;
             $_a = $t_dom->firstChild->getAttribute('allow');
             $_d = $t_dom->firstChild->getAttribute('deny');
-            if(!ACL::check($_a,$_d))
-               {header("HTTP/1.0 403 Forbidden");exit();}
+            if(!ACL::check($_a,$_d)) Header::error(Header::FORBIDDEN);
            //die("ACL!");
             array_unshift($included_pages,$e_src);
             array_unshift($adj_list,$t_dom);
@@ -507,7 +507,6 @@ class Controller
 		$dh = new WDataHandler(isset($elem['id'])?$elem['id']:null);
 		$dh->parseParams($elem);
 		$this->datahandlers[] = $dh;
-
 	}
 	protected function addStyle(SimpleXMLElement $elem)
 	{
@@ -578,7 +577,11 @@ class Controller
             if(!$widget->getState()) continue;
 			$this->final_html .= $this->widgets[$name]->generateHTML();
 			$this->widgets[$name]->postRender();				
-		}
+        }
+
+        $this->final_html.= $this->processNotifications();
+            
+
 		return $this->final_html;
 	}
 
@@ -601,7 +604,17 @@ class Controller
 		if($echo)
 			echo $v;
 		else return $v; 
-	}
+    }
+
+    function getHeadBodyTail($echo = 1){
+        $body = $this->allHTML();
+        $head = $this->head(0);
+        $tail = $this->tail(0);
+        if ($echo) echo $head,$body,$tail;
+        else return $head.$body.$tail;
+
+    }
+
 	function getDispatcher()
 	{
 		return $this->dispatcher;
@@ -626,13 +639,13 @@ class Controller
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->scripts))return;
-		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".$src,'cond'=>$cond);
+		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".ltrim($src,"/"),'cond'=>$cond);
 	}
 	function addCSS($src = null,$cond = null,$media = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->css)) return;
-		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".$src,'cond'=>$cond, 'media'=>$media);
+		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".ltrim($src,"/"),'cond'=>$cond, 'media'=>$media);
 	}
 	function getNavigator()
 	{
@@ -718,28 +731,16 @@ class Controller
 
 		$n_get2 = array();
 		foreach($n_get as $k=>$v)
-			$n_get2[] = $k."=".$v;
-		foreach($n_p2 as $k=>$v)
-			if(empty($v)) unset($n_p2[$k]);
-	/*	return 	Filter::filter("http://".$_SERVER['SERVER_NAME'].((!empty($controller_name))?"/".$controller_name:"")."/".
-			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
-            (!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);*/
-        return 	Filter::filter($this->makeHTTPHost().
+			$n_get2[] = urlencode($k)."=".urlencode($v);
+		foreach($n_p2 as $k=>&$v)
+            if(empty($v)) unset($n_p2[$k]);
+            else $v = urlencode($v);
+        return 	Filter::filter( 
             ((!empty($controller_name))?"/".$controller_name:"")."/".
 			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
 			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
-
-
-		//for testing
-		//var_dump($this->makeURL('nnn',array("c"=>"c2",'bb'=>'bb')));
-		//var_dump($this->makeURL(null,array('p1','p2')));
-	}
-    private final function makeHTTPHost()
-    {
-        return (empty($_SERVER['HTTPS'])?'http://':'https://').
-            $_SERVER['HTTP_HOST'].
-            (($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
     }
+
 	function getDisplayModeParams()
 	{
 		return $this->display_mode_params;
@@ -823,17 +824,14 @@ class Controller
 	protected function gotoStep_0()
 	{
 		$s = $this->navigator->getStep(0);
-		if(isset($s,$s['url'])) header("Location: ".$s['url']);
-        else header("Location: ".$this->makeHTTPHost()."/");
-		exit();
+        Header::redirect( isset($s,$s['url'])?$s['url']:"/");
     }
     protected function gotoLocation($loc)
     {
-        if(isset($loc))
-            if(strpos($loc,"/") !== false)
-                header("Location: ".$loc);
-            else
-                header("Location: ".$this->makeURL($loc)); //suggest $loc is a page to which redirect to.
+        if(isset($loc)){
+            if(strpos($loc,"/") === false) $loc = $this->makeURL($loc);//suggest $loc is a page to which redirect to.
+            Header::redirect($loc, Header::SEE_OTHER);
+        }
         exit();
     }
 	// checkers
@@ -887,6 +885,49 @@ class Controller
 		$this->pagehandler = $storage->get('pagehandler');
 		$storage->un_set('pagehandler');
     }
+    public function addNotify($text){
+        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
+        $notes = $this->notifyStorage['notify'];
+        $notes[] = Language::encodePair($text);
+        $this->notifyStorage['notify'] = $notes;
+    }
+    
+    /*private function processNotifications(){
+        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
+        $notes = $this->notifyStorage['notify'];
+        if (!is_array($notes) || empty($notes)) return '';
+
+        $this->addScript("jquery.jgrowl.js");
+        $this->addCSS("jquery.jgrowl.css");
+
+        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notify.tpl');
+        $list = '';
+        foreach($notes as $note){
+            $tpl->setParamsArray(array('text'=>$note));
+            $list.= $tpl->getHTML(); 
+            $tpl->flushVars();
+        }
+        unset($this->notifyStorage['notify']);
+        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notifyBlock.tpl');
+        $tpl->setParamsArray(array('list' => $list));
+        $html = $tpl->getHTML();
+        return $html;
+    }*/
+    private function processNotifications(){
+        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
+        $notes = $this->notifyStorage['notify'];
+        if (!is_array($notes) || empty($notes)) return '';
+
+        $this->addScript("jquery.jgrowl.js");
+        $this->addCSS("jquery.jgrowl.css");
+
+        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notify.tpl');
+        $tpl->setParamsArray(array('list' => $notes));
+        unset($this->notifyStorage['notify']);
+        return $tpl->getHTML();
+    }
+
+
 	// destructor
 	function __destruct()
     {
@@ -997,7 +1038,7 @@ class AjaxController extends Controller
     }
 	function init()
     {
-        $this->determineLanguage();
+        Language::Init();
         
         $this->header = Header::get();
 		$this->dispatcher = new EventDispatcher();

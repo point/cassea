@@ -74,7 +74,7 @@ class WButton extends WControl
     */
     function parseParams(SimpleXMLElement $elem)
     {
-       	if(isset($elem['src']) && $elem['type'] == "image")
+        if(isset($elem['src']) /*&& $elem['type'] == "image"*/)
 			$this->setSrc((string)$elem['src']);
 		if(isset($elem['type']))
 			$this->setType((string)$elem['type']);
@@ -160,6 +160,7 @@ class WButton extends WControl
 	function buildComplete()
 	{
 		if(!isset($this->value)) $this->setValue("OK");
+        if(isset($this->src)) $this->setType("image");
 		parent::buildComplete();
 	}    
 	// }}}
@@ -201,7 +202,8 @@ class WButton extends WControl
     {
 		$this->tpl->setParamsArray(array(
 			"src"=>$this->getSrc(),
-			"type"=>$this->getType()
+			"type"=>$this->getType(),
+            "alt"=>$this->getAlt()
 		));
 
 		parent::assignVars();

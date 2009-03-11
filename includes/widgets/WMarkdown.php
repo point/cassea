@@ -77,8 +77,10 @@ class WMarkdown extends WTextarea
 			$this->tpl = $this->createTemplate();
 
         $controller = Controller::getInstance();
+        $controller->addScript("jquery.ui.js");
         $controller->addScript("jquery.markitup_set.js");
         $controller->addScript("jquery.markitup.js");
+        $controller->addCSS("jquery-ui.css");
         $controller->addCSS("jquery.markitup_main.css");
         $controller->addCSS("jquery.markitup_markdown.css");
 		parent::buildComplete();

@@ -111,13 +111,15 @@ function getImgSize($path = null)
 }
 function recalcSize($width,$height,$max_width = null,$max_height = null)
 {
+    if((int)$width < 1 || (int)$height < 1)
+        return array(0,0,"width"=>0,"height"=>0);
 	if((int)$max_width < 1)
 		$max_width = $width;
 	if((int)$max_height < 1)
 		$max_height = $height;
 
 	$m = min($max_width / $width,$max_height / $height);
-	if($m > 1) return array($width,$height);
+	if($m > 1) return array($width,$height,"width"=>$width,"height"=>$height);
 	$a = array(round($width*$m),round($height*$m));
 	$a['width'] = $a[0];$a['height'] = $a[1];
 	return $a;
