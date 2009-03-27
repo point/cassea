@@ -361,6 +361,7 @@ EOD;
     function setData(WidgetResultSet $data)
     {
 		$this->setSrc($data->getDef());
+        $this->setFile($data->get('file'));
 		$this->setSrc($data->get('src'));
 		$this->setWidth($data->get('width'));
 		$this->setHeight($data->get('height'));
@@ -368,7 +369,6 @@ EOD;
 		$this->setMaxWidth($data->get('max_width'));
 		$this->setMaxHeight($data->get('max_height'));
         $this->setWithPreview($data->get('with_preview'));
-        $this->setFile($data->get('file'));
 
 
 		parent::setData($data);

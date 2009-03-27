@@ -84,7 +84,6 @@ class UploadedFiles
     {
         if (is_null($names)) $httpFiles = $_FILES;
         else $httpFiles = array_intersect_key($_FILES, array_flip(is_scalar($names)? array($names): $names));
-        print_pre($httpFiles);
         foreach($httpFiles as $name => $v)
             if(is_scalar($v['error']))
                 if($v['error']  === UPLOAD_ERR_OK && is_uploaded_file($v['tmp_name']) && $v['size'] !== 0)

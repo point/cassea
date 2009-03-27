@@ -36,25 +36,29 @@ class ResultSetPool
 	static $pool = array();	
     const SYSTEM_PRIORITY = 1000;
 	
-	static function set(ResultSet $rs,$priority = 0,$is_system = false)
+	static function set(ResultSet $rs,$priority = 0)
 	{
 		self::$pool[] = array('priority'=>$priority,
-			'result_set'=>$rs,'is_system'=>$is_system);
+			'result_set'=>$rs);
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
-	static function findMatched($widget_id,$is_system = false)
+	static function findMatched($widget_id)
 	{
-		$wrs = new WidgetResultSet;
+        $wrs = new WidgetResultSet;
+        $flag = false;
 		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
 
+        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
 		foreach(self::$pool as $v)
         {
-            if($is_system && !$v['is_system']) continue;
 			$rs = $v['result_set'];
-			$wrs = $rs->findMatched($wrs,$widget);
+            $wrs = $rs->findMatched($widget);
+            if($wrs->isEmpty()) continue;
+            $widget->{$data_setter}($wrs);
+            $flag = true;
 		}
-		return $wrs;
+		return $flag;
 	}
 }
 
@@ -76,24 +80,23 @@ class DataObjectPool
 		$wrs = new WidgetResultSet;
 		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
 
+        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
 		foreach(self::$pool as $v)
 		{
 			$d_o = $v['data_object'];
-			if(($def = $d_o->getData($widget_id)) !== null && is_scalar($def))
+			if(($def = $d_o->getData($widget_id)) !== null && !$def instanceof WidgetResultSet)
 		        $wrs->setDef($def);
 		}
-		return $wrs;
+        $widget->{$data_setter}($wrs);
 	}
 }
 
 class DataRetriever
 {
-	static function getData($widget_id,$fetch_system = false)
+	static function manageData($widget_id)
 	{
-		$wrs = ResultSetPool::findMatched($widget_id,$fetch_system);
-		if($wrs->isEmpty())
-			$wrs = DataObjectPool::findDefault($widget_id);
-		return $wrs;
+		if(!ResultSetPool::findMatched($widget_id))
+			DataObjectPool::findDefault($widget_id);
 	}
 }
 

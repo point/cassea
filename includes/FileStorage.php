@@ -60,7 +60,7 @@ interface iFileStorage
 {
     function getFile($path);
     /*function getURL($path);*/
-    function upload(UploadedFiles $u,$path);
+    function upload(UploadedFiles $u,$path = "/");
     function store($srcPath, $destPath, $moveSource = true);
     function exists($path);
     function delete($path);
@@ -120,13 +120,17 @@ class FileStorage implements iFileStorage{
         //var_dump('unlicnk', $u);
         return  $u;
     }
+    function deleteFile(iFile $file)
+    {
+        $this->delete($file->getPath());
+    }
 
     /**
      *
      *
      * @throw FileException - в случае неудачной заливки
      */
-    function upload( UploadedFiles $u, $path){
+    function upload( UploadedFiles $u, $path = "/"){
         $upath = $this->validate($this->root.$path);
         $res = array();
         $uploadedFiles = $u->getUploaded();
@@ -134,7 +138,6 @@ class FileStorage implements iFileStorage{
             //no need to additional check. Data in UploadedFile already checked.
             //if (!is_uploaded_file($uf['tmp_name'])) throw new FileException('File "'.$uf['tmp_name'].'" wasn\'t uploaded via HTTP POST');
             $storePath = $upath.$uf['name'];
-            print_pre($storePath);
             move_uploaded_file($uf['tmp_name'], $storePath);
             //$this->store($uf['tmp_name'], $storePath); 
             $res[] = new File($storePath, $this);

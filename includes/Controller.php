@@ -108,7 +108,9 @@ class Controller
             $pagehandler = null,
             $ie_files = array(), //included and extending files
             $captcha_name = null,
-            $notifyStorage = null
+            $notifyStorage = null,
+            $is_ajax = false,
+            $responce_string = null
 			;
 
 
@@ -605,14 +607,23 @@ class Controller
 			echo $v;
 		else return $v; 
     }
-
+    function setResponceString($str)
+    {
+        if(!isset($str) || !is_scalar($str)) return ;
+        $this->responce_string = $str;
+    }
     function getHeadBodyTail($echo = 1){
-        $body = $this->allHTML();
-        $head = $this->head(0);
-        $tail = $this->tail(0);
-        if ($echo) echo $head,$body,$tail;
-        else return $head.$body.$tail;
-
+        if(isset($this->responce_string))
+            if ($echo) echo $this->responce_string;
+            else return $this->responce_string;
+        else
+        {
+            $body = $this->allHTML();
+            $head = $this->head(0);
+            $tail = $this->tail(0);
+            if ($echo) echo $head,$body,$tail;
+            else return $head.$body.$tail;
+        }
     }
 
 	function getDispatcher()
@@ -892,27 +903,6 @@ class Controller
         $this->notifyStorage['notify'] = $notes;
     }
     
-    /*private function processNotifications(){
-        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
-        $notes = $this->notifyStorage['notify'];
-        if (!is_array($notes) || empty($notes)) return '';
-
-        $this->addScript("jquery.jgrowl.js");
-        $this->addCSS("jquery.jgrowl.css");
-
-        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notify.tpl');
-        $list = '';
-        foreach($notes as $note){
-            $tpl->setParamsArray(array('text'=>$note));
-            $list.= $tpl->getHTML(); 
-            $tpl->flushVars();
-        }
-        unset($this->notifyStorage['notify']);
-        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notifyBlock.tpl');
-        $tpl->setParamsArray(array('list' => $list));
-        $html = $tpl->getHTML();
-        return $html;
-    }*/
     private function processNotifications(){
         if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
         $notes = $this->notifyStorage['notify'];
@@ -925,6 +915,10 @@ class Controller
         $tpl->setParamsArray(array('list' => $notes));
         unset($this->notifyStorage['notify']);
         return $tpl->getHTML();
+    }
+    function isAjax()
+    {
+        return $this->is_ajax;
     }
 
 
@@ -1034,6 +1028,7 @@ class AjaxController extends Controller
 
     protected function __construct()
     {
+        $this->is_ajax = true;
         parent::__construct();
     }
 	function init()
@@ -1048,13 +1043,14 @@ class AjaxController extends Controller
 
         try{
             $full_path = $this->findPage();
-            if($_SERVER['REQUEST_METHOD'] == "POST")
-                $this->handlePOST();
 
             $dom = new DomDocument;
             $dom->load($full_path);
 
             $this->parsePage($this->processPage($dom));
+            if($_SERVER['REQUEST_METHOD'] == "POST")
+                $this->handlePOST();
+
         }catch(Exception $e){}
         
     }
@@ -1072,12 +1068,6 @@ class AjaxController extends Controller
 	{
 		if($this->post->isEmpty()) return;
 
-		POSTChecker::checkByRules($this->post,$this->checker_rules);
-		if(POSTErrors::hasErrors())
-		{
-            exit("");
-		}
-
 		try
 		{
 			DataUpdaterPool::callCheckers();
@@ -1092,8 +1082,6 @@ class AjaxController extends Controller
 		}
 		DataUpdaterPool::callHandlers();
         DataUpdaterPool::callFinilze();
-
-        exit("");
 	}
 
 	// destructor

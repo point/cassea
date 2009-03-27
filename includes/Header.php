@@ -169,7 +169,7 @@ class Header
     */
     static function redirect( $url, $code = 302 )
     {
-        Header($_SERVER['SERVER_PROTOCOL'].' '.$code.' '.self::$statusText[$code]); 
+        header($_SERVER['SERVER_PROTOCOL'].' '.$code.' '.self::$statusText[$code]); 
         if (!strpos($url, '://'))  $url = Header::makeHTTPHost().$url;
         header('Location: '.$url);
 

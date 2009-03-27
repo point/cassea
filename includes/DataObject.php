@@ -421,7 +421,7 @@ class DataSourceObject extends DataObject
                 return $p->getValue($this->object);
             if($ro->hasMethod("get".$w_id) && @t($m = $ro->getMethod("get".$w_id))->isPublic())
                 return $m->invoke($this->object);
-            if($ro->hasMethod("get".str_replace("_","",$w_id)) && t($m = $ro->getMethod("get".str_replace("_","",$w_id)))->isPublic())
+            if($ro->hasMethod("get".str_replace("_","",$w_id)) && @t($m = $ro->getMethod("get".str_replace("_","",$w_id)))->isPublic())
                 return $m->invoke($this->object);
             if($ro->hasMethod("get_".$w_id) && @t($m = $ro->getMethod("get_".$w_id))->isPublic())
                 return $m->invoke($this->object);

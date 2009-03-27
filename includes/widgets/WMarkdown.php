@@ -32,7 +32,7 @@
 // $Id$
 //
 WidgetLoader::load("WTextarea");
-//{{{ WTextarea
+//{{{ WMarkdown
 class WMarkdown extends WTextarea
 {
     

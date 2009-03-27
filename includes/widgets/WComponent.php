@@ -134,7 +134,7 @@ abstract class WComponent extends WObject
 		/**
         * @var      string
         */
-        $data_setted = false
+		$data_setted = false
 		;
 
     // {{{ __construct
@@ -568,12 +568,22 @@ abstract class WComponent extends WObject
         if(!$this->getDataSetted())
         {
 		    $this->restoreMemento();
-		    $this->setData(DataRetriever::getData($this->getId()));
-		    $this->setData(DataRetriever::getData($this->getId(),true));
+		    DataRetriever::manageData($this->getId());
         }
     }
     // }}}
-
+    // {{{ getDataSetterMethod
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+	function getDataSetterMethod()
+	{
+		return "setData";
+	}
 
 
     // {{{ getDataSet 

@@ -26,5 +26,31 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+$controller='index';
+unset($_GET['__q']);
+list($rewrite) = explode("?",$_SERVER['REQUEST_URI']);
+if(preg_match('#^(/[^\.?&]*[^/])([?&\#].*)?$#',$rewrite,$match))
+    $rewrite = $match[1]."/".$match[2];
+if(preg_match('#^/([a-z]{2})(/.*)$#',$rewrite,$match))
+{
+    $_GET['__lang'] = $match[1];
+    $rewrite = $match[2];
+}
 
-require_once("common.php.inc");
+//controller
+if(preg_match('#^/([^/\.]{3,})(/.*)?$#',$rewrite,$match))
+    $controller = $match[1];
+if(preg_match('#^/([^/\.]{1,2})/.*$#',$rewrite,$match))
+    {header("HTTP/1.0 404 Not found");exit();}
+
+if(preg_match('#^/([^/\.]{3,})(/([^\.]+))?(/([^/]+)\.(htm|html|xml)?)?$#',$rewrite,$match)){
+    $_GET['__p1'] = $match[5];
+    $_GET['__p2'] = $match[3];
+}
+
+//make env for scripts
+$_SERVER['PHP_SELF'] = "/controllers/$controller.php";
+set_include_path(realpath($_SERVER['DOCUMENT_ROOT'])."/controllers/". PATH_SEPARATOR . get_include_path());
+chdir(realpath($_SERVER['DOCUMENT_ROOT'])."/controllers/");
+
+require_once(dirname(__FILE__)."/controllers/".$controller.".php");

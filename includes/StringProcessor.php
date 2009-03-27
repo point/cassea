@@ -48,7 +48,7 @@ class StringProcessorFactory
                     $p2[] = trim($p1[$i]);
                 else
                     $p2 = array_merge($p2,explode(" ",trim($p1[$i])));
-            
+            foreach($p2 as &$v) if($v === "null") $v = null;
             $o->addProcessor($p2[0],array_slice($p2,1));
         }
         return $o;
@@ -133,8 +133,9 @@ class StringProcessor
     {
         return date($format, is_numeric($time)?$time:strtotime($time));
     }
-    protected function date_locale($time,$locale = "ru")
+    protected function date_locale($time,$locale = "ru_RU.UTF-8")
     {
+        setlocale(LC_TIME,$locale);
         return strftime("%e %B %Y, %R:%M", is_numeric($time)?$time:strtotime($time));
     }
 
@@ -142,7 +143,7 @@ class StringProcessor
     // базовую часть языковой константы (например, hour)
     // врзвращает час (часа, часов).
     // Ищет в hour_1 (1 час), hour_2(2-4 часа), hour_3 (5-9 часов)
-    protected final function timelang($number,$lang_const_base)
+    /*protected final function timelang($number,$lang_const_base)
     {
         $d = $number%10;
         if($d == 1)
@@ -150,6 +151,13 @@ class StringProcessor
         if($d >=2 && $d <=4)
             return Language::getConst($lang_const_base.'_2');
         return Language::getConst($lang_const_base.'_3');
+    }*/
+    protected final function _plural($number, $lang_const_base)
+    {
+        if(strpos($lang_const_base,'{') !== false && preg_match("/\{(\w+)\.(\w+)\}/",
+            $lang_const_base, $m))
+            return Language::getPluralConst($number,$m[2], $m[1]);
+        return Language::getPluralConst($number,$lang_const_base);
     }
     protected function relative_time($time, $locale = "ru_RU.UTF8") 
     {
@@ -167,7 +175,7 @@ class StringProcessor
             return Language::getConst("Yesterday_at")." " .strftime("%R:%M", $timestamp);
 
         if ($delta > 7200)
-            $string .= ($f = floor($delta / 3600))." ".$this->timelang($f,"hour").", ";
+            $string .= ($f = floor($delta / 3600))." ".$this->_plural($f,"hour").", ";
         else if ($delta > 3660)
             $string .= "1 ".Language::getConst("hour").", ";
         else if ($delta >= 3600)
@@ -175,7 +183,7 @@ class StringProcessor
         $delta  %= 3600;
         
         if ($delta > 60)
-            $string .= ($f = floor($delta / 60)) . " ".$this->timelang($f,"minutes")." ";
+            $string .= ($f = floor($delta / 60)) . " ".$this->_plural($f,"minutes")." ";
         else
             $string .= abs($delta)." ".$this->timelang($delta,"seconds")." ";
         return ($delta > 0)?($string." ".Language::getConst("ago")):(Language::getConst("date_in")." ".$string);
@@ -238,9 +246,11 @@ class StringProcessor
     protected function lower($string)
     {return strtolower($string);}
     protected function capitalize($string) 
-    {return ucwords(strtolower($string)) ;}
+    { /* not ucwords. UTF8 unfriendly */
+        return mb_convert_case($string, MB_CASE_TITLE, "UTF-8"); }
     protected function capfirst($string) 
-    {return ucfirst(strtolower($string));}
+    { /* not ucfirst. UTF8 unfriendly :(*/
+       return strtoupper(substr($string, 0, 1)).substr(strtolower($string), 1);   }
     protected function space($string) 
     {return preg_replace("/\s{2,}/", ' ',$string);}
     protected function escape($string, $quotes = 1) 
@@ -255,6 +265,10 @@ class StringProcessor
     {return $string.($insert_whitespace?"&nbsp;":"").$str2append;}
     protected function prepend($string, $str2prepend, $insert_whitespace = false)
     {return $str2prepend.($insert_whitespace?"&nbsp;":"").$string;}
+    protected function plural($number, $key, $model = 'common')
+    { if(!is_numeric($number) || !isset($number)) return $number;
+       return Language::getPluralConst($number,$key, $model, $number); 
+    }
 }
 // }}}
 ?>

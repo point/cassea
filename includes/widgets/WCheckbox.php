@@ -185,6 +185,7 @@ class WCheckbox extends WControl
     */
     function setData(WidgetResultSet $data)
     {
+		$this->setChecked($data->getDef());
 		$this->setChecked($data->get('checked'));
 		$this->setText($data->get('text'));
 

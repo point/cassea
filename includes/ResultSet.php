@@ -208,8 +208,9 @@ class ResultSet
 
 		return $wrs;
     }*/
-    function findMatched(WidgetResultSet $wrs, WComponent $widget)
+    function findMatched(/*WidgetResultSet $wrs,*/ WComponent $widget)
     {
+        $wrs = new WidgetResultSet();
         foreach($this->fors as $selectors => $v)
             foreach(explode(",",$selectors) as $selector)
                 if(SelectorMatcher::matched($widget,$selector,null,null) && 

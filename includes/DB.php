@@ -592,6 +592,7 @@ class DBMysqliLazyLoad{
     public function __call($name, $arguments) {
         DB::init($this->host, $this->username, $this->password, $this->dbname, $this->port, $this->socket, false);
         $mysqli = DB::getMysqli();
+        foreach($arguments as &$a) if(strpos($a,"'") !== false) $a = str_replace("'","\\'",$a);
         if (count($arguments)) $param ="'".implode("', ", $arguments)."'";
         else $param = ''; 
         $proxy = create_function('$o, $m', 'return  $o->$m('.$param.');');
@@ -738,7 +739,6 @@ class DB{
         }
 
         if (self::$mysqli instanceof DBMysqliLazyLoad){
-//            print_pre('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
             self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
             if ( mysqli_connect_errno()) throw ( new DBConnectException(mysqli_connect_error(), mysqli_connect_errno()));
             if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 

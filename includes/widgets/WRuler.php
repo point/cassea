@@ -73,7 +73,11 @@ class WRuler extends WContainer
 		*/
 		$use_get = false,
 
-		$total_pages
+        $total_pages = null,
+
+        $begin = null,
+
+        $end = null
 
 		;
     

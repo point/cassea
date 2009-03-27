@@ -36,6 +36,7 @@ WidgetLoader::load("WObject");
 class WDataHandler extends WObject
 {
 	protected 
+        $is_static = false,
         $form_ids = array(),
 		$handler_object = null,
 		$priority = 0
@@ -62,12 +63,15 @@ class WDataHandler extends WObject
     */
     function parseParams(SimpleXMLElement $params)
     {
-		$this->handler_object = new DataHandlerObject();
-		$this->handler_object->parseParams($params);
 		if(isset($params['priority']))
             $this->setPriority(0+$params['priority']);
         if(isset($params['forms']))
             $this->setFormIds((string)$params['forms']);
+		if(isset($params['static']))
+			$this->setStatic(0+$params['static']);
+
+		$this->handler_object = new DataHandlerObject($this->getStatic());
+		$this->handler_object->parseParams($params);
 		DataUpdaterPool::set($this->handler_object,$this->getPriority(),$this->getId(),$this->getFormIds());
     }
     // }}}
@@ -126,6 +130,34 @@ class WDataHandler extends WObject
     function getFormIds()
     {
 		return $this->form_ids;
+    }
+    // }}}
+    
+	// {{{ setStatic
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    bool $static
+    * @return   void
+    */
+    function setStatic($static = false)
+	{
+		$this->is_static = (bool)$static;
+    }
+    // }}}
+
+	// {{{ getStatic
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   bool
+    */
+    function getStatic()
+    {
+		return $this->is_static;
     }
     // }}}
 }

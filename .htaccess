@@ -1,0 +1,72 @@
+PHP_VALUE mbstring.internal_encoding UTF-8
+PHP_VALUE default_charset UTF-8
+PHP_VALUE mbstring.http_output UTF-8
+PHP_VALUE mbstring.encoding_translation On
+PHP_VALUE mbstring.detect_order UTF-8
+PHP_VALUE mbstring.func_overload 6
+php_value default_charset utf-8
+
+AddDefaultCharset utf-8
+
+
+RewriteEngine On
+Options +FollowSymLinks -MultiViews
+
+RewriteBase /
+RewriteRule \.htaccess - [F]
+
+RewriteCond %{REQUEST_URI} ^/?web 
+RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f [OR]
+RewriteCond %{REQUEST_URI} ^/?web/.*\.css [OR] 
+RewriteCond %{REQUEST_URI} ^/?web/.*\.js [OR] 
+RewriteCond %{REQUEST_URI} ^/?web/(.*\.(jpg|png|jpeg|gif|ico)) [OR]
+RewriteCond %{REQUEST_URI} ^/?web/.*\.swf [OR] 
+
+RewriteRule ^.* - [L]
+
+
+RewriteCond %{REQUEST_URI} ^/?(robots.txt|sitemap[^\.]*\.xml(\.gz)?)
+RewriteRule ^(.*) /web/$1 [L]
+
+RewriteCond %{REQUEST_URI} !^/?([^/\.]{3,})/(.*)/([\.]+)\.(htm|html|xml)$
+RewriteCond %{DOCUMENT_ROOT}/controllers/$1\.php -f
+RewriteRule ^/?([^/\.]{3,})/(.*)/([\.]+)\.(htm|html|xml)$ /web/$1/$2/$3\.$4 [L]
+
+RewriteCond %{REQUEST_URI} ^/?([^/\.]{3,})/(.*)$
+RewriteCond %{DOCUMENT_ROOT}/controllers/$1\.php !-f 
+RewriteCond %{DOCUMENT_ROOT}/web/$1/$2 -f 
+RewriteRule ^/?([^/\.]{3,})/(.*)$ /web/$1/$2 [L]
+
+#for images
+RewriteRule ^/?(.*\.(jpg|png|jpeg|gif|ico)) /web/images/$1 [L]
+
+#for js
+RewriteRule ^/?(.*\.js) /web/js/$1 [L]
+
+#for css
+RewriteRule ^/?(.*\.css) /web/css/$1 [L]
+
+#for swf
+RewriteRule ^/?(.*\.swf) /web/flash/$1 [L]
+
+##for images
+#RewriteCond %{DOCUMENT_ROOT}/web/$1/$2 !-f
+#RewriteRule ^/?web/(.*\.(jpg|png|jpeg|gif|ico)) /web/images/$1 [L]
+
+##for js
+#RewriteCond %{REQUEST_URI} ^/?(.*\.js)
+#RewriteRule ^(.*) /web/js/$1 [L]
+
+##for css
+#RewriteCond %{REQUEST_URI} ^/?(.*\.css)
+#RewriteRule ^(.*) /web/css/$1 [L]
+
+##for swf
+#RewriteCond %{REQUEST_URI} ^/?(.*\.swf)
+#RewriteRule ^(.*) /web/flash/$1 [L]
+
+
+RewriteCond $1 !^/?(router\.php)
+RewriteRule ^(.*)$ /router.php [L] 
+
+
