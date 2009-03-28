@@ -10,9 +10,9 @@ function lic($f) {
 				if(!preg_match('/<\?php\n+\/\*-.+-\*\//ms',$f))
 					file_put_contents($sf,preg_replace('/<\?php\n*/','<?php'."\n".$lic,$f,1));
 				else 
-					file_put_contents($sf,preg_replace('/<\?php\n*\/\*-.+\*\/\n*/ms','<?php'."\n".$lic,$f));
+					file_put_contents($sf,preg_replace('/<\?php\n\/\*-.+-\*\/\n/ms','<?php'."\n".$lic,$f));
 }
-$lic = file_get_contents('license');
+$lic = file_get_contents(dirname(__FILE__).'/license');
 $exclude = array("web");
 if(empty($lic)) return;
 lic("..");

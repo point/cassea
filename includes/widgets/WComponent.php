@@ -1,7 +1,7 @@
 <?php
 /*- vim:noet:shiftwidth=4:tabstop=4: 
 {{{ LICENSE  
-* Copyright (c) 2008, Cassea Project
+* Copyright (c) 2008,2009 Cassea Project
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
