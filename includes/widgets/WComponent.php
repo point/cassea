@@ -256,7 +256,7 @@ abstract class WComponent extends WObject
     {
    		if(!$this->getState()) return "";
 		$this->assignVars();
-		if($this->visible && isset($this->tpl)) return $this->tpl->getHTML();
+		if($this->getVisible() && isset($this->tpl)) return $this->tpl->getHTML();
 		else return "";
 
 	}
@@ -349,7 +349,7 @@ abstract class WComponent extends WObject
     {
 		if(!isset($style_class)) 
 			return;
-		$this->style_class = " ".$style_class;
+		$this->style_class .= " ".$style_class;
     }
     // }}}
     
@@ -926,7 +926,7 @@ EOD;
     {
         $this->checkAndSetData();
 
-		if(!empty($this->tpl))
+		if(isset($this->tpl))
 			$this->tpl->flushVars();
 
 		$controller = Controller::getInstance();
@@ -975,10 +975,6 @@ EOD;
     */
 	function postRender()
 	{
-/*		foreach($this->class_vars as $p)
-			if($this->$p instanceof WidgetCollection)
-                $this->$p->postRender();*/
-
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
 		//$controller->getDispatcher()->deleteSubscriber("increment_id", $this->id);

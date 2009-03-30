@@ -185,7 +185,7 @@ class StringProcessor
         if ($delta > 60)
             $string .= ($f = floor($delta / 60)) . " ".$this->_plural($f,"minutes")." ";
         else
-            $string .= abs($delta)." ".$this->timelang($delta,"seconds")." ";
+            $string .= abs($delta)." ".$this->_plural($delta,"seconds")." ";
         return ($delta > 0)?($string." ".Language::getConst("ago")):(Language::getConst("date_in")." ".$string);
     }
 
@@ -204,9 +204,9 @@ class StringProcessor
         
         if (abs($reldays) < 7) 
             if ($reldays > 0) 
-                return Language::getConst('date_in').' '.($reldays = floor($reldays)).$this->timelang($reldays,' day') ;
+                return Language::getConst('date_in').' '.($reldays = floor($reldays)).$this->_plural($reldays,' day') ;
              else 
-                return ($reldays = abs(floor($reldays)))." ".$this->timelang($reldays,"day")." ".Language::getConst("ago");
+                return ($reldays = abs(floor($reldays)))." ".$this->_plural($reldays,"day")." ".Language::getConst("ago");
             
         
         setlocale(LC_TIME,$locale);

@@ -55,7 +55,7 @@ class HTTPParamHolder implements IteratorAggregate
         {
             if($k{0} === "_" && $k{1} !== "_") continue;
 			if((is_scalar($v) && mb_check_encoding($k,"UTF8") && mb_check_encoding($v,"UTF8"))||
-				$allow_array &&!is_scalar($v) && mb_check_encoding($k,"UTF8"))
+				$allow_array && is_array($v) && mb_check_encoding($k,"UTF8"))
                 $this->checked_vars[$k] = $this->sanitizeVars($v);
         }
 	}

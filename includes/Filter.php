@@ -31,6 +31,9 @@
  * author	ExpressionEngine Dev Team
  * link		http://codeigniter.com/user_guide/libraries/input.html
 */
+
+class FilterException extends Exception {}
+
 class Filter
 {
 	const NONE = 0;
@@ -63,7 +66,8 @@ class Filter
 		$c = $c->getConstants();
 		$type = strtoupper($type);
 		if(isset($c[$type])) return $c[$type];
-		return self::NONE;
+        throw new FilterException('Filter '.$type.' doesn\'t exists');
+		//return self::NONE;
 	}
 	static function filter($var = null,$type)
 	{

@@ -360,7 +360,7 @@ EOD;
     */
     function setData(WidgetResultSet $data)
     {
-		$this->setSrc($data->getDef());
+		$this->setFile($data->getDef());
         $this->setFile($data->get('file'));
 		$this->setSrc($data->get('src'));
 		$this->setWidth($data->get('width'));

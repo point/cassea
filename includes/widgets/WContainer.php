@@ -39,7 +39,7 @@ class WContainer extends WComponent
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
                 $this->$v = clone $this->$v;
-	}*/
+    }*/
 	// }}}
 	// {{{ preRender
 	function preRender()
@@ -461,7 +461,6 @@ class IterableCollection extends WidgetCollection
 		else 
 			parent::postRender();
 
-		$controller = Controller::getInstance();
 	} 
 	// }}}
 

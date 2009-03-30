@@ -95,8 +95,12 @@ class WValueChecker extends WObject
 				//else $this->messages[$i] = self::def_message;
 				$i++;
 			}
-			elseif($c->getName() == 'filter')
-				$this->filter = (string)$c;
+            elseif($c->getName() == 'filter')
+            {
+                if(Filter::getFilter((string)$c) == Filter::NONE)
+                    throw new FilterException('Filter '.(string)$c.' doesn\'t exists');
+                $this->filter = (string)$c;
+            }
 
 		}
 		$controller = Controller::getInstance();

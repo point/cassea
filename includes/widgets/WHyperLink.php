@@ -40,7 +40,7 @@ class WHyperLink extends WContainer implements StringProcessable
         /**
         * @var      string
         */
-        $href = "#",
+        $href = null,
         /**
         * @var      string
         */
@@ -155,8 +155,10 @@ class WHyperLink extends WContainer implements StringProcessable
     */
 	function buildComplete()
 	{
-        if(isset($this->name))
+        if(isset($this->name) && !isset($this->href))
             $this->setHREF("");
+        if(!isset($this->name) && !isset($this->href))
+            $this->setHREF("#");
         if($this->items->isEmpty())
             if(isset($this->text))
                 $this->items->setText($this->getText());
