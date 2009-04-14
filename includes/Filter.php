@@ -226,7 +226,9 @@ class Filter
                                             "/javascript\s*:/i"			,
                                             "/expression\s*(\(|&\#40;)/i"	, // css and ie
                                             "/vbscript\s*:/i"				, // ie, surprise!
-                                            "/redirect\s+302/i"			
+											"/redirect\s+302/i",
+											"/<script[^>]*>/",
+											"/<\/script[^>]*>/"
                                         );
         
         $str = str_ireplace($never_allowed_str,'[removed]',$str);

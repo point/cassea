@@ -185,6 +185,7 @@ abstract class DataObject
 		*/
 		$object = null
 		;
+	private $classes_required = false;
 
 	function __construct($is_static = false)
 	{
@@ -236,11 +237,15 @@ abstract class DataObject
 	}
     protected function requireClasses()
     {
+		if($this->classes_required) return;
+
         if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
             require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
 
         if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
             require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");
+
+		$this->classes_required = true;
     }
 	function createObject()
 	{
@@ -412,7 +417,7 @@ class DataSourceObject extends DataObject
 	
     function findValueInObject($w_id)
     {
-		if(!isset($w_id) || !isset($this->object)) return false;
+		if(!isset($w_id) || ($w_id[0] === "_" && $w_id[1] === "_") || !isset($this->object)) return false;
         try
         {
             $w_id = strtolower($w_id);
@@ -441,7 +446,7 @@ class DataSourceObject extends DataObject
 
     function findValueInStatic($w_id)
     {
-		if(!isset($w_id) || !isset($this->object)) return false;
+		if(!isset($w_id) || ($w_id[0] === "_" && $w_id[1] === "_") || !isset($this->object)) return false;
         try
         {
             $w_id = strtolower($w_id);
@@ -537,6 +542,7 @@ class DataHandlerObject extends DataObject
 		}
 		else
         {
+            $this->requireClasses();
             foreach($this->checker_methods as $ind => $checker)
             {
                 try

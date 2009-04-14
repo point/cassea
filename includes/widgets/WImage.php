@@ -76,7 +76,11 @@ class WImage extends WComponent
 		 /**
         * @var      boolean
         */
-		$use_cache = 1
+		$use_cache = 1,
+        /**
+		* @var      string
+		*/
+		$subst_src = null
 
 		;
     
@@ -116,8 +120,10 @@ class WImage extends WComponent
 			$this->setMaxHeight((string)$elem['max_height']);
 		if(isset($elem['with_preview']))
 			$this->setWithPreview((string)$elem['with_preview']);
+		if(isset($elem['subst_src']))
+			$this->setSubstSrc((string)$elem['subst_src']);
 
-		$this->addToMemento(array("alt","height","width","src","align","max_width","max_height","with_preview","use_cache"));
+		$this->addToMemento(array("alt","height","width","src","align","max_width","max_height","with_preview","use_cache","subst_src"));
 
 		parent::parseParams($elem);		    	
     }
@@ -241,6 +247,7 @@ class WImage extends WComponent
 		return $this->file;
     }
     // }}}
+
     // {{{ setSrc 
     /**
     * Method description
@@ -253,7 +260,7 @@ class WImage extends WComponent
     {
 		if(!isset($src) || !is_scalar($src)) 
 			return ;
-		if(strpos($src,"/") !== 0)
+		if(substr($src,0,4) != "http" && strpos($src,"/") !== 0)
             $src = "/".$src;
 		$this->src = $src;
     }
@@ -298,6 +305,9 @@ class WImage extends WComponent
     function preRender()
     {
         $this->checkAndSetData();
+
+		if(!$this->file instanceof iFile && isset($this->src) && isset($this->subst_src))
+				$this->setSrc(sprintf($this->getSubstSrc(),$this->getSrc()));
 		
         //!!! Beware
         //!!! Dont be arfaid :)
@@ -369,7 +379,6 @@ EOD;
 		$this->setMaxWidth($data->get('max_width'));
 		$this->setMaxHeight($data->get('max_height'));
         $this->setWithPreview($data->get('with_preview'));
-
 
 		parent::setData($data);
     }
@@ -457,6 +466,7 @@ EOD;
 		return $this->max_width;
     }
     // }}}
+	
     // {{{ setWithPreview
     /**
     * Method description
@@ -484,6 +494,36 @@ EOD;
     function getWithPreview()
     {
 		return $this->with_preview;
+    }
+    // }}}
+	
+    // {{{ setSubstSrc
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $subst_src
+    * @return   void
+    */
+    function setSubstSrc($subst_src)
+    {
+		if(!isset($subst_src) || !is_scalar($subst_src)) 
+			return ;
+		$this->subst_src = (string)$subst_src;
+    }
+    // }}}
+    
+    // {{{ getSubstSrc
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getSubstSrc()
+    {
+		return $this->subst_src;
     }
     // }}}
 }

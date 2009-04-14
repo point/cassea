@@ -236,6 +236,7 @@ class Language{
 
     // {{{ getLangName
     public static function getLangName($lang_id = null){
+		if(!isset($langs_cache['__list__'])) return null;
         $la = array_flip(self::$langs_cache['__list__']);
         return  isset($la[$lang_id])?$la[$lang_id]:null;
     }

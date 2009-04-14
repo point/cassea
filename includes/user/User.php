@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-
+require_once("Profile.php");
 //{{{ User
 /**
 * @author       billy
@@ -36,21 +36,8 @@ class User
 {
     const GUEST = -1;
 
-    const TABLE = 'user';
-    const TABLE_BAN = 'user_ban';
-    const TABLE_REGISTRATION = 'user_registration';
 
-    //const REGEXP_LOGIN ='#^[a-zA-Z0-9_\\-.]{5,20}$#';
-    const REGEXP_LOGIN ='/^[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+$/is'; 
-    const REGEXP_EMAIL = '/^[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+$/is';
-    const REGEXP_PASSWORD = '/^[a-zA-Z0-9#!@$%\\^&*()_\\-+.,]{5,20}$/';
-    const ERROR_USER_NOT_EXIST = 1;
-    const ERROR_PASSWORD_INCORRECT = 2;
-    const ERROR_USER_BANNED = 3;
-    const ERROR_USER_NOTACTIVE = 4;
-    const ERROR_USER_DELETED = 5;
-
-/**
+	/**
     * @var      int
     */
     private $id = User::GUEST;
@@ -69,9 +56,8 @@ class User
     /**
     * @var      User
     */
-    private static $user;
+    private static $instance;
 
-    private $storage;
 
     //{{{ __construct
     /**
@@ -81,59 +67,21 @@ class User
     private function __construct( ){
         if ( !is_int($uid =  Session::get()->getUserId()) || $uid <= 0 ) return;
         $this->id = $uid;
-        
-        if (Config::getInstance()->user->proxy_time){
-            $this->storage = Storage::create('__UserData'.$this->id,Config::getInstance()->user->proxy_time);
 
-            if (!$this->restoreUserData()){
-                $d = $this->getUserData();
-                $this->login = $d['login'];
-                $this->email = $d['email'];
-                $this->storeUserData($d);
-            }
-        }
-        else{
-            $d = $this->getUserData();
-            $this->login = $d['login'];
-            $this->email = $d['email'];
-        }
+		if(($data = UserManager::get()->getUserData($this->id)) === false)
+			throw new Exception("User data for uid '".$this->id."' not found");
+		
+		$this->login = $data['login'];
+		$this->email = $data['email'];
+
+		$this->profile = new Profile($this->id);
     }//}}}
 
-    // {{{  ===User Proxy===
-
-    //{{{ restoreUserData
-    /**
-     *
-     * @return bool
-     */
-    private function restoreUserData(){
-        if (!isset($this->storage['login'])) return false;
-
-        $this->login = $this->storage['login'];
-        $this->email = $this->storage['email'];    
-//        print_pre('USer data from Storage:');
-//        print_pre($this->login);
-//        print_pre($this->email);
-         
-        return true;
-    }// }}}
-
-    private function getUserData(){
-        $res= DB::query('select login, email from '.User::TABLE. ' where id='.$this->id);
-        $res = array_pop($res);
-        if (!is_Array($res)) throw new Exception('Unable find user with id '. $this->id);
-//        print_pre('USer data from DB:');
-//        print_pre($res);
-        return $res;
-    }
-
-    private function storeUserData($arr){
-//        print_pre('Store data in Storage');
-//        print_pre($arr);
-        foreach ($arr as $k => $v){
-            $this->storage->set( $k, $v);
-        }
-    }
+	static function renew()
+	{
+		self::$instance = null;
+		User::get();
+	}
 
     // }}}
 
@@ -143,47 +91,9 @@ class User
     */
     public static function get()
     {
-        if (!is_object(self::$user))
-                self::$user = new User();
-        return self::$user;
-    }// }}}
-    
-    //{{{ auth
-    /**
-    * @return   boolean
-    */
-    public function auth($login, $password)
-    {
-        if (!preg_match(User::REGEXP_LOGIN, $login) && !preg_match(User::REGEXP_PASSWORD, $password))
-            return false;
-        // nonactive
-        $sql = 'select login from '.User::TABLE_REGISTRATION.' where login="'.$login.'"';
-        $r = DB::query($sql);
-        if (count($r) == 1) return User::ERROR_USER_NOTACTIVE;
-        $r = DB::query('select id, login, email, password, sold, state from '.User::TABLE.' where login="'.$login.'"');
-        if (count($r)!= 1 ) return User::ERROR_USER_NOT_EXIST;
-        $r = $r[0];
-
-        if ($r['state'] == 'ban') return User::ERROR_USER_BANNED;
-        if ($r['state'] == 'delete') return User::ERROR_USER_DELETED;
-
-        if ($r['password'] != self::buildPasword($password, $r['sold'], Config::getInstance()->user->secret) )
-            return User::ERROR_PASSWORD_INCORRECT;
-
-        $this->id = 0+$r['id'];
-        $this->login = $r['login'];
-        $this->email = $r['email'];
-
-        Session::kill();
-        Session::init();
-        Session::get()->setUserId($this->id);
-        return true;        
-    }// }}}
-
-    // {{{ buildPasword
-    static function buildPasword($password, $dbSold, $serverSold){
-        $needed = hash('md5', $dbSold.$password.$serverSold);
-        return $needed; 
+        if (!is_object(self::$instance))
+                self::$instance = new User();
+        return self::$instance;
     }// }}}
 
     //{{{ getId
@@ -220,29 +130,14 @@ class User
     */
     public function getProfile()
     {
-       // TODO: implement
+		return $this->profile;
+	}
+	// }}}
 
-    }// }}}
-
-
-    // {{{ checkPassword
-    /**
-     *
-     *
-     */
-    public static function checkPassword($user_id, $password){
-        $r = DB::query('select  password, sold from '.User::TABLE.' where id="'.$user_id.'"');
-        $r =$r[0];
-        $dbPassword = $r['password'];
-        $dbSold = $r['sold'];
-        $serverSold = Config::getInstance()->user->secret;
-        
-        //echo 
-        $neededPassword = hash('md5', $dbSold.$password.$serverSold);
-        
-
-        return $dbPassword == $neededPassword;
-    } // }}}
+	public function isGuest()
+	{
+		return $this->id == self::GUEST;
+	}
 
 }// }}}
 

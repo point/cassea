@@ -59,36 +59,39 @@ class POSTChecker
                                 POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
 
 				if($rule === 'minlength' && is_numeric($rule_value) && isset($p_val))
-					if(is_string($p_val) && strlen($p_val) < 0+$rule_value)
+					if(is_string($p_val) && strlen(htmlspecialchars_decode($p_val,ENT_QUOTES)) < 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MINLENGTH,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
-							if(is_string($p_val2) && strlen($p_val2) < 0+$rule_value || !isset($p_val2))
+							if(is_string($p_val2) && strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES)) < 0+$rule_value || !isset($p_val2))
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MINLENGTH,$rule_value));
-							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen($p_val2[0]) < 0+$rule_value)
+							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES)) < 0+$rule_value)
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MINLENGTH,$rule_value));
 
 				if($rule === 'maxlength' && is_numeric($rule_value) && isset($p_val))
-					if(is_string($p_val) && strlen($p_val) > 0+$rule_value)
+					if(is_string($p_val) && strlen(htmlspecialchars_decode($p_val,ENT_QUOTES)) > 0+$rule_value)
 						POSTErrors::addError($name,null,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
-							if(is_string($p_val2) && strlen($p_val2) > 0+$rule_value || !isset($p_val2))
+							if(is_string($p_val2) && strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES)) > 0+$rule_value || !isset($p_val2))
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
-							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen($p_val2[0]) > 0+$rule_value)
+							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES)) > 0+$rule_value)
 								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
 
 				if($rule === 'rangelength' && !empty($rule_value) && isset($p_val))
 					if(preg_match("/\[\s*(\d+)\s*,\s*(\d+)\s*\]/",$rule_value,$m))
 					{
 						$range_from = $m[1];$range_to = $m[2];
-						if(is_string($p_val) && (strlen($p_val) > 0+$rule_to || strlen($p_val) < 0+$range_from))
+						if(is_string($p_val) && (($len = strlen(htmlspecialchars_decode($p_val,ENT_QUOTES))) > 0+$rule_to || 
+							$len < 0+$range_from))
 							POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
-								if(is_string($p_val2) && (strlen($p_val2) > 0+$range_to || strlen($p_val2) < 0+$range_from) || !isset($p_val2))
+								if(is_string($p_val2) && (($len = strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES))) > 0+$range_to || 
+									$len < 0+$range_from) || !isset($p_val2))
 										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
-								elseif(is_array($p_val2) && count($p_val2) == 1 && (strlen($p_val2[0]) > 0+$rule_to || strlen($p_val2[0]) < 0+$range_from))
+								elseif(is_array($p_val2) && count($p_val2) == 1 && (($len = strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES))) > 0+$rule_to || 
+									$len < 0+$range_from))
 										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
 					}
 
@@ -119,9 +122,7 @@ class POSTChecker
                     {
 						$range_from = $m[1];$range_to = $m[2];
 						if( is_numeric($p_val) && ($p_val > 0+$range_to || $p_val < 0+$range_from))
-                        {
                             POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
-                        }
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
 								if(is_numeric($p_val2) && ($p_val2 > 0+$range_to || $p_val2 < 0+$range_from) || !isset($p_val2))

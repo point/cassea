@@ -307,16 +307,17 @@ class ImageDecorator extends Decorator{
      */
     public function resize($targetFile, $maxWidth, $maxHeight, $quality = 100){
         // do it in __construct
-        //$this->getImageSize();
+        // Needed here
+        $this->getImageSize();
         $proportion = $this->width / $this->height;
         if($this->width >= $this->height)
         {
             $tw = $maxWidth;
-            $th = round($tw / $proportion);
+            $th = (int)round($tw / $proportion);
         }
         else{
             $th = $maxHeight;
-            $tw = round( $proportion * $th);
+            $tw = (int)round( $proportion * $th);
         } 
         $image = $this->createImage($this->getPath());
         $image_p = imagecreatetruecolor($tw, $th);

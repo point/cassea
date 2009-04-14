@@ -126,11 +126,12 @@ abstract class SessionBase
         } else {
             $strIP = $_SERVER['REMOTE_ADDR'];
         }
+        if(ip2long($strIP) === false || ip2long($strRemoteIP) === false)
+            throw new Exception("Session: user ip is invalid");
+
         if ($strRemoteIP != $strIP) {
             $strIP = $strRemoteIP . ', ' . $strIP;
         }
-        if(ip2long($strIP) === false)
-            throw new Exception("Session: user ip is invalid");
         return $strIP;
     }// }}}
     
@@ -181,9 +182,8 @@ abstract class SessionBase
     /**
     * @return   int
     */
-    protected function deleteExpired()
-    {
-    }// }}}
+    abstract protected function deleteExpired();
+    // }}}
     
     //{{{ getSessionId
     /**
@@ -193,7 +193,7 @@ abstract class SessionBase
     {
         return $this->id;
     }// }}}
-    
+   
     //{{{ getUserId
     /**
     * @return   int
@@ -209,14 +209,12 @@ abstract class SessionBase
     */
     public function setUserId( $id)
     {
-        // проверить вызывающего. 
-        // Функция должна вызыватся тoлько из User:auth()
-        $ar = debug_backtrace(); $caller = $ar[2];
-        if ( strtoupper($caller['class']) == 'USER' && strtoupper($caller['function']) == 'AUTH'){
-            $this->userId = (int)$id;
-            return true;
-        }
-        throw new Exception('Method setUserId');
+		if($this->userId == User::GUEST && $id > 0)
+		{
+			$this->userId = (int)$id; 
+			return true;
+		}
+		return false;
     }// }}}
 
     //{{{ getOnlineUsers

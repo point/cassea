@@ -264,6 +264,7 @@ class SelectorMatcher
                         {
                             $_w2 = $controller->getWidget($parent);
                             $flag = true;
+							$_parent = null;
                             foreach(RSIndexer::toArray($k) as $next_index)
                             {
                                 while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)

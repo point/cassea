@@ -133,11 +133,12 @@ class DataUpdaterPool
 	}
 	static function callCheckers($form_id = null)
 	{
+		if(!isset($form_id)) return;
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
         {
-            $flag = true;
-            if(isset($form_id) && !empty($p['form_ids']))
+            $flag = false;
+            if(!empty($p['form_ids']))
                 $flag = in_array($form_id,$p['form_ids']);
 			if(($dho = $p['data_handler_object']) && $flag)
 			    $dho->check($controller->post);
@@ -145,11 +146,12 @@ class DataUpdaterPool
 	}
 	static function callHandlers($form_id = null)
 	{
+		if(!isset($form_id)) return;
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
 		{	
-            $flag = true;
-            if(isset($form_id) && !empty($p['form_ids']))
+            $flag = false;
+            if(!empty($p['form_ids']))
                 $flag = in_array($form_id,$p['form_ids']);
             if(($dho = $p['data_handler_object']) && $flag)
                 $dho->handle($controller->post);
@@ -157,11 +159,12 @@ class DataUpdaterPool
 	}
 	static function callFinilze($form_id = null)
 	{
+		if(!isset($form_id)) return;
 		$controller = Controller::getInstance();
 		foreach(self::$pool as $p)
 		{	
-            $flag = true;
-            if(isset($form_id) && !empty($p['form_ids']))
+            $flag = false;
+            if(!empty($p['form_ids']))
                 $flag = in_array($form_id,$p['form_ids']);
             if(($dho = $p['data_handler_object']) && $flag)
                 $dho->finalize();

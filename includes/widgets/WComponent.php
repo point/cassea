@@ -160,7 +160,7 @@ abstract class WComponent extends WObject
     */
     function setID($id = null)
 	{
-		if(!isset($id) || !is_scalar($id) || Controller::getInstance()->getWidget($id) instanceof WObject)
+		if(!isset($id) || !is_scalar($id) /*|| Controller::getInstance()->getWidget($id) instanceof WObject*/)
 			$id = "__w".(self::$w_counter++);
 		parent::setId($id);
         $this->setIDLower(strtolower($this->getId()));

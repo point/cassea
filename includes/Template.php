@@ -39,6 +39,8 @@ class Template
 		$params = null;
 	function __construct($path,$filename)
 	{
+		$path = rtrim($path,"/");
+		$filename = ltrim($filename,"/");
 		if(!file_exists($path."/".$filename))
 			throw(new TemplateException("template '$path/$filename' does not exists"));
 		$this->path = $path;

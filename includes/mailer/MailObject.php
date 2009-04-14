@@ -70,7 +70,7 @@ class MailObject implements IMailObject{
      *@var string
      *@access private
      */
-	private $htmlMsg        ="";
+	private $htmlMsg        =null;
     private $subject        ='';
     /*
      *$bound,$boundary,$boundaryEnd устанавливают разделитель,который будет разделять части письма типа multipart/mixed
@@ -153,7 +153,11 @@ class MailObject implements IMailObject{
     /*{{{send
      *отсылает сформированное сообщение с помощью выбранного транспорта
      */
-    public function send(){$this->transport->send($this);}
+    public function send()
+    {
+        $this->transport = new SmtpMail();
+        $this->transport->send($this);
+    }
     /*}}}*/
 
     /*{{{setText
@@ -196,7 +200,7 @@ class MailObject implements IMailObject{
      *текст письма
      */
     public function message($msg){
-        if(!isset($this->htmlMsg))
+        if(is_null($this->htmlMsg))
             $this->setText();
         else $this->setTextHtml();
         $this->msg=$msg;

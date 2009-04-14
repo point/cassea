@@ -27,72 +27,40 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//{{{ Session
-/**
- * @package user
-*/
-class Session
+class ProfileException extends Exception {}
+
+//{{{ Profile
+class Profile
 {
-    const COOKIE_NAME = 'sid';
 
-    /**
-    * @var      SessionBase
-    */
-    private static $session = null;
-    
-    //{{{ init
-    /**
-    * @return   SessionBase
-    */
-    public static function init()
-    {
-        if (is_object(self::$session)) return;
+	const TABLE = 'profile';
 
-        $inc_path = '../includes/';
-        $sessionClassName = 'DBSession';
-        if (Config::getInstance()->session->engine ==  'memcache' )
-            $sessionClassName = 'MemcacheSession';
+	protected $user_id = null;
+	protected $fields = array();
 
-        if (!class_exists('SessionBase')) require('SessionBase.php');
-
-        if (!class_exists($sessionClassName)) 
-            if (file_exists(dirname(__FILE__)."/".$sessionClassName.'.php')) require($sessionClassName.'.php');
-            else throw new Exception('Session: '.$sessionClassName.' not found');
-        
-        self::$session = new $sessionClassName();
-        self::$session->init();
-    }// }}}
-    
-    //{{{ get
-    /**
-    * Возвращает объект Сессии
-    * @return   SessionBase
-    */
-    public static function get()
-    {
-        return self::$session;
-    }// }}}
-    
-    //{{{ getId
-    /**
-    * Возвращает Id сесси
-    * @return   String
-    */
-    public static function getId()
+	function __construct($user_id)
 	{
-        return self::$session->getSessionId();
-    }// }}}
+		if(!is_numeric($user_id) || $user_id < 0)
+			throw new ProfileException("Unknown user id '".$user_id."'");
 
-
-    //{{{ kill 
-    /**
-    * @return   
-    */
-    public static function kill()
-    {
-        self::$session->kill() ;
-        self::$session = null;
-    }// }}}
+		$r = DB::query("select * from ".self::TABLE." where user_id='".$user_id."' limit 1");
+		if(count($r))
+			$this->fields = array_shift($r);
+		$this->user_id = $user_id;
+	}
+	function __get($name)
+	{
+		return isset($this->fields[$name])?$this->fields[$name]:null;
+	}
+	function set($field_name, $value)
+	{
+		if(!is_scalar($value) || !isset($this->fields[$field_name])) return;
+		$this->fields[$field_name] = $value;
+		
+		$field_name = Filter::filter($field_name,Filter::STRING_QUOTE_ENCODE);
+		$value = Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
+		DB::query("update ".self::TABLE." set ".$field_name." = '".$value."' where user_id='".$this->user_id."' limit 1");
+	}
 }// }}}
 
 ?>

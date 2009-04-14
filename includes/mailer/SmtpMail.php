@@ -96,9 +96,9 @@ class SmtpMail extends MailTransport{
       $this->errMsg('tls','');fclose($this->smtpCt);
       }
     
-    if(!stream_socket_enable_crypto($this->smtpCt, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-      return false;
-    }
+	if(!stream_socket_enable_crypto($this->smtpCt, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+		return false;
+	}
 
     return true;
     }
@@ -117,7 +117,7 @@ class SmtpMail extends MailTransport{
             if($code!= 250) {$this->errMsg('ehlo',' ');fclose($this->smtpCt);return false;}
 
             
-            if($this->smtpProto != "ssl")
+            if($this->smtpProto != "ssl" && extension_loaded('openssl'))
             {
                 $this->tls();
                 fputs($this->smtpCt,"EHLO ".$this->smtpHost."\r\n");

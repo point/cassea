@@ -64,7 +64,11 @@ class WHyperLink extends WContainer implements StringProcessable
         /**
         * @var      string
         */
-        $name = null
+        $name = null,
+        /**
+        * @var      string
+        */
+        $subst_href = null
 
   	;
     
@@ -92,9 +96,6 @@ class WHyperLink extends WContainer implements StringProcessable
     {
     	if(isset($elem['href']))
 			$this->setHREF((string)$elem['href']);
-		if(isset($elem['baseurl']))
-			$this->setBaseURL((string)$elem['baseurl']);
-
 		if(isset($elem['rel']))
 			$this->setAttribute('rel',(string)$elem['rel']);
 		if(isset($elem['rev']))
@@ -105,9 +106,11 @@ class WHyperLink extends WContainer implements StringProcessable
             $this->setText((string)$elem['text']);
         if(isset($elem['name']))
             $this->setName((string)$elem['name']);
+        if(isset($elem['subst_href']))
+            $this->setSubstHREF((string)$elem['subst_href']);
 
 		$this->items = new MixedCollection($this->getId(),$elem);
-        $this->addToMemento(array("href","baseurl","label","rel","rev","target","name"));
+        $this->addToMemento(array("href","label","rel","rev","target","name","subst_href"));
 
 		parent::parseParams($elem);		    	
     }
@@ -125,7 +128,10 @@ class WHyperLink extends WContainer implements StringProcessable
 		$this->setHREF($data->getDef());
 		$this->setAttribute('rel',$data->get('rel'));
 		$this->setAttribute('rev',$data->get('rev'));
-		$this->setAttribute('target',$data->get('target'));
+        $this->setName($data->get('name'));
+        $this->setAttribute('target',$data->get('target'));
+        if(($text = $data->getDef()) !== null && !$this->items->count())
+            $this->items->setText($text);
         if(($text = $data->get('text')) !== null && !$this->items->count())
             $this->items->setText($text);
 
@@ -171,6 +177,25 @@ class WHyperLink extends WContainer implements StringProcessable
 		parent::buildComplete();
 	}    
 	// }}}
+
+    // {{{ preRender
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function preRender()
+    {
+        $this->checkAndSetData();
+
+        if(isset($this->subst_href) && isset($this->href))
+            $this->setHREF(sprintf($this->getSubstHREF(),$this->getHREF()));
+
+        parent::preRender();
+    }
+
     // {{{ assignVars
     /**
     * Method description
@@ -280,6 +305,36 @@ class WHyperLink extends WContainer implements StringProcessable
     function getName()
     {
 		return $this->name;
+    }
+    // }}}
+
+    // {{{ setSubstHREF
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $subst_href
+    * @return   void
+    */
+    function setSubstHREF($subst_href)
+    {
+		if(!isset($subst_href) || !is_scalar($subst_href)) 
+			return ;
+		$this->subst_href = (string)$subst_href;
+    }
+    // }}}
+    
+    // {{{ getSubstHREF
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getSubstHREF()
+    {
+		return $this->subst_href;
     }
     // }}}
 }

@@ -49,6 +49,7 @@ require("DB.php");
 require("Language.php");
 require("user/Session.php");
 require("user/User.php");
+require("user/UserManager.php");
 require("POSTChecker.php");
 require("markdown.php");
 require("LTC.php");
@@ -56,8 +57,8 @@ require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
 
-class ControllerException extends Exception
-{}
+class ControllerException extends Exception {}
+class IdExistsException extends Exception {}
 
 class WidgetLoader
 {
@@ -186,7 +187,7 @@ class Controller
 		    $this->handlePOST();
 		$this->navigator->addStep($this->page);
 
-		$this->addCSS("ns_reset.css");
+		//$this->addCSS("ns_reset.css");
 		$this->addScript("jquery.js");
 		$this->addScript("jquery.cookie.js");
 		$this->addScript("jquery.bgiframe.js");
@@ -453,13 +454,14 @@ class Controller
 		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
 		$w_id = $widget->getID();
+		if(isset($this->system_widgets[$w_id]) || isset($this->widgets[$w_id])) 
+			throw new IdExistsException('Widget with id '.$w_id.' already exists');
+
+
+
 		$this->adjacency_list->add($w_id);
 
 		$widget->parseParams($elem);
-
-		/*if(isset($elem['dataset']) && isset($this->datasets[(string)$elem['dataset']]))
-            $widget->setDataSet($this->datasets[(string)$elem['dataset']]);*/
-
 
 		WidgetLoader::load("WStyle");
 		if(isset($elem['style']) && isset($this->styles[(string)$elem['style']]))
@@ -498,6 +500,10 @@ class Controller
 		if(WidgetLoader::load("WDataSet") === false) return;
 
 		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
+		
+		if(isset($this->datasets[$ds->getId()]))
+			throw new IdExistsException('DataSet with id '.$ds->getId().' already exists');
+			
 		$ds->parseParams($elem);
 		$this->datasets[(string)$ds->getId()] = $ds;
 	}
@@ -515,6 +521,10 @@ class Controller
 		WidgetLoader::load("WStyle");
 		if(empty($elem['id'])) return;
 		$s = new WStyle((string)$elem['id']);
+
+		if(isset($this->styles[$s->getId()]))
+			throw new IdExistsException('WStyle with id '.$s->getId().' already exists');
+
 		$s->parseParams($elem);
 		$this->styles[$s->getId()] = $s;
 	}
@@ -522,8 +532,16 @@ class Controller
 	{
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
 		$j = new $c_name((string)$elem['id']);
+
 		$j->parseParams($elem);
-		$this->javascripts[$j->getId()] = $j;
+		
+		if($j->getId())
+		{
+			if(isset($this->javascripts[$j->getId()]))
+				throw new IdExistsException('WJavaScript with id '.$j->getId().' already exists');
+
+			$this->javascripts[$j->getId()] = $j;
+		}
 	}	
 	protected function addPageHandler(SimpleXMLElement $elem)
 	{
@@ -537,6 +555,10 @@ class Controller
 		if(!isset($elem['id'])) return;
 		if(WidgetLoader::load("WValueChecker") === false) return;
 		$vc = new WValueChecker((string) $elem['id']);
+
+		if(isset($this->valuecheckers[$vc->getId()]))
+			throw new IdExistsException('WValueChecker with id '.$vc->getId().' already exists');
+
 		$vc->parseParams($elem);
 		$this->valuecheckers[$vc->getId()] = $vc;
 	}	
@@ -746,10 +768,10 @@ class Controller
 		foreach($n_p2 as $k=>&$v)
             if(empty($v)) unset($n_p2[$k]);
             else $v = urlencode($v);
-        return 	Filter::filter( 
+        return Header::makeHTTPHost(). 
             ((!empty($controller_name))?"/".$controller_name:"")."/".
 			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
-			(!empty($n_get2)?"?".implode("&",$n_get2):""),	Filter::STRING_QUOTE_ENCODE	);
+			(!empty($n_get2)?"?".implode("&",$n_get2):"");
     }
 
 	function getDisplayModeParams()
@@ -795,8 +817,9 @@ class Controller
         }
 
         $formid_name = $this->post->{WForm::formid_name};
-        if(isset($formid_name))
-		    POSTChecker::checkByRules($this->post,$formid_name,$this->checker_rules);
+		if(!isset($formid_name))
+			$this->gotoStep_0();
+		POSTChecker::checkByRules($this->post,$formid_name,$this->checker_rules);
 		if(POSTErrors::hasErrors() || !$checked_by_captcha)
         {
 			POSTErrors::saveErrorList();

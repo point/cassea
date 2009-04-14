@@ -106,7 +106,7 @@ class HTTPParamHolder implements IteratorAggregate
         {
             $new_vals = array();
             foreach($str as $k=>$v)
-                $new_vals[$k] = $this->sanitizeVars($v);
+				$new_vals[$k] = $this->sanitizeVars($v);
             return $new_vals;
         }
         return Filter::sanitizeVars($str);

@@ -186,7 +186,7 @@ GO;
      * Определение baseUrl: протокол, хост, порт
      * @return string
      */
-    static private function makeHTTPHost(){
+    static public function makeHTTPHost(){
         return (empty($_SERVER['HTTPS'])?'http://':'https://').
             $_SERVER['HTTP_HOST'].
             (($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
