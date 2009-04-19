@@ -100,6 +100,11 @@ class ACL
         if(Config::getInstance()->acl->cache_groups)
             Storage::create('acl_groups')->un_set($user_id);
     }
+	static function flushCache($user_id)
+	{
+        if(Config::getInstance()->acl->cache_groups)
+            Storage::create('acl_groups')->un_set($user_id);
+	}
 }
 // }}}
 ?>

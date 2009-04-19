@@ -221,9 +221,6 @@ class WidgetCollection
 	// {{{ preReder
 	function preRender()
     {
-        $controller = Controller::getInstance();
-		for($i = 0, $c = $this->count(); $i < $c; $i++)
-            $controller->getDispatcher()->addSubscriber("increment_id", $this->getItemId($i));
 		for($i = 0, $c = $this->count(); $i < $c; $i++)
 			$this->getItem($i)->messageInterchange();
 
@@ -256,7 +253,6 @@ class WidgetCollection
 		for($i = 0, $c = $this->count();$i < $c; $i++)
         {
             $this->getItem($i)->postRender();
-		    $controller->getDispatcher()->deleteSubscriber("increment_id", $this->getItem($i)->getId());
         }
 	} 
 	// }}}
@@ -411,14 +407,10 @@ class IterableCollection extends WidgetCollection
         $this->i_elem = array();
         for($i = 0, $c = $controller->getDisplayModeParams()->getLimit($this->parent_id);$i < $c; $i++)
         {
-            $controller->getDispatcher()->notify(
-                new Event("increment_id",null,null,array('do_increment'=>1)));
             parent::preRender();
             for($j = 0, $c2 = $this->count();$j < $c2; $j++)
                 $this->i_elem[$i][$j] = clone $this->getItem($j);
 
-            $controller->getDispatcher()->notify(
-                new Event("increment_id",null,null,array('do_increment'=>0)));
 
             $controller->getDisplayModeParams()->incCurrent($this->parent_id);
         }

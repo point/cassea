@@ -43,6 +43,7 @@ class AdjacencyListCell
 class WidgetAdjacencyList
 {
 	public $list = array();
+	private $parent_cache = array();
 
 	function add($widget_id, $parent = null)
 	{
@@ -54,10 +55,18 @@ class WidgetAdjacencyList
 	}
 	function getParentForId($id)
 	{
+		if(isset($this->parent_cache[$id])) 
+			return $this->parent_cache[$id];
+
 		foreach($this->list as $v)
 			if($v->widgetId == $id)
 				return $v->parent;
 		return null;
+	}
+	function setParentForIdCache($id,$widget)
+	{
+		if(is_string($widget))
+			$this->parent_cache[$id] = $widget;
 	}
 	function getPrevUntil($id,$until = null)
 	{

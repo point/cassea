@@ -97,7 +97,20 @@ class AbstractUserManager
 	function getUserData($uid)
 	{
 		if(!is_numeric($uid) || $uid < 1) return; 
-		return $this->storage->get($uid);
+		$data = $this->storage->get($uid);
+
+		if($data === false)
+		{
+			$r = DB::query("select login, email from ".self::TABLE." where id='".$uid."' limit 1");
+			if(isset($r[0]))
+			{
+				$data = array();
+				$data['login'] = $r[0]['login'];
+				$data['email'] = $r[0]['email'];
+				$this->storeUserData(0+$uid,$data);
+			}
+		}
+		return $data;
 	}
 
 	function logout()

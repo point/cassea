@@ -445,7 +445,8 @@ class Controller
 		$sxml = simplexml_import_dom($dom);
 		foreach($sxml as $elem)
 			$this->buildWidget($elem);
-
+		$this->getDispatcher()->notify(new Event("all_build_complete"));
+		
 	}
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{

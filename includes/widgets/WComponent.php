@@ -657,7 +657,9 @@ abstract class WComponent extends WObject
 
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
-		$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
+		$controller->getDispatcher()->addEvent("all_build_complete");	
+		//$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
+		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
 		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
         $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
@@ -843,6 +845,20 @@ EOD;
 		if($event->getName() === "increment_id" /*&& $event->inDst($this->getId())*/)
 		{
 			$this->do_increment = 0 + $event->getParam('do_increment');
+		}
+		elseif($event->getName() == "all_build_complete")
+		{
+			$controller = Controller::getInstance();
+			$_w2 = $this;
+			$has_roll = false;
+			while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
+				if($controller->getWidget($_p) instanceof WRoll) {$has_roll = true;break;}
+				else  $_w2 = $controller->getWidget($_p);
+			if($has_roll)
+			{
+				$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
+				$this->do_increment = 1;
+			}
 		}
     }
 	//}}}

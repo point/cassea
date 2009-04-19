@@ -41,7 +41,7 @@ class SelectorMatcher
         {$c++;echo " $c ";}*/
 
 		$controller = Controller::getInstance();
-        $parser = SelectorParserFactory::getSelectorParser($selector,$index,$global);
+        $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$global);
 		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
@@ -236,6 +236,7 @@ class SelectorMatcher
                         if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
                         else $w2 = $controller->getWidget($p);
                 if($parent == null) return false;
+				$controller->getAdjacencyList()->setParentForIdCache($widget->getId(),$parent); 
                 if(!is_array($parsed_selector['pseudo_value']))
                 {
                     if(strpos($parsed_selector['pseudo_value'],":") !== false)
@@ -262,7 +263,7 @@ class SelectorMatcher
                         if($current != RSIndexer::getLastIndex($k)) continue;
                         else
                         {
-                            $_w2 = $controller->getWidget($parent);
+                            $_w3 = $_w2 = $controller->getWidget($parent);
                             $flag = true;
 							$_parent = null;
                             foreach(RSIndexer::toArray($k) as $next_index)
@@ -270,6 +271,9 @@ class SelectorMatcher
                                 while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
                                     if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
                                     else  $_w2 = $controller->getWidget($_p);
+
+								$controller->getAdjacencyList()->setParentForIdCache($_w3->getId(),$_parent); 
+
                                 if($_parent && $controller->getDisplayModeParams()->getCurrent($_parent,$cur_scope) != $next_index)
                                 {$flag = false;break;}
                             }
@@ -295,7 +299,7 @@ class SelectorParserFactory
     static function getSelectorParser($selector,$index,$scope)
     {
         if(!isset(self::$cache[$selector]))
-        {
+		{
             $o = new SelectorParser($selector,$index,$scope);
             self::$cache[$selector] = $o;
             return $o;
@@ -303,6 +307,25 @@ class SelectorParserFactory
         else
         {
             $o = self::$cache[$selector];
+            $o->setIndex($index);
+            $o->setScope($scope);
+            $o->processIndexScope();
+            return $o;
+        }
+    }
+
+    static function getSelectorParser2($selector,$index,$scope)
+    {
+		$m = md5($selector);
+        if(!isset($GLOBALS['selector_cache'][$m]))
+		{
+            $o = new SelectorParser($selector,$index,$scope);
+            $GLOBALS['selector_cache'][$m] = &$o;
+            return $o;
+        }
+        else
+        {
+            $o = &$GLOBALS['selector_cache'][$m];
             $o->setIndex($index);
             $o->setScope($scope);
             $o->processIndexScope();
