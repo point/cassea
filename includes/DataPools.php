@@ -134,59 +134,40 @@ class DataUpdaterPool
 	static function callCheckers($form_id = null)
 	{
 		$controller = Controller::getInstance();
-		if(!isset($form_id)) //if not isset call all checkers (in ajax)
-			foreach(self::$pool as $p)
-			{
-				if(($dho = $p['data_handler_object']))
-					$dho->check($controller->post);
-			}
-		else
-			foreach(self::$pool as $p)
-			{
-				$flag = false;
-				if(!empty($p['form_ids']))
-					$flag = in_array($form_id,$p['form_ids']);
-				if(($dho = $p['data_handler_object']) && $flag)
-					$dho->check($controller->post);
-			}
+		foreach(self::lookupDHs($form_id) as $dho)
+			$dho->check($controller->post);
 	}
 	static function callHandlers($form_id = null)
 	{
 		$controller = Controller::getInstance();
-		if(!isset($form_id)) //if not isset call all checkers (in ajax)
-			foreach(self::$pool as $p)
-			{
-				if(($dho = $p['data_handler_object']))
-					$dho->handle($controller->post);
-			}
-		else
-			foreach(self::$pool as $p)
-			{	
-				$flag = false;
-				if(!empty($p['form_ids']))
-					$flag = in_array($form_id,$p['form_ids']);
-				if(($dho = $p['data_handler_object']) && $flag)
-					$dho->handle($controller->post);
-			}
+		foreach(self::lookupDHs($form_id) as $dho)
+			$dho->handle($controller->post);
+
 	}
 	static function callFinilze($form_id = null)
 	{
 		$controller = Controller::getInstance();
-		if(!isset($form_id)) //if not isset call all checkers (in ajax)
+		foreach(self::lookupDHs($form_id) as $dho)
+			$dho->finalize($controller->post);
+	}
+	private static function lookupDHs($form_id)
+	{
+		$dhls = array();
+		// form_id doesn't set if request passed via ajax
+		// also looking up datahandlers to check, handle or finalize POSTs
+		// if no special DHs founded, calling all DHs
+		if(isset($form_id))
 			foreach(self::$pool as $p)
-			{
+				if(!empty($p['form_ids']) && in_array($form_id,$p['form_ids']) && 
+					($dho = $p['data_handler_object']))
+					$dhls[] = $dho;
+
+		if(empty($dhls)) 
+			foreach(self::$pool as $p)
 				if(($dho = $p['data_handler_object']))
-					$dho->finalize();
-			}
-		else
-			foreach(self::$pool as $p)
-			{	
-				$flag = false;
-				if(!empty($p['form_ids']))
-					$flag = in_array($form_id,$p['form_ids']);
-				if(($dho = $p['data_handler_object']) && $flag)
-					$dho->finalize();
-			}
-    }
+					$dhls[] = $dho;
+
+		return $dhls;
+	}
 }
 ?>
