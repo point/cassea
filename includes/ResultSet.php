@@ -135,7 +135,8 @@ class ResultSet
         $fors_array = array(),
         $for_values_array = array(),
         $cur_index = -1,
-        $f1s = array()
+		$f1s = array(),
+		$scope = "global"
 
 		;
 	/*function f($selector = "",$index = null,$scope = "global")
@@ -144,9 +145,16 @@ class ResultSet
 		$this->fors[$this->cur_for] = array("selector"=>$selector,"index"=>$index,"scope"=>$scope);
 		$this->for_values[$this->cur_for] = array();
 		return $this;
-    }*/
-    function f($selector = "", $index = null, $scope = "global")
+	}*/
+	function setScope($scope)
+	{
+		if($scope != "local" && $scope != "global") return;
+		$this->scope = $scope;
+	}
+    function f($selector = "", $index = null, $scope = null)
     {
+		if(!isset($scope))
+			$scope = $this->scope;
         if(isset($index))
         {
             //$this->cur_index = $index;
@@ -164,8 +172,10 @@ class ResultSet
         $this->cur_selector = $selector;
         return $this;
     }
-    function f1($selector = "", $index = null, $scope = "global")
+    function f1($selector = "", $index = null, $scope = null)
     {
+		if(!isset($scope))
+			$scope = $this->scope;
         if(strpos($selector,",") === false)
             $this->f1s[$selector] = 1;
         return $this->f($selector, $index, $scope);

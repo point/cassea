@@ -369,19 +369,17 @@ class DataSourceObject extends DataObject
 		if(!$this->is_static)
 		{
 			if(!isset($this->object) && !$this->createObject()) return null;
-            $ret = array();
             if(!empty($this->datasource_methods))
             {
-                foreach($this->datasource_params as $ind => $dsp)
-                {
+				$ret = array();
+                foreach($this->datasource_methods as $ind => $method)
+				{
+					$dsp = $this->datasource_params[$ind];
                     $dsp->replaceLimitParams();
-                    if(isset($this->datasource_methods[$ind]))
-                    {
-                        try{
-                            $r = new ReflectionObject($this->object);
-                            $ret[] = $r->getMethod($this->datasource_methods[$ind])->invokeArgs($this->object,$dsp->getParams());
-                        }catch(ReflectionException $e){}
-                    }
+					try{
+						$r = new ReflectionObject($this->object);
+						$ret[] = $r->getMethod($method)->invokeArgs($this->object,$dsp->getParams());
+					}catch(ReflectionException $e){}
                 }
                 return $ret;
             }
@@ -395,14 +393,16 @@ class DataSourceObject extends DataObject
             {
                 $this->requireClasses();
 
-                $ret = array();
                 foreach($this->datasource_methods as $ind => $method)
                 {
+					$ret = array();
+					$dsp = $this->datasource_params[$ind];
+					$dsp->replaceLimitParams();
                     try
                     {
                         $r = new ReflectionClass($this->classname);
                         if(!$r->getMethod($method)->isAbstract() && $r->getMethod($method)->isStatic())
-                            $ret[] = call_user_func_array($this->classname."::".$method,$this->datasource_params[$ind]->getParams());
+                            $ret[] = call_user_func_array($this->classname."::".$method,$dsp->getParams());
                     }
                     catch(ReflectionException $e){return null;}
 

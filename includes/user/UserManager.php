@@ -101,12 +101,14 @@ class AbstractUserManager
 
 		if($data === false)
 		{
-			$r = DB::query("select login, email from ".self::TABLE." where id='".$uid."' limit 1");
+			$r = DB::query("select * from ".self::TABLE." where id='".$uid."' limit 1");
 			if(isset($r[0]))
 			{
 				$data = array();
 				$data['login'] = $r[0]['login'];
 				$data['email'] = $r[0]['email'];
+				$data['last_login'] = $r[0]['last_login'];
+				$data['date_joined'] = $r[0]['date_joined'];
 				$this->storeUserData(0+$uid,$data);
 			}
 		}
@@ -167,7 +169,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		if(!$this->checkLogin($login) || !$this->checkPassord($password))
             return false;
 
-        $r = DB::query('select id, login, email, password, salt, state from '.self::TABLE.' where login="'.$login.'" limit 1');
+        $r = DB::query('select *  from '.self::TABLE.' where login="'.$login.'" limit 1');
 		if (count($r)!= 1 ) 
 		{
 			if(Config::getInstance()->user->registration_confirm)
@@ -187,6 +189,8 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		$store = array();
         $store['login'] = $r['login'];
         $store['email'] = $r['email'];
+		$store['last_login'] = $r['last_login'];
+		$store['date_joined'] = $r['date_joined'];
 		$this->storeUserData(0+$r['id'],$store);
 
         Session::get()->setUserId(0+$r['id']);
@@ -381,6 +385,33 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE." where login='".$login."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
+	}
+	function getLastLogin($uid)
+	{
+		if(!is_numeric($uid)) return;
+
+		$data = $this->getUserData($uid);
+		if(isset($data['last_login'])) return $data['last_login'];
+
+
+        $r  = DB::query('select last_login from '.self::TABLE.' where id="'.(0+$uid).'"');
+		$data['last_login'] = isset($r[0])?$r[0]['last_login']:null;
+		$this->storeUserData($uid,$data);
+		return $data['last_login'];
+	}
+
+	function getDateJoined($uid)
+	{
+		if(!is_numeric($uid)) return;
+
+		$data = $this->getUserData($uid);
+		if(isset($data['date_joined'])) return $data['date_joined'];
+
+
+        $r  = DB::query('select date_joined from '.self::TABLE.' where id="'.(0+$uid).'"');
+		$data['date_joined'] = isset($r[0])?$r[0]['date_joined']:null;
+		$this->storeUserData($uid,$data);
+		return $data['date_joined'];
 	}
 	function getEmail($uid)
 	{

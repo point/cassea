@@ -58,6 +58,10 @@ class User
     */
     private static $instance;
 
+	protected 
+		$last_login = null,
+		$date_joined;
+
 
     //{{{ __construct
     /**
@@ -73,6 +77,8 @@ class User
 		
 		$this->login = $data['login'];
 		$this->email = $data['email'];
+		$this->last_login = $data['last_login'];
+		$this->date_joined = $data['date_joined'];
 
 		$this->profile = new Profile($this->id);
     }//}}}
@@ -137,6 +143,15 @@ class User
 	public function isGuest()
 	{
 		return $this->id == self::GUEST;
+	}
+
+	function getLastLogin()
+	{
+		return $this->last_login;
+	}
+	function getDateJoined()
+	{
+		return $this->date_joined;
 	}
 
 }// }}}

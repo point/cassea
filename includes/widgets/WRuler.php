@@ -47,7 +47,7 @@ class WRuler extends WContainer
         /**
         * @var      int
         */
-        $current_page = null,
+        $current_page = 1,
         /**
         * @var      int
         */
@@ -64,10 +64,6 @@ class WRuler extends WContainer
         * @var      boolean
 		*/
 		$another_ruler = false,
-        /**
-        * @var      boolean
-		*/
-		$reverse = false,
         /**
         * @var      boolean
 		*/
@@ -107,8 +103,6 @@ class WRuler extends WContainer
 	       	$this->setResPerPage((string)$elem['res_per_page']);
 		if(isset($elem['links_per_page']))
 			$this->setLinksPerPage((string)$elem['links_per_page']);
-		if(isset($elem['reverse']))
-			$this->setReverse((string)$elem['reverse']);
 		if(isset($elem['use_get']))
 			$this->setUseGET((string)$elem['use_get']);
 		
@@ -127,27 +121,34 @@ class WRuler extends WContainer
 	{
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
-		/*if(isset($this->get_post_params['cp']))
-			$this->current_page = 0 + $this->get_post_params['cp'];*/
 
-		Controller::getInstance()->getDispatcher()->addSubscriber("ruler_settotal",$this->getId());
-		Controller::getInstance()->getDispatcher()->addSubscriber("ruler_has_another_instance",$this->getId());
-		Controller::getInstance()->getDispatcher()->addEvent("roll_setlimits");
-		Controller::getInstance()->getDispatcher()->addEvent("ruler_has_another_instance");
+		$controller = Controller::getInstance();
+		$controller->getDispatcher()->addSubscriber("ruler_settotal",$this->getId());
+		$controller->getDispatcher()->addSubscriber("ruler_has_another_instance",$this->getId());
+		$controller->getDispatcher()->addEvent("roll_setlimits");
+		$controller->getDispatcher()->addEvent("ruler_has_another_instance");
 
-		Controller::getInstance()->getDispatcher()->notify(
-			new Event("ruler_has_another_instance",$this->getId(),null));
-
-		if(!$this->getReverse())
-		{
-			$this->calcCurrentPage();
-			$controller = Controller::getInstance();
-			$controller->getDisplayModeParams()->predicted_from = $this->getResPerPage()*($this->current_page-1);
-			$controller->getDisplayModeParams()->predicted_limit = $this->getResPerPage();
-		}
+		$this->calcCurrentPage();
+		$controller->getDisplayModeParams()->predicted_from = $this->getResPerPage()*($this->current_page-1);
+		$controller->getDisplayModeParams()->predicted_limit = $this->getResPerPage();
 		parent::buildComplete();
 	}    
 	// }}}
+
+	// {{{ messageInterchange
+	/**
+    * method description
+    *
+    * more detailed method description
+    * @param    void
+    * @return   void
+    */
+	function messageInterchange()
+	{
+		Controller::getInstance()->getDispatcher()->notify(
+			new Event("ruler_has_another_instance",$this->getId(),null));
+	}
+	//}}}	
 
     // {{{ assignVars
     /**
@@ -159,9 +160,9 @@ class WRuler extends WContainer
     */
     function assignVars()
 	{
+		if($this->total_pages == 1)
+			$this->setVisible(0);
 		$items = array();
-		if(!$this->getReverse())
-		{
 			for($i = $this->begin; $i <= $this->end; $i++)
 				//for($i = $this->end; $i >= $this->begin; $i--)
 				$items[$i] = array(
@@ -170,49 +171,10 @@ class WRuler extends WContainer
 					"link"=>$this->makeLink($i)
 				);
 			$this->tpl->setParamsArray(array("items"=>$items,"show_first"=>$this->show_first,"show_last"=>$this->show_last,
-				"first_link"=>$this->makeLink(null),"last_link"=>$this->makeLink($this->total_pages)));
-		}
-		else
-		{
-			for($i = $this->end; $i >= $this->begin; $i--)
-				$items[$i] = array(
-					"title"=>$i,
-					"class"=>$i == $this->current_page?"class=\"current\"":"",
-					"link"=>$this->makeLink($i)
-				);
-			$this->tpl->setParamsArray(array("items"=>$items,"show_first"=>$this->show_first,"show_last"=>$this->show_last,
-				"first_link"=>$this->makeLink(null),"last_link"=>$this->makeLink(1)));
-		}
+				"first_link"=>$this->makeLink($this->current_page-1),"last_link"=>$this->makeLink($this->current_page+1)));
 		parent::assignVars();
     }
 	// }}}	
-    // {{{ setReverse
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    int $reverse
-    * @return   void
-    */
-    function setReverse($reverse)
-    {
-		if(!isset($reverse) || !is_scalar($reverse)) return;
-		$this->reverse = 0+$reverse;
-    }
-    // }}}
-    // {{{ getReverse
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   int
-    */
-    function getReverse()
-    {
-		return $this->reverse;
-    }
-    // }}} 
     // {{{ setResPerPage 
     /**
     * Method description
@@ -330,24 +292,15 @@ class WRuler extends WContainer
 		if($event->getName() == "ruler_settotal")
 		{
 			$this->setTotalCount($event->getParam('total_count'));
-			$this->calcCurrentPage();
 			$this->calc();
-			if(!$this->getReverse())
-				$cur_limit = $this->res_per_page*($this->current_page-1);
-			else $cur_limit = $this->res_per_page*($this->total_pages - $this->current_page);
-
-			if($cur_limit >= $this->total_count)
-				$cur_limit = $this->res_per_page*($this->current_page-1);
-
-			$cur_count = $this->res_per_page;
-			if($cur_limit + $cur_count > $this->total_count)
-				$cur_count = $this->total_count - $cur_limit ;
 
 			Controller::getInstance()->getDispatcher()->notify(
-				new Event("roll_setlimits",$this->getId(),$event->getSrc(),array('from'=>$cur_limit,
-				"limit"=>$cur_count)));
+				new Event("roll_setlimits",$this->getId(),$event->getSrc(),array('from'=>($this->current_page-1)*$this->res_per_page,
+				"limit"=>(($_r = $this->total_count - $this->current_page*$this->res_per_page) < 0)?$this->res_per_page+$_r:$this->res_per_page
+			
+			)));
 		}
-		if($event->getName() == "ruler_has_another_instance")
+		elseif($event->getName() == "ruler_has_another_instance")
 		{
 			$this->setUseGET(1);
 			$controller = Controller::getInstance();
@@ -357,51 +310,25 @@ class WRuler extends WContainer
 	
 	protected function calc()
 	{
-		$this->total_pages = ceil($this->total_count/$this->res_per_page);
-		if($this->total_pages <= 0) $this->total_pages = 1;
+		if($this->total_count <= $this->res_per_page)
+		{ 			$this->begin = $this->end = $this->total_pages = 1;	return; }
+		if(($this->current_page-1)  * $this->res_per_page > $this->total_count)
+		{ $this->current_page = 1; $this->begin = 1; $this->end = $this->links_per_page; return; }
 
-		if($this->getReverse() && !isset($this->current_page))
-			$this->current_page = $this->total_pages;
+		$this->total_pages = $total_pages = ceil($this->total_count / $this->res_per_page);
 
-		if($this->current_page <= 0 || $this->current_page > $this->total_pages)
-			if(!$this->getReverse())
-				$this->current_page = 1;
-			else $this->current_page = $this->total_pages;
-
-		if($this->current_page <= 0 + floor($this->links_per_page/2))
-		{
-			$this->begin = 1;
-			if($this->begin + $this->links_per_page <= $this->total_pages)
-				$this->end = $this->links_per_page;
-			else $this->end = $this->total_pages;
-		}
-		elseif($this->current_page > $this->total_pages - floor($this->links_per_page/2))
-		{
-			$this->end = $this->total_pages;
-			if($this->end - ($this->links_per_page-1) >= 0)
-				$this->begin = $this->end - ($this->links_per_page - 1);
-			else $this->begin = 1;
-		}
-		else
-		{
-			$this->begin = $this->current_page - floor($this->links_per_page/2);
-			$this->end = $this->begin + $this->links_per_page-1;
-		}
-		if($this->total_pages == 1)
-			$this->setVisible(0);
+		$this->begin = (($_b = $this->current_page - ceil($this->links_per_page/2)) <= 0)?1:($_b);
+		$this->end = (($_e = $this->begin + ($this->links_per_page-1)) > $total_pages)?$total_pages:$_e;
 
 		if($this->current_page > 1)
-			if(!$this->getReverse())
-				$this->show_first = 1;
-			else $this->show_last = 1;
+		$this->show_first = 1;
 
 		if($this->current_page < $this->total_pages)
-			if(!$this->getReverse())
-				$this->show_last = 1;
-			else $this->show_first = 1;
+			$this->show_last = 1;
 	}
 	protected function makeLink($page)
 	{
+		if($page <= 1) $page = null;
 		$link = "#";
 		if(!$this->getUseGET())
 		{
@@ -420,18 +347,17 @@ class WRuler extends WContainer
 	}
 	protected function calcCurrentPage()
 	{
-		if(!$this->getReverse())
-			$this->current_page = 1;
+		$this->current_page = 1;
 		if(!$this->getUseGET())
 		{
 			foreach(Controller::getInstance()->p2 as $v)
-				if(preg_match("/^page(\d+)$/",$v,$m) && is_numeric($m[1]))
+				if(preg_match("/^page(\d+)$/",$v,$m) && is_numeric($m[1]) && $m[1] > 0)
 					$this->current_page = Filter::filter(0+$m[1],Filter::INT);
 		}
 		else
 		{
 			$page = Controller::getInstance()->get->{"page".$this->id};
-			if($page !== null && is_numeric($page))
+			if($page !== null && is_numeric($page) && $page > 0)
 				$this->current_page = Filter::filter(0+$page,Filter::INT);
 		}
 	}

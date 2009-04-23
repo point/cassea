@@ -100,6 +100,10 @@ class HTTPParamHolder implements IteratorAggregate
 		if(!isset($this->checked_vars[$var_name])) return;
 		unset($this->checked_vars[$var_name]);
 	}
+	function __unset($var_name)
+	{
+		$this->delte($var_name);
+	}
     private function sanitizeVars($str)
     {
         if(is_array($str))

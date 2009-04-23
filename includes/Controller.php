@@ -687,8 +687,11 @@ class Controller
 	}
 	function makeURL($page = null, $p2 = null,$controller_name = null, $get = null)
 	{
-		if((!isset($controller_name) || !is_scalar($controller_name)) && $this->controller_name != "index")
+		if(!isset($controller_name) || !is_scalar($controller_name))
 			$controller_name = $this->controller_name;
+		if($this->controller_name == "index" && empty($p2))
+			$controller_name = "";
+
 		if(!isset($page) || !is_scalar($page))
 			$page = $this->p1;
 		$n_p2 = $this->p2;
