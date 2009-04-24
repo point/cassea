@@ -164,7 +164,7 @@ class DataUpdaterPool
 
 		if(empty($dhls)) 
 			foreach(self::$pool as $p)
-				if(($dho = $p['data_handler_object']))
+				if(($dho = $p['data_handler_object']) && empty($p['form_ids']))
 					$dhls[] = $dho;
 
 		return $dhls;
