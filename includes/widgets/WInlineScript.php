@@ -31,96 +31,72 @@
 //
 // $Id$
 //
-WidgetLoader::load("WControl");
-//{{{ WEdit
-class WFile extends WControl
+WidgetLoader::load("WComponent");
+//{{{ WInlineScript
+class WInlineScript extends WComponent
 {
     protected
-        $size = 40,
-        $maxFileSize = 0;
+
+		$code = null
+		;
+
     // {{{ __construct
     /**
     * Method description
     *
     * More detailed method description
-    * @param    void
+    * @param    array $elem
     */
     function __construct($id = null)
     {
-        $this->setMaxFileSize($this->returnBytes(ini_get('upload_max_filesize')));
-  		parent::__construct($id);
+		parent::__construct($id);
     }
     // }}}
-
-    // {{{ parseParams
+    
+    // {{{ parseParams 
     /**
     * Method description
     *
     * More detailed method description
-    * @param    array
+    * @param    array $elem
     * @return void
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(isset($elem['size']))
-            $this->setSize((string)$elem['size']);
-
-		if(isset($elem['max_file_size']))
-            $this->setMaxFileSize((string)$elem['max_file_size']);
-
-		$this->addToMemento(array("size", 'max_file_size'));
-		parent::parseParams($elem);		    	
+		if(isset($elem) && (string)$elem != "")
+			$this->setCode((string)$elem);
+		
+		parent::parseParams($elem);
     }
     // }}}
     
-    // {{{ setSize 
-    function setMaxFileSize($size)
-    {
-		if(!isset($size) || !is_scalar($size))
-            return;
-        $this->maxFileSize = $this->sizeFromString($size);
-    }
-    // }}}
-    
-    // {{{ getSize 
-    function getMaxFileSize()
-    {
-		return $this->maxFileSize;
-    }
-    // }}}
-    
-    // {{{ setSize 
-    function setSize($size)
-    {
-		if(!isset($size) || !is_scalar($size) || (0+$size) > 1024)
-			return;
-		$this->size = 0 + $size;
-    }
-    // }}}
-    
-    // {{{ getSize 
-    function getSize()
-    {
-		return $this->size;
-    }
-    // }}}
-
-    // {{{ setData 
+    // {{{ setCode
     /**
     * Method description
     *
     * More detailed method description
-    * @param    mixed $data
+    * @param    string $code
     * @return   void
     */
-    function setData(WidgetResultSet $data)
+    function setCode($code)
     {
-		$this->setSize($data->get('size'));
-        $this->setMaxFileSize($data->get('max_file_size'));
-        parent::setData($data);
+		if(empty($code)  || !is_scalar($code)) return; 
+		$this->code = "".$code;
     }
     // }}}
     
+    // {{{ getCode
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @return   string
+    */
+    function getCode()
+    {
+		return $this->code;
+    }
+    // }}}
     // {{{ buildComplete
     /**
     * Method description
@@ -130,13 +106,12 @@ class WFile extends WControl
     * @return   void
     */
 	function buildComplete()
-    {
+	{
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 		parent::buildComplete();
 	}    
 	// }}}
-
     // {{{ assignVars
     /**
     * Method description
@@ -148,50 +123,12 @@ class WFile extends WControl
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-            "size"=>$this->getSize(),
-            'max_file_size' => $this->getMaxFileSize()
+			'code'=> $this->getCode()
 		));
 		parent::assignVars();
     }
 	// }}}	
+}
+//}}}
 
-    // {{{ returnBytes
-    private function returnBytes($val) {
-        $val = trim($val);
-        $last = strtolower($val[strlen($val)-1]);
-        switch($last) {
-            case 'g':
-                $val *= 1024;
-            case 'm':
-                $val *= 1024;
-            case 'k':
-                $val *= 1024;
-        }
-        return $val;
-    }// }}}
-
-    // {{{ sizeFromString
-    private function sizeFromString($size)
-    {
-        if (is_numeric($size)) 
-            return (integer) $size;
-
-        $size = trim($size);
-        $value = substr($size, 0, -2);
-        switch (strtoupper(substr($size, -2))) 
-        {
-           case 'GB':
-                //$value *= (1024 * 1024 * 1024);
-                $value *= 1073741824;
-                break;
-            case 'MB':
-                //$value *= (1024 * 1024);
-                $value *= 1048576;
-                break;
-            case 'KB':
-                $value *= 1024;
-                break;
-        }
-        return $value;
-    }// }}}
-}// }}}
+?>

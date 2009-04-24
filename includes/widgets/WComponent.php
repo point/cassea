@@ -796,12 +796,12 @@ abstract class WComponent extends WObject
         }
 		elseif($this->inside_roll || $this->do_increment)
 		{
-			$final_html_id = $this->id."_".$this->add_html_id;
+			$final_html_id = ltrim($this->id,"_")."_".$this->add_html_id;
 			$this->setHTMLId($final_html_id);
 		}
 		else 
 		{
-			$final_html_id = $this->id;
+			$final_html_id = ltrim($this->id,"_");
 			$this->setHTMLId($final_html_id);
 		}
 		if(isset($this->tooltip))
@@ -874,10 +874,12 @@ EOD;
 	function createMemento()
 	{
 		$x = new ReflectionClass(get_class($this));
+		$t_vars = array();
 		foreach($this->memento_vars as $v)
 			if($x->hasProperty($v))
 				$t_vars[$v] = $this->$v;
-		$this->memento = $t_vars;
+		if(count($t_vars))
+			$this->memento = $t_vars;
 	}
 	//}}}	
     

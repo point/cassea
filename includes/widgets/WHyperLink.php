@@ -195,6 +195,7 @@ class WHyperLink extends WContainer implements StringProcessable
 
         parent::preRender();
     }
+	// }}}
 
     // {{{ assignVars
     /**

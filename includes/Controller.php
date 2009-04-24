@@ -496,9 +496,20 @@ class Controller
 		else
 			$this->widgets[$w_id] = $widget;
 	}
+	private function checkACL(SimpleXMLElement $elem)
+	{
+		$a = $d = null;
+        if(isset($elem['allow']))
+            $a = (string)$elem['allow'];
+        if(isset($elem['deny']))
+            $d = (string)$elem['deny'];
+        return ACL::check($a,$d);
+	}
 	function addDataSet(SimpleXMLElement $elem)
 	{
 		if(WidgetLoader::load("WDataSet") === false) return;
+
+		if(!$this->checkACL($elem)) return;
 
 		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
 		
@@ -513,6 +524,8 @@ class Controller
 	{
 		if(WidgetLoader::load("WDataHandler") === false) return;
 
+		if(!$this->checkACL($elem)) return;
+
 		$dh = new WDataHandler(isset($elem['id'])?$elem['id']:null);
 		$dh->parseParams($elem);
 		$this->datahandlers[] = $dh;
@@ -521,6 +534,9 @@ class Controller
 	{
 		WidgetLoader::load("WStyle");
 		if(empty($elem['id'])) return;
+
+		if(!$this->checkACL($elem)) return;
+
 		$s = new WStyle((string)$elem['id']);
 
 		if(isset($this->styles[$s->getId()]))
@@ -532,6 +548,9 @@ class Controller
 	protected function addJS(SimpleXMLElement $elem)
 	{
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
+
+		if(!$this->checkACL($elem)) return;
+
 		$j = new $c_name((string)$elem['id']);
 
 		$j->parseParams($elem);
@@ -548,12 +567,19 @@ class Controller
 	{
 		if(WidgetLoader::load("WPageHandler") === false) return;
 
+		if(!$this->checkACL($elem)) return;
+
+
         $this->pagehandler = new WPageHandler();
         $this->pagehandler->parseParams($elem);
 	}
 	protected function addValueChecker(SimpleXMLElement $elem)
 	{
 		if(!isset($elem['id'])) return;
+
+		if(!$this->checkACL($elem)) return;
+
+
 		if(WidgetLoader::load("WValueChecker") === false) return;
 		$vc = new WValueChecker((string) $elem['id']);
 
@@ -693,7 +719,8 @@ class Controller
 			$controller_name = "";
 
 		if(!isset($page) || !is_scalar($page))
-			$page = $this->p1;
+			if($this->p1 !== "index")
+				$page = $this->p1;
 		$n_p2 = $this->p2;
 		$n_get = array();
 		if(isset($p2) && is_array($p2))

@@ -55,11 +55,11 @@ class WRuler extends WContainer
         /**
         * @var      boolean
         */
-		$show_first = false,
+		$show_prev = false,
         /**
         * @var      boolean
         */
-		$show_last = false,
+		$show_next = false,
         /**
         * @var      boolean
 		*/
@@ -170,7 +170,7 @@ class WRuler extends WContainer
 					"class"=>$i == $this->current_page?"class=\"current\"":"",
 					"link"=>$this->makeLink($i)
 				);
-			$this->tpl->setParamsArray(array("items"=>$items,"show_first"=>$this->show_first,"show_last"=>$this->show_last,
+			$this->tpl->setParamsArray(array("items"=>$items,"show_prev"=>0+$this->show_prev,"show_next"=>0+$this->show_next,
 				"first_link"=>$this->makeLink($this->current_page-1),"last_link"=>$this->makeLink($this->current_page+1)));
 		parent::assignVars();
     }
@@ -313,7 +313,7 @@ class WRuler extends WContainer
 		if($this->total_count <= $this->res_per_page)
 		{ 			$this->begin = $this->end = $this->total_pages = 1;	return; }
 		if(($this->current_page-1)  * $this->res_per_page > $this->total_count)
-		{ $this->current_page = 1; $this->begin = 1; $this->end = $this->links_per_page; return; }
+		{ /*$this->current_page = 1;*/ $this->begin = 1; $this->end = $this->links_per_page; return; }
 
 		$this->total_pages = $total_pages = ceil($this->total_count / $this->res_per_page);
 
@@ -321,10 +321,10 @@ class WRuler extends WContainer
 		$this->end = (($_e = $this->begin + ($this->links_per_page-1)) > $total_pages)?$total_pages:$_e;
 
 		if($this->current_page > 1)
-		$this->show_first = 1;
+		$this->show_prev = 1;
 
 		if($this->current_page < $this->total_pages)
-			$this->show_last = 1;
+			$this->show_next = 1;
 	}
 	protected function makeLink($page)
 	{
