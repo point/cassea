@@ -140,7 +140,7 @@ class WValueChecker extends WObject
 				}
 				else
 					$t2 .= "true";
-				Controller::getInstance()->setChecker($form_id,$w,$r,isset($this->values[$i])?$this->values[$i]:"true");
+                Controller::getInstance()->setChecker($form_id,$w,$r,isset($this->values[$i])?$this->values[$i]:"true", !is_null($this->messages[$i])?Language::encodePair($this->messages[$i]):null);
 				$ta2[] = $t2;
 			}
 			$t1 .= implode(",\n",$ta2)."\n}";

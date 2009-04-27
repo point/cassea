@@ -33,11 +33,11 @@ class POSTChecker
 	static $url_regexp = "/^((https?):\/\/(?:([a-zA-Z\d\-_]+)@?([a-zA-Z\d\-_]+)\:)?((?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*([a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(\d+))?)(?:\/((?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*)(?:\/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))*)(\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))?)?)$/i";
 	static $date_iso = "/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/";
 	static $digits = "/^\d+$/";
-	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules)
+	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules, $messages)
 	{
 		if(empty($rules) || empty($rules[$formid_name])) return;
-
         $rules = $rules[$formid_name];
+        POSTErrors::setCustomMessages($messages[$formid_name]);
 		foreach($rules as $name => $cr)
 		{
 			if(isset($cr['filter']))
@@ -122,7 +122,7 @@ class POSTChecker
                     {
 						$range_from = $m[1];$range_to = $m[2];
 						if( is_numeric($p_val) && ($p_val > 0+$range_to || $p_val < 0+$range_from))
-                            POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+                        	POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
 								if(is_numeric($p_val2) && ($p_val2 > 0+$range_to || $p_val2 < 0+$range_from) || !isset($p_val2))
@@ -209,11 +209,15 @@ class POSTErrors
 
 	private static $errors = array();
 	private static $post_data = array();
+    private static $custom_messages = array();
+
+    static function setCustomMessages($messages){
+        self::$custom_messages = $messages;
+    }
 
 	static function addError($widget_name, $additional_id,$message)
 	{
-		//print_pre($message);
-		self::$errors[$widget_name][] = array('additional_id'=>$additional_id,'message'=>$message);
+		self::$errors[$widget_name][] = array('additional_id'=>$additional_id,'message'=> isset(self::$custom_messages[$widget_name])?self::$custom_messages[$widget_name]:$message);
 		if(!isset(self::$post_data[$widget_name]))
 			self::$post_data[$widget_name] = Controller::getInstance()->post->{$widget_name};
 	}

@@ -106,6 +106,7 @@ class Controller
 			$adjacency_list = null,
 			$form_signatures = array(),
 			$checker_rules = array(),
+			$checker_messages = array(),
             $pagehandler = null,
             $ie_files = array(), //included and extending files
             $captcha_name = null,
@@ -900,15 +901,17 @@ class Controller
         exit();
     }
 	// checkers
-	function setChecker($form_id,$name,$rule,$rule_value)
-	{
+	function setChecker($form_id,$name,$rule,$rule_value, $message = null)
+    {
 		if(!isset($form_id,$name,$rule,$rule_value)) return;
-		$this->checker_rules[$form_id][$name][$rule] = trim($rule_value);
+        $this->checker_rules[$form_id][$name][$rule] = trim($rule_value);
+        if (!is_null($message)) $this->checker_messages[$form_id][$name] = $message;
 	}
 	protected function restoreCheckers()
 	{
 		$storage = Storage::createWithSession("controller");
-		$this->checker_rules = $storage->get('checker_rules');
+		$this->checker_rules = $storage['checker_rules'];
+		$this->checker_messages = $storage['checker_messages'];
 		$storage->un_set('checker_rules');
 		if(!is_array($this->checker_rules))
 			$this->checker_rules = array();
@@ -985,12 +988,13 @@ class Controller
 		    $storage = Storage::createWithSession("controller");
 		    $storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
+		    $storage->set('checker_messages',$this->checker_messages);
 		    $storage->set('captcha_name',$this->captcha_name);
 		    DataUpdaterPool::savePool();
             $storage->set('pagehandler',$this->pagehandler);
             POSTErrors::flushErrors();
         }
-		DB::close();
+        DB::close();
 	}
 }
 class DisplayModeParams
