@@ -49,6 +49,9 @@ class Filter
 	const STRING_ENCODE = 10;
 	const STRING_QUOTE_ENCODE = 11;
 	const STRING_QUOTE_ENCODE_PARTIALY = 12;
+	const DOUBLE = 13;
+	const ARRAY_DOUBLE = 14;
+	const ARRAY_FLOAT = 15;
 
 	private static $quote_original = array('"','\'','`','\\');
 	private static $quote_replacement = array('&quot;','&#039;','&#096;','&#092;');
@@ -96,6 +99,10 @@ class Filter
 				if(!is_numeric($var)) break;
 				$ret = (float)$var;
 				break;
+			case self::DOUBLE:
+				if(!is_numeric($var)) break;
+				$ret = (double)$var;
+				break;
 			case self::ARR:
 				if(is_array($var) && !empty($var))
 					$ret = $var;
@@ -106,6 +113,24 @@ class Filter
 					$ret = $var;
 					foreach($ret as $k => &$v)
 						$v = self::filter($v,self::INT);
+                    $ret = array_filter($ret,create_function('$v','return $v !== null;'));
+				}
+				break;
+			case self::ARRAY_FLOAT:
+				if(is_array($var) && !empty($var))
+				{
+					$ret = $var;
+					foreach($ret as $k => &$v)
+						$v = self::filter($v,self::FLOAT);
+                    $ret = array_filter($ret,create_function('$v','return $v !== null;'));
+				}
+				break;
+			case self::ARRAY_DOUBLE:
+				if(is_array($var) && !empty($var))
+				{
+					$ret = $var;
+					foreach($ret as $k => &$v)
+						$v = self::filter($v,self::DOUBLE);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
 				break;

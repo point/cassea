@@ -58,8 +58,9 @@ class Navigator
 
 		if(!isset($title))
 			$title = requestURI();
-		if((isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
-			|| empty($this->user_path) || ($this->user_path[0]['controller'] == $this->controller_name && $page_name == "index"))
+		if( !isset($this->user_path[0]) || 
+			(isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
+			|| empty($this->user_path) || ($this->user_path[0]['controller'] == $this->controller_name && strpos($page_name,"index") !== false))
 		{
 			$this->user_path = array();
 			$this->user_path[0]['url'] = requestURI(1);

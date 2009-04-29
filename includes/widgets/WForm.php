@@ -282,7 +282,8 @@ class WForm extends WContainer
             "vc_messages"=>!empty($this->vc_messages)?Language::encodePair(implode(", ",$this->vc_messages)):null,
 			"signature"=>$this->form_signature,
 			"signature_name"=>self::signature_name,
-            "formid_name" => self::formid_name
+            "formid_name" => self::formid_name,
+			"widget_id"=>$this->getId()
 		));
 		
 		parent::assignVars();

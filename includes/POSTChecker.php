@@ -33,11 +33,12 @@ class POSTChecker
 	static $url_regexp = "/^((https?):\/\/(?:([a-zA-Z\d\-_]+)@?([a-zA-Z\d\-_]+)\:)?((?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*([a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(\d+))?)(?:\/((?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*)(?:\/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))*)(\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))?)?)$/i";
 	static $date_iso = "/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/";
 	static $digits = "/^\d+$/";
-	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules, $messages)
+	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules, $messages=array())
 	{
 		if(empty($rules) || empty($rules[$formid_name])) return;
         $rules = $rules[$formid_name];
-        POSTErrors::setCustomMessages($messages[$formid_name]);
+		if(isset($messages[$formid_name]))
+			POSTErrors::setCustomMessages($messages[$formid_name]);
 		foreach($rules as $name => $cr)
 		{
 			if(isset($cr['filter']))
