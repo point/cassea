@@ -30,8 +30,181 @@
 // $Id$
 //
 
-// {{{ Language
+class LanguageException extends Exception {}
+
+interface iLanguageProcessor{
+	public function init();
+	public function current();
+	public function currentName();
+	public function encodePair($value);
+	public function getConst($key);
+	public function getLangList($raw = false);
+}
+
+interface iUpdatableLanguageProcessor{
+	public function setLangConst($key, $val, $model='common', $lang);
+	public function updateLangConst($oldkey, $key, $val, $model='common', $lang=0);
+	public function deleteLangConst($key, $model ='common');
+	public function getModelConst($model='common', $lang, $ruler);
+	public function getModelConstCount($model='common', $lang=0);
+    public function getLangName($lang_id = null);
+}
+
+
 class Language{
+	private static $processor;
+	private static $messages = array();
+
+	static function init(){
+		$processorClass = 'MultiLanguageProcessor';
+		if(Config::getInstance()->language->processor == 'single') $processorClass = 'SingleLanguageProcessor';
+		self::$processor = new $processorClass();
+		self::$processor->init();
+	}
+
+
+	static function message($class, $message){
+		if(!isset(self::$messages[$class])){
+			global $l;
+			unset($l); $l=array();
+			$file = Config::getInstance()->root_dir.Config::getInstance()->data_dir.'/messages/'.$class.'.'.self::currentName().'.php';
+			if (!is_file($file)) throw(new LanguageException('Message file  '.$file.' not found.'));
+			require_once($file);
+			self::$messages[$class] = $l;
+			unset($l);
+		}
+		$val = isset(self::$messages[$class][$message])?self::$messages[$class][$message]:$message;
+		$data =  array_slice(func_get_args(),2);
+		return vsprintf($val, $data);
+	}
+
+	static function current(){ return self::$processor->current();}
+	static function currentName(){return self::$processor->currentName();}
+	static function encodePair($value){ return self::$processor->encodePair($value);}
+	static function getConst(){
+		$args = func_get_args();
+        return call_user_func_array(array(self::$processor,'getConst'), $args);
+	}
+	static function getLangList($raw = false){return self::$processor->getLangList($raw);}
+
+	static function getPluralConst($n, $keys, $model = null ){
+		$args = func_get_args();
+        return call_user_func_array(array(self::$processor,'getPluralConst'), $args);
+	}
+    // {{{ getPluralForm
+    /**
+     * В соотвествии с числом $n и языком выбирает соответствующую форму множественного числа.
+     *
+     * Правила получений формы и дополнительная информация: 
+     * http://www.gnu.org/software/gettext/manual/gettext.html.gz#Plural-forms
+     * http://translate.sourceforge.net/wiki/l10n/pluralforms
+     *
+     *
+     * @param int $n множественное число
+     * @param string{2} $lang двухбуквенное сокращение языка
+     * @return int номер формы
+     */
+    static function getPluralForm($n, $lang){
+        if (!is_numeric($n) || $n < 0 ) return 0;
+        switch($lang){
+        // Croatian, Serbian, Russian, Ukrainian
+        case 'hr':
+        case 'sr':
+        case 'ru':
+        case 'ua':
+            $f = ($n%10 == 1 && $n%100 != 11) ? 0 :
+            ( ($n%10 >= 2 && $n %10 <= 4 && ($n % 100 < 10 || $n %100 >=20 ) )? 1: 2);
+        break; 
+        // Danish, Dutch, English, Faroese, German, Norwegian, Swedish
+        // Estonian, Finnish
+        // Greek
+        // Hebrew
+        // Italian, Portuguese, Spanish 
+        case 'en':
+        case 'de':
+            $f = ($n != 1)?1:0;
+            break;
+        default: $f = 0;
+        }
+        return $f;
+    }//}}} '
+
+	// {{{ Admin Proxy
+	static function getLangName($lang_id){
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->getLangName($lang_id);
+	}
+	static function setLangConst($key, $val, $model='common', $lang){
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->setLangConst($key, $val, $model, $lang);
+	}
+	static function updateLangConst($oldkey, $key, $val, $model='common', $lang=0){		
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->updateLangConst($oldkey, $key, $val, $model, $lang);
+	}
+
+	static function deleteLangConst($key, $model ='common'){
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->deleteLangConst($key, $model);
+	}
+	static function getModelConst($model='common', $lang, $ruler){
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->getModelConst($model, $lang, $ruler);
+	}
+	static function getModelConstCount($model='common', $lang=0){
+		if (self::$processor instanceof iUpdatableLanguageProcessor)
+			return self::$processor->getModelConstCount($model, $lang);
+		
+	}// }}}"
+}
+
+
+
+class SingleLanguageProcessor implements iLanguageProcessor
+{
+	private $current = 0;
+	private $currentName;
+	function init(){
+		$this->currentName = Config::getInstance()->language->single_name;
+	}
+
+	function current(){return $this->current;}
+	function currentName(){return $this->currentName;}
+	function encodePair($value){ return $value;}
+	function getConst($key){ return $key;}
+	function getLangList($raw = false){
+		return array($this->currentName);
+	}
+
+
+ 	// {{{ getPluralStatic
+    /**
+     * По заданному числу $n возвращает соотвествующую форму из масива $forms
+     *
+     * Результирующую строку пропускает через printf, с параметрами следующими за $forms
+     *
+     * @param int $n
+	 * @param array $forms
+	 * @param $model = null необходима для совместимости с интефейсом iLanguageProcessor
+     * @param .... sprintf argumetns.
+     */
+	function getPluralConst($n, $forms, $model = null){
+		if (!is_array($forms)) return $forms;
+		$f= Language::getPluralForm($n,$this->currentName());
+        $str = $forms[$f];
+		if (strpos( $str, '%') !== false){
+			$args = array_slice(func_get_args(),3);
+			$str = vsprintf($str,$args);
+		}
+        return $str;
+    }//}}}
+}
+
+
+
+// {{{ MultiLanguageProcessor
+class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguageProcessor 
+{
     const LANG_CONST_TABLE = 'langs';
     const LANGUAGE_TABLE = 'language';
     private static $langs_cache = array();
@@ -39,8 +212,7 @@ class Language{
     private static $current;
 
     // {{{ init
-    public static function init(){
-        if(!Config::getInstance()->language->use) return;
+    public function init(){
         if (Config::getInstance()->language->cache_langs)
             self::$langs_cache = Storage::create('__Language::list__');
         if (Config::getInstance()->language->cache_consts)
@@ -82,47 +254,49 @@ class Language{
     }//}}}
     
     // {{{ current
-    public static function current(){
+    public function current(){
         return self::$current;
     }// }}}
 
     // {{{ currentName
-    public static function currentName(){
-        return self::getLangName(self::$current);
+    public function currentName(){
+        return $this->getLangName(self::$current);
     }// }}}
 
-	// {{{ encodePair
-    /**
+	// {{{ encodePair "
+	/**
+	 *
     */
-    public static function encodePair( $value ){
-        if(strpos($value,'{') !== false){
+    public function encodePair( $value ){
+		if(strpos($value,'{') !== false){
 			$value =  
             preg_replace_callback("/\{(\w+)\.(\w+)(\.(.+))*\}/",
-                array('self','encodeConst'), $value);
+                array($this,'encodeConst'), $value);
         }
         return $value;
     }// }}}
 
     // {{{ encodeConst
-    private static function encodeConst($matched){
-        if (isset($matched[4])){ 
+	private function encodeConst($matched){
+		if (isset($matched[4])){ 
+				// TODO вспомнить и записать для чего это сделано.
                 $args = array($matched[2], $matched[1]);
                 $args = explode('.', $matched[4]);
                 array_unshift($args,$matched[2], $matched[1] );
-                return call_user_func_array(array('self','getConst'), $args);
+                return call_user_func_array(array($this, 'getConst'), $args);
         }
-        return self::getConst($matched[2], $matched[1]);
+        return $this->getConst($matched[2], $matched[1]);
     }// }}}
 
     // {{{ getConst
-	public static function getConst($key, $model = 'common'){
-        if(!Config::getInstance()->language->use) return $key;
-        $lang = self::current();
+	public function getConst($key, $model = null){
+		if(is_null($model)) $model = 'common';
+        $lang = $this->current();
         $cacheKey = $model.'.'.$key.'.'.$lang;
-        
+		unset(self::$const_cache[$cacheKey]);
         if (isset(self::$const_cache[$cacheKey])) $val = self::$const_cache[$cacheKey];
-        else{
-            static $stmt;
+		else{
+			static $stmt;
             if (!is_object($stmt)) $stmt = DB::getStmt('select `v` from '.self::LANG_CONST_TABLE.' where `lang_id`=? AND  `package`=? AND `k`=?','iss');
             $r = $stmt->execute(array($lang,$model,$key));
             if (count($r) == 1)
@@ -130,53 +304,14 @@ class Language{
             else 
                 return self::$const_cache[$cacheKey] = '{'.$model.'.'.$key.'}';
         } 
-        if (strpos( $val, '%') !== false){
-            $args = array_slice(func_get_args(),1);
-            $args[0] = $val;
-            $val =  call_user_func_array('sprintf', $args);
-        }
+		if (strpos( $val, '%') !== false){
+			$args = array_slice(func_get_args(),2);
+			$val = count($args)?vsprintf($val, $args):$val;
+		}
         return $val;
     }// }}}
 
-    // {{{ getPluralForm
-    /**
-     * В соотвествии с числом $n и языком выбирает соответствующую форму множественного числа.
-     *
-     * Правила получений формы и дополнительная информация: 
-     * http://www.gnu.org/software/gettext/manual/gettext.html.gz#Plural-forms
-     * http://translate.sourceforge.net/wiki/l10n/pluralforms
-     *
-     *
-     * @param int $n множественное число
-     * @param string{2} $lang двухбуквенное сокращение языка
-     * @return int номер формы
-     */
-    static private function getPluralForm($n, $lang){
-        if (!is_numeric($n) || $n < 0 ) return 0;
-        switch($lang){
-        // Croatian, Serbian, Russian, Ukrainian
-        case 'hr':
-        case 'sr':
-        case 'ru':
-        case 'ua':
-            $f = ($n%10 == 1 && $n%100 != 11) ? 0 :
-            ( ($n%10 >= 2 && $n %10 <= 4 && ($n % 100 < 10 || $n %100 >=20 ) )? 1: 2);
-        break; 
-        // Danish, Dutch, English, Faroese, German, Norwegian, Swedish
-        // Estonian, Finnish
-        // Greek
-        // Hebrew
-        // Italian, Portuguese, Spanish 
-        case 'en':
-        case 'de':
-            $f = ($n != 1)?1:0;
-            break;
-        default: $f = 0;
-        }
-        return $f;
-    }//}}}
-
-    // {{{ getPluralConst
+	// {{{ getPluralConst
     /**
      * 
      *
@@ -197,53 +332,33 @@ class Language{
      * Для различных языков количество форм различное, это необходимо 
      * учитывать при локализации.
      */
-    static function getPluralConst($n, $key, $model = 'common'){
-        $f= self::getPluralForm($n,self::currentName());
+	function getPluralConst($n, $key, $model = null){
+		//if (is_array($key)) $key = array_shift($key);
+		if (is_null($model)) $model = 'common';
+        $f= Language::getPluralForm($n,$this->currentName());
         $args = array_slice(func_get_args(),1); $args[0] = $key.'-'.$f;
-        return  call_user_func_array(array('self','getConst'), $args);
+        return  call_user_func_array(array($this,'getConst'), $args);
     }// }}}
-
-    // {{{ getPluralStatic
-    /**
-     * По заданному числу $n возвращает соотвествующую форму из масива $forms
-     *
-     * Результирующую строку пропускает через printf, с параметрами следующими за $forms
-     *
-     * @param int $n
-     * @param array $forms
-     * @param .... sprintf argumetns.
-     */
-    static function getPluralStatic($n, $forms){
-        $f= self::getPluralForm($n, 'ru');
-        $str = $forms[$f];
-        if (strpos( $str, '%') !== false){
-            $args = array_slice(func_get_args(),1); 
-            $args[0] = $str;
-            $str = call_user_func_array('sprintf', $args);
-        }
-        return $str;
-    }//}}}
 
     // {{{ ===== Admin ==== 
     // }}}
 
     // {{{ getLangList
-    public static function getLangList($raw = false){
+    public function getLangList($raw = false){
         if ($raw) return self::$langs_cache['__list__'];
         return array_values(self::$langs_cache['__list__']);
     }
 	// }}}
 
     // {{{ getLangName
-    public static function getLangName($lang_id = null){
-		if(!isset($langs_cache['__list__'])) return null;
+    public function getLangName($lang_id = null){
         $la = array_flip(self::$langs_cache['__list__']);
         return  isset($la[$lang_id])?$la[$lang_id]:null;
     }
     // }}}
 
     // {{{ getModelConst
-    public static function getModelConst($model='common', $lang, $ruler){
+    public function getModelConst($model='common', $lang, $ruler){
         $r = DB::query("select `k`, `v` from ".self::LANG_CONST_TABLE." where  `package`='".$model."' AND `lang_id`=".$lang."   ORDER by `k` LIMIT ".$ruler['from'].",".$ruler['limit']);
         if (empty($r)) return '';
         foreach($r as $k => $v)
@@ -252,13 +367,13 @@ class Language{
     }// }}}
 
     // {{{ setLangConst
-    public static function setLangConst($key, $val, $model='common', $lang){
+    public function setLangConst($key, $val, $model='common', $lang){
         $r = DB::query('replace into '.self::LANG_CONST_TABLE.' (`k`, `v`, `package`, `lang_id`) VALUES ("'.$key.'", "'.$val.'", "'.$model.'" ,'.$lang.')');
         self::$langs_cache[$model.'.'.$key.'.'.$lang] = $val;
     }// }}}
 
     // {{{ updateLangConst
-    public static function updateLangConst($oldkey, $key, $val, $model='common', $lang=0){
+    public function updateLangConst($oldkey, $key, $val, $model='common', $lang=0){
         if ( $oldkey != $key ){
             $r = DB::query('delete from '.self::LANG_CONST_TABLE.' where lang_id=' .$lang.' AND `k`="'.$oldkey.'" AND `package`="'.$model.'"');
             unset(self::$langs_cache[$model.'.'.$oldkey.'.'.$lang]);
@@ -269,16 +384,17 @@ class Language{
     }// }}}
 
     // {{{ deleteLangConst
-    public static function deleteLangConst($key, $model ='common'){
+    public function deleteLangConst($key, $model ='common'){
         $r = DB::query('delete from '.self::LANG_CONST_TABLE.' where package="' .$model.'" AND `k`="'.$key.'"');
         foreach(self::getLangList(true) as $name => $id) unset(self::$langs_cache[$model.'.'.$key.'.'.$id]) ;
     }// }}}
 
     // {{{ getModelConstCount
-    public static function getModelConstCount($model='common', $lang=0){
+    public function getModelConstCount($model='common', $lang=0){
         if ($lang == 0) self::current();
         $r = DB::query("select count(*) as `c` from ".self::LANG_CONST_TABLE." where  `package`='".$model."' AND `lang_id`=".$lang);
         return $r[0]['c'];
     }// }}}
 
 }//}}}
+

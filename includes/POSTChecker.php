@@ -51,33 +51,33 @@ class POSTChecker
 				if($rule === 'required' && $rule_value === 'true')
 					if(!isset($p_val) ||
                         (/*is_string($p_val) &&*/ ($p_val === null || $p_val === "")))
-						POSTErrors::addError($name,null,ErrorMsg::REQUIRED);
+						POSTErrors::addError($name,null,Language::message('checkers','REQUIRED'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && $p_val2 == "" || $p_val2 === null)
-								POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','REQUIRED'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && ($p_val2[0] === null || $p_val2[0] === ""))
-                                POSTErrors::addError($name,$add_id,ErrorMsg::REQUIRED);
+                                POSTErrors::addError($name,$add_id,Language::message('checkers','REQUIRED'));
 
 				if($rule === 'minlength' && is_numeric($rule_value) && isset($p_val))
 					if(is_string($p_val) && strlen(htmlspecialchars_decode($p_val,ENT_QUOTES)) < 0+$rule_value)
-						POSTErrors::addError($name,null,sprintf(ErrorMsg::MINLENGTH,$rule_value));
+						POSTErrors::addError($name,null,Language::message('checkers','MINLENGTH',$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES)) < 0+$rule_value || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MINLENGTH,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MINLENGTH',$rule_value));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES)) < 0+$rule_value)
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MINLENGTH,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MINLENGTH',$rule_value));
 
 				if($rule === 'maxlength' && is_numeric($rule_value) && isset($p_val))
 					if(is_string($p_val) && strlen(htmlspecialchars_decode($p_val,ENT_QUOTES)) > 0+$rule_value)
-						POSTErrors::addError($name,null,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
+						POSTErrors::addError($name,null,Language::message('checkers','MAXLENGTH',$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES)) > 0+$rule_value || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MAXLENGTH',$rule_value));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES)) > 0+$rule_value)
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAXLENGTH,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MAXLENGTH',$rule_value));
 
 				if($rule === 'rangelength' && !empty($rule_value) && isset($p_val))
 					if(preg_match("/\[\s*(\d+)\s*,\s*(\d+)\s*\]/",$rule_value,$m))
@@ -85,37 +85,37 @@ class POSTChecker
 						$range_from = $m[1];$range_to = $m[2];
 						if(is_string($p_val) && (($len = strlen(htmlspecialchars_decode($p_val,ENT_QUOTES))) > 0+$rule_to || 
 							$len < 0+$range_from))
-							POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
+							POSTErrors::addError($name,null,Language::message('checkers','RANGELENGTH',$range_from,$range_to));
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
 								if(is_string($p_val2) && (($len = strlen(htmlspecialchars_decode($p_val2,ENT_QUOTES))) > 0+$range_to || 
 									$len < 0+$range_from) || !isset($p_val2))
-										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
+										POSTErrors::addError($name,$add_id,Language::message('checkers','RANGELENGTH',$range_from,$range_to));
 								elseif(is_array($p_val2) && count($p_val2) == 1 && (($len = strlen(htmlspecialchars_decode($p_val2[0],ENT_QUOTES))) > 0+$rule_to || 
 									$len < 0+$range_from))
-										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGELENGTH,$range_from,$range_to));
+										POSTErrors::addError($name,$add_id,Language::message('checkers','RANGELENGTH',$range_from,$range_to));
 					}
 
 				if($rule === 'min'  && is_numeric($rule_value) && isset($p_val))
 					if(is_numeric($p_val) && $p_val < 0+$rule_value)
-						POSTErrors::addError($name,null,sprintf(ErrorMsg::MIN,$rule_value));
+						POSTErrors::addError($name,null,Language::message('checkers','MIN',$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_numeric($p_val2) && $p_val2 < 0+$rule_value || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MIN,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MIN',$rule_value));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && is_numeric($p_val2[0]) && $p_val2[0] < 0+$rule_value)
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MIN,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MIN',$rule_value));
 
 				
 				if($rule === 'max' && is_numeric($rule_value) && isset($p_val))
 					if(is_numeric($p_val) && $p_val > 0+$rule_value)
-						POSTErrors::addError($name,null,sprintf(ErrorMsg::MAX,$rule_value));
+						POSTErrors::addError($name,null,Language::message('checkers','MAX',$rule_value));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_numeric($p_val2) && $p_val2 > 0+$rule_value || !isset($p_val2) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAX,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MAX',$rule_value));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && is_numeric($p_val2[0]) && $p_val2[0] > 0+$rule_value)
-								POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::MAX,$rule_value));
+								POSTErrors::addError($name,$add_id,Language::message('checkers','MAX',$rule_value));
 
 
 				if($rule === 'range' && !empty($rule_value) && isset($p_val))
@@ -123,84 +123,75 @@ class POSTChecker
                     {
 						$range_from = $m[1];$range_to = $m[2];
 						if( is_numeric($p_val) && ($p_val > 0+$range_to || $p_val < 0+$range_from))
-                        	POSTErrors::addError($name,null,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+                        	POSTErrors::addError($name,null,Language::message('checkers','RANGE',$range_from,$range_to));
 						elseif(is_array($p_val))
 							foreach($p_val as $add_id => $p_val2)
 								if(is_numeric($p_val2) && ($p_val2 > 0+$range_to || $p_val2 < 0+$range_from) || !isset($p_val2))
-										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+										POSTErrors::addError($name,$add_id,Language::message('checkers','RANGE',$range_from,$range_to));
 								elseif(is_array($p_val2) && count($p_val2) == 1 && 
 									is_numeric($p_val2[0]) && ($p_val2[0] > 0+$rule_to || $p_val2[0] < 0+$range_from))
-										POSTErrors::addError($name,$add_id,sprintf(ErrorMsg::RANGE,$range_from,$range_to));
+										POSTErrors::addError($name,$add_id,Language::message('checkers','RANGE',$range_from,$range_to));
                     }
 
 				if($rule === 'email' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && !preg_match(self::$email_regexp,$p_val))
-						POSTErrors::addError($name,null,ErrorMsg::EMAIL);
+						POSTErrors::addError($name,null,Language::message('checkers','EMAIL'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && !preg_match(self::$email_regexp,$p_val2) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::EMAIL);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','EMAIL'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$email_regexp,$p_val2[0]))
-								POSTErrors::addError($name,$add_id,ErrorMsg::EMAIL);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','EMAIL'));
 
 				if($rule === 'url' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && !preg_match(self::$url_regexp,$p_val))
-						POSTErrors::addError($name,null,ErrorMsg::URL);
+						POSTErrors::addError($name,null,Language::message('checkers','URL'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && !preg_match(self::$url_regexp,$p_val2) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::URL);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','URL'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$url_regexp,$p_val2[0]))
-								POSTErrors::addError($name,$add_id,ErrorMsg::URL);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','URL'));
 					
 				if($rule === 'date' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && strtotime($p_val) === -1)
-						POSTErrors::addError($name,null,ErrorMsg::DATE);
+						POSTErrors::addError($name,null,Language::message('checkers','DATE'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && strtotime($p_val2) === -1 || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::DATE);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DATE'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && strtotime($p_val2[0]) === -1)
-								POSTErrors::addError($name,$add_id,ErrorMsg::DATE);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DATE'));
 
 				if($rule === 'dateISO' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && !preg_match(self::$date_iso,$p_val))
-						POSTErrors::addError($name,null,ErrorMsg::DATEISO);
+						POSTErrors::addError($name,null,Language::message('checkers','DATEISO'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && !preg_match(self::$date_iso,$p_val2) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::DATEISO);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DATEISO'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$date_iso,$p_val2[0]))
-								POSTErrors::addError($name,$add_id,ErrorMsg::DATEISO);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DATEISO'));
 
 				if($rule === 'number' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && !is_numeric(str_replace(",",".",$p_val)))
-						POSTErrors::addError($name,null,ErrorMsg::NUMBER);
+						POSTErrors::addError($name,null,Language::message('checkers','NUMBER'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && !is_numeric(str_replace(",",".",$p_val2)) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::NUMBER);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','NUMBER'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !is_numeric(str_replace(",",".",$p_val2[0])))
-								POSTErrors::addError($name,$add_id,ErrorMsg::NUMBER);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','NUMBER'));
 
 				if($rule === 'digits' && $rule_value === 'true' && isset($p_val))
 					if(is_string($p_val) && !preg_match(self::$digits,$p_val))
-						POSTErrors::addError($name,null,ErrorMsg::DIGITS);
+						POSTErrors::addError($name,null,Language::message('checkers','DIGITS'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
 							if(is_string($p_val2) && !preg_match(self::$digits,$p_val2) || !isset($p_val2))
-								POSTErrors::addError($name,$add_id,ErrorMsg::DIGITS);
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DIGITS'));
 							elseif(is_array($p_val2) && count($p_val2) == 1 && !preg_match(self::$digits,$p_val2[0]))
-								POSTErrors::addError($name,$add_id,ErrorMsg::DIGITS);
-
-				// simple impl
-				/*if($rule === 'equalTo' && !empty($rule_value))
-				{
-					$p_val_to = $post->$rule_value;
-					if(!isset($p_val,$p_val_to) || is_string($p_val) && is_string($p_val_to)
-						&& $p_val != $p_val_to)
-						POSTErrors::addError($name,null,ErrorMsg::EQUALTO);
-                }*/
+								POSTErrors::addError($name,$add_id,Language::message('checkers','DIGITS'));
 			}
 		}
 	}
@@ -294,23 +285,6 @@ class POSTErrors
 			if(!isset(self::$post_data[$name]))
 				self::$post_data[$name] = $v;
 	}
-}
-class ErrorMsg
-{
-	const REQUIRED = "Это поле необходимо заполнить.";
-	const MINLENGTH = "Пожалуйста, введите не меньше %d символов.";
-	const MAXLENGTH = "Пожалуйста, введите не больше %d символов.";
-	const RANGELENGTH = "Пожалуйста, введите значение длиной от %d до %d символов.";
-	const MIN = "Пожалуйста, введите число, большее или равное %d.";
-	const MAX = "Пожалуйста, введите число, меньшее или равное %d.";
-	const RANGE = "Пожалуйста, введите число от %d до %d.";
-	const EMAIL = "Пожалуйста, введите корретный адрес электронной почты.";
-	const URL = "Пожалуйста, введите корректный URL.";
-	const DATE = "Пожалуйста, введите корректную дату.";
-	const DATEISO = "Пожалуйста, введите корректную дату в формате ISO.";
-	const NUMBER = "Пожалуйста, введите число.";
-	const DIGITS = "Пожалуйста, вводите только цифры.";
-	const EQUALTO = "Пожалуйста, введите такое же значение ещё раз.";
 }
 
 //{{{ CheckerException

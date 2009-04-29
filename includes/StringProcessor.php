@@ -265,7 +265,7 @@ class StringProcessor
     {return $string.($insert_whitespace?"&nbsp;":"").$str2append;}
     protected function prepend($string, $str2prepend, $insert_whitespace = false)
     {return $str2prepend.($insert_whitespace?"&nbsp;":"").$string;}
-    protected function plural($number, $key, $model = 'common')
+    protected function plural($number, $key, $model = null)
     { if(!is_numeric($number) || !isset($number)) return $number;
        return Language::getPluralConst($number,$key, $model, $number); 
     }
