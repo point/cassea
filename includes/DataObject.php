@@ -393,9 +393,9 @@ class DataSourceObject extends DataObject
             {
                 $this->requireClasses();
 
+				$ret = array();
                 foreach($this->datasource_methods as $ind => $method)
                 {
-					$ret = array();
 					$dsp = $this->datasource_params[$ind];
 					$dsp->replaceLimitParams();
                     try

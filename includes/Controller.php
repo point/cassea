@@ -455,11 +455,13 @@ class Controller
 
 		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
+		
 		$w_id = $widget->getID();
+		$widget->parseParams($elem);
+
 		if(isset($this->system_widgets[$w_id]) || isset($this->widgets[$w_id])) 
 			throw new IdExistsException('Widget with id '.$w_id.' already exists');
 
-		$widget->parseParams($elem);
 
 		WidgetLoader::load("WStyle");
 		if(isset($elem['style']) && isset($this->styles[(string)$elem['style']]))
