@@ -102,7 +102,7 @@ class HTTPParamHolder implements IteratorAggregate
 	}
 	function __unset($var_name)
 	{
-		$this->delte($var_name);
+		$this->delete($var_name);
 	}
     private function sanitizeVars($str)
     {

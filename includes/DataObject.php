@@ -48,6 +48,7 @@ class DataObjectParams
 		if(!isset($elem,$elem->param)) return;
 
 		$controller = Controller::getInstance();
+		$p2_cursor = 0;
 		foreach($elem->param as $param)
 		{
 			if($param['from'] == "p1")
@@ -70,11 +71,10 @@ class DataObjectParams
 					$c = abs(0+$param['count']);
 
 				$p = array();
-				for($i = 0; $i < $c;$i++)
+				for($i = 0; $i < $c;$i++,$p2_cursor++)
 				{
 					//if(!isset($controller->p2[$i])) continue;
-
-					$p[$i] = isset($controller->p2[$i])?$controller->p2[$i]:null;
+					$p[$i] = isset($controller->p2[$p2_cursor])?$controller->p2[$p2_cursor]:null;
 					if(isset($param->filter[$i]))
 						$p[$i] = Filter::filter($p[$i],(string)$param->filter[$i]);
 				}

@@ -138,6 +138,7 @@ class WidgetCollection
 		{
 			$this->addItem(($id = $controller->buildWidget($v,1)));
 			$controller->getAdjacencyList()->add($id,$this->parent_id);
+			unset($id);
 		}
 	}
 	// }}}

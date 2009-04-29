@@ -57,25 +57,36 @@ th > img
 {
 	vertical-align:bottom;
 }
-.ruler
+
+.ruler 
 {
-	margin:0px 5px;
+	list-style: none;
+	padding: 0;
+	margin: 0;
 }
 .ruler li
 {
-	display:block;
 	float:left;
-	padding:0px 10px;
-	text-align:center;
-	margin-right:2px;
+	margin:0px;
 }
-.ruler li.current
+.ruler li a
+{
+	display:block;
+	height:24px;
+	line-height:24px;
+	width:24px;
+	text-align:center;
+	vertical-align:middle;
+}
+.ruler li.current a
 {
 	border:1px solid #777;
+	height:22px;
+	line-height:22px;
 }
-.ruler li.last, .ruler li.first
+.ruler li.last a, .ruler li.first a
 {
-	padding: 0px 2px;
+	width:1em;
 }
 /* color select */
 .CS {

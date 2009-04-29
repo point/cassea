@@ -45,28 +45,31 @@ class WidgetAdjacencyList
 	public $list = array();
 	private $parent_cache = array();
 
-	function add($widget_id, $parent = null)
+	function add($widget_id, $parent )
 	{
 		$flag = 0;
-		foreach($this->list as $v)
+		foreach($this->list as &$v)
 			if($v->widgetId == $widget_id)
 				$v->parent = $parent and $flag = 1;
 		if(!$flag) $this->list[] = new AdjacencyListCell($widget_id,$parent);
 	}
 	function getParentForId($id)
 	{
-		if(isset($this->parent_cache[$id])) 
-			return $this->parent_cache[$id];
-
 		foreach($this->list as $v)
 			if($v->widgetId == $id)
 				return $v->parent;
 		return null;
 	}
-	function setParentForIdCache($id,$widget)
+	function getParentRollForId($id)
 	{
-		if(is_string($widget))
-			$this->parent_cache[$id] = $widget;
+		if(isset($this->parent_cache[$id])) 
+			return $this->parent_cache[$id];
+		else return $this->getParentForId($id);
+	}
+	function setParentRollForIdCache($id,$widget_id)
+	{
+		if(is_string($widget_id))
+			$this->parent_cache[$id] = $widget_id;
 	}
 	function getPrevUntil($id,$until = null)
 	{

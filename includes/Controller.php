@@ -459,10 +459,6 @@ class Controller
 		if(isset($this->system_widgets[$w_id]) || isset($this->widgets[$w_id])) 
 			throw new IdExistsException('Widget with id '.$w_id.' already exists');
 
-
-
-		$this->adjacency_list->add($w_id);
-
 		$widget->parseParams($elem);
 
 		WidgetLoader::load("WStyle");
@@ -994,7 +990,7 @@ class Controller
             $storage->set('pagehandler',$this->pagehandler);
             POSTErrors::flushErrors();
         }
-        DB::close();
+		DB::close();
 	}
 }
 class DisplayModeParams

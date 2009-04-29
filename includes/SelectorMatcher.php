@@ -232,11 +232,11 @@ class SelectorMatcher
 
                 /*if($w2 instanceof WRoll) $parent = $w2->getId();
                 else*/
-                    while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
+                    while($w2 && ($p = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) !== null)
                         if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
                         else $w2 = $controller->getWidget($p);
                 if($parent == null) return false;
-				$controller->getAdjacencyList()->setParentForIdCache($widget->getId(),$parent); 
+				$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
                 if(!is_array($parsed_selector['pseudo_value']))
                 {
                     if(strpos($parsed_selector['pseudo_value'],":") !== false)
@@ -268,11 +268,11 @@ class SelectorMatcher
 							$_parent = null;
                             foreach(RSIndexer::toArray($k) as $next_index)
                             {
-                                while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
+                                while($_w2 && ($_p = $controller->getAdjacencyList()->getParentRollForId($_w2->getId())) !== null)
                                     if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
                                     else  $_w2 = $controller->getWidget($_p);
 
-								$controller->getAdjacencyList()->setParentForIdCache($_w3->getId(),$_parent); 
+								$controller->getAdjacencyList()->setParentRollForIdCache($_w3->getId(),$_parent); 
 
                                 if($_parent && $controller->getDisplayModeParams()->getCurrent($_parent,$cur_scope) != $next_index)
                                 {$flag = false;break;}
