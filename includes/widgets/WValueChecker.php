@@ -105,7 +105,7 @@ class WValueChecker extends WObject
 		}
 		$controller = Controller::getInstance();
 		$controller->addScript("jquery.validate.js");
-		$controller->addScript("jquery.validate.messages_ru.js");
+		$controller->addScript("jquery.validate.messages_".Language::currentName().".js");
     }
     // }}}
     
