@@ -117,7 +117,7 @@ class AbstractUserManager
 
 	function logout()
 	{
-		$this->flushUserData();
+		$this->flushUserData(User::get()->getId());
         Session::kill();
 		Session::init();
 		User::renew();

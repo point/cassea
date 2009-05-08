@@ -40,6 +40,8 @@ if(preg_match('#^/([a-z]{2})(/.*)$#',$rewrite,$match))
 //controller
 if(preg_match('#^/([^/\.]{3,})(/.*)?$#',$rewrite,$match))
     $controller = $match[1];
+else $rewrite = "/".$controller.$rewrite;
+	
 if(preg_match('#^/([^/\.]{1,2})/.*$#',$rewrite,$match))
     {header("HTTP/1.0 404 Not found");exit();}
 
@@ -53,4 +55,8 @@ $_SERVER['PHP_SELF'] = "/controllers/$controller.php";
 set_include_path(realpath($_SERVER['DOCUMENT_ROOT'])."/controllers/". PATH_SEPARATOR . get_include_path());
 chdir(realpath($_SERVER['DOCUMENT_ROOT'])."/controllers/");
 
-require_once(dirname(__FILE__)."/controllers/".$controller.".php");
+$c_name = dirname(__FILE__)."/controllers/".$controller.".php";
+if(!file_exists($c_name))
+    {header("HTTP/1.0 404 Not found");exit();}
+
+require_once($c_name);
