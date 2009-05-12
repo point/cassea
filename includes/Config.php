@@ -212,8 +212,10 @@ class IniDBConfig extends IniConfig
         return $this->get($name);
     }
 
-    function __set($name, $value)
+    function set($name, $value)
     {
+		if(!isset($this->table_data))
+			$this->loadData();
         if(isset($this->table_data[$name],$name,$value))
         {
             $name = Filter::filter($name,'STRING_QUOTE');
