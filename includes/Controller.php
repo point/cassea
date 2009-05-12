@@ -843,7 +843,7 @@ class Controller
         if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
         {
             $checked_by_captcha = 0;
-            POSTErrors::addError($this->captcha_name,null,Language::getConst("WIDGET_CAPTCHA_ERROR"));
+            POSTErrors::addError($this->captcha_name,null,Language::message('widgets',"captcha_error"));
         }
 
         $formid_name = $this->post->{WForm::formid_name};

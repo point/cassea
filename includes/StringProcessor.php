@@ -142,22 +142,9 @@ class StringProcessor
     // принимает число (например, 11), 
     // базовую часть языковой константы (например, hour)
     // врзвращает час (часа, часов).
-    // Ищет в hour_1 (1 час), hour_2(2-4 часа), hour_3 (5-9 часов)
-    /*protected final function timelang($number,$lang_const_base)
-    {
-        $d = $number%10;
-        if($d == 1)
-            return Language::getConst($lang_const_base.'_1');
-        if($d >=2 && $d <=4)
-            return Language::getConst($lang_const_base.'_2');
-        return Language::getConst($lang_const_base.'_3');
-    }*/
     protected final function _plural($number, $lang_const_base)
     {
-        if(strpos($lang_const_base,'{') !== false && preg_match("/\{(\w+)\.(\w+)\}/",
-            $lang_const_base, $m))
-            return Language::getPluralConst($number,$m[2], $m[1]);
-        return Language::getPluralConst($number,$lang_const_base);
+        return Language::message('widgets',Language::getPluralConst($number,$lang_const_base));
     }
     protected function relative_time($time, $locale = "ru_RU.UTF8") 
     {
@@ -172,21 +159,21 @@ class StringProcessor
             return strftime("%B %e, %Y, %R:%M", $timestamp);
 
         if ($delta > 86400 && $timestamp < $time) 
-            return Language::getConst("Yesterday_at")." " .strftime("%R:%M", $timestamp);
+            return Language::message('widgets',"Yesterday_at")." " .strftime("%R:%M", $timestamp);
 
         if ($delta > 7200)
             $string .= ($f = floor($delta / 3600))." ".$this->_plural($f,"hour").", ";
         else if ($delta > 3660)
-            $string .= "1 ".Language::getConst("hour").", ";
+            $string .= "1 ".$this->_plural(1, "hour").", ";
         else if ($delta >= 3600)
-            $string .= "1 ".Language::getConst("hour")." ";
+            $string .= "1 ".$this->_plural(1, "hour")." ";
         $delta  %= 3600;
         
         if ($delta > 60)
             $string .= ($f = floor($delta / 60)) . " ".$this->_plural($f,"minutes")." ";
         else
             $string .= abs($delta)." ".$this->_plural($delta,"seconds")." ";
-        return ($delta > 0)?($string." ".Language::getConst("ago")):(Language::getConst("date_in")." ".$string);
+        return ($delta > 0)?($string." ".Language::message('widgets',"ago")):(Language::message('widgets',"date_in")." ".$string);
     }
 
     protected function relative_date($time,$locale = "ru_RU.UTF8") 
@@ -195,18 +182,18 @@ class StringProcessor
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
         if ($reldays >= 0 && $reldays < 1) 
-            return Language::getConst("today");
+            return Language::message('widgets',"today");
          else if ($reldays >= 1 && $reldays < 2) 
-            return Language::getConst("tomorrow");
+            return Language::message('widgets',"tomorrow");
          else if ($reldays >= -1 && $reldays < 0) 
-            return Language::getConst("yesterday");
+            return Language::message('widgets',"yesterday");
         
         
         if (abs($reldays) < 7) 
             if ($reldays > 0) 
-                return Language::getConst('date_in').' '.($reldays = floor($reldays)).$this->_plural($reldays,' day') ;
+                return Language::message('widgets','date_in').' '.($reldays = floor($reldays)).$this->_plural($reldays,' day') ;
              else 
-                return ($reldays = abs(floor($reldays)))." ".$this->_plural($reldays,"day")." ".Language::getConst("ago");
+                return ($reldays = abs(floor($reldays)))." ".$this->_plural($reldays,"day")." ".Language::message('widgets',"ago");
             
         
         setlocale(LC_TIME,$locale);
@@ -222,7 +209,7 @@ class StringProcessor
     protected function relative_datetime($time, $locale = "ru_RU.UTF8") 
     {
         $date = self::relative_date($time,$locale);
-        if ($date == Language::getConst("today")) 
+        if ($date == Language::message('widgets',"today")) 
             return self::relative_time($time,$locale);
         return $date;
     }

@@ -39,6 +39,7 @@ interface iLanguageProcessor{
 	public function encodePair($value);
 	public function getConst($key);
 	public function getLangList($raw = false);
+	public function getPluralConst($n, $key, $model = null);
 }
 
 interface iUpdatableLanguageProcessor{
@@ -65,13 +66,13 @@ class Language{
 
 	static function message($class, $message){
 		if(!isset(self::$messages[$class])){
-			global $l;
-			unset($l); $l=array();
+			global $__l;
+			unset($__l); $__l=array();
 			$file = Config::getInstance()->root_dir.Config::getInstance()->data_dir.'/messages/'.$class.'.'.self::currentName().'.php';
 			if (!is_file($file)) throw(new LanguageException('Message file  '.$file.' not found.'));
 			require_once($file);
-			self::$messages[$class] = $l;
-			unset($l);
+			self::$messages[$class] = $__l;
+			unset($__l);
 		}
 		$val = isset(self::$messages[$class][$message])?self::$messages[$class][$message]:$message;
 		$data =  array_slice(func_get_args(),2);
@@ -177,7 +178,7 @@ class SingleLanguageProcessor implements iLanguageProcessor
 	}
 
 
- 	// {{{ getPluralStatic
+ 	// {{{ getPluralConst
     /**
      * По заданному числу $n возвращает соотвествующую форму из масива $forms
      *
@@ -188,7 +189,7 @@ class SingleLanguageProcessor implements iLanguageProcessor
 	 * @param $model = null необходима для совместимости с интефейсом iLanguageProcessor
      * @param .... sprintf argumetns.
      */
-	function getPluralConst($n, $forms, $model = null){
+	function getPluralConst0($n, $forms, $model = null){
 		if (!is_array($forms)) return $forms;
 		$f= Language::getPluralForm($n,$this->currentName());
         $str = $forms[$f];
@@ -198,6 +199,12 @@ class SingleLanguageProcessor implements iLanguageProcessor
 		}
         return $str;
     }//}}}
+
+	// {{{ getPluralConst 
+	function getPluralConst($n, $key, $model = null){
+        $f= Language::getPluralForm($n,$this->currentName());
+		return $key.'-'.$f;
+    }// }}}
 }
 
 

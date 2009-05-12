@@ -51,7 +51,7 @@ class WBackLink extends WHyperLink
 
         $this->setHREF(Controller::getInstance()->getNavigator()->getStepURL(-1));
         if($this->items->isEmpty())
-            $this->items->setText(Language::getConst('WIDGET_BACK_LINK'));
+            $this->items->setText(Language::message('widgets','back_link'));
 		parent::buildComplete();
 	}    
 	// }}}

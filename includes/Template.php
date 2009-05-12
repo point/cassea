@@ -67,6 +67,8 @@ class Template
 		include($this->path."/".$this->filename);
 		$s = ob_get_contents();
 		ob_end_clean();
+		unset($this->params);
+		$this->params = new TemplateParams;
 		return $s;
 	}
 }

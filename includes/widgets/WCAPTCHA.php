@@ -55,7 +55,7 @@ class WCAPTCHA extends WImage
 
         $this->use_cache = 0;
         $this->rand_num = mt_rand(0,1000);
-        $this->text = Language::getConst("WIDGET_CAPTCHA_TEXT");
+        $this->text = Language::message('widgets',"captcha_text");
         $this->height = 60;
     }
     // }}}

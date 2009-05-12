@@ -185,7 +185,7 @@ class SelectorMatcher
 			// :image
 			elseif($parsed_selector['pseudo'] === "image" && !$widget instanceof WImage) return false;
 			// :reset
-			elseif($parsed_selector['pseudo'] === "reser" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return false;
+			elseif($parsed_selector['pseudo'] === "reset" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return false;
 			// :button
 			elseif($parsed_selector['pseudo'] === "button" && (!$widget instanceof WButton || !$widget->getType() != "button")) return false;
 			// :hidden
