@@ -116,8 +116,8 @@ class SmtpMail extends MailTransport{
 	        $code = substr($this->getData($this->smtpCt),0,3);
             if($code!= 250) {$this->errMsg('ehlo',' ');fclose($this->smtpCt);return false;}
 
-            
-            if($this->smtpProto != "ssl" && extension_loaded('openssl'))
+           
+            if(Config::getInstance()->mail->use_smtp_tls && $this->smtpProto != "ssl" && extension_loaded('openssl'))
             {
                 $this->tls();
                 fputs($this->smtpCt,"EHLO ".$this->smtpHost."\r\n");
@@ -125,17 +125,20 @@ class SmtpMail extends MailTransport{
                 if($code!= 250) {$this->errMsg('ehlo',' ');fclose($this->smtpCt);return false;}
             }
 
-   			fputs($this->smtpCt,"AUTH LOGIN\r\n");
-			$code = substr($this->getData($this->smtpCt),0,3);
-			if($code != 334) {$this->errMsg('authLogin',' ');fclose($this->smtpCt);return false;}
-            
-			fputs($this->smtpCt,base64_encode($this->smtpUser)."\r\n");
-			$code = substr($this->getData($this->smtpCt),0,3);
-			if($code != 334) {$this->errMsg('access',$this->smtpUser);fclose($this->smtpCt);return false;}
-            
-			fputs($this->smtpCt,base64_encode($this->smtpPassw)."\r\n");
-			$code = substr($this->getData($this->smtpCt),0,3);
-    		if($code != 235) {$this->errMsg('password',$this->smtpPassw);fclose($this->smtpCt);return false;}
+            if(Config::getInstance()->mail->use_smtp_auth)
+            {
+                fputs($this->smtpCt,"AUTH LOGIN\r\n");
+                $code = substr($this->getData($this->smtpCt),0,3);
+                if($code != 334) {$this->errMsg('authLogin',' ');fclose($this->smtpCt);return false;}
+                
+                fputs($this->smtpCt,base64_encode($this->smtpUser)."\r\n");
+                $code = substr($this->getData($this->smtpCt),0,3);
+                if($code != 334) {$this->errMsg('access',$this->smtpUser);fclose($this->smtpCt);return false;}
+                
+                fputs($this->smtpCt,base64_encode($this->smtpPassw)."\r\n");
+                $code = substr($this->getData($this->smtpCt),0,3);
+                if($code != 235) {$this->errMsg('password',$this->smtpPassw);fclose($this->smtpCt);return false;}
+            }
                         
 			fputs($this->smtpCt,"MAIL FROM:".'<'.$pointer->getFrom().'>'."\r\n");
 			$code = substr($this->getData($this->smtpCt),0,3);

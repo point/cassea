@@ -338,8 +338,8 @@ class MailObject implements IMailObject{
     	$headers.="From: =?UTF-8?B?".base64_encode($this->fromName)."?=<".$this->from.">".$this->rn;
         //$headers.=$this->xMailer.$this->rn;
         if (count($this->replyTo)>0){
-	        $reply=implode(",",$this->replyTo);
-	        $headers.=$reply;
+            $reply=implode(",",$this->replyTo);
+	        $headers.="Reply-To: ".$reply.$this->rn;
 	    }
         $headers.="X-Priority: 3 (Normal)".$this->rn;
         //$headers.="Message-ID: <0405.".date("YmjHis")."Sender>".$this->rn;
