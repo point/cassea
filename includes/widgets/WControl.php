@@ -188,14 +188,15 @@ abstract class WControl extends WComponent
     * More detailed method description
     * @param    string $datahandler    
     * @return   void
-    */
-    function setDataHandler($datahandler)
+	*/
+	// DEPRECATED
+    /*function setDataHandler($datahandler)
     {
 		//$datahandler == datahandler name
 		if(empty($datahandler))
 			return;	
 		$this->datahandler = $datahandler;
-	}
+	}*/
     // }}}
     
     // {{{ getDataHandler 
@@ -434,18 +435,18 @@ abstract class WControl extends WComponent
     {
 		$this->tpl->setParamsArray(array(
 			"name"=>(isset($this->additional_id))?
-				($this->name.'['.$this->additional_id.']'.($this->name_w_braces?"[]":"")):
-				($this->name.($this->name_w_braces?"[]":"")),
-			"value"=>Language::encodePair($this->value),
+				($this->getName().'['.$this->additional_id.']'.($this->name_w_braces?"[]":"")):
+				($this->getName().($this->name_w_braces?"[]":"")),
+			"value"=>Language::encodePair($this->getValue()),
 			//"alt"=>(isset($this->alt))?('alt="'.$this->alt.'"'):'',
-			"readonly"=>($this->readonly)?('readonly="'.$this->readonly.'"'):'',
-			"disabled"=>($this->disabled)?('disabled="'.$this->disabled.'"'):''
+			"readonly"=>($this->getReadonly())?('readonly="'.$this->getReadonly().'"'):'',
+			"disabled"=>($this->getDisabled())?('disabled="'.$this->getDisabled().'"'):''
 			));
         if($this instanceof StringProcessable)
             $this->tpl->setParams(t(new TemplateParams)->set('value',
-                StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->value))));
+                StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->getValue()))));
         else
-            $this->tpl->setParams(t(new TemplateParams)->set('value',Language::encodePair($this->value)));
+            $this->tpl->setParams(t(new TemplateParams)->set('value',Language::encodePair($this->getValue())));
 
 		if(isset($this->filter_error_string))
 			$this->tpl->setParamsArray(array("error_string"=>

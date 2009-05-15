@@ -108,6 +108,10 @@ class UploadedFiles
     {
         return empty($this->http_files);
     }
+	function getCount()
+	{
+	   return count($this->http_files);	
+	}
     function getFileRaw($w_name,$additional_id = null)
     {
         $name = isset($additional_id)?$w_name."\\".$additional_id:$w_name;

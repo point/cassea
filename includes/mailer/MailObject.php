@@ -259,10 +259,10 @@ class MailObject implements IMailObject{
     }
     /*}}}*/
     
-    /*{{{replToAdd
+    /*{{{replyToAdd
      *добавляет в массив адрес на который можно ответить
      */
-    public function replToAdd($address){
+    public function replyToAdd($address){
     	if($this->validMail($address))
     		{$this->replyTo[]=$address;}
     		else $this->errMsg('invalidMail',$address);

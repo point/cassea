@@ -67,7 +67,7 @@ class Mail{
 	$a->setSubject("Тест");
 	$a->setFromname("Алексей Ковтунец");
     $a->setFrom("climbonn@gmail.com");
-    $a->replToAdd('x-kai-x@rambler.ru');
+    $a->replyToAdd('x-kai-x@rambler.ru');
     //$a->setFrom("skai@intvideo");
 	$a->htmlMessage("Это <b>html </b> текст...");
     $a->Message("До нашего времени, криптография занималась исключительно конфиденциальностью 

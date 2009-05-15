@@ -49,7 +49,7 @@ interface IMailObject{
 
     public function toAdd($address);
 
-    public function replToAdd($address);
+    public function replyToAdd($address);
 
     public function attachAdd($path);
 

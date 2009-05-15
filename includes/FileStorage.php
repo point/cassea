@@ -74,6 +74,7 @@ class FileStorage implements iFileStorage{
     //папки не содержат последнего слеша
 
     function __construct($urlRoot){
+        $urlRoot = rtrim($urlRoot,'/');
         $this->setFSRoot($urlRoot);
         $this->urlRoot = $urlRoot;
     }
@@ -97,8 +98,10 @@ class FileStorage implements iFileStorage{
     }
 
     function getFiles(array $paths){
+        $r=array();
          foreach($paths as $p)
-            $r[] = $this->getFile($p);  
+             $r[] = $this->getFile($p); 
+        return $r; 
     }
 
     function getURL($path){
