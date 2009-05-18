@@ -178,7 +178,8 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
 
 		$this->storage_name = $storage_name;
 		
-        if (!isset($ttl)) $ttl = 86400; //1day
+        //if (!isset($ttl)) $ttl = 86400; //1day
+        if (!isset($ttl)) $ttl = COnfig::getInstance()->session->length;
         $this->ttl = min((int)$ttl, 2592000 );
 
         $this->memcache = new Memcache;
@@ -197,11 +198,7 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
     // {{{ set
     function set($var,$val)
     {
-        //echo $var." ".$this->storage_name." ".md5($this->storage_name.$var)." ".$val."<br>";
-		if($this->is_set($var))
-			$r = $this->memcache->replace(md5($this->storage_name.$var),$val,false,$this->ttl);
-		else
-            $r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
+        $r = $this->memcache->set(md5($this->storage_name.$var),$val,false,$this->ttl);
 		return $r;
     }// }}} 
 
