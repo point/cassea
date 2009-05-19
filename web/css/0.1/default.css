@@ -124,10 +124,41 @@ th > img
 	cursor:pointer;
 	text-align:center;
 }
-.widget_error, .error{
-    font-size:9px;
-    color: red;
-    /*border:1px solid red;*/
-    /*float:right;*/
-	clear:both;
+div.w-error-box div.w-error{
+    color:red;
+    border:1px solid #222222;
+    border-top:0px;
+    background-color:#dfdfdf;
+    padding:7px;
+}
+div.w-error-box {
+    display:none;
+    position:absolute;
+    opacity:0;
+    z-index:1000;
+    cursor:default;
+}
+div.w-error-box div.wrapper {padding:0px; margin:0px; border:0px; }
+
+div.w-error-box img.corner{
+	border:0px;
+    display:block;
+    float:left; 
+    width:36px !important;
+    height:16px !important;
+    _margin-left:-4px;
+    _margin-right:-5px;
+}
+
+div.w-error-box div.ertop{
+	margin:0px !important;
+    margin-left:36px !important;
+    height:15px !important;
+    max-height:15px;
+    border-bottom:1px solid #222222;
+    line-height:15px;
+}
+div.w-error{
+    color:#990033;
+    border:1px solid red;
 }

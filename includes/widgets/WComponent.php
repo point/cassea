@@ -662,7 +662,7 @@ abstract class WComponent extends WObject
 		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
 		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
-        $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
+        $this->addToMemento(array("enabled","title","visible","html_id","style","style_class","tooltip","javascript",
             "javascript_before","javascript_after","hide_if_hidden","hide_if_empty"));
 
     }

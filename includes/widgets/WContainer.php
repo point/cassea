@@ -450,7 +450,10 @@ class IterableCollection extends WidgetCollection
 		if(count($this->i_elem))
 			for($j = 0, $c2 = count($this->i_elem); $j < $c2; $j++)
 				for($i = 0, $c = $this->count();$i < $c; $i++)
+				{
 					$this->i_elem[$j][$i]->postRender();
+					unset($this->i_elem[$j][$i]);
+				}
 		else 
 			parent::postRender();
 

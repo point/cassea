@@ -258,11 +258,12 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 			// add user instantly w/o confirmation
 		
 			$salt = $this->generateSalt();
-			DB::query("insert into ".self::TABLE." set login = '".$login."', 
+			$user_id = DB::query("insert into ".self::TABLE." set login = '".$login."', 
 				email = '".$email."', 
 				password = '".$this->buildPassword($password,$salt,Config::getInstance()->user->secret)."', 
 				salt = '".$salt."',
 				date_joined = now()	");
+			Profile::addUser($user_id);
 		}
 	}
 
@@ -277,9 +278,11 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		
 		$info = $info[0];
 
-		DB::query("insert into ".self::TABLE. " (login, email, password, salt, date_joined) values ('".
+		$user_id = DB::query("insert into ".self::TABLE. " (login, email, password, salt, date_joined) values ('".
 			$info['login']."', '".$info['email']."','".self::buildPassword($info['password'],($salt = $this->generateSalt()),
 				Config::getInstance()->user->secret)."', '".$salt."', now())");
+
+		Profile::addUser($user_id);
 
 		DB::query("delete from ".self::TABLE_REGISTRATION." where regkey='".$regkey."' or expires < now()");
 

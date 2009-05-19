@@ -48,6 +48,10 @@ class Profile
 			$this->fields = array_shift($r);
 		$this->user_id = $user_id;
 	}
+	static function addUser($user_id)
+	{
+		DB::query("insert into ".self::TABLE." set user_id='".$user_id."'");
+	}
 	function __get($name)
 	{
 		return isset($this->fields[$name])?$this->fields[$name]:null;

@@ -2,7 +2,6 @@
 if(isset($p->vc_rules)) 
 {?>
 <script type="text/javascript">
-
 $(document).ready(function() {
 	// validate signup form on submit
 	var validator_<?php echo $p->id?> = $("#<?php echo $p->id?>").validate({
@@ -18,16 +17,17 @@ $(document).ready(function() {
 } ?>
 	onsubmit:true,
 	onkeyup:false,
-	onfocusout: false,
+	onfocusout:false,
+	focusInvalid:false,
 	errorElement: "div",
-	focusInvalid:true,
-	errorPlacement: function(error, element) {
-		element.after(error);
+	errorClass:"w-error",
+	showErrors: function(errorMap, errorList) {
+		this.defaultShowErrors();
+		show_error_boxes();
 	}
-});
+	});
 	$("#<?php echo $p->id?>").submit(function(){
-		$(".widget_error").remove();
-		});
+			$(".widget_error").remove();	});
 });
 </script>
 <?php }?>

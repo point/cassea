@@ -196,6 +196,7 @@ class Controller
 		$this->addCSS("jquery.tooltip.css");
 		//$this->addScript("jquery.treeview.js");
 		$this->addCSS("default.css");
+		$this->addScript("default.js");
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)

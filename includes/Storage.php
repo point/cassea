@@ -179,7 +179,7 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
 		$this->storage_name = $storage_name;
 		
         //if (!isset($ttl)) $ttl = 86400; //1day
-        if (!isset($ttl)) $ttl = COnfig::getInstance()->session->length;
+        if (!isset($ttl)) $ttl = Config::getInstance()->session->length;
         $this->ttl = min((int)$ttl, 2592000 );
 
         $this->memcache = new Memcache;

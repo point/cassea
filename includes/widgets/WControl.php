@@ -450,7 +450,7 @@ abstract class WControl extends WComponent
 
 		if(isset($this->filter_error_string))
 			$this->tpl->setParamsArray(array("error_string"=>
-            "<span class=\"widget_error\">".Language::encodePair($this->getFilterError())."</span>"));
+            "<div class=\"w-error\">".Language::encodePair($this->getFilterError())."</div>"));
 
 		parent::assignVars();
     }

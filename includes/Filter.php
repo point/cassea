@@ -52,6 +52,7 @@ class Filter
 	const DOUBLE = 13;
 	const ARRAY_DOUBLE = 14;
 	const ARRAY_FLOAT = 15;
+	const ARRAY_INT_KEYS = 16;
 
 	private static $quote_original = array('"','\'','`','\\');
 	private static $quote_replacement = array('&quot;','&#039;','&#096;','&#092;');
@@ -176,9 +177,15 @@ class Filter
                     $ret = preg_replace('#&lt;(/?)'.self::$allowed_tags[$i].'(/?)&gt;#','<$1'.self::$allowed_tags[$i].'$2>', $ret );
                     //str_replace('&lt;'.self::$allowed_tags[$i].'&gt', '<'.self::$allowed_tags[$i].'>', $res);
 
-                }
-
-                
+				}
+				break;
+			case self::ARRAY_INT_KEYS:
+				if(!is_array($var)) return;
+				$ret0 = array();
+				foreach(self::filter(array_keys($var), self::ARRAY_INT) as $k)
+					$ret0[$k] = $var[$k];
+				if(!empty($ret0)) $ret = $ret0;
+				unset($ret0);
 				break;
 		}
 		return $ret;
