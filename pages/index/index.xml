@@ -1,5 +1,3 @@
-<root extends="base2.xml">
-	<block id="subst_me">
-		<WText> INDEX SUBSTME</WText>
-	</block>
+<root >
+	<WText h='1'>Cassea Framework default page</WText>
 </root>

@@ -1,5 +1,0 @@
-<root extends="base.xml">
-	<block id="subst_me">
-		<WText> BASE2</WText>
-	</block>
-</root>
