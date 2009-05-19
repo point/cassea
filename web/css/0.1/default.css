@@ -162,3 +162,6 @@ div.w-error{
     color:#990033;
     border:1px solid red;
 }
+.showpass{
+    cursor:pointer;
+}

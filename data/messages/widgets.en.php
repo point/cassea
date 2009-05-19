@@ -17,3 +17,4 @@ $__l['yesterday'] =  "yesterday";
 $__l['captcha_text'] = 'Refresh CAPTCHA text';
 $__l['back_link'] = "Back";
 $__l['captcha_error'] = 'Wrong CAPTCHA text';
+$__l['edit_key_title'] = 'Show/hide password';

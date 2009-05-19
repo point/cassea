@@ -21,3 +21,4 @@ $__l['yesterday'] =  "вчера";
 $__l['captcha_text'] = 'Обновить текст';
 $__l['back_link'] = "Назад";
 $__l['captcha_error'] = 'Неправильный текст CAPTCHA';
+$__l['edit_key_title'] = 'Показать/спрятать пароль';

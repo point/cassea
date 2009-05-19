@@ -1,13 +1,16 @@
-PHP_VALUE mbstring.internal_encoding UTF-8
-PHP_VALUE default_charset UTF-8
-PHP_VALUE mbstring.http_output UTF-8
-PHP_VALUE mbstring.encoding_translation On
-PHP_VALUE mbstring.detect_order UTF-8
-PHP_VALUE mbstring.func_overload 6
-php_value default_charset utf-8
-
+#PHP_VALUE mbstring.internal_encoding UTF-8
+#PHP_VALUE default_charset UTF-8
+#PHP_VALUE mbstring.http_output UTF-8
+#PHP_VALUE mbstring.encoding_translation On
+#PHP_VALUE mbstring.detect_order UTF-8
+#PHP_VALUE mbstring.func_overload 6
 AddDefaultCharset utf-8
 
+ErrorDocument 400 /error_pages/50x.html
+ErrorDocument 401 /error_pages/50x.html
+ErrorDocument 403 /error_pages/50x.html
+ErrorDocument 404 /error_pages/50x.html
+ErrorDocument 503 /error_pages/50x.html
 
 RewriteEngine On
 Options +FollowSymLinks -MultiViews

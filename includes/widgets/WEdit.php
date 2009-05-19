@@ -48,7 +48,12 @@ class WEdit extends WControl
         /**
         * @var      string
         */
-		$type = "text"
+        $type = "text",
+       
+        /**
+        * @var     int
+        */
+        $switch=0
 		;
     
     // {{{ __construct
@@ -78,13 +83,46 @@ class WEdit extends WControl
 		if(isset($elem['size']))
 			$this->setSize((string)$elem['size']);
 		if(isset($elem['type']))
-			$this->setType((string)$elem['type']);
+            $this->setType((string)$elem['type']);
+        if(isset($elem['switch']))
+            $this->setSwitch((string)$elem['switch']);
 
 		$this->addToMemento(array("maxlength","size","type"));
 
 		parent::parseParams($elem);		    	
     }
     // }}}
+    
+    // {{{ setSwitch
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $switch    
+    * @return   void
+    */
+    function setSwitch($switch)
+    {
+		if(!isset($switch) || !is_scalar($switch) || (0+$switch > 1))
+			return;
+		$this->switch = 0 + $switch;
+    }
+    // }}}
+    
+    // {{{ getSwitch
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getSwitch()
+    {
+		return $this->switch;
+    }
+    // }}}
+
 
     // {{{ setMaxLength 
     /**
@@ -201,8 +239,11 @@ class WEdit extends WControl
     */
 	function buildComplete()
 	{
-		if(!isset($this->tpl))
-			$this->tpl = $this->createTemplate();
+        if(!isset($this->tpl))
+            if($this->switch && $this->getType() == "password")
+			    $this->tpl = $this->createTemplate(null,'switch.tpl');
+            else
+			    $this->tpl = $this->createTemplate();
 			
 		parent::buildComplete();
 	}    
@@ -220,7 +261,8 @@ class WEdit extends WControl
 		$this->tpl->setParamsArray(array(
 			"type"=>$this->getType(),
 			"maxlength"=>$this->getMaxLength(),
-			"size"=>$this->getSize()	
+			"size"=>$this->getSize(),
+			"key_title"=>Language::message("widgets","edit_key_title")
 		));
 		parent::assignVars();
     }
