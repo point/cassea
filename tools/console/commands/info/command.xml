@@ -1,0 +1,6 @@
+<command>
+    <class>Info</class>
+    <descr>Provide information about web-server, etc</descr>
+    <help>
+    </help>
+</command>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdUserInfo</class>
+    <name>info</name>
+    <help>
+        <short>User Info</short>
+        <main>User Info.
+Usage: info [LOGIN][id][E-mail] </main>
+    </help>
+</command>

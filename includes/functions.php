@@ -201,10 +201,11 @@ function getMime($file)
 }
 function sizeFromString($size)
 {
+    $delist=array("&nbsp;","\r\n","\t","\r","\n"," ");
     if (is_numeric($size)) 
         return (integer) $size;
-
     $size = trim($size);
+    $size=str_replace($delist,'',$size);
     $value = substr($size, 0, -2);
     switch (strtoupper(substr($size, -2))) 
     {
@@ -232,16 +233,52 @@ function sizeFromString($size)
         case 'KB':
             $value *= 1024;
             break;
+        default: return 0;
     }
     return $value;
 }
 
-function sizeToString($size)
+function sizeToString($size,$flag=0)
 {
     $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     for ($i=0; $size >= 1024 && $i < 9; $i++) 
         $size /= 1024;
-    return round($size, 2) . $sizes[$i];
+    if($flag)
+        return round($size, 2) . ' ' .$sizes[$i];
+    else
+        return round($size, 2) . $sizes[$i];
+}
+
+public function moveUp($table,$priority_field,$id_field,$id,$priority=null)
+{
+    if($priority===null)
+    {
+        $r = DB::query('SELECT '.$priority_field.' as priority FROM '.$table.' WHERE '.$id_field.'="'.$id.'"');
+        $rating=$r[0]['priority'];
+    }
+    else
+        $rating=$priority;
+    $maxq= DB::query('SELECT '.$id_field.' as id, '.$priority_field.' as priority FROM '.$table.' WHERE '.$priority_field.'=(SELECT max('.$priority_field.') FROM '.$table.' WHERE '.$priority_field.'<'.$rating.')');
+    if(!$maxq) return;
+    $maxid=$maxq[0]['id'];
+    $max=$maxq[0]['priority'];
+    return $up = DB::multiQuery('UPDATE '.$table.' SET '.$priority_field.'="'.$max.'" WHERE '.$id_field.'="'.$id.'";UPDATE '.$table.' SET '.$priority_field.'="'.$rating.'" WHERE '.$id_field.'="'.$maxid.'"');
+}
+public function moveDown($table,$priority_field,$id_field,$id,$priority=null)
+{
+
+    if($priority===null)
+    {
+        $r = DB::query('SELECT '.$priority_field.' as priority FROM '.$table.' WHERE '.$id_field.'="'.$id.'"');
+        $rating=$r[0]['priority'];
+    }
+    else 
+        $rating=$priority;
+    $minq = DB::query('SELECT '.$id_field.' as id, '.$priority_field.'  as priority FROM '.$table.' WHERE '.$priority_field.'=(SELECT min('.$priority_field.') FROM '.$table.' WHERE '.$priority_field.'>'.$rating.')');
+    if(!$minq) return;
+    $minid=$minq[0]['id'];
+    $min=$minq[0]['priority'];
+    return $down = DB::multiQuery('UPDATE '.$table.' SET '.$priority_field.'="'.$min.'" WHERE '.$id_field.'="'.$id.'";UPDATE '.$table.' SET '.$priority_field.'="'.$rating.'" WHERE '.$id_field.'="'.$minid.'"');
 }
 
 

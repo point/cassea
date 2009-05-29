@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdGroupList</class>
+    <name>list</name>
+    <help>
+        <short>Groups list </short>
+        <main>
+    List site group.
+    Usage: group list
+        </main>
+    </help>
+</command>

@@ -96,9 +96,14 @@ class StringProcessor
         return (substr($text, 0, $pos[$min_p]).$ends);
     }
 
+    protected function sizetostring($size,$flag=0) 
+    {
+        return sizeToString($size,$flag);
+    }
     //deprecated
     protected function filesize_old ($bytes, $round = 1) 
     {
+        trigger_error('deprecated');
         if ($bytes==0)
             return '0 bytes';
         elseif ($bytes==1)
@@ -215,6 +220,7 @@ class StringProcessor
     }
     protected function filesize($size)
     {
+        trigger_error('filesize deprecated. Use sizeToString($size,$flag4nbsp).');
         $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         for ($i=0; $size >= 1024 && $i < 9; $i++) 
             $size /= 1024;

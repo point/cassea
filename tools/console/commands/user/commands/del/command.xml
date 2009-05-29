@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdUserDel</class>
+    <name>del</name>
+    <help>
+        <short>Del user</short>
+        <main>Del site user.
+Usage: del  LOGIN </main>
+    </help>
+</command>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdGroupeAdd</class>
+    <name>adduser</name>
+    <help>
+        <short>Add user to group</short>
+        <main>
+  Add site user to group.
+  Usage: adduser LOGIN GROUPNAME</main>
+    </help>
+</command>

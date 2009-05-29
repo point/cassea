@@ -51,7 +51,7 @@ class ACL
 			{
 				$res = DB::query("select groups from ".self::ACL_TABLE." where user_id='".User::get()->getId()."' limit 1");
 				if(count($res))
-					self::$groups = array_map('trim',explode(":",$res[0]['groups']));
+					self::$groups = array_filter(array_map('trim',explode(":",$res[0]['groups'])));
 				else 
 					// there's no group for user.
 					self::$groups = array();
@@ -61,6 +61,50 @@ class ACL
                 Storage::create('acl_groups')->set(User::get()->getId(),self::$groups);
         }
     }
+
+    static function getGroups()
+    {
+        $groups=array();
+        $res = DB::query("select groups from ".self::ACL_TABLE);
+        for($i=0;$i<count($res);$i++)
+            $groups =array_merge($groups,array_map('trim',explode(":",$res[$i]['groups'])));
+		$groups  = array_unique($groups);
+		sort($groups);
+		return $groups;
+    }
+    
+    static function getUserByGroups($group=null)
+    {
+        $group=Filter::filter($group,'string_quote_encode');
+        if($group===null)
+            return $res = DB::query("select ".self::ACL_TABLE.".groups,".AbstractUserManager::TABLE.".login from ".self::ACL_TABLE." left join ".AbstractUserManager::TABLE." on ".self::ACL_TABLE.".user_id=".AbstractUserManager::TABLE.".id order by ".self::ACL_TABLE.".groups");
+        else
+            return $res = DB::query("select user_id from ".self::ACL_TABLE." where groups REGEXP  '(^|:)".$group."($|:)'");
+    }
+    
+    static function addUserToGroup($id,$group)
+    {
+        $group=Filter::filter($group,'string_quote_encode');
+        if(!count($res = DB::query("select user_id,groups from ".self::ACL_TABLE." where user_id=".$id)))
+            return DB::query("insert into ".self::ACL_TABLE." set user_id='".(int)$id."', groups='".$group."'");
+        else
+            DB::query("update ".self::ACL_TABLE." set groups='".(empty($res[0]['groups'])?$group:($res[0]['groups'].":".$group)).
+                "' where user_id='".$res[0]['user_id']."' and groups not REGEXP '(^|:)".$group."($|:)'");
+            
+    }
+    
+    static function delUserFromGroup($id,$group)
+    {
+        $group=Filter::filter($group,'string_quote_encode');
+        $id = Filter::filter($id,Filter::INT);
+
+        if(count($res = DB::query("select user_id, groups from ".self::ACL_TABLE." where user_id=".$id." and groups regexp '(^|:)".$group."($|:)'")))
+            DB::query("update ".self::ACL_TABLE." set groups='".implode(":",array_diff(explode(":",$res[0]['groups']),array($group))).
+            "' where user_id='".$id."' limit 1");
+    }
+
+
+
     static function check($allows = "", $denies = "", $delimiter = ",")
     {
         if(!Config::getInstance()->acl->use_acl) return true;

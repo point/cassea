@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdControllerAdd</class>
+    <name>add</name>
+    <help>
+        <short>Add controller</short>
+        <main>
+    Add controller with models and pages.
+    Usage: add name [--copy=src_name]</main>
+        <options>
+            <option name='--copy' description='Copy the existing controller(models,pages) with new name'/>
+        </options>
+    </help>
+</command>

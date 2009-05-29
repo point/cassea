@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdGroupUserList</class>
+    <name>userlist</name>
+    <help>
+        <short>List of users by group </short>
+        <main>
+ List of users by group
+ Usage: group userlist
+        group userlist [groupname]</main>
+    </help>
+</command>

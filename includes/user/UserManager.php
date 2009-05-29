@@ -66,7 +66,14 @@ interface iUserManager
 interface iRegistrableUserManager
 {
 
-	function addUser($login, $password, $email);
+	// {{{ addUser
+	/** 
+	 *
+	 * @param bool $confirm:  null - use config options
+	 *		false - add user without activation
+	 *		true - add user with activation
+	 */
+	function addUser($login, $password, $email, $confirm = null);
 	function setPassword($uid, $password = null);
 	function recoverPassword($email);
 
@@ -158,6 +165,15 @@ class AbstractUserManager
         return substr(md5(uniqid(rand(), true)),rand(0,15),16);
 	}
 	//}}}
+
+	// Need for console functions
+	function getUsersList(){
+		return DB::query('select * from '.self::TABLE.'');
+    }
+    function getNotConfirmed(){
+       return DB::query('select * from '.self::TABLE_REGISTRATION.' order by expires');
+	}
+
 }
 class CasseaUserManager extends AbstractUserManager implements iUserManager,iRegistrableUserManager
 {
@@ -201,7 +217,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	}
 	// }}}
 
-	function addUser($login, $password, $email)
+	function addUser($login, $password, $email, $confirm= null, $id=null)
 	{
 		//if (!preg_match(self::REGEXP_LOGIN, $login) || !preg_match(self::REGEXP_PASSWORD, $password))
 		if(!$this->checkLogin($login) || !$this->checkPassord($password))
@@ -217,7 +233,9 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 			throw new UserManagerException('Email '.$email.' already exists');
 
 		// confirmation first
-		if(Config::getInstance()->user->registration_confirm)
+		
+		$needConfirm = is_null($confirm)?Config::getInstance()->user->registration_confirm:$confirm;
+		if($needConfirm)
 		{
 			$regkey = md5(rand()*time());
 			$config = Config::getInstance();
@@ -265,7 +283,16 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 				date_joined = now()	");
 			Profile::addUser($user_id);
 		}
-	}
+    }
+
+    function cleanUser($login)
+    {
+
+        if (self::existsLogin($login))
+            return $info = DB::query('delete from '.self::TABLE.' where login="'.$login.'"');
+        else
+            return;
+    }
 
 	function activate($regkey)
 	{
@@ -387,6 +414,14 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		if(!is_string($login)) return;
 		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE." where login='".$login."' limit 1");
+		return isset($r[0])?$r[0]['id']:"";
+    }
+    
+    function getIdByEmail($email)
+	{
+		if(!is_string($email)) return;
+		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
+		$r = DB::query("select id from ".self::TABLE." where email='".$email."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
 	}
 	function getLastLogin($uid)

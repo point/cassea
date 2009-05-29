@@ -124,7 +124,7 @@ th > img
 	cursor:pointer;
 	text-align:center;
 }
-div.w-error-box div.w-error{
+div.w-error-box div.w-error-message{
     color:red;
     border:1px solid #222222;
     border-top:0px;
@@ -132,6 +132,7 @@ div.w-error-box div.w-error{
     padding:7px;
 }
 div.w-error-box {
+    border:0px !important;
     display:none;
     position:absolute;
     opacity:0;
@@ -165,3 +166,6 @@ div.w-error{
 .showpass{
     cursor:pointer;
 }
+
+.clearfix:after {content:"\0020";display:block;height:0;clear:both;visibility:hidden;overflow:hidden;}
+.clearfix {display:block;}

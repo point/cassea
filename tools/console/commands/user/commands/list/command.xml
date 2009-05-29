@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>cmd</class>
+    <name>list</name>
+    <help>
+        <short>List registred user or users witch not complete reginstration </short>
+        <main>
+    List site user.
+    Usage: user list
+        </main>
+        <options>
+            <option name='--not-confirmed' description='Show users with incomplete registration'/>
+            <option name='--count' description='Show count of all,not-confirmed users and registered users'/>
+        </options>
+    </help>
+</command>
