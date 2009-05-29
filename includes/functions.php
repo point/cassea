@@ -249,7 +249,7 @@ function sizeToString($size,$flag=0)
         return round($size, 2) . $sizes[$i];
 }
 
-public function moveUp($table,$priority_field,$id_field,$id,$priority=null)
+function moveUp($table,$priority_field,$id_field,$id,$priority=null)
 {
     if($priority===null)
     {
@@ -264,7 +264,7 @@ public function moveUp($table,$priority_field,$id_field,$id,$priority=null)
     $max=$maxq[0]['priority'];
     return $up = DB::multiQuery('UPDATE '.$table.' SET '.$priority_field.'="'.$max.'" WHERE '.$id_field.'="'.$id.'";UPDATE '.$table.' SET '.$priority_field.'="'.$rating.'" WHERE '.$id_field.'="'.$maxid.'"');
 }
-public function moveDown($table,$priority_field,$id_field,$id,$priority=null)
+function moveDown($table,$priority_field,$id_field,$id,$priority=null)
 {
 
     if($priority===null)

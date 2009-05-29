@@ -17,7 +17,7 @@ class CmdUserDel extends Command{
         try{
             if (IO::YES == io::dialog('~RED~Realy Delete user with login ~~~ '.$login.'?', IO::NO|IO::YES, IO::NO))
             {
-                if(!$res=UserManager::get()->cleanUser($login))    
+                if(!$res=UserManager::get()->deleteUser($login))    
                     io::done('Deleting User '.$login);
                 else 
                     io::done($res);

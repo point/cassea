@@ -217,7 +217,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	}
 	// }}}
 
-	function addUser($login, $password, $email, $confirm= null, $id=null)
+	function addUser($login, $password, $email, $confirm= null)
 	{
 		//if (!preg_match(self::REGEXP_LOGIN, $login) || !preg_match(self::REGEXP_PASSWORD, $password))
 		if(!$this->checkLogin($login) || !$this->checkPassord($password))
