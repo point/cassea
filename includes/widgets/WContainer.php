@@ -44,8 +44,8 @@ class WContainer extends WComponent
 	// {{{ preRender
 	function preRender()
 	{
-		$this->childPreRender();
 		parent::preRender();
+		$this->childPreRender();
 	}
 	// }}}
 	// {{{ childPreRender
@@ -81,8 +81,8 @@ class WControlContainer extends WControl
 	// {{{ preRender
 	function preRender()
 	{
-        $this->childPreRender();
 		parent::preRender();
+        $this->childPreRender();
 	}
 	// }}}
 	// {{{ childPreRender

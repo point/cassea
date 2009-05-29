@@ -44,6 +44,7 @@ class WidgetAdjacencyList
 {
 	public $list = array();
 	private $parent_cache = array();
+	private $parent_cache2 = array();
 
 	function add($widget_id, $parent )
 	{
@@ -55,20 +56,22 @@ class WidgetAdjacencyList
 	}
 	function getParentForId($id)
 	{
+		if(isset($this->parent_cache2[$id])) 
+			return $this->parent_cache2[$id];
 		foreach($this->list as $v)
 			if($v->widgetId == $id)
-				return $v->parent;
+				return $this->parent_cache2[$id] = $v->parent;
 		return null;
 	}
 	function getParentRollForId($id)
 	{
 		if(isset($this->parent_cache[$id])) 
 			return $this->parent_cache[$id];
-		else return $this->getParentForId($id);
+		else return null;
 	}
 	function setParentRollForIdCache($id,$widget_id)
 	{
-		if(is_string($widget_id))
+		if(!isset($this->parent_cache[$id]))
 			$this->parent_cache[$id] = $widget_id;
 	}
 	function getPrevUntil($id,$until = null)
@@ -82,9 +85,11 @@ class WidgetAdjacencyList
 	}
 	function hasParent($id)
 	{
+		if(isset($this->parent_cache2[$id])) 
+			return true;
 		foreach($this->list as $v)
 			if($v->widgetId == $id)
-				if($v->parent !== null) return true;
+				if($v->parent !== null) { $this->parent_cache2[$id] = $v->parent; return true; }
 		return false;
 	}
 	function getByInd($ind = 0)

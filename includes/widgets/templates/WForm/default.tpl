@@ -16,6 +16,7 @@ $(document).ready(function() {
 <?php
 } ?>
 	onsubmit:true,
+	onclick:false,
 	onkeyup:false,
 	onfocusout:false,
 	focusInvalid:false,

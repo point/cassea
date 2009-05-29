@@ -74,7 +74,6 @@ class WidgetResultSet implements IteratorAggregate
 }
 class RSIndexer
 {
-    static $_cache = array();
     static function index($inp)
     {
         if(is_numeric($inp))
@@ -87,38 +86,33 @@ class RSIndexer
     }
     static function getLastIndex($s_index)
     {
-        if(!isset($s_index)) return null;
         if(is_numeric($s_index))
             return $s_index;
+        if(!isset($s_index)) return null;
         
-        if(isset(self::$_cache[$s_index]))
-        {
-            $a = self::$_cache[$s_index];
-            return array_pop($a);
-        }
+		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
+			return $GLOBALS['__rsindexer_cache'][$s_index][0];
 
         $us_index = unserialize($s_index);
         if($us_index === false || !is_array($us_index) || empty($us_index))
-            $ret = array();
-        else
-            $ret = $us_index;
-        self::$_cache[$s_index] = $ret;
-        return array_pop($ret);
+            $us_index = array(null);
+
+		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
+        return $us_index[0];
     }
     static function toArray($s_index)
     {
         if(!isset($s_index)|| is_numeric($s_index)) return array();
 
-        if(isset(self::$_cache[$s_index]))
-            return array_slice(array_reverse(self::$_cache[$s_index]),1);
+		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
+            return array_slice(array_reverse($GLOBALS['__rsindexer_cache'][$s_index]),1);
 
         $us_index = unserialize($s_index);
         if($us_index === false || !is_array($us_index) || empty($us_index))
-            $ret = array();
-        else
-            $ret = $us_index;
-        self::$_cache[$s_index] = $ret;
-        return array_slice(array_reverse($ret),1);
+            $us_index = array(null);
+
+		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
+        return array_slice(array_reverse($us_index),1);
     }
 
 }

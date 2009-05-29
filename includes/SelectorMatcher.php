@@ -32,7 +32,6 @@
 //
 class SelectorMatcher
 {
-	static $cache = array();
 	static function matched(WComponent $widget, $selector,$index,$global)
 	{
 		/*echo $id = $widget->getId();
@@ -125,9 +124,9 @@ class SelectorMatcher
 		//id, quick
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return false;
 		// *
-		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] == '*') return true;
+		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return true;
 		// tag
-		if(isset($parsed_selector['tag']) && $widget->getClassLower() != $parsed_selector['tag']) return false;
+		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return false;
 		// [attribute]
 		if(isset($parsed_selector['attr']))
 		   if( !isset($parsed_selector['attr_value'])
@@ -156,7 +155,7 @@ class SelectorMatcher
 					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return false;
 
 
-
+		//pseudo
 		if(isset($parsed_selector['pseudo']))
 			// :contains(text) for ->getText() and ->getValue()
 			if($parsed_selector['pseudo'] == "contains" && isset($parsed_selector['pseudo_value']))
@@ -220,8 +219,8 @@ class SelectorMatcher
 
 			}
 			// :index for WRoll
-			elseif($parsed_selector['pseudo'] === "index")
-            {
+			elseif($parsed_selector['pseudo'] === "index" && $widget->isInsideRoll())
+			{
 				if(!isset($parsed_selector['pseudo_value'])) return false;
 				//return false;
 				$w2 = $widget;
@@ -232,11 +231,15 @@ class SelectorMatcher
 
                 /*if($w2 instanceof WRoll) $parent = $w2->getId();
                 else*/
-                    while($w2 && ($p = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) !== null)
-                        if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
-                        else $w2 = $controller->getWidget($p);
-                if($parent == null) return false;
-				$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
+					if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
+					{
+						while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
+							if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
+							else $w2 = $controller->getWidget($p);
+						if($parent == null) return false;
+						$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
+					}
+
                 if(!is_array($parsed_selector['pseudo_value']))
                 {
                     if(strpos($parsed_selector['pseudo_value'],":") !== false)
@@ -259,21 +262,25 @@ class SelectorMatcher
                     $cur_scope = array_shift($parsed_selector['scope']);
                     $matched = $current = $controller->getDisplayModeParams()->getCurrent($parent,$cur_scope);
                     foreach($parsed_selector['pseudo_value'] as $k => $v)
-                    {
-                        if($current != RSIndexer::getLastIndex($k)) continue;
+					{
+						if(is_numeric($k) && $k != $current) continue;
+						// else $k -- array
+						elseif($current != RSIndexer::getLastIndex($k)) continue;
                         else
                         {
                             $_w3 = $_w2 = $controller->getWidget($parent);
                             $flag = true;
 							$_parent = null;
                             foreach(RSIndexer::toArray($k) as $next_index)
-                            {
-                                while($_w2 && ($_p = $controller->getAdjacencyList()->getParentRollForId($_w2->getId())) !== null)
-                                    if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
-                                    else  $_w2 = $controller->getWidget($_p);
+							{
+								if(($_parent = $controller->getAdjacencyList()->getParentRollForId($_w2->getId())) === null)
+								{
+									while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
+										if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
+										else  $_w2 = $controller->getWidget($_p);
 
-								$controller->getAdjacencyList()->setParentRollForIdCache($_w3->getId(),$_parent); 
-
+									$controller->getAdjacencyList()->setParentRollForIdCache($_w3->getId(),$_parent); 
+								}
                                 if($_parent && $controller->getDisplayModeParams()->getCurrent($_parent,$cur_scope) != $next_index)
                                 {$flag = false;break;}
                             }
@@ -285,11 +292,8 @@ class SelectorMatcher
                         }
                     }
                     return false;
-                    //if(!isset($parsed_selector['pseudo_value'][$current]) || $parsed_selector['pseudo_value'][$current] != $current) return false;
-                    //$matched = $current;
-                    //$controller->getDisplayModeParams()->setMatchedIndex($current);
                 }
-			}
+			}//finish pseudo
 		return true;
 	}
 }
@@ -307,25 +311,28 @@ class SelectorParserFactory
         else
         {
             $o = self::$cache[$selector];
-            $o->setIndex($index);
-            $o->setScope($scope);
-            $o->processIndexScope();
+			if($index)
+			{
+				$o->setIndex($index);
+				$o->setScope($scope);
+				$o->processIndexScope();
+			}
             return $o;
         }
     }
 
-    static function getSelectorParser2($selector,$index,$scope)
+    static function &getSelectorParser2($selector,$index,$scope)
     {
 		$m = md5($selector);
-        if(!isset($GLOBALS['selector_cache'][$m]))
+        if(!isset($GLOBALS['__selector_cache'][$m]))
 		{
             $o = new SelectorParser($selector,$index,$scope);
-            $GLOBALS['selector_cache'][$m] = &$o;
+            $GLOBALS['__selector_cache'][$m] = &$o;
             return $o;
         }
         else
         {
-            $o = &$GLOBALS['selector_cache'][$m];
+            $o = &$GLOBALS['__selector_cache'][$m];
             $o->setIndex($index);
             $o->setScope($scope);
             $o->processIndexScope();

@@ -141,12 +141,14 @@ abstract class WControl extends WComponent
     {
 		if(!isset($name) || !is_scalar($name)) return ;
 		$name = "".$name;
-		//if(substr($name,-2,2) == "[]")
-		if(strpos($name,'[') !== false)
+		// case if name="qwe[]" may use additional_id
+		if(strpos($name,'[') !== false && strpos($name,'[]') !== false)
 		{
-			$this->name_w_braces = 1;
-			$this->name = preg_replace("/\[.*\]/","",$name);
+				$this->name_w_braces = 1;
+				$this->name = preg_replace("/\[.*\]/","",$name);
 		}
+		// case if (name="qwe[3]" => can't use additional_id)
+		// or name="qwe" => normal case
 		else $this->name = $name;
     }
     // }}}

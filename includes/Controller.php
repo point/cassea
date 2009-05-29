@@ -448,6 +448,7 @@ class Controller
 		foreach($sxml as $elem)
 			$this->buildWidget($elem);
 		$this->getDispatcher()->notify(new Event("all_build_complete"));
+		unset($d);
 		
 	}
 	function buildWidget(SimpleXMLElement $elem,$system = 0)

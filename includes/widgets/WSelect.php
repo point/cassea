@@ -192,6 +192,13 @@ class WSelect extends WControlContainer
     */
     function setData(WidgetResultSet $data)
 	{
+		if($data->getDef() !== null)
+            ResultSetPool::set(
+                t(new ResultSet())
+                //->f("wselect[name=".$this->getName()."] > wselectoption")->selected(0)
+                ->f1("#".$this->getId()." wselectoption[value=".$data->getDef()."]")
+				->set('selected',1),ResultSetPool::SYSTEM_PRIORITY);
+			
         $this->setSize($data->get('size'));
         $this->setMultiple($data->get('multiple'));
 

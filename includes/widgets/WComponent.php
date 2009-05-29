@@ -857,6 +857,7 @@ EOD;
 			if($has_roll)
 			{
 				$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
+				$this->inside_roll = 1;
 				$this->do_increment = 1;
 			}
 		}
@@ -1121,6 +1122,20 @@ EOD;
 			$tpl_name = $this->template_name;
 
 		return new Template($path,$tpl_name);
+    }
+    // }}}
+
+    // {{{ getInsideRoll
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    null
+    * @return   string
+    */
+    function isInsideRoll()
+    {
+    	return $this->inside_roll;
     }
     // }}}
 

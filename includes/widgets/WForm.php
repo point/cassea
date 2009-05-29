@@ -280,9 +280,9 @@ class WForm extends WContainer
 			"form_content" =>$this->items->generateAllHTML(),
 			"vc_rules"=>!empty($this->vc_rules)?implode(", ",$this->vc_rules):null,
             "vc_messages"=>!empty($this->vc_messages)?Language::encodePair(implode(", ",$this->vc_messages)):null,
-			"signature"=>$this->form_signature,
-			"signature_name"=>self::signature_name,
-            "formid_name" => self::formid_name,
+			"signature"=>$this->getMethod() != "post"?null:$this->form_signature,
+			"signature_name"=>$this->getMethod() != "post"?null:self::signature_name,
+            "formid_name" =>$this->getMethod() != "post"?null: self::formid_name,
 			"widget_id"=>$this->getId()
 		));
 		

@@ -262,6 +262,8 @@ class StringProcessor
     { if(!is_numeric($number) || !isset($number)) return $number;
        return Language::getPluralConst($number,$key, $model, $number); 
     }
+	protected function stripslashes($str)
+	{ return stripslashes($str); }
 }
 // }}}
 ?>

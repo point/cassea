@@ -58,27 +58,27 @@ class Navigator
 
 		if(!isset($title))
 			$title = requestURI();
-		if( !isset($this->user_path[0]) || 
-			(isset($this->user_path[0]) && $this->user_path[0]['controller'] != $this->controller_name)
-			|| empty($this->user_path) || ($this->user_path[0]['controller'] == $this->controller_name && strpos($page_name,"index") !== false))
+		if( !isset($this->user_path[0]) ||  empty($this->user_path) )
 		{
 			$this->user_path = array();
 			$this->user_path[0]['url'] = requestURI(1);
 			$this->user_path[0]['title'] = $title;
-			if(isset($description))
-				$this->user_path[0]['desription'] = $description;
+			$this->user_path[0]['desription'] = $description;
 			$this->user_path[0]['page'] = $page_name;
 			$this->user_path[0]['controller'] = $this->controller_name;
 		}
-        else
+		else
         {
             $to_add = 1;
             for($i = 0, $c = count($this->user_path); $i < $c; $i++)
-                if(isset($this->user_path[$i]) && isset($this->user_path[$i]['page']) &&  $this->user_path[$i]['page'] == $page_name){
+				if(isset($this->user_path[$i]) && isset($this->user_path[$i]['page']) &&  $this->user_path[$i]['page'] == $page_name
+					&& $this->user_path[$i]['controller'] == $this->controller_name	)
+				{
                     $this->user_path = array_slice($this->user_path,$i);
-                    $this->user_path[$i]['url'] = requestURI(1);
-                    $this->user_path[$i]['page'] = $page_name;
+                    $this->user_path[0]['url'] = requestURI(1);
+                    $this->user_path[0]['page'] = $page_name;
                     $to_add = false;
+					break;
                 }
             if($to_add)
             {
@@ -92,7 +92,7 @@ class Navigator
                     "controller"=>$this->controller_name
                 ));
             }
-        }
+		}
         $this->storage->set("user_path",$this->user_path);
 	}
 	function getStep($step)
