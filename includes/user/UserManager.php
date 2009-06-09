@@ -250,6 +250,10 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 				$tpl_file = 'user_registration.tpl';
 			$subject = Language::getConst('emall_subject_registration','user');
 			
+			// empty language constant or single language use
+			if(empty($subject) || $subject == 'emall_subject_registration')
+				$subject = Language::message('widgets', 'default_emall_subject_registration');
+			
 			$p = new TemplateParams();
 			$p->login = $login;
 			$p->password = $password;
@@ -285,7 +289,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		}
     }
 
-    function cleanUser($login)
+    function deleteUser($login)
     {
 
         if (self::existsLogin($login))
@@ -494,6 +498,10 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		else 
 			$tpl_file = 'user_password_recovery.tpl';
         $subject = Language::getConst('emali_subject_password_recovery','user');
+
+		// empty language constant or single language use
+		if(empty($subject) || $subject == 'emali_subject_password_recovery')
+			$subject = Language::message('widgets', 'default_emali_subject_password_recovery');
 
         $p = new TemplateParams();
 		// TODO: $p->greating = $this->firstname.' '.$this->lastname;

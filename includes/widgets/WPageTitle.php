@@ -66,9 +66,9 @@ class WPageTitle extends WComponent
     function setData(WidgetResultSet $data)
     {
         $h = Header::get();
-        $h->setTitleSeparator(Language::encodePair($data->get('separator')));
-        $h->setTitleStart(Language::encodePair($data->get('start')));
-        $h->setTitleEnd(Language::encodePair($data->get('end')));
+		$h->setTitleSeparator(Language::encodePair($data->get('separator')));
+		$h->setTitleStart(Language::encodePair($data->get('start')));
+		$h->setTitleEnd(Language::encodePair($data->get('end')));
 
         if ($data->get('add')) $h->addTitleItem(Language::encodePair($data->get('add')));
 		parent::setData($data);

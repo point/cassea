@@ -18,3 +18,5 @@ $__l['captcha_text'] = 'Refresh CAPTCHA text';
 $__l['back_link'] = "Back";
 $__l['captcha_error'] = 'Wrong CAPTCHA text';
 $__l['edit_key_title'] = 'Show/hide password';
+$__l['default_emall_subject_registration'] = "Registration confirmation";
+$__l['default_emali_subject_password_recovery'] = "Lost password recovery";

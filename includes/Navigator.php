@@ -41,7 +41,7 @@ class Navigator
     const MAX_PATH = 20;
 	function Navigator($controller_name)
 	{
-		$this->storage = Storage::createWithSession('AdminNavigator');
+		$this->storage = Storage::createWithSession('AdminNavigator'.Controller::getInstance()->getPoolName());
 
 		if(!isset($controller_name))
 			$this->storage->un_set("user_path");
@@ -58,7 +58,8 @@ class Navigator
 
 		if(!isset($title))
 			$title = requestURI();
-		if( !isset($this->user_path[0]) ||  empty($this->user_path) )
+		if( ($this->controller_name == "index" && $page_name="index")	|| 
+			!isset($this->user_path[0]) ||  empty($this->user_path) )
 		{
 			$this->user_path = array();
 			$this->user_path[0]['url'] = requestURI(1);

@@ -22,3 +22,5 @@ $__l['captcha_text'] = 'Обновить текст';
 $__l['back_link'] = "Назад";
 $__l['captcha_error'] = 'Неправильный текст CAPTCHA';
 $__l['edit_key_title'] = 'Показать/спрятать пароль';
+$__l['default_emall_subject_registration'] = "Подтверждение регистрации";
+$__l['default_emali_subject_password_recovery'] = "Восстановление утерянного пароля";

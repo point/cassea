@@ -199,7 +199,9 @@ class IniDBConfig extends IniConfig
             return  parent::get($name);
         }catch(ConfigException $e){
             if(!isset($this->table_data))
-                $this->loadData();
+				try {
+					$this->loadData();
+				}catch(DBException $e) {}
             $name = strtolower($name);
             if(isset($this->table_data[$name]))
                 return $this->table_data[$name];

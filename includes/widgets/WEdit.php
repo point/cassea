@@ -53,7 +53,11 @@ class WEdit extends WControl
         /**
         * @var     int
         */
-        $switch=0
+		$switch=0,
+        /**
+		* @var boolean
+		*/
+		$default = false
 		;
     
     // {{{ __construct
@@ -86,6 +90,8 @@ class WEdit extends WControl
             $this->setType((string)$elem['type']);
         if(isset($elem['switch']))
             $this->setSwitch((string)$elem['switch']);
+		if(isset($elem['default']))
+			$this->setDefault((string)$elem['default']);
 
 		$this->addToMemento(array("maxlength","size","type"));
 
@@ -259,6 +265,7 @@ class WEdit extends WControl
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
+			"default"=>$this->getDefault(),
 			"type"=>$this->getType(),
 			"maxlength"=>$this->getMaxLength(),
 			"size"=>$this->getSize(),
@@ -267,6 +274,35 @@ class WEdit extends WControl
 		parent::assignVars();
     }
 	// }}}	
+	
+    // {{{ setDefault
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    bool $default  
+    * @return   void
+    */
+    function setDefault($default)
+    {
+		if(!isset($default) || !is_scalar($default))
+			return;
+        $this->default = 0+$default;
+    }
+    // }}}
+    // {{{ getDefault
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   bool
+    */
+    function getDefault()
+    {
+		return $this->default;
+    }
+    // }}}
 }
 //}}}
 

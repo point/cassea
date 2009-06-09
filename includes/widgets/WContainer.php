@@ -71,6 +71,36 @@ class WContainer extends WComponent
 				$this->$v->postRender();
 	}
 	// }}}
+	// {{{ setData
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    array $data
+    * @return   void
+	*/
+    function setData(WidgetResultSet $data)
+	{
+		$this->childSetData($data);
+		parent::setData($data);
+	}
+	// }}}
+	
+	// {{{ childSetData
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    array $data
+    * @return   void
+	*/
+    function childSetData(WidgetResultSet $data)
+	{
+		foreach($this->class_vars as $v)
+			if($this->$v instanceof MixedCollection)
+				$this->$v->setData($data);
+	}
+	// }}}
 }
 //}}}
 
@@ -345,6 +375,23 @@ class MixedCollection extends WidgetCollection
 			parent::init($elem);
 	}
 	 // }}}
+	
+	// {{{ setData
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    array $data
+    * @return   void
+	*/
+    function setData(WidgetResultSet $data)
+	{
+		$this->setText($data->get('text'));
+		
+		// May be not ?
+		$this->setText($data->getDef());
+	}
+	// }}}
 	// {{{ generateHTML
 	function generateHTML($pos = 0)
 	{

@@ -27,4 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once("common.php.inc");
+require("../includes/Controller.php");
+$c = Controller::getInstance();
+$c->setPoolName('markdownmedia');
+$c->init();
+$c->getHeadBodyTail(1);

@@ -141,7 +141,17 @@ class WText extends WContainer implements StringProcessable
         /**
         * @var      boolean
         */
-		$is_simple = 0
+		$is_simple = 0,
+
+        /**
+        * @var      array
+        */
+		$style_to_repeat = array('br','hr'),
+        /**
+        * @var      array
+        */
+		$repeat_count = 1
+
  ;
     
     // {{{ __construct
@@ -209,7 +219,7 @@ class WText extends WContainer implements StringProcessable
 				case "code": $this->is_code = $v;   break 2;
 				case "dfn": $this->is_dfn = $v;   break 2;
 				case "em": $this->is_em = $v;   break 2;
-				case "h": $this->heading = ($v>0 and $v < 5)?$v:1; $this->is_h = $v;  break 2;
+				case "h": $this->heading = ($v>0 and $v <= 5)?$v:1; $this->is_h = $v;  break 2;
 				case "kbd": $this->is_kbd = $v;   break 2;
 				case "p": $this->is_p = $v;   break 2;
 				case "pre": $this->is_pre = $v;   break 2;
@@ -247,6 +257,8 @@ class WText extends WContainer implements StringProcessable
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)
 			{
 				$this->setTemplate($m[1]);
+				if(in_array($m[1],$this->style_to_repeat))
+					$this->setRepeatCount($this->$v);
 				break;
 			}
 		}		
@@ -268,7 +280,9 @@ class WText extends WContainer implements StringProcessable
     {
 		if($this->is_h)
 			$this->tpl->setParamsArray(array("heading"=>$this->heading));
-		$this->tpl->setParamsArray(array('value'=>StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->text))));
+		$this->tpl->setParamsArray(array('value'=>StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->text)),
+			'repeat_count'=>$this->getRepeatCount()
+			));
 		parent::assignVars();
     }
 	// }}}	
@@ -316,6 +330,34 @@ class WText extends WContainer implements StringProcessable
     function getText()
     {
 		return $this->text;
+    }
+    // }}}
+	
+    // {{{ setRepeatCount
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int
+    * @return   void
+    */
+    function setRepeatCount($repeat_count)
+	{
+		if(!isset($repeat_count) || !is_numeric($repeat_count)) return ;
+		$this->repeat_count = 0 + $repeat_count;
+    }
+    // }}}
+    // {{{ getRepeatCount
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getRepeatcount()
+    {
+		return $this->repeat_count;
     }
     // }}}
 

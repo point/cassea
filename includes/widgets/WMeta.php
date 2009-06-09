@@ -27,53 +27,39 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require("../includes/Controller.php");
-$controller = Controller::getInstance();
-$c->registerStep(0);
-$page = $controller->p2[0];
-		
 
-if(Config::getInstance()->captcha->type == 'static')
+//
+// $Id:$
+//
+WidgetLoader::load("WComponent");
+//{{{ WMeta
+class WMeta extends WComponent
 {
-    $s=Storage::create("__CAPTCHALIST__",2592000);
-    $filenames = array();
-    if (!$s->is_set("files")) 
-    //if (1) 
-    {
-        for($i=1;$i<11;$i++)
-        {
-            $filenames[$i] = array_map(create_function('$e','$pi = pathinfo($e);return $pi["filename"];'),
-                glob(Config::get('root_dir').Config::getInstance()->captcha->dir."/{$i}/*.png"));
-        }
-        $s->set("files",$filenames);
+    // {{{ parseParams
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    array
+    * @return void
+    */
+    function parseParams(SimpleXMLElement $elem)
+	{
+		$attr = array();
+		if(isset($elem['http-equiv']))
+			$attr['http-equiv'] = (string)$elem['http-equiv'];
+		if(isset($elem['name']))
+			$attr['name'] = (string)$elem['name'];
+		if(isset($elem['content']))
+			$attr['content'] = (string)$elem['content'];
+		if(isset($elem['scheme']))
+			$attr['scheme'] = (string)$elem['scheme'];
+
+		if(!empty($attr['name']) || !empty($attr['content']))
+			Header::get()->addMeta($attr);
+		parent::parseParams($elem);		    	
     }
-    $filenames=$s->get("files");
-    $s->close();
-    unset($s);
-    $st=Storage::createWithSession("_CAPTCHA_",60);    
-    $i=mt_rand(1,10);
-    $j=mt_rand(1,100);
-    $path="/captcha/{$i}/{$filenames[$i][$j]}.png";
-
-    $st->set("answer",$filenames[$i][$j]);
-    $st->set("page",$page);
-
-    header("Content-Type:image/png");
-    header("X-Accel-Redirect:".$path);
-    exit();
+    // }}}
 }
-else
-{
-    //echo 1;
-    $str = null;
-    $image = generateCAPTCHA($str);
-    $st=Storage::createWithSession("_CAPTCHA_",60);    
-    $st->set("answer",$str);
-    $st->set("page",$page);
-
-    header('Content-type:image/png');
-    echo $image;
-    exit();
-}
-
+//}}}
 ?>

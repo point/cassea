@@ -309,9 +309,10 @@ class WImage extends WComponent
 		if(!$this->file instanceof iFile && isset($this->src) && isset($this->subst_src))
 				$this->setSrc(sprintf($this->getSubstSrc(),$this->getSrc()));
 		
-        //!!! Beware
-        //!!! Dont be arfaid :)
-        if(empty($this->src)) {
+		if(empty($this->alt))
+			$this->setAlt(basename($this->getSrc()));
+		if(empty($this->src)) 
+		{
             $this->setVisible(0);
        		parent::preRender();
             return;
@@ -394,7 +395,7 @@ EOD;
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			"alt"=> ($this->getAlt())?'alt="'.Language::encodePair($this->getAlt()).'"':'',
+			"alt"=> Language::encodePair($this->getAlt()),
 			"width" => ($this->getWidth())?' width="'.$this->getWidth().'"':'',
 			"height" => ($this->getHeight())?' height="'.$this->getHeight().'"':'',
 			"src" => $this->getSrc(),

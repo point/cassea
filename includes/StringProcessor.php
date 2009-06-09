@@ -248,6 +248,8 @@ class StringProcessor
     {return preg_replace("/\s{2,}/", ' ',$string);}
     protected function escape($string, $quotes = 1) 
     { return htmlspecialchars($string, $quotes ? ENT_QUOTES : ENT_NOQUOTES); }
+	protected function unescape($string, $quotes = 1)
+	{ return htmlspecialchars_decode($string, $quotes ? ENT_QUOTES : ENT_NOQUOTES); }
     protected function truncate ($string, $max = 50, $ends = '...') 
     {return substr($string,0,abs($max - strlen($ends))).$ends; }
     protected function nl2br($string) 

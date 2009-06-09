@@ -57,6 +57,8 @@ require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
 
+spl_autoload_register(create_function('$name','if($name == "Feed") require_once("feed/Feed.php");'));
+
 class ControllerException extends Exception {}
 class IdExistsException extends Exception {}
 
@@ -87,6 +89,8 @@ class Controller
 		;
 
 	protected 
+			$register_step = 1,
+			$pool_name = "default",
             $inited = false,
 			$header = null,
 			$page = "index",
@@ -186,7 +190,6 @@ class Controller
         $full_path = $this->findPage();
         if($_SERVER['REQUEST_METHOD'] == "POST")
 		    $this->handlePOST();
-		$this->navigator->addStep($this->page);
 
 		//$this->addCSS("ns_reset.css");
 		$this->addScript("jquery.js");
@@ -202,9 +205,13 @@ class Controller
         if($dom->load($full_path) === false)
             throw new ControllerException("Can not load XML ".$full_path);
 
+	
+		if($this->register_step)
+			$this->navigator->addStep($this->page);
+
         $this->parsePage($this->processPage($dom));
         
-        $this->inited = true;
+		$this->inited = true;
 
     }
     protected function findPage()
@@ -909,7 +916,7 @@ class Controller
 	}
 	protected function restoreCheckers()
 	{
-		$storage = Storage::createWithSession("controller");
+		$storage = Storage::createWithSession("controller".$this->getPoolName());
 		$this->checker_rules = $storage['checker_rules'];
 		$this->checker_messages = $storage['checker_messages'];
 		$storage->un_set('checker_rules');
@@ -934,13 +941,13 @@ class Controller
     }
     protected function restoreCAPTCHA()
     {
-		$storage = Storage::createWithSession("controller");
+		$storage = Storage::createWithSession("controller".$this->getPoolName());
         $this->captcha_name = $storage->get('captcha_name');
 		$storage->un_set('captcha_name');
     }
 	protected function restoreSignatures()
 	{
-		$storage = Storage::createWithSession("controller");
+		$storage = Storage::createWithSession("controller".$this->getPoolName());
 		$this->form_signatures = $storage->get('signatures');
 		$storage->un_set('signatures');
 		if(!is_array($this->form_signatures))
@@ -949,7 +956,7 @@ class Controller
     protected function restorePageHandler()
     {
         if(WidgetLoader::load("WPageHandler") === false) return;
-		$storage = Storage::createWithSession("controller");
+		$storage = Storage::createWithSession("controller".$this->getPoolName());
 		$this->pagehandler = $storage->get('pagehandler');
 		$storage->un_set('pagehandler');
     }
@@ -985,7 +992,7 @@ class Controller
         //do it only if init was completed
         if($this->inited)
         {
-		    $storage = Storage::createWithSession("controller");
+		    $storage = Storage::createWithSession("controller".$this->getPoolName());
 		    $storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
@@ -995,6 +1002,21 @@ class Controller
             POSTErrors::flushErrors();
         }
 		DB::close();
+	}
+	function setPoolName($name)
+	{
+		if(!isset($name) || !is_string($name)) return ;
+		$this->pool_name = (string)$name;
+	}
+	function getPoolName()
+	{
+		return $this->pool_name;
+	}
+	function registerStep($reg = 1)
+	{
+		if(!isset($reg) || !is_scalar($reg)) return;
+
+		$this->register_step = 0 + $reg;
 	}
 }
 class DisplayModeParams

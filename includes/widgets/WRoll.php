@@ -63,7 +63,11 @@ class WRoll extends WContainer
 	    /**
         * @var		int
 		*/
-		$count = 0
+		$count = 0,
+	    /**
+        * @var		string
+		*/
+		$if_empty = null
 
 		;
     // {{{ WRoll 
@@ -92,6 +96,8 @@ class WRoll extends WContainer
 			$this->setRuler((string)$elem['ruler']);
         if(isset($elem['count']))
             $this->setCount((string)$elem['count']);
+		if(isset($elem['if_empty']))
+			$this->setIfEmpty((string)$elem['if_empty']);
 
 		$this->items = new IterableCollection($this->getId(),$elem);
 		$this->addToMemento(array("count"));
@@ -143,6 +149,15 @@ class WRoll extends WContainer
 		else
 			Controller::getInstance()->getDisplayModeParams()
 				->set($this->getId(), 0, $this->getCount(),$this->getCount());
+
+		if(($w = Controller::getInstance()->getWidget($this->getIfEmpty())) && $w instanceof WComponent)
+			if(!$this->getCount())
+			{
+				$w->setEnabled(1);
+				$w->setVisible(1);
+			}
+			else
+				$w->setVisible(0);
 
 		parent::preRender();
     }
@@ -272,6 +287,35 @@ class WRoll extends WContainer
     function getCount()
     {
 		return $this->count;
+    }
+    // }}}
+	
+    // {{{ setIfEmpty
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $if_empty
+    * @return   void
+    */
+    function setIfEmpty($if_empty)
+	{
+		if(!isset($if_empty) || !is_string($if_empty)) return;
+		$this->if_empty = "".$if_empty;
+    }
+	// }}}
+	
+    // {{{ getifEmpty
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getIfEmpty()
+    {
+		return $this->if_empty;
     }
     // }}}
 }

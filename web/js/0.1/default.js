@@ -33,4 +33,6 @@ function show_error_boxes()
 	$("div.w-error").hide();
 	show_error_boxes_int();
 }
-$(document).ready(function(){ show_error_boxes(); });
+$(document).ready(function(){ show_error_boxes(); 
+$("[tabindex=1]:text").focus();
+});

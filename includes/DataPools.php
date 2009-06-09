@@ -123,12 +123,12 @@ class DataUpdaterPool
     }
 	static function savePool()
 	{
-		$storage = Storage::createWithSession("DataUpdaterPool");
+		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getPoolName());
 		$storage->set('pool',self::$pool);
 	}
 	static function restorePool()
 	{
-		$storage = Storage::createWithSession("DataUpdaterPool");
+		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getPoolName());
 		self::$pool = $storage->get('pool');
 	}
 	static function callCheckers($form_id = null)
