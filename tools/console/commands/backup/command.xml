@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdBackup</class>
+    <name>backup</name>
+    <default>backup</default>
+    <help>
+        <short>Backup the files to tar.bz2 archieve and create MySQL DB dump. </short>
+        <main>
+   Usage: backup</main>
+    <options>
+            <option name='--separate' description='Create separated files for MySQL and the project'/>
+    </options>
+
+    </help>
+</command>

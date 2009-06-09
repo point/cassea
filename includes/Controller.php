@@ -147,6 +147,8 @@ class Controller
 		Session::init();
         User::get();
 
+		date_default_timezone_set(Config::get('TIMEZONE'));
+
 	}
 	static function getInstance()
 	{
@@ -200,6 +202,7 @@ class Controller
 		//$this->addScript("jquery.treeview.js");
 		$this->addCSS("default.css");
 		$this->addScript("default.js");
+
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)

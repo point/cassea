@@ -529,5 +529,32 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
     private function validateRegKey($str){
         return preg_match('#^[a-zA-Z0-9]{32}$#', $str);
     }// }}}
+    
+    public function lookForNotConfirmed()
+    {
+		return $r=DB::query("select * from ".self::TABLE_REGISTRATION." where expires < now()");
+    }
+
+    public function deletNotConfirmed()
+    {
+		DB::query("delete from ".self::TABLE_REGISTRATION." where expires < now()");
+    }
+
+    public function deleteFromRegistration($login='')
+    {
+        $login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		DB::query("delete from ".self::TABLE_REGISTRATION." where login='".$login."'");
+    }
+    
+    public function existsRegistration($login='')
+    {
+        $login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+        $r  = DB::query('select login from '.self::TABLE.' where login="'.$login.'" limit 1');
+		if(count($r) != 1)
+			return (bool)count(DB::query('select login from '.self::TABLE_REGISTRATION.' where login="'.$login.'"'));
+        return true;
+    }
+
+
 }
 ?>

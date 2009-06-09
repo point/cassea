@@ -29,8 +29,8 @@ class FS{
     {
         $mod="class ".$name."{} ?>";
         self::create($root . '/controllers/' . $name . '.php',file_get_contents(dirname(__FILE__) . '/templates/controller.tpl'));
-        mkdir($root . '/models/' . $name,0777);
-        mkdir($root . '/pages/' . $name,0777);
+        mkdir($root . '/models/' . $name,0775);
+        mkdir($root . '/pages/' . $name,0775);
         self::create($root . '/models/' . $name . '/' . $name . '.php',file_get_contents(dirname(__FILE__) . '/templates/model.tpl') . $mod);
         self::create($root . '/pages/' . $name . '/index.xml',file_get_contents(dirname(__FILE__) . '/templates/page.tpl'));
         
@@ -39,7 +39,7 @@ class FS{
     public static function rCopy($src,$dist) 
     { 
         $dir = opendir($src); 
-        if (!is_dir($dist)) @mkdir($dist,0777);
+        if (!is_dir($dist)) @mkdir($dist,0775);
         while(false !== ( $file = readdir($dir)) ) 
         { 
             if (( $file != '.' ) && ( $file != '..' )) 

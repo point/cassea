@@ -80,9 +80,13 @@ class Header
         */
 		private $predefine_doctypes = array (
 			''  => '',
-            'strict'        => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">',
-            'transitional'  => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">',
-            'frameset'      => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">'
+            'strict'                => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">',
+            'transitional'          => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">',
+            'frameset'              => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">',
+            'xhtml11'               =>'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+            'xhtml10strict'         =>'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+            'xhtml10transitional'   =>'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+            'xhtml10frameset'       =>'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'
             );
         /**
         * Заголовок документа
@@ -133,7 +137,13 @@ class Header
     */
     protected function __construct ($doctype = 'strict')
 	{
-		$this->setDoctype($doctype);
+        $this->setDoctype($doctype);
+
+        if(Config::get('x_ua_compatible')== 'on')
+            if(substr($doctype,0,5)=='xhtml')
+                header('X-UA-Compatible: IE=EmulateIE7');
+            else
+                $this->addMeta(array('http-equiv'=>'X-UA-Compatible','content'=>'IE=EmulateIE7'));
 	}// }}}
 
     /** {{{ get

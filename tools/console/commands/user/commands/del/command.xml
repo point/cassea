@@ -5,6 +5,10 @@
     <help>
         <short>Del user</short>
         <main>Del site user.
-Usage: del  LOGIN </main>
+ Usage: del  LOGIN </main>
+        <options>
+            <option name='--confirm-expires' description='Delete all users with delayed confirmation.'/>
+            <option name='--confirm' description='Delete not-confirmed user.Use --confirm=[login]'/>
+        </options>
     </help>
 </command>

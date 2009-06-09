@@ -44,9 +44,9 @@ class cmd  extends Command{
             $list =UserManager::get()->getNotConfirmed();
             IO::out("");
             IO::out('~WHITE~Not-confirmed  users Count~~~:'.count($list));
-            IO::out('~WHITE~Not confirmed Users List~~~:');
-            IO::out(sprintf("%-20s %-30s %s", "~GREEN~Regkey~~~:", "~GREEN~Login~~~:", "~GREEN~EMail~~~:"));
-            $format = "%-20s %-20s %s";
+            IO::out('~WHITE~Users List~~~:');
+            IO::out(sprintf("%-50s %-30s %s", "~GREEN~Regkey~~~:", "~GREEN~Login~~~:", "~GREEN~EMail~~~:"));
+            $format = "%-50s %-20s %s";
             for($i=0;$i<count($list);$i++)
                 IO::out(sprintf($format, "~GREEN~".$list[$i]['regkey']."~~~", $list[$i]['login'], $list[$i]['email']));
             IO::out("");

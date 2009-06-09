@@ -1,6 +1,15 @@
+<?xml version='1.0' encoding='utf-8' ?>
 <command>
-    <class>Info</class>
-    <descr>Provide information about web-server, etc</descr>
+    <class>CmdInfo</class>
+    <name>info</name>
+    <hasSubcommands>1</hasSubcommands>
+    <default>info</default>
     <help>
+        <short>Provide information about web-server</short>
+        <main>
+   Usage: info [php]</main>
+        <subcommands>
+            <cmd name='phpinfo' description='view phpinfo'/>
+        </subcommands>
     </help>
 </command>

@@ -68,7 +68,12 @@ class WHyperLink extends WContainer implements StringProcessable
         /**
         * @var      string
         */
-        $subst_href = null
+        $subst_href = null,
+        /**
+        * @var      string
+        */
+        $clear_link = 0
+
 
   	;
     
@@ -108,6 +113,9 @@ class WHyperLink extends WContainer implements StringProcessable
             $this->setName((string)$elem['name']);
         if(isset($elem['subst_href']))
             $this->setSubstHREF((string)$elem['subst_href']);
+        if(isset($elem['clear_link']))
+            $this->setClearLink((string)$elem['clear_link']);
+
 
 		$this->items = new MixedCollection($this->getId(),$elem);
         $this->addToMemento(array("href","label","rel","rev","target","name","subst_href"));
@@ -115,6 +123,39 @@ class WHyperLink extends WContainer implements StringProcessable
 		parent::parseParams($elem);		    	
     }
     // }}}
+
+
+    // {{{ setClearLink
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $clear_link    
+    * @return   void
+    */
+    function setClearLink($clear_link)
+    {
+        if(!isset($clear_link) || !is_scalar($clear_link) || (0+$clear_link > 1))
+			return;
+		$this->clear_link = 0 + $clear_link;
+    }
+    // }}}
+
+    // {{{ getClearLink
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getClearLink()
+    {
+		return $this->clear_link;
+    }
+    // }}}
+
+    //
    // {{{ setData 
     /**
     * Method description
@@ -170,6 +211,10 @@ class WHyperLink extends WContainer implements StringProcessable
                 $this->items->setText($this->getText());
             else
                 $this->items->setText($this->getHREF());
+        
+        if(($this->getHREF() ==' ' || empty($this->href) || $this->getHREF()=='#') && $this->getClearLink())
+		    if(!isset($this->tpl))
+                $this->tpl = $this->createTemplate(null,'simpletext.tpl');
 
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();

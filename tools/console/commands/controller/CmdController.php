@@ -15,7 +15,4 @@ class cmdController extends Command{
         foreach($arr as $c)
             io::out('~GREEN~  '.$c.'~~~');
     }
-
-
-
 }

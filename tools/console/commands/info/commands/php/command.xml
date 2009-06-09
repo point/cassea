@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdPhpInfo</class>
+    <name>php</name>
+    <help>
+        <short>Show the phpinfo command adapted for console</short>
+        <main>
+    Phpinfo.
+    Usage: info php
+        </main>
+        <options>
+            <option name='--not-confirmed' description='Show users with incomplete registration'/>
+            <option name='--count' description='Show count of all,not-confirmed users and registered users'/>
+        </options>
+    </help>
+</command>
