@@ -153,8 +153,8 @@ class WListItem extends WContainer implements StringProcessable
     */
     function setData(WidgetResultSet $data)
 	{
-		$this->setText($data->get('text'));
-		$this->setText($data->getDef());
+		/*$this->setText($data->get('text'));
+		$this->setText($data->getDef());*/
 
     	parent::setData($data);
     }

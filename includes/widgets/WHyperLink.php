@@ -130,10 +130,10 @@ class WHyperLink extends WContainer implements StringProcessable
 		$this->setAttribute('rev',$data->get('rev'));
         $this->setName($data->get('name'));
         $this->setAttribute('target',$data->get('target'));
-        if(($text = $data->getDef()) !== null && !$this->items->count())
+        /*if(($text = $data->getDef()) !== null && !$this->items->count())
             $this->items->setText($text);
         if(($text = $data->get('text')) !== null && !$this->items->count())
-            $this->items->setText($text);
+			$this->items->setText($text);*/
 
 
 		$href = $data->get('href');
