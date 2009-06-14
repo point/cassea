@@ -28,11 +28,11 @@
 }}} -*/
 
 
-//{{{ DBSession
+//{{{ DatabaseSession
 /**
 * @author       billy
 */
-class DBSession extends SessionBase
+class DatabaseSession extends SessionBase
 {
 
     const TABLE = 'user_session';
@@ -43,7 +43,7 @@ class DBSession extends SessionBase
     */
     public function getServerSession($sid)
     {
-        $sql = "select user_id as user, user_ip as ip, cast  from " . DBSession::TABLE . " where id='" . $sid . "' LIMIT 1" ;
+        $sql = "select user_id as user, user_ip as ip, cast  from " . self::TABLE . " where id='" . $sid . "' LIMIT 1" ;
         $res = DB::query($sql);
         return (count($res) == 1)?$res[0]:null;
     }// }}}
@@ -56,7 +56,7 @@ class DBSession extends SessionBase
     public function updateSession($param)
     {
         parent::updateSession($param);
-        $sql = 'replace into '. DBSession::TABLE.'( id, user_id, user_ip,  cast, time) values '.
+        $sql = 'replace into '. self::TABLE.'( id, user_id, user_ip,  cast, time) values '.
             '( "'.$this->id.'", '.$param['user'].', "'.$param['ip'].'", "'.$param['cast'].'", "'.time().'" )'; 
         DB::query($sql);        
     }// }}}
@@ -68,7 +68,7 @@ class DBSession extends SessionBase
     public function setUserId($id)
     {
         if (!parent::setUserId($id)) return false;
-        $sql = 'update '.DBSession::TABLE.' set user_id = '.$id.' where id ="'. $this->id.'"';
+        $sql = 'update '.self::TABLE.' set user_id = '.$id.' where id ="'. $this->id.'"';
         DB::query($sql);
     }// }}}
     
@@ -78,7 +78,7 @@ class DBSession extends SessionBase
     */
     public function kill()
     {
-        $r = DB::query( "delete from " . DBSession::TABLE . ' where id = "'.$this->id.'"');
+        $r = self::query( "delete from " . self::TABLE . ' where id = "'.$this->id.'"');
         parent::kill();
 
 
@@ -91,7 +91,7 @@ class DBSession extends SessionBase
     public function deleteExpired()
     {
         $expiry_time = time() - Config::getInstance()->session->length;
-        $sql = 'delete from ' . DBSession::TABLE . ' where time < '.$expiry_time;
+        $sql = 'delete from ' . self::TABLE . ' where time < '.$expiry_time;
         DB::query($sql);
         return DB::getMysqli()->affected_rows;
     }// }}}

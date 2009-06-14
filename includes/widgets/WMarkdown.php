@@ -35,6 +35,7 @@ WidgetLoader::load("WTextarea");
 //{{{ WMarkdown
 class WMarkdown extends WTextarea
 {
+	private $preview_template = null;
     
     // {{{ __construct
     /**
@@ -58,6 +59,8 @@ class WMarkdown extends WTextarea
     */
     function parseParams(SimpleXMLElement $elem)
 	{
+		if(isset($elem['preview_template']))
+			$this->preview_template = ((string)$elem['preview_template']);
         $this->setRows(20);
         $this->setCols(80);
 		parent::parseParams($elem);		    	
@@ -86,6 +89,21 @@ class WMarkdown extends WTextarea
 		parent::buildComplete();
 	}    
 	// }}}
+	
+    // {{{ assignVars
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   void
+    */
+    function assignVars()
+    {
+		$this->tpl->setParamsArray(array("preview_template"=>$this->preview_template));
+		parent::assignVars();
+    }
+	// }}}	
 }
 //}}}
 

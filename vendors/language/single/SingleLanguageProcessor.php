@@ -27,49 +27,51 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-/**
- *
- *
- *
- * @package Storage
- */
+// $Id: Language.php 95 2009-05-12 12:12:01Z point $
+//
 
-interface StorageEngine
+class SingleLanguageProcessor implements iLanguageProcessor
 {
-	function set($var, $val);
-	function get($var);
-	function is_set($var);
-	function un_set($var);
-    function sync();
-    function close();
+	private $current = 0;
+	private $currentName;
+	function init(){
+		$this->currentName = Config::getInstance()->language->single_name;
+	}
+
+	function current(){return $this->current;}
+	function currentName(){return $this->currentName;}
+	function encodePair($value){ return $value;}
+	function getConst($key){ return $key;}
+	function getLangList($raw = false){
+		return array($this->currentName);
+	}
+
+
+ 	// {{{ getPluralConst
+    /**
+     * По заданному числу $n возвращает соотвествующую форму из масива $forms
+     *
+     * Результирующую строку пропускает через printf, с параметрами следующими за $forms
+     *
+     * @param int $n
+	 * @param array $forms
+	 * @param $model = null необходима для совместимости с интефейсом iLanguageProcessor
+     * @param .... sprintf argumetns.
+     */
+	function getPluralConst0($n, $forms, $model = null){
+		if (!is_array($forms)) return $forms;
+		$f= Language::getPluralForm($n,$this->currentName());
+        $str = $forms[$f];
+		if (strpos( $str, '%') !== false){
+			$args = array_slice(func_get_args(),3);
+			$str = vsprintf($str,$args);
+		}
+        return $str;
+    }//}}}
+
+	// {{{ getPluralConst 
+	function getPluralConst($n, $key, $model = null){
+        $f= Language::getPluralForm($n,$this->currentName());
+		return $key.'-'.$f;
+    }// }}}
 }
-
-// {{{ StorageException
-class StorageException extends Exception
-{
-	function __construct($message)
-	{
-		parent::__construct($message);
-	}
-}// }}}
-
-// {{{ Storage
-class Storage 
-{
-	private static $classname;
-
-	static function init(){
-		$storageEngine = Config::get('STORAGE_ENGINE');
-		self::$classname = nameToClass($storageEngine).'Storage';
-		Autoload::addVendor('storage', $storageEngine);
-	}
-	static function create($storage_name,$ttl = null)
-	{
-		return new self::$classname($storage_name, $ttl);
-	}
-	static function createWithSession($storage_name,$ttl = null)
-	{
-		return self::create($storage_name.Session::getId(),$ttl);
-	}
-}// }}}
-?>

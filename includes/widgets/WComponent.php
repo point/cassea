@@ -54,7 +54,7 @@ abstract class WComponent extends WObject
         /**
         * @var      string
         */
-        $template_name = "",
+        $template_name = null,
         /**
         * @var      CTemplate&
         */
@@ -272,24 +272,7 @@ abstract class WComponent extends WObject
     */
     function setTemplate($template_name = null)
 	{
-		if(empty($template_name)) 
-		{
-			$this->template_name = 'default.tpl';
-			$this->template_path = Config::get('ROOT_DIR').'/includes/widgets/templates/'.get_class($this);
-		}	
-		/*elseif(strpos($template_name,"/") !== false)
-		{
-			preg_match("/(\S*)\/([^\/]{1,})$/",$template_name,$m);
-			$this->template_path = $m[1];
-			$this->template_name = $m[2];
-		}*/
-		else
-		{
-			$this->template_path = Config::get('ROOT_DIR').'/includes/widgets/templates/'.get_class($this);
-			if(strpos($template_name,".tpl"))
-				$this->template_name = $template_name;
-			else $this->template_name = $template_name.".tpl";
-		}
+		$this->template_name = $template_name;
     }
     // }}}
     
@@ -1116,10 +1099,15 @@ EOD;
     */
     function createTemplate($path = null, $tpl_name = null)
     {
-		if(!isset($path))
-			$path = $this->template_path;
-		if(!isset($tpl_name))
-			$tpl_name = $this->template_name;
+		if (is_null($path)){
+			$conf = Config::getInstance();
+			if(is_dir( $path = $conf->root_dir.$conf->vendors_dir."/widgets/templates/".get_class($this)));
+			elseif(is_dir($path = $conf->root_dir."/includes/widgets/templates/".get_class($this)));
+			else throw new ControllerException(' Template path for widget '.get_class($this).' not found');
+		}
+		
+		if (is_null($tpl_name) && is_null($this->template_name)) $tpl_name = 'default.tpl';
+		else $tpl_name = $this->template_name.(substr($tpl_name, -4) == '.tpl'?'':".tpl"); 
 
 		return new Template($path,$tpl_name);
     }

@@ -47,7 +47,7 @@ class WFile extends WControl
     */
     function __construct($id = null)
     {
-        $this->setMaxFileSize($this->returnBytes(ini_get('upload_max_filesize')));
+        $this->setMaxFileSize(sizeFromString(ini_get('upload_max_filesize')));
   		parent::__construct($id);
     }
     // }}}
@@ -78,7 +78,7 @@ class WFile extends WControl
     {
 		if(!isset($size) || !is_scalar($size))
             return;
-        $this->maxFileSize = $this->sizeFromString($size);
+        $this->maxFileSize = sizeFromString($size);
     }
     // }}}
     
@@ -155,43 +155,4 @@ class WFile extends WControl
     }
 	// }}}	
 
-    // {{{ returnBytes
-    private function returnBytes($val) {
-        $val = trim($val);
-        $last = strtolower($val[strlen($val)-1]);
-        switch($last) {
-            case 'g':
-                $val *= 1024;
-            case 'm':
-                $val *= 1024;
-            case 'k':
-                $val *= 1024;
-        }
-        return $val;
-    }// }}}
-
-    // {{{ sizeFromString
-    private function sizeFromString($size)
-    {
-        if (is_numeric($size)) 
-            return (integer) $size;
-
-        $size = trim($size);
-        $value = substr($size, 0, -2);
-        switch (strtoupper(substr($size, -2))) 
-        {
-           case 'GB':
-                //$value *= (1024 * 1024 * 1024);
-                $value *= 1073741824;
-                break;
-            case 'MB':
-                //$value *= (1024 * 1024);
-                $value *= 1048576;
-                break;
-            case 'KB':
-                $value *= 1024;
-                break;
-        }
-        return $value;
-    }// }}}
 }// }}}

@@ -31,6 +31,7 @@
 //
 set_include_path('.');
 require("functions.php");
+require('Autoload.php');
 require("Config.php");
 require("Storage.php");
 require("Filter.php");
@@ -62,21 +63,24 @@ spl_autoload_register(create_function('$name','if($name == "Feed") require_once(
 class ControllerException extends Exception {}
 class IdExistsException extends Exception {}
 
+/**
+ *
+ */
 class WidgetLoader
 {
-	static private $cache = array();
 	static function load($name = null)
 	{
-		if(!isset($name))
-			return false;
-		if(isset(self::$cache[$name]))
-			return self::$cache[$name];
-		if(file_exists(Config::get("ROOT_DIR")."/includes/widgets/".$name.".php"))
-		{
-			require Config::get("ROOT_DIR")."/includes/widgets/".$name.".php";
-			return self::$cache[$name] = $name;
-		}
+		if(is_null($name))return false;
+		if (class_exists($name,false)) return $name;
+
+		$c = Config::getInstance();
+		$rd = $c->root_dir;
+		$vd = $c->vendors_dir;
+		if(file_exists( $p = $rd.$vd."/widgets/".$name.".php"));
+		elseif(file_exists($p= $rd."/includes/widgets/".$name.".php"));
 		else return false;
+		require($p);
+		return $name;
 	}
 }
 class Controller
@@ -141,7 +145,9 @@ class Controller
             Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
         else Config::init(new IniDBConfig("config.ini","config"));
 
-        $config = Config::getInstance();
+		Autoload::init();
+		Storage::init();
+		$config = Config::getInstance();
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
 
 		Session::init();
@@ -261,21 +267,36 @@ class Controller
             else $this->p2 = array();
 		}
     }
-    protected final function pagePath($src)
+    protected final function pagePath($src, $vendor_only = false)
     {
         if(empty($src))
-            throw new ControllerException('page file not found');
-        $src = str_replace('.xml','',$src);
-        if($src{0} == "/") 
-            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src.'.xml'))
-                throw new ControllerException('page file '.$src.'.xml not found');
-            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src.'.xml';
-        else
-            if(!file_exists(Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").'/'.$this->controller_name.'/'.$src.'.xml'))
-                throw new ControllerException('page file '.$src.'.xml not found');
-            else $src = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").'/'.$this->controller_name.'/'.$src.'.xml';
-        return $src;
-    }
+			throw new ControllerException('page file not set');
+
+		if ($vendor_only) return  $this->vendorPagePath($src);
+		else{
+			// models page
+			$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
+			$src = ($src{0} != "/")?('/'.$this->controller_name.'/'.$src):$src;
+			$src2 = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src;
+			if(file_exists($src2)) return $src2;
+
+			// vendor pages
+			return $this->vendorPagePath($src);
+		}
+		throw new ControllerException('page file '.$src.' not found');
+	}
+
+    protected final function vendorPagePath($src)
+    {
+		$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
+		$src = (($src{0} != "/")?'/':'').$src;
+		$src2 = Config::get('ROOT_DIR').Config::get("vendors_dir").$src;
+
+		if(file_exists($src2)) return $src2;
+		throw new ControllerException('vendor page file '.$src.' not found', 1);
+	}
+
+
     protected function processPage(DomDocument $dom)
     {
         if(! $dom instanceof DOMNode || !isset($dom->firstChild))
@@ -362,9 +383,13 @@ class Controller
 		for($i = 0, $c = $node->length;$i < $c;$i++)
         {
 			$el = $node->item(0);
-            if($el && ($src = $el->getAttribute('src')) == "") continue;
-            try{$src = $this->pagePath($src);}
-            catch(ControllerException $e){ throw new ControllerException('include page file '.$src.' not found');}
+			if($el && ($src = $el->getAttribute('src')) == "") continue;
+			try{
+				$src = $this->pagePath($src, ($el->getAttribute('vendor') == '1'));
+			}
+			catch(ControllerException $e){ 
+				throw new ControllerException('include page file '.$src.' not found');
+			}
             $d = new DomDocument;
             $d->load($src);
 

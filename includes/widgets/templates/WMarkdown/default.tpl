@@ -1,5 +1,8 @@
 <script language="javascript">
 $(document).ready(function(){
+    <?php if (isset($p->preview_template)){ ?>
+    mySettings.previewParserPath = '/markdownparser/index.html?preview_template=<?php echo $p->preview_template;?>',
+    <?php } ?>
     $('#<?php echo $p->id?>').markItUp(mySettings);
 	});
 </script>

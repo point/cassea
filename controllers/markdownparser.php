@@ -33,8 +33,18 @@
 
 $data = $_POST['data'];
 if(!is_string($data)) exit("");
-
 require("../includes/markdown.php");
-echo Markdown($data);
+$html = Markdown($data);
+
+if (isset($_GET['preview_template']) && preg_match('#^[a-zA-Z-0-9-_].html$#', $_GET['preview_template'])){
+	require("../includes/Config.php");
+	require("../includes/functions.php");
+	Config::init(new IniDBConfig("config.ini","config"));
+	$file = Config::get('root_dir').Config::get('html_dir').'/markdown/'.$_GET['preview_template'];
+	if (is_file($file))
+		$html = str_replace('<!-- content -->', $html, file_get_contents($file));
+	else echo 'Template file <code>'.$_GET['preview_template'].'</code> not found.';
+}
+echo $html;
 exit();
 ?>

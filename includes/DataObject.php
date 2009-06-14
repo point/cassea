@@ -143,7 +143,7 @@ abstract class DataObject
 		/**
 		* @var  string
 		*/
-		$model = null,
+		$objectDir = null,
 		/**
 		* @var  string
 		*/
@@ -197,8 +197,11 @@ abstract class DataObject
 	function parseParams(SimpleXMLElement $elem)
 	{
 		if(isset($elem->model))
-			$this->model = (string)$elem->model;
-		else throw new DataObjectException("Model name for data object does not set");
+			$this->objectDir = Config::get('ROOT_DIR')."/models/".(string)$elem->model;
+		elseif(isset($elem->vendor)) 
+			$this->objectDir = Config::get('ROOT_DIR').Config::get('vendors_dir')."/".(string)$elem->vendor;
+		else
+			throw new DataObjectException("Model name  or Vendor name for data object does not set");
 
 		if(isset($elem->classname))
 			$this->classname = (string)$elem->classname;
@@ -239,11 +242,11 @@ abstract class DataObject
     {
 		if($this->classes_required) return;
 
-        if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
-            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
+        if(file_exists($this->objectDir."/autoload.php"))
+            require_once($this->objectDir."/autoload.php");
 
-        if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
-            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");
+        if(!class_exists($this->classname, false) && file_exists($this->objectDir."/".$this->classname.".php"))
+            require_once($this->objectDir."/".$this->classname.".php");
 
 		$this->classes_required = true;
     }

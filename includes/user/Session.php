@@ -47,19 +47,13 @@ class Session
     public static function init()
     {
         if (is_object(self::$session)) return;
+        if (!class_exists('SessionBase', false)) require('SessionBase.php');
+		
+		$sessionEngine = Config::getInstance()->session->engine;
+		$classname = nameToClass($sessionEngine).'Session';
+		Autoload::addVendor('session', $sessionEngine);
 
-        $inc_path = '../includes/';
-        $sessionClassName = 'DBSession';
-        if (Config::getInstance()->session->engine ==  'memcache' )
-            $sessionClassName = 'MemcacheSession';
-
-        if (!class_exists('SessionBase')) require('SessionBase.php');
-
-        if (!class_exists($sessionClassName)) 
-            if (file_exists(dirname(__FILE__)."/".$sessionClassName.'.php')) require($sessionClassName.'.php');
-            else throw new Exception('Session: '.$sessionClassName.' not found');
-        
-        self::$session = new $sessionClassName();
+        self::$session = new $classname();
         self::$session->init();
     }// }}}
     

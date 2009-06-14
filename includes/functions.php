@@ -201,39 +201,24 @@ function getMime($file)
 }
 function sizeFromString($size)
 {
-    $delist=array("&nbsp;","\r\n","\t","\r","\n"," ");
-    if (is_numeric($size)) 
-        return (integer) $size;
-    $size = trim($size);
-    $size=str_replace($delist,'',$size);
-    $value = substr($size, 0, -2);
-    switch (strtoupper(substr($size, -2))) 
-    {
-        case 'YB':
-            $value *= 1208925819614629174706176;
-            break;
-        case 'ZB':
-            $value *= 1180591620717411303424;
-            break;
-        case 'EB':
-            $value *= 1152921504606846976;
-            break;
-        case 'PB':
-            $value *= 1125899906842624;
-            break;
-        case 'TB':
-            $value *= 1099511627776;
-            break;
-        case 'GB':
-            $value *= 1073741824;
-            break;
-        case 'MB':
-            $value *= 1048576;
-            break;
-        case 'KB':
-            $value *= 1024;
-            break;
-        default: return 0;
+	if (is_null($size)) return 0;
+    if (is_numeric($size)) return (integer) $size;
+
+	if (!preg_match('/^(\d+)(\s|&nbsp;)*([kmgtpezy])?(b)?$/i', trim($size), $m)) throw new Exception('Incorrect string format "'.$size.'"');
+	$value = $m[1];
+	if(isset($m[3])) $mul = strtoupper($m[3]);
+	else return $value;
+
+	switch ($mul)     
+	{
+        case 'Y': $value *= 1208925819614629174706176;          break;
+        case 'Z': $value *= 1180591620717411303424;				break;
+        case 'E': $value *= 1152921504606846976;	            break;
+        case 'P': $value *= 1125899906842624;		            break;
+        case 'T': $value *= 1099511627776;			            break;
+        case 'G': $value *= 1073741824;				            break;
+        case 'M': $value *= 1048576;							break;
+        case 'K': $value *= 1024;								break;
     }
     return $value;
 }
@@ -281,6 +266,8 @@ function moveDown($table,$priority_field,$id_field,$id,$priority=null)
     return $down = DB::multiQuery('UPDATE '.$table.' SET '.$priority_field.'="'.$min.'" WHERE '.$id_field.'="'.$id.'";UPDATE '.$table.' SET '.$priority_field.'="'.$rating.'" WHERE '.$id_field.'="'.$minid.'"');
 }
 
-
+function nameToClass($name){
+	return strtoupper(substr($name,0,1)).substr($name,1);
+}
 
 ?>

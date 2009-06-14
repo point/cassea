@@ -250,18 +250,19 @@ class WText extends WContainer implements StringProcessable
     */
     function preRender()
     {
-        $this->checkAndSetData();
-        $this->setTemplate('default');
+		$this->checkAndSetData();
+		$template_name = 'default';
 		foreach($this->class_vars as $v)
 		{
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)
 			{
-				$this->setTemplate($m[1]);
+				$template_name = $m[1];
 				if(in_array($m[1],$this->style_to_repeat))
 					$this->setRepeatCount($this->$v);
 				break;
 			}
 		}		
+		$this->setTemplate($template_name);
 		$this->tpl = $this->createTemplate();
 		parent::preRender();
         if(!isset($this->text))

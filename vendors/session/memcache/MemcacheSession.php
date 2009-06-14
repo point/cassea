@@ -91,6 +91,8 @@ class MemcacheSession extends SessionBase
         parent::kill();
     }// }}}
     
+	protected function deleteExpired(){}
+
     private function getStorageName($sid){
         return 'session:'.$sid;
     }

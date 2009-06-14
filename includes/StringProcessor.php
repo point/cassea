@@ -96,34 +96,9 @@ class StringProcessor
         return (substr($text, 0, $pos[$min_p]).$ends);
     }
 
-    protected function sizetostring($size,$flag=0) 
-    {
+    protected function filesize($size, $flag=0){
         return sizeToString($size,$flag);
     }
-    //deprecated
-    protected function filesize_old ($bytes, $round = 1) 
-    {
-        trigger_error('deprecated');
-        if ($bytes==0)
-            return '0 bytes';
-        elseif ($bytes==1)
-            return '1 byte';
-    
-        $units = array(
-            'bytes' => pow(2, 0), 'kB' => pow(2, 10),
-            'MB' => pow(2, 20), 'GB' => pow(2, 30),
-            'TB' => pow(2, 40), 'PB' => pow(2, 50),
-            'EB' => pow(2, 60), 'ZB' => pow(2, 70)
-        );
-
-        $lastUnit = 'bytes';
-        foreach ($units as $unitName => $unitFactor) 
-            if ($bytes >= $unitFactor) 
-                $lastUnit = $unitName;
-            else 
-                return (number_format(round( $bytes / $units[$lastUnit], $round )).' '.$lastUnit);
-    }
-
 
     protected function nl2pbr($value) 
     {
@@ -217,14 +192,6 @@ class StringProcessor
         if ($date == Language::message('widgets',"today")) 
             return self::relative_time($time,$locale);
         return $date;
-    }
-    protected function filesize($size)
-    {
-        trigger_error('filesize deprecated. Use sizeToString($size,$flag4nbsp).');
-        $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
-        for ($i=0; $size >= 1024 && $i < 9; $i++) 
-            $size /= 1024;
-        return round($size, 2) . ' '.$sizes[$i];
     }
     protected function md5($string)
     {return md5($string);}
