@@ -244,6 +244,7 @@ class WRoll extends WContainer
 			Controller::getInstance()->getDisplayModeParams()
 				->set($this->getId(),$event->getParam('from'),$event->getParam('limit'),$this->getCount());
 		}
+		parent::handleEvent($event);
     }
    // {{{ setData 
     /**

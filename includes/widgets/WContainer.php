@@ -366,11 +366,12 @@ class WidgetCollection
 class MixedCollection extends WidgetCollection
 {
 	private $str = null;
+	private $str_memento = null;
 	// {{{ init
 	protected function init(SimpleXMLElement $elem )
 	{
 		if(!count($elem->children()))
-			$this->str = trim((string)$elem);
+			$this->str_memento = $this->str = trim((string)$elem);
 		else
 			parent::init($elem);
 	}
@@ -386,6 +387,8 @@ class MixedCollection extends WidgetCollection
 	*/
     function setData(WidgetResultSet $data)
 	{
+		$this->str = $this->str_memento; 
+
 		$this->setText($data->get('text'));
 		
 		// May be not ?

@@ -67,12 +67,15 @@ class CmdBackup extends Command{
             $filename=$name."_".date('Ymd_H_i_s').'.tar';
         else
             $filename=$name."_".date('Ymd').'.tar';
-        $cmd="tar -cvf ".$root."/".$filename." ".$root." --exclude='*web*' --exclude='*~'";
+        //$cmd="tar -cvf ".$root."/".$filename." ".$root." --exclude='*web*' --exclude='*~'";
+        chdir($root);
+        $cmd="tar --exclude='*web*' --exclude='*~' -cvf ".$root."/".$filename." * ";
         exec($cmd,$out,$return);
         if($return) return;
         foreach($out as $o)
             io::out($o);
-        $cmd="tar -rvf ".$root."/".$filename." ".$root."/web/css/ ".$root."/web/js/ --exclude='*~'";
+        //$cmd="tar -rvf ".$root."/".$filename." ".$root."/web/css/ ".$root."/web/js/ --exclude='*~'";
+        $cmd="tar --exclude='*~' -rvf ".$root."/".$filename." ./web/css/ ./web/js/ ";
         exec($cmd,$out,$return);
         if($return) return;
         foreach($out as $o)
@@ -80,7 +83,7 @@ class CmdBackup extends Command{
         $cmd="bzip2 -9 ".$root."/".$filename;
         io::out("Creating file ".$filename.".bz2.....");
         exec($cmd,$out,$return);
-                io::done('~GREEN~The backup for files of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
+            io::done('~GREEN~The backup for files of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
 
     }
 }

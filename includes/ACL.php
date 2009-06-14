@@ -127,6 +127,14 @@ class ACL
         return true;
 
     }
+	static function in($group) // in('admin') or in(array('admin','admin2'))
+	{
+		if(empty($group)) return false;
+		
+		if(is_string($group)) $group = array($group);
+
+		return (bool)count(array_intersect($group,self::$groups));
+	}
     static function add($user_id = null, $groups = array())
     {
         if(!is_numeric($user_id) || empty($groups) || !is_array($groups)) return;

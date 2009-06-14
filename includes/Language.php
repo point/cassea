@@ -106,6 +106,7 @@ class Language{
      * @return int номер формы
      */
     static function getPluralForm($n, $lang){
+		$n = abs($n);
         if (!is_numeric($n) || $n < 0 ) return 0;
         switch($lang){
         // Croatian, Serbian, Russian, Ukrainian

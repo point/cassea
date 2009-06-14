@@ -45,6 +45,9 @@ class Header
         const FORBIDDEN = 403;
         const NOT_FOUND = 404;
 
+		const INTERNAL_SERVER_ERROR = 500;
+		const SERVICE_UNUNAVAILABLE = 503;
+
         /* Title build order */
         const TITLE_BUILD_ORDER_NATIVE = 0;
         const TITLE_BUILD_ORDER_REVERSE = 1;

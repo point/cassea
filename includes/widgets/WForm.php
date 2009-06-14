@@ -293,6 +293,7 @@ class WForm extends WContainer
 	{
 		if($event->getName() == "have_valuechecker" && ($id = $event->getParam('id')))
             $this->inner_valuecheckers[$id] = 1;
+		parent::handleEvent($event);
     }
 	// {{{ 
 	function postRender()

@@ -55,8 +55,31 @@ class WMeta extends WComponent
 		if(isset($elem['scheme']))
 			$attr['scheme'] = (string)$elem['scheme'];
 
-		if(!empty($attr['name']) || !empty($attr['content']))
+		if(!empty($attr['content']))  // content is required
 			Header::get()->addMeta($attr);
+		
+		if(isset($elem['nofollow']) && (string)$elem['nofollow'])
+			Header::get()->nofollow();
+
+		if(isset($elem['noindex']) && (string)$elem['noindex'])
+			Header::get()->noindex();
+
+		$attr = array();
+
+        if (isset ($elem['charset'])) $attr['charset'] = (string)$elem['charset'];
+        if (isset ($elem['href'])) $attr['href'] = (string)$elem['href'];
+        if (isset ($elem['hreflang'])) $attr['hreflang'] = (string)$elem['hreflang'];
+        if (isset ($elem['type'])) $attr['type'] = (string)$elem['type'];
+        if (isset ($elem['rel'])) $attr['rel'] = (string)$elem['rel'];
+        if (isset ($elem['rev'])) $attr['rev'] = (string)$elem['rev'];
+		if (isset ($elem['title'])) $attr['title'] = (string)$elem['title'];
+		if (isset ($elem['cond'])) $attr['cond'] = (string)$elem['cond'];
+		if (isset ($elem['media'])) $attr['media'] = (string)$elem['media'];
+
+		if(!empty($attr))
+			Header::get()->addLink($attr);
+		
+		
 		parent::parseParams($elem);		    	
     }
     // }}}

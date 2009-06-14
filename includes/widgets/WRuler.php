@@ -306,6 +306,7 @@ class WRuler extends WContainer
 			$controller = Controller::getInstance();
 			$controller->getDisplayModeParams()->predicted_from = $controller->getDisplayModeParams()->prdicted_limit = null;
 		}
+		parent::handleEvent($event);
 	}
 	
 	protected function calc()

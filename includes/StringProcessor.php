@@ -177,7 +177,7 @@ class StringProcessor
         if ($delta > 60)
             $string .= ($f = floor($delta / 60)) . " ".$this->_plural($f,"minutes")." ";
         else
-            $string .= abs($delta)." ".$this->_plural($delta,"seconds")." ";
+            $string .= abs($delta)." ".$this->_plural(abs($delta),"seconds")." ";
         return ($delta > 0)?($string." ".Language::message('widgets',"ago")):(Language::message('widgets',"date_in")." ".$string);
     }
 

@@ -20,7 +20,7 @@ class CmdUserPassword extends Command{
         try{
             if (IO::YES == io::dialog('~RED~Realy set NEW PASSWORD for user with login ~~~ '.$login.'?', IO::NO|IO::YES, IO::NO))
             {
-                usermanager::get()->setpassword(usermanager::get()->getidbylogin($login));
+                usermanager::get()->setpassword(usermanager::get()->getidbylogin($login),$password);
                 io::done('Setting password for user '.$login);
             }
             else 

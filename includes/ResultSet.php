@@ -89,7 +89,7 @@ class RSIndexer
         if(is_numeric($s_index))
             return $s_index;
         if(!isset($s_index)) return null;
-        
+
 		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
 			return $GLOBALS['__rsindexer_cache'][$s_index][0];
 
@@ -97,6 +97,7 @@ class RSIndexer
         if($us_index === false || !is_array($us_index) || empty($us_index))
             $us_index = array(null);
 
+		$us_index = array_reverse($us_index);
 		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
         return $us_index[0];
     }
@@ -105,14 +106,15 @@ class RSIndexer
         if(!isset($s_index)|| is_numeric($s_index)) return array();
 
 		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
-            return array_slice(array_reverse($GLOBALS['__rsindexer_cache'][$s_index]),1);
+            return array_slice($GLOBALS['__rsindexer_cache'][$s_index],1);
 
         $us_index = unserialize($s_index);
         if($us_index === false || !is_array($us_index) || empty($us_index))
-            $us_index = array(null);
+			$us_index = array(null);
+		$us_index = array_reverse($us_index);
 
 		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
-        return array_slice(array_reverse($us_index),1);
+        return array_slice($us_index,1);
     }
 
 }
