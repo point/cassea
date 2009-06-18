@@ -105,7 +105,7 @@ class FileStorage implements iFileStorage{
     }
 
     function getURL($path){
-        if( strpos($path, $this->root) === 0) return substr($path,strlen($this->root) -strlen($this->urlRoot));
+		if( strpos($path, $this->root) === 0) return "/".ltrim(substr($path,strlen($this->root) -strlen($this->urlRoot)),'/');
         throw new FileException('Bad Path');
     }
 
@@ -178,11 +178,13 @@ class FileStorage implements iFileStorage{
         if(!file_exists($this->root."/".$this->path) || !is_dir($this->root."/".$this->path)) 
             throw new FileException("Directory {$this->path} not found");
 
-        foreach(scandir($this->root."/".$this->path) as $v)
+		$scandir = $this->root.(($this->path != '.')?"/".$this->path:'');
+		foreach(scandir($scandir) as $v)
+
             if($v == "." || $v == "..") continue;
             else
-                if(is_file($this->root."/".$this->path."/".$v))
-                    $ret['files'][] = new File($this->root."/".$this->path."/".$v,$this);
+                if(is_file($scandir."/".$v))
+                    $ret['files'][] = new File($scandir."/".$v,$this);
                 else 
                     $ret['dirs'][] = $v;
 

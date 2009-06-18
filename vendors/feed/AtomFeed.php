@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Based on ZendFramework's feed ZendFeed
+ * Zend Technologies USA Inc. (http://www.zend.com)
+ * http://framework.zend.com/license/new-bsd New BSD License
+*/
+
 require_once("AbstractFeed.php");
 
 class AtomFeed extends AbstractFeed
@@ -66,7 +72,7 @@ class AtomFeed extends AbstractFeed
             $feed->appendChild($image);
         }
 
-        $generator = !empty($fd->generator) ? $fd->generator : 'Zend_Feed';
+        $generator = !empty($fd->generator) ? $fd->generator : 'Cassea Feed Generator';
         $generator = $this->dom->createElement('generator', $generator);
 		$feed->appendChild($generator);
 
@@ -185,5 +191,65 @@ class AtomFeed extends AbstractFeed
 
         header('Content-Type: '.self::mime_type.'; charset=' . $this->dom->actualEncoding);
         echo $this->asXML();
+	}
+
+	static function import(SimpleXMLElement $el)
+	{
+		$fd = new AtomFeedData();
+		if(isset($el->link))
+			$fd->link = (string)$el->link['href'];
+
+		foreach($el->children() as $v)
+			if($v->getName() == 'entry')
+			{
+					$fe = new FeedEntry((string)$v->title, (string)$v->link['href'], (string)$v->content);
+					foreach($v->children() as $e)
+						if($e->getName() == "updated")
+							$fe->last_update = (string)$e;
+						elseif($e->getName() == "category")
+							$fe->addCategory((string)$e['term'], (string)$e['scheme']);
+						elseif($e->getName() == "source")
+							$fe->setSource((string)$e['title'],(string)$e['url']);
+						elseif($e->getName() == "link")
+							$fe->addEnclosure($e['href'],$e['type'],$e['length']);
+						elseif($e->getName() == "id")
+							$fe->guid = (string)$e;
+						elseif($e->getName() == "author")
+							$fe->author = (string)$e->name;
+						elseif($e->getName() == "link")
+							$fe->line = (string)$el['href'];
+						elseif($e->getName() == "summary")
+							$fe->description = (string)$e;
+						elseif(!in_array($e->getName(),array("published"))) 
+							$fe->{$e->getName()} = (string)$e;
+					if(!$fe->isReady())
+						throw new FeedException('Not all required fields are filled-in');
+					$fd->addEntry($fe);
+					unset($fe);
+			}
+			else
+				$fd->{(string)$v->getName()} = (string)$v;
+		if(!$fd->isReady()) 
+			throw new Exception('Not all required feilds of FeedData are filled-in');
+		return $fd;
+	}
+}
+
+class AtomFeedData extends FeedData
+{
+	private $map = array(
+		'id'=>"",
+		'updated' => 'last_update',
+		'subtitle' => 'description',
+		'rights' => 'copyright',
+		'logo' => 'image',
+		'entry'=>""
+		);
+	function __set($var, $val)
+	{
+		if(isset($this->map[$var]) && $this->map[$var] === "") return;
+		if(isset($this->map[$var]) && $this->map[$var] !== "")
+			$this->{$this->map[$var]} = $val;
+		else parent::__set($var,$val);
 	}
 }

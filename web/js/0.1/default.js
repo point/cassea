@@ -1,3 +1,98 @@
+
+/**
+ * Written by Rob Schmitt, The Web Developer's Blog
+ * http://webdeveloper.beforeseven.com/
+ */
+
+/**
+ * The following variables may be adjusted
+ */
+
+var active_color = '#000'; // Colour of user provided text
+var inactive_color = '#777'; // Colour of default text
+
+/**
+ * No need to modify anything below this line
+ */
+
+$(document).ready(function() {
+  $("input.default-value").css("color", inactive_color);
+  var default_values = new Array();
+  $("input.default-value").focus(function() {
+    if (!default_values[this.id]) {
+      default_values[this.id] = this.value;
+    }
+    if (this.value == default_values[this.id]) {
+      this.value = '';
+      this.style.color = active_color;
+    }
+	$(this).blur(function() {
+	  if (this.value == '') {
+		this.style.color = inactive_color;
+		this.value = default_values[this.id];
+	  }
+	});
+  });
+});
+/**
+ * @author Dan Blaisdell
+ */
+
+/** using: $("#myElement").offset({left:34,top:100}); */
+
+(function($){
+	$.fn.extend({
+		_offset : $.fn.offset,
+		
+		offset : function(newOffset){
+		    return newOffset ? this.setXY(newOffset) : this._offset();
+		},
+		
+		setXY: function(newOffset){
+			return this.each(function(){
+				var el = this;
+				
+				var hide = false;
+				
+				if($(el).css('display')=='none'){
+					hide = true;
+					$(el).show();
+				}
+				
+				var style_pos = $(el).css('position');
+				
+				// default to relative
+				if (style_pos == 'static') {
+					$(el).css('position','relative');
+					style_pos = 'relative';
+				}
+				
+				var offset = $(el).offset();
+				
+				if (offset){
+					var delta = {
+						left : parseInt($(el).css('left'), 10),
+						top: parseInt($(el).css('top'), 10)
+					};
+					
+					// in case of 'auto'
+					if (isNaN(delta.left)) 
+						delta.left = (style_pos == 'relative') ? 0 : el.offsetLeft;
+					if (isNaN(delta.top))
+						delta.top = (style_pos == 'relative') ? 0 : el.offsetTop;
+					
+					if (newOffset.left || newOffset.left===0)
+						$(el).css('left',newOffset.left - offset.left + delta.left + 'px');
+				
+					if (newOffset.top || newOffset.top===0)
+						$(el).css('top',newOffset.top - offset.top + delta.top + 'px');
+				}
+				if(hide) $(el).hide();
+			});
+		}
+	});
+})(jQuery);
+
 function debug(text) {
   ((window.console && console.log) ||
 	 (window.opera && opera.postError) ||
@@ -20,19 +115,23 @@ function show_error_boxes()
 		if(!firstdiv.size()) return;
 		firstdiv = firstdiv.eq(0);
 
-		var message=firstdiv.html(); 
+		var message=firstdiv.text(); 
 		var input=firstdiv.prev(":input,:text,:checkbox label,:radio label,:file");
 		firstdiv.remove();
-		$("<div class='w-error w-error-box'><div class='wrapper'><img class='corner' src='/w_images/c.png'/>"+
-			"<div class='ertop'>&nbsp;</div></div><div class='w-error-message'>"+message+"</div></div>").insertAfter(input)
-		.css('top',input.offset().top+input.height()+5).css('left',input.offset().left).width(Math.max(input.width()+5,150)).css('opacity',1).show()/*.fadeTo('slow',0.8)*/
-		.one('click',function(){ remove( $(this)); });
+		$("<div class='w_error_box'><div class='wrapper'><img class='corner' src='/w_images/c.png'/>"+
+			"<div class='ertop'>&nbsp;</div></div><div class='w_error_message'>"+message+"</div></div>").
+			insertAfter(input)
+		.offset({'top':input.offset().top+input.height()+5, 'left':input.offset().left}).width(Math.max(input.width()+5,200)).css('opacity',1).show()/*.fadeTo('slow',0.8)*/
+		.one('click',function(){ remove( $(this)); })
 		input.one('focus',function(){ remove($("+ .w-error-box",this)); })
 		;
 	}
 	$("div.w-error").hide();
+	$("div.w-error-box").remove();
 	show_error_boxes_int();
 }
-$(document).ready(function(){ show_error_boxes(); 
-$("[tabindex=1]:text").focus();
+$(document).ready(function(){ show_error_boxes(); });
+$(document).ready(function(){ 
+show_error_boxes(); 
+	$("[tabindex=1]:text").focus();
 });

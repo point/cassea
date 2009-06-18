@@ -126,14 +126,30 @@ abstract class SessionBase
         } else {
             $strIP = $_SERVER['REMOTE_ADDR'];
         }
-        if(ip2long($strIP) === false || ip2long($strRemoteIP) === false)
+		if(/*ip2long($strIP) === false ||*/ ip2long($strRemoteIP) === false)
             throw new Exception("Session: user ip is invalid");
 
-        if ($strRemoteIP != $strIP) {
+        if ($strRemoteIP != $strIP && !empty($strIp)) {
             $strIP = $strRemoteIP . ', ' . $strIP;
         }
-        return $strIP;
+        return Filter::filter($strIP,Filter::STRING_QUOTE_ENCODE);
     }// }}}
+
+   // {{{ getUserIP
+    /**
+    * get client ip.
+    * Return string like "151.2.41.55". ip2long of it !== false anytime
+    *
+    * @return string
+	*/
+	public function getIp()
+	{
+		$ip = $this->getUserIP();
+		if(strpos($ip,",") !== false)
+			list($ip) = explode(",",$ip);
+		return trim($ip);
+	}
+	//}}}
     
     //{{{ makeCast
     /**

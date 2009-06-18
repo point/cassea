@@ -56,7 +56,10 @@ class Profile
 	{
 		return isset($this->fields[$name])?$this->fields[$name]:null;
 	}
-	function set($field_name, $value)
+
+	function set($field_name, $value){$this->$field_name = $value;}
+
+	function __set($field_name, $value)
 	{
 		if(!is_scalar($value) || !isset($this->fields[$field_name])) return;
 		$this->fields[$field_name] = $value;

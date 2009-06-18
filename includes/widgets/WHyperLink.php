@@ -211,10 +211,6 @@ class WHyperLink extends WContainer implements StringProcessable
                 $this->items->setText($this->getText());
             else
                 $this->items->setText($this->getHREF());
-        
-        if(($this->getHREF() ==' ' || empty($this->href) || $this->getHREF()=='#') && $this->getClearLink())
-		    if(!isset($this->tpl))
-                $this->tpl = $this->createTemplate(null,'simpletext.tpl');
 
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
@@ -238,6 +234,9 @@ class WHyperLink extends WContainer implements StringProcessable
         if(isset($this->subst_href) && isset($this->href))
             $this->setHREF(sprintf($this->getSubstHREF(),$this->getHREF()));
 
+        if(($this->getHREF() ==' ' || empty($this->href) || $this->getHREF()=='#') && $this->getClearLink())
+                $this->tpl = $this->createTemplate(null,'simpletext.tpl');
+            
         parent::preRender();
     }
 	// }}}

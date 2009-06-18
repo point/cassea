@@ -58,8 +58,6 @@ require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
 
-spl_autoload_register(create_function('$name','if($name == "Feed") require_once("feed/Feed.php");'));
-
 class ControllerException extends Exception {}
 class IdExistsException extends Exception {}
 
@@ -153,7 +151,9 @@ class Controller
 		Session::init();
         User::get();
 
-		date_default_timezone_set(Config::get('TIMEZONE'));
+		$tz = Config::get('timezone');
+		if(!empty($tz))
+			date_default_timezone_set($tz);
 
 	}
 	static function getInstance()
@@ -383,7 +383,7 @@ class Controller
 		for($i = 0, $c = $node->length;$i < $c;$i++)
         {
 			$el = $node->item(0);
-			if($el && ($src = $el->getAttribute('src')) == "") continue;
+			if($el && ($src = $el->getAttribute('src')) == "") {$el->parentNode->removeChild($el);continue;}
 			try{
 				$src = $this->pagePath($src, ($el->getAttribute('vendor') == '1'));
 			}
@@ -395,12 +395,12 @@ class Controller
 
             $_a = $d->firstChild->getAttribute('allow');
             $_d = $d->firstChild->getAttribute('deny');
-            if(!ACL::check($_a,$_d)) continue;
+            if(!ACL::check($_a,$_d)) {$el->parentNode->removeChild($el);continue;}
 
             if($el && ($block_id = $el->getAttribute("block")) !== "")
             {
                 $block = t(new DOMXPath($d))->query("//block[@id='".$block_id."']");
-                if(!$block->length) continue;
+                if(!$block->length) {$el->parentNode->removeChild($el);continue;}
                 else
                 {
                     $n_d = new DOMDocument('1.0', 'utf-8');
@@ -735,13 +735,17 @@ class Controller
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->scripts))return;
-		$this->scripts[] = array('src'=>"/".Config::get("JS_VER")."/".ltrim($src,"/"),'cond'=>$cond);
+		$this->scripts[] = array('src'=>
+			strpos($src,"http://") === false?
+			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond);
 	}
 	function addCSS($src = null,$cond = null,$media = null)
 	{
 		if(empty($src)) return;
 		if(in_array($src,$this->css)) return;
-		$this->css[] = array('src'=>"/".Config::get("CSS_VER")."/".ltrim($src,"/"),'cond'=>$cond, 'media'=>$media);
+		$this->css[] = array('src'=>
+			strpos($src,"http://") === false?
+			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media);
 	}
 	function getNavigator()
 	{

@@ -274,6 +274,9 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 			$a->Message( $body );
 			
 			$r = $a->send();
+
+			return $regkey;
+
 		}
 		else
 		{
@@ -286,6 +289,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 				salt = '".$salt."',
 				date_joined = now()	");
 			Profile::addUser($user_id);
+			return $user_id;
 		}
     }
 
@@ -294,8 +298,6 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 
         if (self::existsLogin($login))
             return $info = DB::query('delete from '.self::TABLE.' where login="'.$login.'"');
-        else
-            return;
     }
 
 	function activate($regkey)
@@ -316,7 +318,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		Profile::addUser($user_id);
 
 		DB::query("delete from ".self::TABLE_REGISTRATION." where regkey='".$regkey."' or expires < now()");
-
+		return $user_id;
     }// }}}
 
     // {{{ setPassword

@@ -7,9 +7,9 @@
     <help>
         <short>Provide information about web-server</short>
         <main>
-   Usage: info [php]</main>
+   Usage: info [php] [ext] [extname]</main>
         <subcommands>
-            <cmd name='phpinfo' description='view phpinfo'/>
+            <cmd name='php' description='view phpinfo'/>
         </subcommands>
     </help>
 </command>

@@ -22,6 +22,12 @@ abstract class AbstractFeedData
 			throw new FeedException("Property $var doesn't exists");
 		return $this->$var;
 	}
+    function __set($var, $val)
+    {
+		if(!property_exists($this,$var))
+			throw new FeedException("Property $var doesn't exists");
+        $this->$var = $val;
+    }
 	function __isset($var)
 	{
 		if(!property_exists($this,$var))
@@ -32,7 +38,7 @@ abstract class AbstractFeedData
 	function checkRequired()
 	{
 		foreach($this->required_data as $v)
-			if(empty($this->$v)) return false;
+			if(!isset($this->$v)) return false;
 		return true;
 	}
 	function isReady()

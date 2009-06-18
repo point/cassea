@@ -260,8 +260,8 @@ class WImage extends WComponent
     {
 		if(!isset($src) || !is_scalar($src)) 
 			return ;
-		if(substr($src,0,4) != "http" && strpos($src,"/") !== 0)
-            $src = "/".$src;
+		/*if(substr($src,0,4) != "http" && strpos($src,"/") !== 0)
+			$src = "/".$src;*/
 		$this->src = $src;
     }
     // }}}

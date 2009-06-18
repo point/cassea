@@ -75,7 +75,7 @@ class RSSFeed extends AbstractFeed
             $channel->appendChild($image);
         }
 
-        $generator = !empty($fd->generator) ? $fd->generator : 'Zend_Feed';
+        $generator = !empty($fd->generator) ? $fd->generator : 'Cassea Feed Generator';
         $generator = $this->dom->createElement('generator', $generator);
         $channel->appendChild($generator);
 
@@ -91,9 +91,9 @@ class RSSFeed extends AbstractFeed
 		if (!empty($fd->cloud)) 
 		{
             $cloud = $this->dom->createElement('cloud');
-            $cloud->setAttribute('domain', $fd->cloud['uri']->getHost());
-            $cloud->setAttribute('port', $fd->cloud['uri']->getPort());
-            $cloud->setAttribute('path', $fd->cloud['uri']->getPath());
+            $cloud->setAttribute('domain', $fd->cloud['domain']);
+            $cloud->setAttribute('port', $fd->cloud['port']);
+            $cloud->setAttribute('path', $fd->cloud['path']);
             $cloud->setAttribute('registerProcedure', $fd->cloud['procedure']);
             $cloud->setAttribute('protocol', $fd->cloud['protocol']);
             $channel->appendChild($cloud);
@@ -393,4 +393,86 @@ class RSSFeed extends AbstractFeed
         echo $this->asXML();
     }
 
+	static function import(SimpleXMLElement $el)
+	{
+		$fd = new RSSFeedData();
+		if(isset($el->image) && isset($el->image->url))
+			$fd->image = (string)$el->image->url;
+		if(isset($el->cloud))
+			$fd->cloud = array('domain'=>(string)$el->cloud['domain'],
+				'port' => $el->cloud['port'],
+				'path' => $el->cloud['path'],
+				'procedure' => $el->cloud['registerProcedure'],
+				'protocol'=> $el->cloud['protocol']);
+
+		if(isset($el->textInput))
+			$fd->setTextInput($el->textInput->title, $el->textInput->description, 
+				$el->textInput->name, $el->textInput->link);
+		
+		if(isset($el->skipHours))
+			foreach($el->skipHours->children() as $v)
+				if($v->getName() == "hour")
+					$fd->addSkipHours((string)$v);
+
+		if(isset($el->skipDays))
+			foreach($el->skipDays->children() as $v)
+				if($v->getName() == "day")
+					$df->addSkipDays((string)$v);
+
+		foreach($el->children() as $v)
+			if($v->getName() == 'item')
+			{
+				if(isset($v->description))
+					$_content = (string)$v->description;
+				else
+				{
+					$_c = $v->children('content',true);
+					$_content = (string)$_c->encoded;
+					unset($_c);
+				}
+				$fe = new FeedEntry((string)$v->title, (string)$v->link, $_content);
+				unset($_content);
+				foreach($v->children() as $e)
+					if($e->getName() == "pubDate")
+						$fe->last_update = (string)$e;
+					elseif($e->getName() == "category")
+						$fe->addCategory((string)$e, $e['domain']);
+					elseif($e->getName() == "source")
+						$fe->setSource((string)$e,$e['url']);
+					elseif($e->getName() == "enclosure")
+						$fe->addEnclosure($e['url'],$e['type'],$e['length']);
+					else
+						$fe->{$e->getName()} = (string)$e;
+				if(!$fe->isReady())
+					throw new FeedException('Not all required fields are filled-in');
+				$fd->addEntry($fe);
+				unset($fe);
+			}
+			elseif(in_array($v->getName(),array('image','cloud','textInput','skipHours','skipDays'))) continue;
+			else
+				$fd->{(string)$v->getName()} = (string)$v;
+		if(!$fd->isReady()) 
+			throw new Exception('Not all required feilds of FeedData are filled-in');
+		return $fd;
+	}
+
+}
+
+class RSSFeedData extends FeedData
+{
+	private $map = array(
+		'pubDate' => 'last_update',
+		'lastBuildDate'=>'published',
+		'managingEditor' => 'author',
+		'webMaster'=>'webmaster',
+		'docs'=>"",
+		'item'=>""
+		);
+	function __set($var, $val)
+	{
+		if(isset($this->map[$var]) && $this->map[$var] === "") return;
+		if(isset($this->map[$var]) && $this->map[$var] !== "")
+			$this->{$this->map[$var]} = $val;
+		else parent::__set($var,$val);
+	}
 }

@@ -124,24 +124,24 @@ th > img
 	cursor:pointer;
 	text-align:center;
 }
-div.w-error-box div.w-error-message{
+div.w_error_box {
+    border:0px !important;
+    display:none;
+    position:absolute;
+    opacity:0;
+    z-index:1000;
+    cursor:pointer;
+}
+div.w_error_box div.wrapper {padding:0px; margin:0px; border:0px; }
+
+div.w_error_box div.w_error_message{
     color:red;
     border:1px solid #222222;
     border-top:0px;
     background-color:#dfdfdf;
     padding:7px;
 }
-div.w-error-box {
-    border:0px !important;
-    display:none;
-    position:absolute;
-    opacity:0;
-    z-index:1000;
-    cursor:default;
-}
-div.w-error-box div.wrapper {padding:0px; margin:0px; border:0px; }
-
-div.w-error-box img.corner{
+div.w_error_box img.corner{
 	border:0px;
     display:block;
     float:left; 
@@ -151,7 +151,7 @@ div.w-error-box img.corner{
     _margin-right:-5px;
 }
 
-div.w-error-box div.ertop{
+div.w_error_box div.ertop{
 	margin:0px !important;
     margin-left:36px !important;
     height:15px !important;

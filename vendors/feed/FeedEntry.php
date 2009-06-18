@@ -15,7 +15,7 @@ class FeedEntry extends AbstractFeedData
 		$description,  // short version of a feed entry,  only text, no html, required
 		$guid,         // id of the article, if not given link value will used, optional
 		$content,      // long version,  can contain html, optional
-		$lastUpdate,   // timestamp of the publication date,  optional
+		$last_update,   // timestamp of the publication date,  optional
 		$comments,     // comments page of the feed entry,  optional
 		$commentRss,   // the feed url of the associated comments,  optional
 		$source       = array(),  //original source of the feed entry  optional
@@ -80,11 +80,11 @@ class FeedEntry extends AbstractFeedData
 		$this->content = (string)$content;
 		return $this;
 	}
-	function setLastUpdate($lastUpdate)
+	function setLastUpdate($last_update)
 	{
-		if(!is_numeric($lastUpdate))
+		if(!is_numeric($last_update))
 			throw new FeedException('Wrong time format. Only int allowed');
-		$this->last_update = (int)$lastUpdate;
+		$this->last_update = (int)$last_update;
 		return $this;
 	}
 	function setCommentsUrl($comments)

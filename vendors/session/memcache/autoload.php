@@ -1,2 +1,2 @@
 <?php
-require('MemcacheSession.php');
+require_once('MemcacheSession.php');
