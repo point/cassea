@@ -237,7 +237,7 @@ class Filter
 		* Note: Use rawurldecode() so it does not remove plus signs
 		*
 		*/
-		$str = rawurldecode($str);
+		//$str = rawurldecode($str);
 
 
         //NOTE: no html_entity_decode was made !

@@ -233,6 +233,8 @@ class StringProcessor
     }
 	protected function stripslashes($str)
 	{ return stripslashes($str); }
+	protected function markdown($str)
+	{ return Markdown($str); }
 }
 // }}}
 ?>

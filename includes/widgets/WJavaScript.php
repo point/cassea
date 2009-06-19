@@ -165,7 +165,7 @@ class WJavaScript extends WObject
 			return;
 		if($attribute == "src" )
         {
-            if(substr($value,-3) != ".js")
+            if(substr($value,-3) != ".js" && strpos($value,"http://") === false)
                 $value .= ".js";
             $this->src = $value;
 			$controller = Controller::getInstance();

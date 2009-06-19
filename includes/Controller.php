@@ -384,6 +384,11 @@ class Controller
         {
 			$el = $node->item(0);
 			if($el && ($src = $el->getAttribute('src')) == "") {$el->parentNode->removeChild($el);continue;}
+
+            $_a = $el->getAttribute('allow');
+			$_d = $el->getAttribute('deny');
+			if(!ACL::check($_a,$_d))  {$el->parentNode->removeChild($el);continue;}
+
 			try{
 				$src = $this->pagePath($src, ($el->getAttribute('vendor') == '1'));
 			}
