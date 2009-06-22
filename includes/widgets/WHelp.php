@@ -78,7 +78,8 @@ class WHelp extends WHyperLink
 			$this->tpl = $this->createTemplate();
 
         $controller = Controller::getInstance();
-        $this->setHREF($controller->makeURL(null,array($controller->getControllerName(),$controller->getPage()),"help"));
+        if($controller->getControllerName() == 'help') $this->setEnabled(0);
+        else $this->setHREF($controller->makeURL('index.html',array($controller->getControllerName(),$controller->getPage()),"help"));
         parent::buildComplete();
 	}    
 	// }}}
