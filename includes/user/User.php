@@ -27,7 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once("Profile.php");
 //{{{ User
 /**
 * @author       billy
@@ -80,7 +79,6 @@ class User
 		$this->last_login = $data['last_login'];
 		$this->date_joined = $data['date_joined'];
 
-		$this->profile = new Profile($this->id);
     }//}}}
 
 	static function renew()
@@ -136,7 +134,9 @@ class User
     */
     public function getProfile()
     {
-		return $this->profile;
+		if(isset($this->profile))
+			return $this->profile;
+		else return $this->profile = Profile::get();
 	}
 	// }}}
 

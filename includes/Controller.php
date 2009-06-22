@@ -48,6 +48,7 @@ require("ResultSet.php");
 require("WidgetsAdjacencyList.php");
 require("DB.php");
 require("Language.php");
+require("user/Profile.php");
 require("user/Session.php");
 require("user/User.php");
 require("user/UserManager.php");

@@ -29,8 +29,40 @@
 
 class ProfileException extends Exception {}
 
-//{{{ Profile
+
+interface iProfile
+{
+	static function addUser($user_id);
+	function __get($name) ;
+	function set($field_name, $value);
+	function __set($field_name, $value);
+}
+
 class Profile
+{
+	static function get($user_id = null)
+	{
+		if(!$user_id === null)
+			$user_id = User::get()->getId();
+
+		$profile_classname = null;
+		try {
+			$profile_classname = Config::getInstance()->profile->name;
+		}
+		catch(ConfigException $e){	$profile_classname = null; }
+
+		if($profile_classname === null || $profile_classname == "cassea")
+			return new CasseaProfile($user_id);
+		else
+		{
+			Autoload::addVendorDir('profile',nameToClass($profile_classname));
+			return new $profile_classname($user_id);
+		}
+	}
+}
+
+//{{{ Profile
+class CasseaProfile implements iProfile
 {
 
 	const TABLE = 'profile';
