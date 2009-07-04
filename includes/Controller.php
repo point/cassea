@@ -75,6 +75,8 @@ class WidgetLoader
 		$c = Config::getInstance();
 		$rd = $c->root_dir;
 		$vd = $c->vendors_dir;
+		$p1 = $rd.$vd."/widgets/".$name.".php";
+		$p2 =  $rd."/includes/widgets/".$name.".php";
 		if(file_exists( $p = $rd.$vd."/widgets/".$name.".php"));
 		elseif(file_exists($p= $rd."/includes/widgets/".$name.".php"));
 		else return false;

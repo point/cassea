@@ -1,2 +1,2 @@
 <?php
-require('DatabaseSession.php');
+require_once('DatabaseSession.php');

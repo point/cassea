@@ -14,6 +14,9 @@ class Autoload{
         $c=  Config::getInstance();
         self::$rd = $c->root_dir;
         self::$vd = self::$rd.$c->vendors_dir;
+        self::addDir(self::$vd.'/includes');
+        self::addDir(self::$rd.'/includes/widgets');
+
 
     	//require(self::$rd.'/includes/widgets/autoload.php');
     	//require(self::$vd.'/widgets/autoload.php');
@@ -50,7 +53,7 @@ class Autoload{
     public static function load($class){
         foreach(self::$dirs as $d)
             if (is_file($f= $d.'/'.$class.'.php'))
-                return require($f);
+                return require_once($f);
         print_pre('Class "'.$class.'"\r\n not found.');
         print_pre('Directory List:');
         foreach(self::$dirs as $d) print_prE($d);

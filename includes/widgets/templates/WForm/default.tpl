@@ -19,7 +19,7 @@ $(document).ready(function() {
 	onclick:false,
 	onkeyup:false,
 	onfocusout:false,
-	focusInvalid:false,
+	focusInvalid:true,
 	errorElement: "div",
 	errorClass:"w-error",
 	showErrors: function(errorMap, errorList) {

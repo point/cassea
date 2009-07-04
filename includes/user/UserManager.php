@@ -35,8 +35,15 @@ class UserManager
 {
 	static function get()
 	{
-		if(Config::getInstance()->user->authenticator == "cassea")
-			return new CasseaUserManager();
+		static $instance = null;
+		if($instance instanceof iUserManager) return $instance;
+
+		if(($authenticator = Config::getInstance()->user->authenticator) == "cassea")
+			return $instance = new CasseaUserManager();
+
+		Autoload::addVendorDir('user_manager');
+		return $instance = new $authenticator();
+		
 	}
 }
 
@@ -165,6 +172,14 @@ class AbstractUserManager
         return substr(md5(uniqid(rand(), true)),rand(0,15),16);
 	}
 	//}}}
+
+	function comparePassword($uid,$password)
+	{
+        $r = DB::query('select  password, salt from '.self::TABLE.' where id="'.$uid.'"');
+		if(!isset($r[0])) return false;
+        $r =$r[0];
+		return $r['password'] == $this->buildPassword($password, $r['salt'], Config::getInstance()->user->secret); 
+    } // }}}
 
 	// Need for console functions
 	function getUsersList(){
@@ -384,7 +399,11 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		$this->storeUserData($uid,$data);
 		return $data['exists'];
     }
-
+	function waiting($login)
+	{
+		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+        return (bool)count(DB::query('select id from '.self::TABLE_REGISTRATION.' where login="'.$login.'" limit 1'));
+    }
 	function existsLogin($login)
 	{
 		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
@@ -422,12 +441,26 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		$r = DB::query("select id from ".self::TABLE." where login='".$login."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
     }
+	function getWaitingIdByLogin($login)
+	{
+		if(!is_string($login)) return;
+		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		$r = DB::query("select id from ".self::TABLE_REGISTRATION." where login='".$login."' limit 1");
+		return isset($r[0])?$r[0]['id']:"";
+	}
     
     function getIdByEmail($email)
 	{
 		if(!is_string($email)) return;
 		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE." where email='".$email."' limit 1");
+		return isset($r[0])?$r[0]['id']:"";
+	}
+	function getWaitingIdByEmail($email)
+	{
+		if(!is_string($email)) return;
+		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
+		$r = DB::query("select id from ".self::TABLE_REGISTRATION." where email='".$email."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
 	}
 	function getLastLogin($uid)

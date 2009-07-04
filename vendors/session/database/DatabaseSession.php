@@ -78,10 +78,8 @@ class DatabaseSession extends SessionBase
     */
     public function kill()
     {
-        $r = self::query( "delete from " . self::TABLE . ' where id = "'.$this->id.'"');
+        $r = DB::query( "delete from " . self::TABLE . ' where id = "'.$this->id.'"');
         parent::kill();
-
-
     }// }}}
     
     //{{{ deleteExpired

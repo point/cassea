@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdConvert</class>
+    <name>convert</name>
+	<default></default>
+    <help>
+        <short>Convert html to widget-compatible form. </short>
+        <main>
+   Usage: convert filename</main>
+    <options>
+            <option name='--show-body-only' description='This option specifies if it should print only the contents of the body tag as an HTML fragment.'/>
+            <option name='--output' description='Defines file to output converted XML'/>
+            <option name='--tidy-only' description='Clean out code only'/>
+    </options>
+
+    </help>
+</command>

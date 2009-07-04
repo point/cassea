@@ -340,8 +340,8 @@ class ImageDecorator extends Decorator{
     }
 
 
-    private function getImageSize(){
-        list($this->width, $this->height, $this->type) = getimagesize($this->getPath());
+	private function getImageSize(){
+        list($this->width, $this->height, $this->type) = @getimagesize($this->getPath());
     }    
 
     private function createImage($path)

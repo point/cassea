@@ -118,6 +118,7 @@ class Console{
         DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
         require_once($config->root_dir.'/includes/Autoload.php');
         Autoload::init();
+        Storage::init();
         Language::init();
         
         IO::done();

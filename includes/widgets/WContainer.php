@@ -252,8 +252,8 @@ class WidgetCollection
 	// {{{ preReder
 	function preRender()
     {
-		for($i = 0, $c = $this->count(); $i < $c; $i++)
-			$this->getItem($i)->messageInterchange();
+		/*for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$this->getItem($i)->messageInterchange();*/
 
 		for($i = 0, $c = $this->count();$i < $c; $i++)
 			$this->getItem($i)->preRender();
@@ -366,12 +366,12 @@ class WidgetCollection
 class MixedCollection extends WidgetCollection
 {
 	private $str = null;
-	private $str_memento = null;
+	private $str_memento = -1;
 	// {{{ init
 	protected function init(SimpleXMLElement $elem )
 	{
 		if(!count($elem->children()))
-			$this->str_memento = $this->str = trim((string)$elem);
+			$this->str = trim((string)$elem);
 		else
 			parent::init($elem);
 	}
@@ -387,7 +387,11 @@ class MixedCollection extends WidgetCollection
 	*/
     function setData(WidgetResultSet $data)
 	{
-		$this->str = $this->str_memento; 
+		// should be true only once: upon the first setData call
+		if($this->str_memento === -1)
+			$this->str_memento = $this->getText();
+		else 
+			$this->str = $this->str_memento;
 
 		$this->setText($data->get('text'));
 		
@@ -425,7 +429,7 @@ class MixedCollection extends WidgetCollection
 	function setText($text)
 	{
         if(!isset($text) || !is_scalar($text)) return;
-        $this->str = $text;
+        $this->str = "".$text;
 	}
     // }}}
     

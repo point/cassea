@@ -78,9 +78,9 @@ class WCheckbox extends WControl
 		$this->addToMemento(array("checked","text"));
 
 		parent::parseParams($elem);		    	
-
-        if(!empty($elem))
-            $this->setText((string)$elem);
+        $t = (string)$elem;
+        if(!empty($t))
+            $this->setText($t);
     }
     // }}}
     

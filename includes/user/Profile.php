@@ -29,7 +29,6 @@
 
 class ProfileException extends Exception {}
 
-
 interface iProfile
 {
 	static function addUser($user_id);
@@ -40,11 +39,21 @@ interface iProfile
 
 class Profile
 {
+
 	static function get($user_id = null)
 	{
 		if(!$user_id === null)
 			$user_id = User::get()->getId();
 
+		$profile_classname = self::getProfileClass();
+		return new $profile_classname($user_id);
+	}
+
+	static function addUser($user_id, $param=null){
+		return call_user_func( self::getProfileClass().'::addUser',$user_id, $param);
+	}
+
+	static private function getProfileClass(){
 		$profile_classname = null;
 		try {
 			$profile_classname = Config::getInstance()->profile->name;
@@ -52,12 +61,13 @@ class Profile
 		catch(ConfigException $e){	$profile_classname = null; }
 
 		if($profile_classname === null || $profile_classname == "cassea")
-			return new CasseaProfile($user_id);
+			return 'CasseaProfile';
 		else
 		{
 			Autoload::addVendorDir('profile',nameToClass($profile_classname));
-			return new $profile_classname($user_id);
+			return $profile_classname;
 		}
+
 	}
 }
 

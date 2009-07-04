@@ -1,0 +1,16 @@
+bare: yes
+clean: yes
+drop-font-tags: yes
+drop-proprietary-attributes: yes
+enclose-block-text: yes
+enclose-text: yes
+output-xhtml:yes 
+break-before-br: yes
+indent: yes
+indent-spaces: 4
+sort-attributes: alpha
+wrap: 80
+char-encoding: utf8
+tidy-mark: false
+numeric-entities: yes
+markup: yes

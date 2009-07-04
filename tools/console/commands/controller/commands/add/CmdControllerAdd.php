@@ -18,7 +18,26 @@ class CmdControllerAdd extends Command{
             return;
         }
         if($this->copy) return $this->cntrlCopy($this->copy,$name);
+        
+        if (file_exists($this->root.'/controllers/'.$name.'.php'))
+        {
+            io::out( 'Controller with name ~RED~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
+            return;
+    }
+        
+        if (file_exists($this->root.'/models/'.$name))
+        {
 
+            io::out( 'Model with name ~RED~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+       
+        if (file_exists($this->root.'/pages/'.$name))
+        {
+            io::out( 'Pages for model with name ~RED~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+return;
         if (!file_exists($this->root.'/controllers/'.$name.'.php'))
         {
         try{
@@ -41,14 +60,41 @@ class CmdControllerAdd extends Command{
 
         if(file_exists($this->root.'/controllers/'.$name.'.php'))
         {
-            io::out( 'Controller with name ~RED~'.$name.'~~~ exist',IO::MESSAGE_FAIL);
+            io::out( 'Controller with name ~RED~'.$name.'~~~ exists!',IO::MESSAGE_FAIL);
             return;
         }
+        
+        if (file_exists($this->root.'/models/'.$name))
+        {
+
+            io::out( 'Model with name ~RED~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+       
+        if (file_exists($this->root.'/pages/'.$name))
+        {
+            io::out( 'Pages for model with name ~RED~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+
         if(!file_exists($this->root.'/controllers/'.$src.'.php'))
         {
             io::out( 'Controller with name ~RED~'.$src.'~~~ not exist ',IO::MESSAGE_FAIL);
             return;
         }
+        
+        if (!file_exists($this->root.'/models/'.$src))
+        {
+            io::out( 'Model with name ~RED~'.$src.'~~~ not exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+       
+        if (!file_exists($this->root.'/pages/'.$src))
+        {
+            io::out( 'Pages for model with name ~RED~'.$src.'~~~ not exist!',IO::MESSAGE_FAIL);
+            return;
+        }
+
         
         try{
             FS::copyController($this->root,$src,$name);

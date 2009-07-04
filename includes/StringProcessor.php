@@ -218,7 +218,8 @@ class StringProcessor
 	protected function unescape($string, $quotes = 1)
 	{ return htmlspecialchars_decode($string, $quotes ? ENT_QUOTES : ENT_NOQUOTES); }
     protected function truncate ($string, $max = 50, $ends = '...') 
-    {return substr($string,0,abs($max - strlen($ends))).$ends; }
+	{  if (strlen($string) <=  $max) return $string;
+		return substr($string,0,abs($max - strlen($ends))).$ends; }
     protected function nl2br($string) 
     {return nl2br($string);}
     protected function decode_ip($long_ip)

@@ -150,6 +150,21 @@ class WRoll extends WContainer
 			Controller::getInstance()->getDisplayModeParams()
 				->set($this->getId(), 0, $this->getCount(),$this->getCount());
 
+
+		parent::preRender();
+    }
+	// }}}    
+	
+	// {{{ messageInterchange
+	/**
+    * method description
+    *
+    * more detailed method description
+    * @param    void
+    * @return   void
+    */
+	function messageInterchange()
+	{
 		if(($w = Controller::getInstance()->getWidget($this->getIfEmpty())) && $w instanceof WComponent)
 			if(!$this->getCount())
 			{
@@ -159,9 +174,9 @@ class WRoll extends WContainer
 			else
 				$w->setVisible(0);
 
-		parent::preRender();
-    }
-	// }}}    
+		parent::messageInterchange();
+	}
+	//}}}	
     // {{{ assignVars
     /**
     * Method description

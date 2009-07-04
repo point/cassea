@@ -932,35 +932,6 @@ EOD;
 			$this->tpl->flushVars();
 
 		$controller = Controller::getInstance();
-		if(isset($this->hide_if_hidden_id))
-		{
-			$w = null;
-			$w = $controller->getWidget($this->getHideIfHidden());
-			if(!empty($w) && (!$w->getVisible() || !$w->getState()))
-				$this->setVisible(0);
-		}
-		if(isset($this->hide_if_empty_id))
-		{
-			$w = null;
-			$w = $controller->getWidget($this->getHideIfEmpty());
-			if(isset($w))
-			{
-				if(method_exists($w,"getText"))
-				{
-					$t = $w->getText();
-					if(empty($t))
-						$this->setVisible(0);
-				}
-				if($w instanceof WControl)
-				{
-					$v = $w->getValue();
-					if(empty($v))
-						$this->setVisible(0);
-				}
-				if(isset($w->items) && $w->items instanceof WidgetCollection && $w->items->isEmpty())
-					$this->setVisible(0);
-			}
-		}
 		if($this->do_increment)
 			$this->add_html_id++;
         $this->setDataSetted(false);
@@ -993,6 +964,36 @@ EOD;
     */
 	function messageInterchange()
 	{
+		$controller = Controller::getInstance();
+		if(isset($this->hide_if_hidden_id))
+		{
+			$w = null;
+			$w = $controller->getWidget($this->getHideIfHidden());
+			if(!empty($w) && (!$w->getVisible() || !$w->getState()))
+				$this->setVisible(0);
+		}
+		if(isset($this->hide_if_empty_id))
+		{
+			$w = null;
+			$w = $controller->getWidget($this->getHideIfEmpty());
+			if(isset($w))
+			{
+				if(method_exists($w,"getText"))
+				{
+					$t = $w->getText();
+					if(empty($t))
+						$this->setVisible(0);
+				}
+				if($w instanceof WControl)
+				{
+					$v = $w->getValue();
+					if(empty($v))
+						$this->setVisible(0);
+				}
+				if(isset($w->items) && $w->items instanceof WidgetCollection && $w->items->isEmpty())
+					$this->setVisible(0);
+			}
+		}
 	}
 	//}}}	
     
