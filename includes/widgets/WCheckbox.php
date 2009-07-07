@@ -214,9 +214,7 @@ class WCheckbox extends WControl
         }
         $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
         if(isset($post_data))
-            ResultSetPool::set(
-                t(new ResultSet())
-                ->f("wcheckbox[name=".$this->getName()."]")->set('checked',1),ResultSetPool::SYSTEM_PRIORITY,true);
+			$this->setChecked(1);
     }
     // }}}
 }

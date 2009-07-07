@@ -187,6 +187,27 @@ class WRadio extends WControl
     }
     //}}}
 
+    // {{{ restorePOST
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    mixed $post
+    * @param    array $errors
+    * @return   string
+    */
+    function restorePOST()
+	{
+        $errors = POSTErrors::getErrorFor($this->getName(),$this->getAdditionalID());
+    	if($errors !== null)
+        {
+			$this->setFilterError(implode("<br/>",$errors));
+        }
+        $post_data = POSTErrors::getPOSTData($this->getName(),$this->getAdditionalID());
+        if(isset($post_data))
+			$this->setChecked(1);
+    }
+    // }}}
 }
 //}}}
 
