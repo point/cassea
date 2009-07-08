@@ -90,7 +90,19 @@ class WJavaScript extends WObject
     	/**
         * @var      string
         */
-		$src = null
+		$src = null,
+    	/**
+        * @var      string
+        */
+		$media = null,
+    	/**
+        * @var      string
+        */
+		$condition = null,
+    	/**
+        * @var      string
+        */
+		$priority = null
 		;
 
     // {{{ generateJS 
@@ -146,6 +158,8 @@ class WJavaScript extends WObject
 			$this->addBeforeWidget((string) $params->before);
 		if(isset($params->after))
 			$this->addAfterWidget((string) $params->after);
+
+		$this->manageSrc();
     }
     // }}}
     
@@ -168,15 +182,30 @@ class WJavaScript extends WObject
             if(substr($value,-3) != ".js" && strpos($value,"http://") === false)
                 $value .= ".js";
             $this->src = $value;
-			$controller = Controller::getInstance();
-			$controller->addScript($this->src);
 			return;
 		}	
+		elseif($attribute == "condition")
+		{
+			$this->condition = "".$value;
+			return;
+		}
+		elseif($attribute == "priority")
+		{
+			$this->priority = 0+$value;
+			return;
+		}
 		if(!isset($this->$attribute))
 			$this->$attribute = new WJSEvent();
 		$this->$attribute->add($value);
     }
     // }}}
+	
+	private function manageSrc()
+	{
+		if(isset($this->src))
+			Controller::getInstance()->addScript($this->src,$this->condition,$this->priority);
+				
+	}
     
     // {{{ getAttribute 
     /**

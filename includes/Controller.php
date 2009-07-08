@@ -683,8 +683,16 @@ class Controller
 	function head($echo = 1)
 	{
 		$h = Header::get();
+
+		usort($this->scripts,create_function('$a,$b',
+			'return ($a["priority"] < $b["priority"])?-1:1;'));
+
 		foreach($this->scripts as $v)
 			$h->addScript($v['src'],$v['cond']);
+
+		usort($this->css,create_function('$a,$b',
+			'return ($a["priority"] < $b["priority"])?-1:1;'));
+
 		foreach($this->css as $v)
 			$h->addCSS($v['src'],$v['cond'],$v['media']);
 		$v = $h->send();
@@ -739,21 +747,28 @@ class Controller
 			return null;
 		return $this->javascripts["".$name];
 	}
-	function addScript($src = null,$cond = null)
+	function addScript($src = null,$cond = null,$priority=10)
 	{
 		if(empty($src)) return;
-		if(in_array($src,$this->scripts))return;
+		$priority = (int)$priority;
+		if($priority < 1) $priority=10;
+
+		//if(in_array($src,$this->scripts))return;
 		$this->scripts[] = array('src'=>
 			strpos($src,"http://") === false?
-			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond);
+			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond,'priority'=>$priority);
 	}
-	function addCSS($src = null,$cond = null,$media = null)
+	function addCSS($src = null,$cond = null,$media = null,$priority = 10)
 	{
 		if(empty($src)) return;
-		if(in_array($src,$this->css)) return;
+
+		$priority = (int)$priority;
+		if($priority < 1) $priority=10;
+
+		//if(in_array($src,$this->css)) return;
 		$this->css[] = array('src'=>
 			strpos($src,"http://") === false?
-			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media);
+			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media,'priority'=>$priority);
 	}
 	function getNavigator()
 	{

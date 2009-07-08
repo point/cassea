@@ -51,7 +51,11 @@ class WCSS extends WComponent
 		/**
 		* @var string
 		*/
-		$text = null
+		$text = null,
+    	/**
+        * @var      string
+        */
+		$priority = null
 		;
     // {{{ __construct
     /**
@@ -64,7 +68,7 @@ class WCSS extends WComponent
     {
 		parent::__construct($id);
     }
-    // }}}
+    // }}} 
     // {{{ parseParams
     /**
     * Method description
@@ -80,6 +84,8 @@ class WCSS extends WComponent
         elseif((string)$elem)
 			$this->setText(trim((string)$elem));
 
+		if(isset($elem['priority']))
+			$this->setPriority((string)$elem['priority']);
 		if(isset($elem['condition']))
 			$this->setCond((string)$elem['condition']);
         if(isset($elem['media']))
@@ -100,7 +106,7 @@ class WCSS extends WComponent
 	function buildComplete()
 	{
         if(isset($this->src))
-            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getMedia());
+            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getMedia(),$this->getPriority());
 
         parent::buildComplete();
     }
@@ -283,6 +289,36 @@ class WCSS extends WComponent
     }
 	// }}}
 	
+    // {{{ setPriority
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $priority
+    * @return   void
+    */
+    function setPriority($priority)
+    {
+		if(!isset($priority) || !is_scalar($priority))
+			return;
+
+		$this->priority = "".$priority;
+    }
+    // }}}
+    
+    // {{{ getPriority
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getPriority()
+    {
+		return $this->priority;
+    }
+	// }}}
 	
 }
 //}}}
