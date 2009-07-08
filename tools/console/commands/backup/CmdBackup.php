@@ -3,6 +3,8 @@
 class CmdBackup extends Command{
     
     private $separate = false;
+	private $send_email = false;
+	private $email_address = "";
       
     public function __construct( $workingDir = '.', $info, $commandsSeq = array())
     {
@@ -13,6 +15,16 @@ class CmdBackup extends Command{
     {
         Console::initCore();
         if ($r=ArgsHolder::get()->getOption('separate'))$this->separate=$r;
+		if ($r=ArgsHolder::get()->getOption('send-email'))
+		{
+			$this->send_email = true;
+			$this->email_address = (string)$r;
+			if(!preg_match(POSTChecker::$email_regexp,$this->email_address))
+			{
+				io::out( "Incorrect email address format",IO::MESSAGE_FAIL);
+				return;
+			}
+		}
         if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
         try{
             if (IO::YES == io::dialog('~RED~Do You really want to do backup ~~~ ?', IO::NO|IO::YES, IO::NO))
@@ -22,10 +34,29 @@ class CmdBackup extends Command{
                 //Create MySQL dump
                 $sqlname=$this->createMySQL($root,$name,$this->separate);
                 //Create backup file
-                $this->createTar($root,$name,$this->separate);
+                $filename = $this->createTar($root,$name,$this->separate);
                 if(!$this->separate)
-                    unlink($root.'/'.$sqlname);
+					unlink($root.'/'.$sqlname);
 
+				if($this->send_email)
+				{
+					io::out("~GREEN~Sending email to ~~~".$this->email_address);
+					$a=Mail::CreateMail();
+					$a->toAdd($this->email_address);
+					$a->setSubject("Backup ".$filename);
+					$a->setFromname(Config::getInstance()->mail->default_from_name);
+					$a->setFrom(Config::getInstance()->mail->default_from);
+					$a->Message("Backup with filename ".$filename);
+					$a->attachAdd($root."/".$filename);
+					if($this->separate)
+						$a->attachAdd($root."/".$sqlname);
+					$r = $a->send();
+					if($r === false)
+						io::out("Sending email to ".$this->email_address." failed",IO::MESSAGE_FAIL);
+					else io::done("Email sended to ".$this->email_address);
+
+
+				}
             }
             else 
                 io::done('Canceling creating backup. ');
@@ -83,7 +114,8 @@ class CmdBackup extends Command{
         $cmd="bzip2 -9 ".$root."/".$filename;
         io::out("Creating file ".$filename.".bz2.....");
         exec($cmd,$out,$return);
-            io::done('~GREEN~The backup for files of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
+        io::done('~GREEN~The backup for files of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
+		return $filename.".bz2";
 
     }
 }

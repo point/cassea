@@ -9,6 +9,7 @@
    Usage: backup</main>
     <options>
             <option name='--separate' description='Create separated files for MySQL and the project'/>
+			<option name='--send-email=_address_' description='Create backup file and send it via mail on _address_'/>
     </options>
 
     </help>
