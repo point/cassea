@@ -252,11 +252,11 @@ class WidgetCollection
 	// {{{ preReder
 	function preRender()
     {
-		/*for($i = 0, $c = $this->count(); $i < $c; $i++)
-			$this->getItem($i)->messageInterchange();*/
-
 		for($i = 0, $c = $this->count();$i < $c; $i++)
 			$this->getItem($i)->preRender();
+
+		for($i = 0, $c = $this->count(); $i < $c; $i++)
+			$this->getItem($i)->messageInterchange();
 	}
     // }}}
 	// {{{ generateHTML

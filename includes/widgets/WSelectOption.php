@@ -40,7 +40,7 @@ class WSelectOption extends WComponent
         /**
         * @var      string
         */
-        $text = "",
+        $text = null,
         /**
         * @var      boolean
         */
@@ -76,7 +76,7 @@ class WSelectOption extends WComponent
     {
 		if(isset($elem['text']))
             $this->setText((string)$elem['text']);
-		elseif(!count($elem))
+		elseif(!count($elem->children) && (string)$elem)
 			$this->setText((string)$elem);
         if(isset($elem['selected']))
             $this->setSelected((string)$elem['selected']);
@@ -195,6 +195,21 @@ class WSelectOption extends WComponent
 		parent::buildComplete();
 	}    
 	// }}}
+	// {{{ messageInterchange
+	/**
+    * method description
+    *
+    * more detailed method description
+    * @param    void
+    * @return   void
+    */
+	function messageInterchange()
+	{
+		if(!isset($this->text))
+			$this->setText($this->getValue());
+		parent::messageInterchange();
+	}
+	//}}}	
     //  {{{ assignVars
     /**
     * Method description

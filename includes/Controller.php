@@ -659,18 +659,22 @@ class Controller
 
 		foreach($this->widgets as $name=>$widget)
 		{
-			if(!$widget->getState()) continue;
-			$this->widgets[$name]->messageInterchange();
-		}
-		foreach($this->widgets as $name=>$widget)
-		{
-			if(!$widget->getState()) continue;
+			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$this->widgets[$name]->preRender();
         }
+		foreach($this->widgets as $name=>$widget)
+		{
+			if(!$widget->getState() || !$widget instanceof WComponent) continue;
+			$widget->messageInterchange();
+		}
         foreach($this->widgets as $name => $widget)
         {
-            if(!$widget->getState()) continue;
+            if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$this->final_html .= $this->widgets[$name]->generateHTML();
+        }
+		foreach($this->widgets as $name=>$widget)
+		{
+			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$this->widgets[$name]->postRender();				
         }
 
