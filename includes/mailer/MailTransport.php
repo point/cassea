@@ -29,9 +29,6 @@
 
 abstract class MailTransport{
     abstract public function send($pointer);
-    public function result(){
-       // echo "Message sent successful!!!!!";
-        }
 
 	}
 ?>

@@ -39,17 +39,7 @@ class MailMail extends MailTransport{
      *@return true если отправка выполнилась успешно
      */
     public function Send($pointer){
-        $header=$pointer->createHeader();
-        $body=$pointer->mailBody();
-        //echo $header;
-        //echo $body;
-        if (mail(implode(",",$pointer->getTo()),$pointer->getSubject(),$body,$header))
-            {
-                $this->result();
-  			    return true;
-  		    }
-			else 
-                return false;
+        return mail(implode(",",$pointer->getTo()),$pointer->getSubject(),$pointer->mailBody(),$pointer->createHeader());
     }
     /*}}}*/
 }

@@ -37,11 +37,11 @@ class SmtpException extends Exception{}
 class SmtpMail extends MailTransport{
     protected  $smtpHost        = null;
 	protected  $smtpPort        = null;
-	protected  $smtpProto        = null;
+	protected  $smtpProto       = null;
 	protected  $smtpUser        = null;
 	protected  $smtpPassw       = null;
-    protected  $smtpTimeo       =30;
-    private $smtpCt          ="";
+    protected  $smtpTimeo       = 30;
+    private $smtpCt             = "";
 
     function __construct()
     {
@@ -176,8 +176,8 @@ class SmtpMail extends MailTransport{
 			if($code != 250) {$this->errMsg('sendMessage',' ');fclose($this->smtpCt);return false;}
 			fputs($this->smtpCt,"QUIT"."\r\n");
 			fclose($this->smtpCt);
-		    return true;
-		} catch (SmtpException $e){echo $e->getMessage();}
+		} catch (SmtpException $e){echo $e->getMessage();return false;}
+            return true;
     }
     /*}}}*/
     
@@ -199,7 +199,6 @@ class SmtpMail extends MailTransport{
         );
         // UNCOMMENT FOR DEBUG
     	//echo"<strong>".$error[$err]."</strong> ".$add."<br />";
-
     }
     /*}}}*/
 

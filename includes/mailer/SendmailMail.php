@@ -61,9 +61,8 @@ class SendmailMail extends MailTransport{
 			fwrite($fp,$pointer->mailBody()."\r\n");
 			fwrite($fp, "\n");
 			pclose($fp);
-            $this->result();
-            return true;
-		}catch (MailException $e){echo $e->getMessage();}
+        }catch (MailException $e){echo $e->getMessage();return false;}
+        return true;
     }
     /*}}}*/
 }

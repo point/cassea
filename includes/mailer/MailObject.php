@@ -156,7 +156,7 @@ class MailObject implements IMailObject{
     public function send()
     {
         $this->transport = new SmtpMail();
-        $this->transport->send($this);
+        return $this->transport->send($this);
     }
     /*}}}*/
 
@@ -431,7 +431,7 @@ class MailObject implements IMailObject{
      */
     private function validMail($address){
         $reg = "/[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|museum|ua|ru)/";
-		return true;//preg_match($reg, $address);!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		return preg_match($reg, $address);
     }
     /*}}}*/
     
