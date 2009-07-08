@@ -36,7 +36,14 @@ WidgetLoader::load("WComponent");
 class WInlineScript extends WComponent
 {
     protected
+		/**
+		* @var string
+		*/
+        $condition = null,
 
+		/**
+		* @var string
+		*/
 		$code = null
 		;
 
@@ -65,6 +72,9 @@ class WInlineScript extends WComponent
     {
 		if(isset($elem) && (string)$elem != "")
 			$this->setCode((string)$elem);
+
+		if(isset($elem['condition']))
+			$this->setCond((string)$elem['condition']);
 		
 		parent::parseParams($elem);
     }
@@ -123,11 +133,42 @@ class WInlineScript extends WComponent
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			'code'=> $this->getCode()
+			'code'=> $this->getCode(),
+			"condition"=>$this->getCond()
 		));
 		parent::assignVars();
     }
 	// }}}	
+	
+    // {{{ setCond
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    string $cond
+    * @return   void
+    */
+    function setCond($cond)
+    {
+		if(!isset($cond) || !is_scalar($cond)) 
+            return ;
+        $this->condition = (string)$cond;
+    }
+    // }}}
+    
+    // {{{ getCond
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getCond()
+    {
+		return $this->condition;
+    }
+    // }}}
 }
 //}}}
 

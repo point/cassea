@@ -52,7 +52,6 @@ class WCSS extends WComponent
 		* @var string
 		*/
 		$text = null
-
 		;
     // {{{ __construct
     /**
@@ -77,16 +76,15 @@ class WCSS extends WComponent
     function parseParams(SimpleXMLElement $elem)
     {
 		if(isset($elem['src']))
-        {
 			$this->setSrc((string)$elem['src']);
-		    if(isset($elem['condition']))
-			    $this->setCond((string)$elem['condition']);
-        }
         elseif((string)$elem)
 			$this->setText(trim((string)$elem));
+
+		if(isset($elem['condition']))
+			$this->setCond((string)$elem['condition']);
         if(isset($elem['media']))
             $this->setMedia((string)$elem['media']);
-		$this->addToMemento(array("src","condition","media"));
+		$this->addToMemento(array("src","condition","media","text"));
 		parent::parseParams($elem);		    	
     }
     // }}}
@@ -118,10 +116,11 @@ class WCSS extends WComponent
     */
     function assignVars()
     {
-        if(!isset($this->src))
+        if(isset($this->text))
 		    $this->tpl->setParamsArray(array(
                 "content"=>$this->getText(),
-                "media"=>$this->getMedia()
+                "media"=>$this->getMedia(),
+				"condition"=>$this->getCond()
 			    ));
 		parent::assignVars();
     }
@@ -282,7 +281,8 @@ class WCSS extends WComponent
     {
 		return $this->text;
     }
-    // }}}
+	// }}}
+	
 	
 }
 //}}}
