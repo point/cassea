@@ -36,7 +36,7 @@ require("Config.php");
 require("Storage.php");
 require("Filter.php");
 require("HTTPParamHolder.php");
-require("FileStorage.php");
+require("File.php");
 require("Header.php");
 require("Navigator.php");
 require("Template.php");
@@ -59,8 +59,9 @@ require("mailer/Mail.php");
 require("ACL.php");
 require("StringProcessor.php");
 
-class ControllerException extends Exception {}
-class IdExistsException extends Exception {}
+class CasseaException extends Exception{}
+class ControllerException extends CasseaException{}
+class IdExistsException extends CasseaException{}
 
 /**
  *

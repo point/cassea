@@ -61,6 +61,9 @@ class IO{
         if ($ah->getOption('y') || self::$verboseLevel == IO::MESSAGE_FAIL) self::$assumeYes = true;
     }
 
+    static function getVerboseLevel(){
+        return self::$verboseLevel;
+    }
     static function dialog($message, $answ = IO::NONE, $default = null){
         IO::out($message, false);
         $a = array();

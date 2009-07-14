@@ -28,64 +28,71 @@
 }}} -*/
 class Browser
 {
+	const DIRNAME_PREG='#^[a-zA-Z0-9-_()]+$#';
+	const ROOT = 'images';
 
 	static function ls($path)
 	{
 		$ipath = implode("/",$path);
 		$r = new ResultSet();
-		$ls = t(new FileStorage("/images"))->ls($ipath);
-		$r->f("#dirs")->count(count(@$ls['dirs']))
+		$dImages = new Dir(self::ROOT);
+		$dir = $dImages->getDir($ipath);
+		$dirs = $dir->ls(null, DIR::LS_DIR);
+		$r->f("#dirs")->count(count($dirs))
 			->f("#parent > whyperlink")->href(array_merge(array_slice($path,0,-1),array(null)))
 			;
 
-		if(!empty($ls['dirs']))
-			foreach($ls['dirs'] as $k => $d)
-			{
-				$r->f("#cd > whyperlink",$k)->href(array_merge($path,array($d)))
-					->f("#ddel",$k)->additional_id($d)
-					->f("#cd wtext",$k)->text($d);
-			}
+		foreach($dirs as $k => $d)
+		{
+			$l = substr($d,strlen($dImages));
+			$r->f("#cd > whyperlink",$k)->href(explode('/',$l))
+				->f("#ddel",$k)->additional_id($d->getName())
+				->f("#cd wtext",$k)->text($d->getName());
+		}
 		$fc = 0;
-		if(!empty($ls['files']))
-			foreach($ls['files'] as $k => $f)
-			{
-				$df = new MimeDecorator(new StatDecorator($f));
-				if(strpos($df->getMime(),"image") === false) continue;
-				$df = new ImageDecorator($df);
-				$stat = $df->stat();
-				$r->f("#fname",$k)->text($df->getName())
-					->f("#fdel",$k)->additional_id($df->getName())
-					->f("#stat",$k)->text(
-						$df->getWidth()."&#215;".$df->getHeight()."&nbsp;".
-						date("Y/m/d H:i",$stat['mtime'])."&nbsp;".
-						sizeToString($stat['size'])	)					
+		foreach($dir->ls() as $k => $f)
+		{
+			$df = new MimeDecorator(new StatDecorator($f));
+			if(strpos($df->getMime(),"image") === false) continue;
+			$df = new ImageDecorator($df);
+			$stat = $df->stat();
+			$r->f("#fname",$k)->text($df->getName())
+				->f("#fdel",$k)->additional_id($df->getName())
+				->f("#stat",$k)->text(
+					$df->getWidth()."&#215;".$df->getHeight()."&nbsp;".
+					date("Y/m/d H:i",$stat['mtime'])."&nbsp;".
+					sizeToString($stat['size'])	)					
 					->f("#preview",$k)->file($df)
 					->f("#choose > whyperlink",$k)->href($df->getURL())
-						;
-				$fc++;
-			}
+					;
+			$fc++;
+		}
 		$r->f("#files")->count($fc);
 		return $r;
 	}
 
+	static function mkdirChecker($post, $path){
+		$dname = trim($post->dirname);
+		if (!preg_match(self::DIRNAME_PREG,$dname))
+			throw new CheckerException(Language::message('markdownmedia_browser','incorrect_directory_name'), 'dirname');
+
+		if(Dir::get(self::ROOT)->getDir(implode("/",$path))->getDir($dname)->exists())
+			throw new CheckerException(Language::message('markdownmedia_browser', 'directory_already_exists', $dname), 'dirname');
+	}
+
 	static function mkdir($post,$path)
 	{
-		if(empty($post->dirname)) return;
-		$ipath = implode("/",$path);
-		t(new FileStorage("/images/".$ipath))->mkdir($post->dirname);
+		Dir::get(self::ROOT)->getDir(implode("/",$path))->mkdir($post->dirname);
 	}
 
 	static function delete($post,$path)
 	{
 		$f = null;
+		$d = Dir::get(self::ROOT)->getDir(implode("/",$path));
 		if(!empty($post->fdel)) 
-			$f = key($post->fdel);
+			$o = $d->getFile(key($post->fdel))->delete();
 		elseif(!empty($post->ddel))
-			$f = key($post->ddel);
-		else return;
-
-		$ipath = implode("/",$path);
-		t(new FileStorage("/images/".$ipath))->rm($f);
+			$o = $d->getDir(key($post->ddel))->delete();
 	}
 	static function upload($post,$path)
 	{
@@ -94,7 +101,7 @@ class Browser
 		if(!empty($post->upload_rename))
 			$uf->setFileName($post->upload_rename, "uploaded_file");
 		$ipath = implode("/",$path);
-        t(new FileStorage("/images/"))->upload($uf, $ipath);
+		$d = Dir::get(self::ROOT)->getDir(implode("/",$path))->upload($uf);
 	}
 }
 

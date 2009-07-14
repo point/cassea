@@ -227,9 +227,9 @@ class WImage extends WComponent
     * @return   void
     */
     function setFile($file)
-    {
-        if(!isset($file) || !is_object($file) || !($file instanceof iFile)) return;
-        $this->file = $file;
+	{
+		if(!isset($file) || !is_object($file) || !( $file instanceof iFile || $file instanceof Decorator )) return;
+		$this->file = $file;
         $this->setSrc( ($this->file->exists())?$this->file->getURL():null ) ;
     }
     // }}}
@@ -320,10 +320,8 @@ class WImage extends WComponent
 
 		if(($this->getMaxWidth() || $this->getMaxHeight()) && !is_null($this->file))
         {
-
-            list($width, $height) = getimagesize($this->file->getPath());
-
-            $a = recalcSize($width, $height,$this->getMaxWidth(),$this->getMaxHeight());
+			$iDeco = new ImageDecorator($this->file);
+            $a = recalcSize($iDeco->getWidth(), $iDeco->getHeight(),$this->getMaxWidth(),$this->getMaxHeight());
             $this->setWidth($a['0']);
 			$this->setHeight($a['1']);
 		}

@@ -74,6 +74,9 @@ return false;
 	<WDataHandler static="1" forms="mkdir">
 		<model>markdownmedia</model>
 		<classname>Browser</classname>
+        <checker method='mkdirChecker'>
+			<param from="p2" as="array"/>
+        </checker>
 		<handler method="mkdir">
 			<param from="p2" as="array"/>
 		</handler>

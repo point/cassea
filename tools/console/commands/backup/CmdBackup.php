@@ -27,39 +27,32 @@ class CmdBackup extends Command{
 		}
         if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
         try{
-            if (IO::YES == io::dialog('~RED~Do You really want to do backup ~~~ ?', IO::NO|IO::YES, IO::NO))
+            $root=Config::get('ROOT_DIR');
+            $name=basename($root);
+            //Create MySQL dump
+            $sqlname=$this->createMySQL($root,$name,$this->separate);
+            //Create backup file
+            $filename = $this->createTar($root,$name,$this->separate);
+            if(!$this->separate)
+                unlink($root.'/'.$sqlname);
+
+            if($this->send_email)
             {
-                $root=Config::get('ROOT_DIR');
-                $name=basename($root);
-                //Create MySQL dump
-                $sqlname=$this->createMySQL($root,$name,$this->separate);
-                //Create backup file
-                $filename = $this->createTar($root,$name,$this->separate);
-                if(!$this->separate)
-					unlink($root.'/'.$sqlname);
-
-				if($this->send_email)
-				{
-					io::out("~GREEN~Sending email to ~~~".$this->email_address);
-					$a=Mail::CreateMail();
-					$a->toAdd($this->email_address);
-					$a->setSubject("Backup ".$filename);
-					$a->setFromname(Config::getInstance()->mail->default_from_name);
-					$a->setFrom(Config::getInstance()->mail->default_from);
-					$a->Message("Backup with filename ".$filename);
-					$a->attachAdd($root."/".$filename);
-					if($this->separate)
-						$a->attachAdd($root."/".$sqlname);
-					$r = $a->send();
-					if($r === false)
-						io::out("Sending email to ".$this->email_address." failed",IO::MESSAGE_FAIL);
-					else io::done("Email sended to ".$this->email_address);
-
-
-				}
+                io::out("~GREEN~Sending email to ~~~".$this->email_address);
+                $a=Mail::CreateMail();
+                $a->toAdd($this->email_address);
+                $a->setSubject("Backup ".$filename);
+                $a->setFromname(Config::getInstance()->mail->default_from_name);
+                $a->setFrom(Config::getInstance()->mail->default_from);
+                $a->Message("Backup with filename ".$filename);
+                $a->attachAdd($root."/".$filename);
+                if($this->separate)
+                    $a->attachAdd($root."/".$sqlname);
+                $r = $a->send();
+                if($r === false)
+                    io::out("Sending email to ".$this->email_address." failed",IO::MESSAGE_FAIL);
+                else io::done("Email sended to ".$this->email_address);
             }
-            else 
-                io::done('Canceling creating backup. ');
         }catch(Exception $e){
             io::out( $e->getMessage(),IO::MESSAGE_FAIL);
             return;
@@ -77,8 +70,8 @@ class CmdBackup extends Command{
         $db_user=Config::getInstance()->db->user;
         $db_password=Config::getInstance()->db->password;
         
-        io::out("Creating Mysql dump .....");
-        $cmd='mysqldump -R -q --single-transaction '.$db_db.' -u'.$db_user.' -p'.$db_password.' --result-file='.$root.'/'.$sqlname;
+        io::out("Creating Mysql dump .....", false);
+        $cmd='mysqldump -R -q --single-transaction '.$db_db.' -u'.$db_user.' --password='.$db_password.' --result-file='.$root.'/'.$sqlname;
         exec($cmd,$out,$return);
         //if($return) return;//PERMISSIONS for SHOW functions and procedures... 
         if($separate)
@@ -87,7 +80,7 @@ class CmdBackup extends Command{
             exec($cmd,$out,$return);
             if($return) return;
         }
-        io::done('~GREEN~The MySQL dump for  DB of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
+        io::done();
         return $sqlname;
 
     }
@@ -100,21 +93,46 @@ class CmdBackup extends Command{
             $filename=$name."_".date('Ymd').'.tar';
         //$cmd="tar -cvf ".$root."/".$filename." ".$root." --exclude='*web*' --exclude='*~'";
         chdir($root);
-        $cmd="tar --exclude='*web*' --exclude='*~' -cvf ".$root."/".$filename." * ";
+        IO::out('Packing main... ', false);
+        $cmd="tar --exclude='web' --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." *";
         exec($cmd,$out,$return);
-        if($return) return;
-        foreach($out as $o)
-            io::out($o);
-        //$cmd="tar -rvf ".$root."/".$filename." ".$root."/web/css/ ".$root."/web/js/ --exclude='*~'";
-        $cmd="tar --exclude='*~' -rvf ".$root."/".$filename." ./web/css/ ./web/js/ ";
+        if ($return ==0) io::done();
+        if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
+            foreach($out as $o)
+                io::out($o);
+        if($return){
+            io::out('Return code '.$return, IO::MESSAGE_FAIL);
+            io::out('Executed command: '.$cmd);
+            return;
+        }
+
+        io::out('Adding web/css, web/js...', false);
+        $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/ ";
         exec($cmd,$out,$return);
-        if($return) return;
-        foreach($out as $o)
-            io::out($o);
+        if ($return ==0) io::done();
+        if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
+            foreach($out as $o)
+                io::out($o);
+
+        if($return){
+            io::out('Return code '.$return, IO::MESSAGE_FAIL);
+            io::out('Executed command: '.$cmd);
+            return;
+        }
+
+        io::out('Bzip '.$filename.'...', false);
         $cmd="bzip2 -9 ".$root."/".$filename;
-        io::out("Creating file ".$filename.".bz2.....");
         exec($cmd,$out,$return);
-        io::done('~GREEN~The backup for files of project~~~ '.$name.'~GREEN~ was successfully created!~~~');
+        if ($return ==0) io::done();
+        if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
+            foreach($out as $o)
+                io::out($o);
+
+        if($return){
+            io::out('Return code '.$return, IO::MESSAGE_FAIL);
+            io::out('Executed command: '.$cmd);
+            return;
+        }
 		return $filename.".bz2";
 
     }
