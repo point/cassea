@@ -191,13 +191,20 @@ function CAPTCHACheckAnswer($str)
 function getMime($file)
 {
     if(!file_exists($file)) return null;
-    if(!extension_loaded('fileinfo') && !@dl('fileinfo')) return null;
-    
-    $finfo = finfo_open(FILEINFO_MIME);
-    if(!$finfo) return null;
-    $mime = finfo_file($finfo,$file);
-    finfo_close($finfo);
-    return $mime;
+	$mime = null;
+	if(!extension_loaded('fileinfo') && !@dl('fileinfo')) 
+	{
+		$mime = @exec('file -bi '.escapeshellarg($file));
+		$mime=trim($mime);
+	}
+	else
+	{
+		$finfo = finfo_open(FILEINFO_MIME);
+		if(!$finfo) return null;
+		$mime = finfo_file($finfo,$file);
+		finfo_close($finfo);
+	}
+	return $mime;
 }
 function sizeFromString($size)
 {

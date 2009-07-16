@@ -40,7 +40,10 @@ class WInlineScript extends WComponent
 		* @var string
 		*/
         $condition = null,
-
+		/**
+		* @var bool
+		*/
+		$use_lang = false,
 		/**
 		* @var string
 		*/
@@ -75,12 +78,26 @@ class WInlineScript extends WComponent
 
 		if(isset($elem['condition']))
 			$this->setCond((string)$elem['condition']);
+		if(isset($elem['use_lang']))
+			$this->setUseLang((string)$elem['use_lang']);
 		
 		parent::parseParams($elem);
     }
     // }}}
     
-    // {{{ setCode
+    // {{{ getUseLang
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @return   string
+    */
+    function getUseLang()
+    {
+		return $this->use_lang;
+    }
+    // }}}
+    // {{{  setCode
     /**
     * Method description
     *
@@ -133,7 +150,7 @@ class WInlineScript extends WComponent
     function assignVars()
     {
 		$this->tpl->setParamsArray(array(
-			'code'=> $this->getCode(),
+			'code'=> $this->getUseLang()?Language::encodePair($this->getCode()):$this->getCode(),
 			"condition"=>$this->getCond()
 		));
 		parent::assignVars();
