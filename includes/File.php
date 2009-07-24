@@ -1,4 +1,6 @@
 <?php
+require_once("UploadedFiles.php");
+
 /**
  * Библиотека для работы с файлами и директориями.
  *
@@ -803,5 +805,7 @@ class StatDecorator extends Decorator{
 // @deprecated 
 class FileStorage extends Dir{
 
-    public function upload(UploadedFiles $uf, $path ='/'){}
+	public function upload(UploadedFiles $uf, $path ='/'){
+		throw new FileSystemException("FileStorage::upload() is deprecated. Use Dir::upload instead");
+	}
 }

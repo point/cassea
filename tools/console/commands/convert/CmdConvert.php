@@ -59,7 +59,7 @@ class CmdConvert extends Command{
 		$output = $ret = null;
 		exec("LANG=en_EN.UTF8 tidy -config ".escapeshellarg(dirname(__FILE__)."/tidy.config")." -q ".
 			(($this->show_body_only)?" --show-body-only yes ":" ").
-			(" --error-file ".dirname(__FILE__)."/error.log ").
+			(" --error-file ".escapeshellarg(dirname(__FILE__))."/error.log ").
 			escapeshellarg($filename),$output,$ret);
 
 		if($ret == 0)
@@ -80,7 +80,12 @@ class CmdConvert extends Command{
 			if(!empty($this->output_file))
 			{
 				io::done('Writing html to file. ');
-				file_put_contents($this->output_file,implode("\n",$output));
+				$_r = file_put_contents($this->output_file,implode("\n",$output));
+				if($_r === false)
+				{
+					io::out("Can't write to file. May be permission denied? ",IO::MESSAGE_FAIL);
+					return 5;
+				}
 			}
 			else 
 				echo implode("\n",$output)."\n";
