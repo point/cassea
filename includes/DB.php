@@ -581,15 +581,9 @@ class DBMysqliLazyLoad{
 		$this->dsn = $dsn;
     }
 
-    public function __call($name, $arguments) {
+	public function __call($name, $arguments) {
         DB::init($this->dsn, false);
-        $mysqli = DB::getMysqli();
-        foreach($arguments as &$a) if(strpos($a,"'") !== false) $a = str_replace("'","\\'",$a);
-        if (count($arguments)) $param ="'".implode("', ", $arguments)."'";
-        else $param = ''; 
-        $proxy = create_function('$o, $m', 'return  $o->$m('.$param.');');
-        //print_pre("\r\nMethod: ".$name."( ". implode(', ', $arguments). " )\n");
-        return $proxy($mysqli, $name);
+		return call_user_func_array(array(DB::getMysqli(), $name), $arguments);
     }
 }// }}}
 
