@@ -150,7 +150,7 @@ class Controller
 		Autoload::init();
 		Storage::init();
 		$config = Config::getInstance();
-        DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
+        DB::init($config->db);
 
 		Session::init();
         User::get();
@@ -212,7 +212,6 @@ class Controller
 		//$this->addScript("jquery.treeview.js");
 		$this->addCSS("default.css");
 		$this->addScript("default.js");
-
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)

@@ -115,7 +115,7 @@ class Console{
         require_once(dirname(dirname(dirname(dirname(__FILE__))))."/includes/Controller.php");
         Config::init(new IniDBConfig("config.ini","config"));
         $config = Config::getInstance();
-        DB::init($config->db->host,$config->db->user,$config->db->password,$config->db->db);
+        DB::init($config->db);
         require_once($config->root_dir.'/includes/Autoload.php');
         Autoload::init();
         Storage::init();

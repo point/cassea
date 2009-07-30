@@ -39,7 +39,6 @@
  */
 
 
-error_reporting(E_ALL | E_STRICT);
 //mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 mysqli_report(MYSQLI_REPORT_OFF);
 //mysqli_report(MYSQLI_REPORT_ALL);
@@ -576,21 +575,14 @@ class DBMysqliFake{
  * @package Database
  */
 class DBMysqliLazyLoad{
+    private $dsn;
 
-    private $host, $username, $password, $dbname, $port, $socket;
-
-
-    public function __construct($host, $username, $password, $dbname, $port = NULL, $socket = NULL){
-        $this->host = $host;
-        $this->username = $username;
-        $this->password = $password;
-        $this->dbname = $dbname;
-        $this->port = $port;
-        $this->socket = $socket;
+	public function __construct($dsn){
+		$this->dsn = $dsn;
     }
 
     public function __call($name, $arguments) {
-        DB::init($this->host, $this->username, $this->password, $this->dbname, $this->port, $this->socket, false);
+        DB::init($this->dsn, false);
         $mysqli = DB::getMysqli();
         foreach($arguments as &$a) if(strpos($a,"'") !== false) $a = str_replace("'","\\'",$a);
         if (count($arguments)) $param ="'".implode("', ", $arguments)."'";
@@ -732,14 +724,15 @@ class DB{
      * @param string $socket сокет сервера
      * @return void
      */
-    static public function init( $host, $username, $password, $dbname, $port = NULL, $socket = NULL, $lazyLoad = true ){
+    static public function init( $dsn, $lazyLoad = true ){
         if ($lazyLoad){
-            self::$mysqli = new DBMysqliLazyLoad($host, $username, $password, $dbname, $port, $socket);
+            self::$mysqli = new DBMysqliLazyLoad($dsn);
             return;
         }
 
-        if (self::$mysqli instanceof DBMysqliLazyLoad){
-            self::$mysqli = new mysqli( $host, $username, $password, $dbname, $port = NULL, $socket = NULL);
+		if (self::$mysqli instanceof DBMysqliLazyLoad){
+			$p = self::parseDSN($dsn);
+            self::$mysqli = new mysqli( $p['host'], $p['username'], $p['password'], $p['database'], $p['port'], $p['socket']);
             if ( mysqli_connect_errno()) throw ( new DBConnectException(mysqli_connect_error(), mysqli_connect_errno()));
             if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 
         }
@@ -1031,5 +1024,115 @@ class DB{
         }
     } // }}}
 
+    // {{{ function parseDSN($dsn)
+    /**
+     * Parse a data source name.
+     *
+     * Additional keys can be added by appending a URI query string to the
+     * end of the DSN.
+     *
+     * The format of the supplied DSN is in its fullest form:
+     * <code>
+     *  driver://username:password@host:port/database?option=8&another=true
+     *  driver://username:password@unix(/path/to/socket)/database?option=8&another=true
+     * </code>
+     *
+     * Most variations are allowed:
+     * <code>
+     *  driver://username:password@host:port/database
+     *  driver://username:password@host/database
+	 *  driver://username:password@/database
+	 *  driver:///database
+	 *	...
+	 *  username:password@/database
+	 *  /database
+	 * </code>
+	 *
+	 * Based on works  Tomas V.V.Cox <cox@idecnet.com>
+     * @param   string  Data Source Name to be parsed
+     *
+     * @return  array   an associative array with the following keys:
+     *  + driver:  Database backend used in PHP (mysqli, mysqlnd etc.)
+     *  + protocol: Communication protocol to use (tcp, unix etc.)
+     *  + host: Host specification (hostname)
+	 *  + port: Port specification (port)
+	 *  + socket: Socket path
+     *  + database: Database to use on the DBMS server
+     *  + username: User name for login
+     *  + password: Password for login
+     * @access  public
+	*/
+    static function parseDSN($dsn)
+    {
+        $parsed = array(
+			'driver' => 'mysqli',
+			'protocol' => 'tcp',
+			'host' => 'localhost',
+			'username' => '',
+			'password' => '',
+			'database' => '',
+			'port'     => null,
+			'socket'   => null,
+		);
+
+        //  driver
+        if (($pos = strpos($dsn, '://')) !== false) {
+            $parsed['driver'] = substr($dsn, 0, $pos);
+            $dsn = substr($dsn, $pos + 3);
+		}	
+		// Get (if found): username and password
+        // $dsn => username:password@protocol+hostspec/database
+        if (($at = strrpos($dsn,'@')) !== false) {
+            $str = substr($dsn, 0, $at);
+            $dsn = substr($dsn, $at + 1);
+            if (($pos = strpos($str, ':')) !== false) {
+                $parsed['username'] = rawurldecode(substr($str, 0, $pos));
+                $parsed['password'] = rawurldecode(substr($str, $pos + 1));
+            } else {
+                $parsed['username'] = rawurldecode($str);
+            }
+		}
+
+		//print_pre($dsn);
+        // $dsn = somehost:port/database
+		if (preg_match('#^([^(:]+)?(:(\d+))?/(.+)$#', $dsn, $m)){
+			//print_pre($m);
+			if ($m[1] != '') $prased['host'] = $m[1];
+			if ($m[2] != '') $parsed['port'] = $m[2];
+			$parsed['protocol'] = 'tcp';
+			$dsn = $m[4];
+		}else
+        //$dsn = unix(/tmp/my.sock)/database
+		if (preg_match('|^([^(]+)\((.*?)\)/(.+)$|', $dsn, $match)) {
+			//print_pre($match);
+            $proto       = $match[1];
+            $proto_opts  = $match[2] ? $match[2] : false;
+			$parsed['protocol'] = (!empty($proto)) ? $proto : 'tcp';
+			if ($parsed['protocol'] == 'unix') 
+				$parsed['socket'] = $proto_opts;
+			else throw new DBException('Unsopported protocol: '.$proto);
+			$dsn = $match[3];
+		}        
+		else throw new DBException('Unsopported DSN format: '.$dsn);
+
+		// /database
+		if (($pos = strpos($dsn, '?')) === false) $parsed['database'] = $dsn;
+		// /database?param1=value1&param2=value2
+		else {
+			$parsed['database'] = substr($dsn, 0, $pos);
+			$dsn = substr($dsn, $pos + 1);
+			if (strpos($dsn, '&') !== false) $opts = explode('&', $dsn);
+			// database?param1=value1
+			else $opts = array($dsn);
+
+			foreach ($opts as $opt) {
+				list($key, $value) = explode('=', $opt);
+				if (!isset($parsed[$key])) 
+					// don't allow params overwrite
+					$parsed[$key] = rawurldecode($value);
+			}
+		}
+		return $parsed;
+    }// }}}
 } // }}}
 ?>
