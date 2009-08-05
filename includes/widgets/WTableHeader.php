@@ -37,9 +37,9 @@ class WTableHeader extends WTableColumn
 {
     protected
         /**
-        * @var      bool
+        * @var      string
 		*/
-		$sorter = 1
+		$sorter = "non_existent"
 		;
 
     // {{{ __construct
@@ -104,6 +104,8 @@ class WTableHeader extends WTableColumn
 
 		if(!$this->getSorter())
 			$this->setStyleClass("{sorter:false}");
+		elseif($this->getSorter() !== "non_existent")
+			$this->setStyleClass("{sorter:'".$this->getSorter()."'}");
     }
 	// }}}    
 
@@ -123,10 +125,15 @@ class WTableHeader extends WTableColumn
 
    // {{{ setSorter
     function setSorter($sorter)
-    {
-		if(!isset($sorter) || !is_scalar($sorter))
+	{
+		if(!isset($sorter) || !is_string($sorter))
 			return;
-		$this->sorter = 0+$sorter;
+		$this->sorter = (string)$sorter;
+
+		$controller = Controller::getInstance();
+		$controller->addScript("jquery.metadata.js");
+		$controller->addScript("jquery.tablesorter.js");
+		$controller->addCSS("jquery.tablesorter.css");
     }
     // }}}
 	

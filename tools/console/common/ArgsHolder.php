@@ -8,7 +8,7 @@
  * Реализовано объединение простых опций: -qy(эквивалентно -q -y), -vf=file(эквивалентно -v -f=file)
  */
 
-class ArgsHolderException extends Exception{
+class ArgsHolderException extends CasseaException{
 
 }
 

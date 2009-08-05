@@ -39,6 +39,7 @@ require_once 'IMailObject.php';
  *    Добавление аттачментов.
  *    Добавление inline картинок.
  *    Валидация E-mail адресов.
+ *    ReplyTo
  */
 
 class MailObject implements IMailObject{

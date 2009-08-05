@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdSwitch</class>
+    <name>switch</name>
+    <help>
+        <short>Switch environment.</short>
+        <main>
+    Phpinfo.
+    Usage: env switch [envname]
+        </main>
+    </help>
+</command>

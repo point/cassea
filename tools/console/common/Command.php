@@ -1,6 +1,6 @@
 <?php
 
-class CommandException extends Exception {}
+class CommandException extends CasseaException {}
 
 
 class Command {

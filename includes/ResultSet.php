@@ -28,6 +28,7 @@
 }}} -*/
 
  
+$GLOBALS['__m_cache'] = array();
 // $Id$
 //
 class WidgetResultSet implements IteratorAggregate
@@ -219,31 +220,90 @@ class ResultSet
         $wrs = new WidgetResultSet();
         foreach($this->fors as $selectors => $v)
             foreach(explode(",",$selectors) as $selector)
-                if(SelectorMatcher::matched($widget,$selector,null,null) && 
-                    (isset($this->for_values[$selectors]) || isset($this->default_values[$selectors])))
-                {
-                    @$wrs->merge($this->for_values[$selectors]);
-                    @$wrs->setDef($this->default_values[$selectors]);
-                    if(isset($this->f1s[$selectors]))
-                    {
-                        unset($this->fors[$selectors]);
-                        unset($this->for_values[$selectors]);
-                    }
-                }
+			{
+				if(array_key_exists(($md5 = md5($selector.$widget->getId())),$GLOBALS['__m_cache'])) 
+				{
+					if($GLOBALS['__m_cache'][$md5] === SelectorMatcher::FALSE_CACHE) continue;
+					elseif($GLOBALS['__m_cache'][$md5] === SelectorMatcher::TRUE_CACHE)
+					{
+						//
+						@$wrs->merge($this->for_values[$selectors]);
+						@$wrs->setDef($this->default_values[$selectors]);
+						if(isset($this->f1s[$selectors]))
+						{
+							unset($this->fors[$selectors]);
+							unset($this->for_values[$selectors]);
+						}
+					}
+					elseif(/*$ret = */SelectorMatcher::matched($widget,$selector,null,null))
+					{
+						//$GLOBALS['__m_cache'][$md5] = $ret;
+						//
+						@$wrs->merge($this->for_values[$selectors]);
+						@$wrs->setDef($this->default_values[$selectors]);
+						if(isset($this->f1s[$selectors]))
+						{
+							unset($this->fors[$selectors]);
+							unset($this->for_values[$selectors]);
+						}
+					}
+				}
+				elseif(($GLOBALS['__m_cache'][$md5] = SelectorMatcher::matched($widget,$selector,null,null)))
+				{
+					//
+					@$wrs->merge($this->for_values[$selectors]);
+					@$wrs->setDef($this->default_values[$selectors]);
+					if(isset($this->f1s[$selectors]))
+					{
+						unset($this->fors[$selectors]);
+						unset($this->for_values[$selectors]);
+					}
+				}
+			}
         
         foreach($this->fors_array as $selectors => $arr)
             foreach(explode(",", $selectors) as $selector)
-                if(SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope']))
-                {
-                    @$wrs->merge($this->for_values_array[$selectors][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
-                    @$wrs->setDef($this->default_values_array[$selectors][$matched]);
-                    if(isset($this->f1s[$selectors]))
-                    {
-                        unset($this->fors_array[$selectors]['index'][$matched]);
-                        unset($this->fors_array[$selectors]['scope'][$matched]);
-                        unset($this->for_values_array[$selectors][$matched]);
-                    }
-                }
+			{
+				$md5 = md5($selector.$widget->getId());
+				if(array_key_exists($md5,$GLOBALS['__m_cache'])) 
+				{
+					if($GLOBALS['__m_cache'][$md5] === SelectorMatcher::FALSE_CACHE) continue;
+					elseif($GLOBALS['__m_cache'][$md5] === SelectorMatcher::TRUE_CACHE)
+					{
+						@$wrs->merge($this->for_values_array[$selectors][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+						@$wrs->setDef($this->default_values_array[$selectors][$matched]);
+						if(isset($this->f1s[$selectors]))
+						{
+							unset($this->fors_array[$selectors]['index'][$matched]);
+							unset($this->fors_array[$selectors]['scope'][$matched]);
+							unset($this->for_values_array[$selectors][$matched]);
+						}
+					}
+					elseif(/*$ret = */SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope']))
+					{
+						//$GLOBALS['__m_cache'][$md5] = $ret;
+						@$wrs->merge($this->for_values_array[$selectors][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+						@$wrs->setDef($this->default_values_array[$selectors][$matched]);
+						if(isset($this->f1s[$selectors]))
+						{
+							unset($this->fors_array[$selectors]['index'][$matched]);
+							unset($this->fors_array[$selectors]['scope'][$matched]);
+							unset($this->for_values_array[$selectors][$matched]);
+						}
+					}
+				}
+				elseif(($GLOBALS['__m_cache'][$md5] = SelectorMatcher::matched($widget,$selector,$arr['index'],$arr['scope'])))
+				{
+						@$wrs->merge($this->for_values_array[$selectors][$matched = Controller::getInstance()->getDisplayModeParams()->getMatchedIndex()]);
+						@$wrs->setDef($this->default_values_array[$selectors][$matched]);
+						if(isset($this->f1s[$selectors]))
+						{
+							unset($this->fors_array[$selectors]['index'][$matched]);
+							unset($this->fors_array[$selectors]['scope'][$matched]);
+							unset($this->for_values_array[$selectors][$matched]);
+						}
+				}
+			}
 
         return $wrs;
     }

@@ -19,9 +19,10 @@ class IO{
     const TYPE_CHAR = '4';
 
     /* Message const */
+    const MESSAGE_OK   = -1;
     const MESSAGE_FAIL = 1;
     const MESSAGE_TEXT = 2;
-    const MESSAGE_WARN = 3;
+    const MESSAGE_WARN = -2;
     const MESSAGE_INFO = 4;
 
     static private $answText = array(
@@ -101,10 +102,11 @@ class IO{
         if (!is_bool($nl))  $type=$nl and $nl=true;
         if (self::$verboseLevel < $type) return;
         switch($type){
-        case IO::MESSAGE_TEXT:break;
-        case IO::MESSAGE_WARN:$message = "[ ~BROWN~WARN~~~ ] ".$message;break;
-        case IO::MESSAGE_FAIL:$message = "[ ~RED~FAIL~~~ ] ".$message;break;
-        case IO::MESSAGE_INFO:$message = "[ ~BLUE~INFO~~~ ] ".$message;break;
+            case IO::MESSAGE_TEXT:break;
+            case IO::MESSAGE_WARN:$message = "[ ~BROWN~WARN~~~ ] ".$message;break;
+            case IO::MESSAGE_FAIL:$message = "[ ~RED~FAIL~~~ ] ".$message;break;
+            case IO::MESSAGE_INFO:$message = "[ ~BLUE~INFO~~~ ] ".$message;break;
+            case IO::MESSAGE_OK:$message = "[ ~GREEN~ OK ~~~ ] ".$message;break;
         }
 
         //process colors

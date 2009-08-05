@@ -9,7 +9,7 @@ require_once('Command.php');
 require_once('FS.php');
 
 
-class ConsoleException extends Exception {}
+class ConsoleException extends CasseaException {}
 
 class Console{
     const CMD = 'console';
@@ -113,13 +113,15 @@ class Console{
         IO::out('Connecting to Cassea...', false);
         
         require_once(dirname(dirname(dirname(dirname(__FILE__))))."/includes/Controller.php");
-        Config::init(new IniDBConfig("config.ini","config"));
+        /*Config::init(new IniDBConfig("config.ini","config"));
         $config = Config::getInstance();
         DB::init($config->db);
         require_once($config->root_dir.'/includes/Autoload.php');
         Autoload::init();
         Storage::init();
-        Language::init();
+        Language::init();*/
+        Controller::makeEnv();
+
         
         IO::done();
         $isConnected = true;

@@ -97,10 +97,10 @@ class CmdConvert extends Command{
 		
 		//echo "=====================";
 		//echo implode("\n",$output);//die();
-		$doc = new DOMDocument();
+		$doc = new DOMDocument('1.0','utf-8');
 		//$doc->loadXML(implode("\n",$output));
 		$doc->loadHTML(implode("\n",$output));
-		$doc->encoding="utf8";
+		$doc->encoding="utf-8";
 		
 		$subst = array("a"=>"WHyperLink",
 			"td"=>"WTableColumn",
@@ -189,8 +189,8 @@ class CmdConvert extends Command{
 		io::done('Dumping XML...');
 		if($this->show_body_only)
 		{
-			$doc2 = new DOMDocument();
-			$doc2->encoding = "utf8";
+			$doc2 = new DOMDocument('1.0','utf-8');
+			$doc2->encoding = "utf-8";
 
 			$doc2->appendChild($doc2->importNode($doc->getElementsByTagName("root")->item(0),true));
 			if(!empty($this->output_file))

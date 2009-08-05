@@ -130,15 +130,32 @@ class IniConfig extends ConfigBase
 		if(empty($filename) || !file_exists($_r) || !file_exists($this->filename = $_r.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
+		if(!isset($inherit_separator))
+			throw new ConfigException("Inherit separator doesn't exists");
+
+		if(!isset($section))
+			throw new ConfigException("Section ".$section." doesn't exists");
+
+
 		$this->section = $section;
 		$this->inherit_separator = (string)$inherit_separator;
 
 		$parsed_ini = parse_ini_file($this->filename,true);
+
 		list($sect_key,$sect_val) = $this->findSection($parsed_ini,$this->section);
 		if(!isset($sect_key, $sect_val)) return;
 
+		$config_values = array();
 
-		if(count(($expl = explode($this->inherit_separator,$sect_key))) == 2) 
+		$arr_to_parent = array();
+		foreach($sect_val as $ik => $iv)
+			$arr_to_parent = array_merge_recursive($arr_to_parent,$this->processKeys(explode(".",$ik),$iv));
+
+		array_push($config_values,$arr_to_parent);
+
+		unset($arr_to_parent);
+
+		while(count(($expl = explode($this->inherit_separator,$sect_key))) == 2) 
 		{
 			list($inh_key,$inh_val) = $this->findSection($parsed_ini,
 				trim($expl[1]));
@@ -147,19 +164,16 @@ class IniConfig extends ConfigBase
 				$arr_to_parent = array();
 				foreach($inh_val as $ik => $iv)
 					$arr_to_parent = array_merge_recursive($arr_to_parent,$this->processKeys(explode(".",$ik),$iv));
-				$this->merge(new ConfigBase($arr_to_parent));
+				array_push($config_values,$arr_to_parent);
+				unset($arr_to_parent);
+				//$this->merge(new ConfigBase($arr_to_parent));
 			}
+			else break;
+
+			$sect_key = $inh_key;
 		}
-		elseif(count($expl) > 2)
-			throw new ConfigException("Multiple inheritance not allowed");
-
-		$arr_to_parent = array();
-		foreach($sect_val as $vk => $vv)
-			$arr_to_parent = array_merge_recursive($arr_to_parent,$this->processKeys(explode(".",$vk),$vv));
-        //parent::__construct($arr_to_parent);
-        $this->merge(new configBase($arr_to_parent));
-
-		
+		foreach(array_reverse($config_values) as $v)
+			$this->merge(new ConfigBase($v));
 	}
 	protected final function findSection($arr,$sect_name)
 	{
@@ -252,10 +266,12 @@ class Config
 	}
 	static function get($parameter)
 	{
+		if(self::$instance === null) throw new ConfigException("Config hasn't been initialized");
 		return self::$instance->$parameter;
 	}
 	static function getInstance()
 	{
+		if(self::$instance === null) throw new ConfigException("Config hasn't been initialized");
 		return self::$instance;
 	}
 }

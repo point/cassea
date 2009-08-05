@@ -30,34 +30,7 @@
 // $Id$
 //
 set_include_path('.');
-require("functions.php");
-require('Autoload.php');
-require("Config.php");
-require("Storage.php");
-require("Filter.php");
-require("HTTPParamHolder.php");
-require("File.php");
-require("Header.php");
-require("Navigator.php");
-require("Template.php");
-require("EventDispatcher.php");
-require("DataObject.php");
-require("SelectorMatcher.php");
-require("DataPools.php");
-require("ResultSet.php");
-require("WidgetsAdjacencyList.php");
-require("DB.php");
-require("Language.php");
-require("user/Profile.php");
-require("user/Session.php");
-require("user/User.php");
-require("user/UserManager.php");
-require("POSTChecker.php");
-require("markdown.php");
-require("LTC.php");
-require("mailer/Mail.php");
-require("ACL.php");
-require("StringProcessor.php");
+error_reporting(0);
 
 class CasseaException extends Exception{}
 class ControllerException extends CasseaException{}
@@ -76,8 +49,6 @@ class WidgetLoader
 		$c = Config::getInstance();
 		$rd = $c->root_dir;
 		$vd = $c->vendors_dir;
-		$p1 = $rd.$vd."/widgets/".$name.".php";
-		$p2 =  $rd."/includes/widgets/".$name.".php";
 		if(file_exists( $p = $rd.$vd."/widgets/".$name.".php"));
 		elseif(file_exists($p= $rd."/includes/widgets/".$name.".php"));
 		else return false;
@@ -87,6 +58,7 @@ class WidgetLoader
 }
 class Controller
 {
+	static  $instance = null;
 	public	$p1 = null,
 			$p2 = array(),
 			$post = null,
@@ -125,7 +97,6 @@ class Controller
             $responce_string = null
 			;
 
-
 	protected function __construct()
 	{
 		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
@@ -136,6 +107,8 @@ class Controller
         if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
             Header::redirect(str_replace("_","-",requestURI(1)), 301);
 
+		self::makeEnv();
+
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
         $this->post->cleanStrings();
@@ -143,17 +116,47 @@ class Controller
 
 		$this->parseP1P2();	
 
-        if(defined('CONFIG') && defined('CONFIG_SECTION'))
-            Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
-        else Config::init(new IniDBConfig("config.ini","config"));
+	}
+	static function makeEnv()
+	{
+		require("functions.php");
+		require('Autoload.php');
+		require("Config.php");
+		require("Storage.php");
+		require("Filter.php");
+		require("HTTPParamHolder.php");
+		require("File.php");
+		require("Header.php");
+		require("Navigator.php");
+		require("Template.php");
+		require("EventDispatcher.php");
+		require("DataObject.php");
+		require("SelectorMatcher.php");
+		require("DataPools.php");
+		require("ResultSet.php");
+		require("WidgetsAdjacencyList.php");
+		require("DB.php");
+		require("Language.php");
+		require("user/Profile.php");
+		require("user/Session.php");
+		require("user/User.php");
+		require("user/UserManager.php");
+		require("POSTChecker.php");
+		require("markdown.php");
+		require("LTC.php");
+		require("mailer/Mail.php");
+		require("ACL.php");
+		require("StringProcessor.php");
+		require("env/Loader.php");
+
+		if(defined('CONFIG') && defined('CONFIG_SECTION'))
+			Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
+		else Config::init(new IniDBConfig("config.ini","config"));
 
 		Autoload::init();
 		Storage::init();
 		$config = Config::getInstance();
         DB::init($config->db);
-
-		Session::init();
-        User::get();
 
 		$tz = Config::get('timezone');
 		if(!empty($tz))
@@ -162,16 +165,14 @@ class Controller
 	}
 	static function getInstance()
 	{
-		static $instance = null;
-		
-        if(!isset($instance))
+        if(!isset(self::$instance))
         {
             if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === "XMLHttpRequest")
-                $instance = new AjaxController();
+                self::$instance = new AjaxController();
             else 
-                $instance = new Controller();
+                self::$instance = new Controller();
         }
-		return $instance;
+		return self::$instance;
 	}
 	function setPageFunc($func)
 	{
@@ -186,6 +187,8 @@ class Controller
 	}
 	function init()
     {
+		Session::init();
+        User::get();
 
         Language::Init();
         
@@ -204,14 +207,15 @@ class Controller
 		    $this->handlePOST();
 
 		//$this->addCSS("ns_reset.css");
-		$this->addScript("jquery.js");
-		$this->addScript("jquery.cookie.js");
-		$this->addScript("jquery.bgiframe.js");
-		$this->addScript("jquery.tooltip.js");
+		$this->addScript("jquery.js",null,1);
+		$this->addScript("jquery.cookie.js",null,1);
+		$this->addScript("jquery.bgiframe.js",null,1);
+		$this->addScript("jquery.tooltip.js",null,1);
 		$this->addCSS("jquery.tooltip.css");
 		//$this->addScript("jquery.treeview.js");
 		$this->addCSS("default.css");
 		$this->addScript("default.js");
+
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)
@@ -239,8 +243,10 @@ class Controller
 		else
 			$this->page = $ret;
 
-		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml")))
+		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml"))){
+			Header::error(Header::NOT_FOUND);
 			throw new ControllerException('page file '.$this->page.'.xml not found');
+		}
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
             throw new ControllerException('page '.$this->page.' is for internal use only');
@@ -689,13 +695,15 @@ class Controller
 		$h = Header::get();
 
 		usort($this->scripts,create_function('$a,$b',
-			'return ($a["priority"] < $b["priority"])?-1:1;'));
+			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
+			 else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->scripts as $v)
 			$h->addScript($v['src'],$v['cond']);
 
 		usort($this->css,create_function('$a,$b',
-			'return ($a["priority"] < $b["priority"])?-1:1;'));
+			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
+			 else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->css as $v)
 			$h->addCSS($v['src'],$v['cond'],$v['media']);
@@ -760,7 +768,7 @@ class Controller
 		//if(in_array($src,$this->scripts))return;
 		$this->scripts[] = array('src'=>
 			strpos($src,"http://") === false?
-			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond,'priority'=>$priority);
+			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond,'priority'=>$priority,"ind"=>count($this->scripts));
 	}
 	function addCSS($src = null,$cond = null,$media = null,$priority = 10)
 	{
@@ -772,7 +780,7 @@ class Controller
 		//if(in_array($src,$this->css)) return;
 		$this->css[] = array('src'=>
 			strpos($src,"http://") === false?
-			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media,'priority'=>$priority);
+			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media,'priority'=>$priority,"ind"=>count($this->css));
 	}
 	function getNavigator()
 	{

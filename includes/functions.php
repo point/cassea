@@ -58,11 +58,11 @@ function &t(&$o)
 {return $o;}
 function requestURI($full = 0)
 {	
-	$s = $full?"http://".$_SERVER['HTTP_HOST']:"";
+	$s = $full?((stripos($_SERVER['SERVER_PROTOCOL'],"https") === false)?"http://":"https://").$_SERVER['HTTP_HOST']:"";
 	$uri = $_SERVER['REQUEST_URI'];
 	if(strpos($uri,"javascript:") !== false)
 		$uri = str_replace("javascript:","",$uri);
-	return $s.Filter::filter(Filter::sanitizeVars($uri),Filter::STRING_QUOTE_ENCODE);
+	return $s.$uri;
 }
 function getImgSizeNoCache($path = null)
 {
@@ -232,7 +232,7 @@ function sizeFromString($size)
 
 function sizeToString($size,$flag=0)
 {
-    $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $sizes = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     for ($i=0; $size >= 1024 && $i < 9; $i++) 
         $size /= 1024;
     if($flag)

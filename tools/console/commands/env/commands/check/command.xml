@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdCheck</class>
+    <name>check</name>
+    <help>
+        <short>Hosting checker</short>
+        <main>
+            Usage: env check 
+            Check the hosting for need  params
+        </main>
+        <options>
+            <option name='--generate-ini' description='Generate the php.ini file.'/>
+        </options>
+
+    </help>
+</command>

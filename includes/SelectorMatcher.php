@@ -30,8 +30,14 @@
 //
 // $Id$
 //
+
 class SelectorMatcher
 {
+	const TRUE_CACHE = 1;
+	const TRUE_NOCACHE = true;
+	const FALSE_CACHE = 0;
+	const FALSE_NOCACHE = false;
+
 	static function matched(WComponent $widget, $selector,$index,$global)
 	{
 		/*echo $id = $widget->getId();
@@ -44,34 +50,32 @@ class SelectorMatcher
 		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
-			if(self::matchAttributes($widget,$parser->getParsedSelector(0))) return true;
+			return self::matchAttributes($widget,$parser->getParsedSelector(0));
 		}
 		elseif(($sel_c = $parser->getSelectorsCount()) - ($sp_c = $parser->getSplittersCount()) == 1)
 		{
 			//if(!self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1))) continue;
-			if(!self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1))) return false;
+			if(!($ret = self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1)))) return $ret;
 			$w2 = $widget;
+			$return_cache = true;
 			for($i = $sp_c - 1; $i >= 0; $i--)
 			{
 				if($parser->getParsedSplitter($i) == ">")
 				{
-					if(!$controller->getAdjacencyList()->hasParent($w2->getId())) return false;
-					//if(!$controller->getAdjacencyList()->hasParent($w2->getId())) continue 2;
-					if(self::matchAttributes(($w2 = $controller->getWidget($controller->getAdjacencyList()->getParentForId($w2->getId()))),
-						$parser->getParsedSelector($i))) continue;
-					else return false;
-					//else continue 2;
+					if(!$controller->getAdjacencyList()->hasParent($w2->getId())) return self::FALSE_CACHE;
+					if(($ret = self::matchAttributes(($w2 = $controller->getWidget($controller->getAdjacencyList()->getParentForId($w2->getId()))),
+						$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE) $return_cache = false; continue;}
+					else return $ret;
 				}
 				elseif($parser->getParsedSplitter($i) == " ")
 				{
 					while(1)
 					{
-						if(!$controller->getAdjacencyList()->hasParent($w2->getId())) return false;
-						//if(!$controller->getAdjacencyList()->hasParent($w2->getId())) continue 3;							
-						if(self::matchAttributes(($w2 = $controller->getWidget($controller->getAdjacencyList()->getParentForId($w2->getId()))),
-							$parser->getParsedSelector($i))) continue 2;
+						if(!$controller->getAdjacencyList()->hasParent($w2->getId())) return self::FALSE_CACHE;
+						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($controller->getAdjacencyList()->getParentForId($w2->getId()))),
+							$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
 					}
-					return false;
+					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 					//continue 2;
 				}
 				elseif($parser->getParsedSplitter($i) == "+")
@@ -82,15 +86,15 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i+1))
-							&& !self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))continue;
+						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i+1)))
+							&& !($ret2 = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i))))
+						{if($ret === self::TRUE_NOCACHE || $ret2 === self::FALSE_NOCACHE ) $return_cache = false; continue;}
 
-						if(self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i))) continue 2;
-						else return false;
-						//else continue 3;
+						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
+						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
+						else $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 					}
-					return false;
-					//continue 2;
+					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 				}
 				elseif($parser->getParsedSplitter($i) == "~")
 				{
@@ -100,16 +104,15 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i))) 
-							continue 2;
+						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
+						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
 					}
-					return false;
-					//continue 2;
+					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 				}
 			}
-			return true;
+			return $return_cache?self::TRUE_CACHE:self::TRUE_NOCACHE;
 			}
-		return false;
+		return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 	}
 	static function matchAttributes(WComponent $widget, $parsed_selector)
 	{
@@ -122,37 +125,37 @@ class SelectorMatcher
 		$controller = Controller::getInstance();
 
 		//id, quick
-		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return false;
+		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
 		// *
-		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return true;
+		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::FALSE_CACHE;
 		// tag
-		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return false;
+		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
 		// [attribute]
 		if(isset($parsed_selector['attr']))
 		   if( !isset($parsed_selector['attr_value'])
 			&& (!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return false;
+				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return self::FALSE_CACHE;
 			// [attr=val]
 			elseif(isset($parsed_selector['attr_value']) && isset($parsed_selector['attr_quant']))
 				if($parsed_selector['attr_quant']  === "=" && 
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return false;
+                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return self::FALSE_CACHE;
 			// [attr!=val]
 				elseif($parsed_selector['attr_quant']  === "!=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return false;
+					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return self::FALSE_CACHE;
 			// [attr^=val]
 				elseif($parsed_selector['attr_quant']  === "^=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return false;
+					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return self::FALSE_CACHE;
 			// [attr$=val]
 				elseif($parsed_selector['attr_quant']  === "$=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return false;
+					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return self::FALSE_CACHE;
 			// [attr*=val]
 				elseif($parsed_selector['attr_quant']  === "*=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return false;
+					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return self::FALSE_CACHE;
 
 
 		//pseudo
@@ -160,68 +163,64 @@ class SelectorMatcher
 			// :contains(text) for ->getText() and ->getValue()
 			if($parsed_selector['pseudo'] == "contains" && isset($parsed_selector['pseudo_value']))
 			{
-				if(method_exists($widget,"getText") && $widget->getText() != $parsed_selector['pseudo_value']) return false;
-				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return false;
+				if(method_exists($widget,"getText") && $widget->getText() != $parsed_selector['pseudo_value']) return self::FALSE_CACHE;
+				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return FALSE_CACHE;
 			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return false;
+			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return self::FALSE_CACHE;
 			// :visible
-			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return false;
+			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return self::FALSE_CACHE;
 			// :disable -> widget disable='1'
-			elseif($parsed_selector['pseudo'] === "disable" && $widget->getState()) return false;
+			elseif($parsed_selector['pseudo'] === "disable" && $widget->getState()) return self::FALSE_CACHE;
 			// :input
-			elseif($parsed_selector['pseudo'] === "input" && !$widget instanceof WControl) return false;
+			elseif($parsed_selector['pseudo'] === "input" && !$widget instanceof WControl) return self::FALSE_CACHE;
 			// :text
-			elseif($parsed_selector['pseudo'] === "text" && (!$widget instanceof WEdit || !$widget->getType() != "text")) return false;
+			elseif($parsed_selector['pseudo'] === "text" && (!$widget instanceof WEdit || !$widget->getType() != "text")) return self::FALSE_CACHE;
 			// :password
-			elseif($parsed_selector['pseudo'] === "password" && (!$widget instanceof WEdit || !$widget->getType() != "password")) return false;
+			elseif($parsed_selector['pseudo'] === "password" && (!$widget instanceof WEdit || !$widget->getType() != "password")) return self::FALSE_CACHE;
 			// :radio
-			elseif($parsed_selector['pseudo'] === "radio" && !$widget instanceof WRadio) return false;
+			elseif($parsed_selector['pseudo'] === "radio" && !$widget instanceof WRadio) return self::FALSE_CACHE;
 			// :checkbox
-			elseif($parsed_selector['pseudo'] === "checkbox" && !$widget instanceof WCheckbox) return false;
+			elseif($parsed_selector['pseudo'] === "checkbox" && !$widget instanceof WCheckbox) return self::FALSE_CACHE;
 			// :submit
-			elseif($parsed_selector['pseudo'] === "submit" && (!$widget instanceof WButton || !$widget->getType() != "submit")) return false;
-			// :image
-			elseif($parsed_selector['pseudo'] === "image" && !$widget instanceof WImage) return false;
+			elseif($parsed_selector['pseudo'] === "image" && !$widget instanceof WImage) return self::FALSE_CACHE;
 			// :reset
-			elseif($parsed_selector['pseudo'] === "reset" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return false;
+			elseif($parsed_selector['pseudo'] === "reset" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return self::FALSE_CACHE;
 			// :button
-			elseif($parsed_selector['pseudo'] === "button" && (!$widget instanceof WButton || !$widget->getType() != "button")) return false;
+			elseif($parsed_selector['pseudo'] === "button" && (!$widget instanceof WButton || !$widget->getType() != "button")) return self::FALSE_CACHE;
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && !$widget instanceof WHidden) return false;
+			elseif($parsed_selector['pseudo'] === "hidden" && !$widget instanceof WHidden) return self::FALSE_CACHE;
 			// :enabled
-			elseif($parsed_selector['pseudo'] === "enabled" && (!$widget instanceof WContol || $widget->getDisabled())) return false;
-			// :disabled
-			elseif($parsed_selector['pseudo'] === "disabled" && (!$widget instanceof WContol || !$widget->getDisabled())) return false;
+			elseif($parsed_selector['pseudo'] === "disabled" && (!$widget instanceof WContol || !$widget->getDisabled())) return self::FALSE_CACHE;
 			// :checked
-			elseif($parsed_selector['pseudo'] === "checked" && (!$widget instanceof WCheckbox || !$widget->getChecked())) return false;
+			elseif($parsed_selector['pseudo'] === "checked" && (!$widget instanceof WCheckbox || !$widget->getChecked())) return self::FALSE_CACHE;
 			// :first-child
 			elseif($parsed_selector['pseudo'] === "first-child")
 			{
-				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null) return false;
+				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null) return self::FALSE_CACHE;
 				if(($list = $controller->getAdjacencyList()->getChildren($parent)) 
-					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== 0) return false;
+					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== 0) return self::FALSE_CACHE;
 			}
 			// :last-child
 			elseif($parsed_selector['pseudo'] === "last-child")
 			{
-				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null) return false;
+				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null) return self::FALSE_CACHE;
 				if(($list = $controller->getAdjacencyList()->getChildren($parent)) 
-					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== (count($list)-1)) return false;
+					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== (count($list)-1)) return self::FALSE_CACHE;
 			}
 			// :nth-child
 			elseif($parsed_selector['pseudo'] === "nth-child")
 			{
 				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null 
-				|| !isset($parsed_selector['pseudo_value']) || !is_numeric($parsed_selector['pseudo_value'])) return false;
+				|| !isset($parsed_selector['pseudo_value']) || !is_numeric($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
 				if(($list = $controller->getAdjacencyList()->getChildren($parent)) 
-					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== ($parsed_selector['pseudo_value']-1)) return false;
+					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== ($parsed_selector['pseudo_value']-1)) return self::FALSE_CACHE;
 
 			}
 			// :index for WRoll
 			elseif($parsed_selector['pseudo'] === "index" && $widget->isInsideRoll())
 			{
-				if(!isset($parsed_selector['pseudo_value'])) return false;
+				if(!isset($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
 				//return false;
 				$w2 = $widget;
 				$parent = null;
@@ -236,7 +235,7 @@ class SelectorMatcher
 						while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
 							if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
 							else $w2 = $controller->getWidget($p);
-						if($parent == null) return false;
+						if($parent == null) return self::FALSE_CACHE;
 						$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
 					}
 
@@ -248,14 +247,14 @@ class SelectorMatcher
                         $parsed_selector['scope'] = "global";
 
                     $current = $controller->getDisplayModeParams()->getCurrent($parent,$parsed_selector['scope']);
-                    if(is_numeric($parsed_selector['pseudo_value']) && $parsed_selector['pseudo_value'] != $current) return false;
-                    if($parsed_selector['pseudo_value'] === "odd" && $current%2 !== 1) return false;
-                    if($parsed_selector['pseudo_value'] === "even" && $current%2 !== 0) return false;
+                    if(is_numeric($parsed_selector['pseudo_value']) && $parsed_selector['pseudo_value'] != $current) return self::FALSE_NOCACHE;
+                    if($parsed_selector['pseudo_value'] === "odd" && $current%2 !== 1) return self::FALSE_NOCACHE;
+                    if($parsed_selector['pseudo_value'] === "even" && $current%2 !== 0) return self::FALSE_NOCACHE;
 
-                    if($parsed_selector['pseudo_value'] === "first" && !$controller->getDisplayModeParams()->isFirst($parent,$parsed_selector['scope'])) return false;
-                    if($parsed_selector['pseudo_value'] === "last" && !$controller->getDisplayModeParams()->isLast($parent,$parsed_selector['scope'])) return false;
+                    if($parsed_selector['pseudo_value'] === "first" && !$controller->getDisplayModeParams()->isFirst($parent,$parsed_selector['scope'])) return self::FALSE_NOCACHE;
+                    if($parsed_selector['pseudo_value'] === "last" && !$controller->getDisplayModeParams()->isLast($parent,$parsed_selector['scope'])) return self::FALSE_NOCACHE;
                 }
-                elseif(!count($parsed_selector['pseudo_value'])) return false;
+                elseif(!count($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
                 else
                 {
                     $controller->getDisplayModeParams()->setMatchedIndex(-1);
@@ -287,14 +286,14 @@ class SelectorMatcher
                             if($flag)
 							{
                                 $controller->getDisplayModeParams()->setMatchedIndex($k);
-                                return true;
+                                return self::TRUE_NOCACHE;
                             }
                         }
                     }
-                    return false;
+                    return self::FALSE_NOCACHE;
                 }
 			}//finish pseudo
-		return true;
+		return self::TRUE_NOCACHE;
 	}
 }
 class SelectorParserFactory

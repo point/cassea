@@ -73,7 +73,11 @@ class WRuler extends WContainer
 
         $begin = null,
 
-        $end = null
+		$end = null,
+        /**
+        * @var      int
+		*/
+		$max_res_per_page = 10
 
 		;
     
@@ -99,7 +103,12 @@ class WRuler extends WContainer
     */
     function parseParams(SimpleXMLElement $elem)
     {
-		if(isset($elem['res_per_page']))
+		if(isset($elem['max_res_per_page']))
+			$this->setMaxResPerPage((string)$elem['max_res_per_page']);
+
+		if(($c_rpp = Controller::getInstance()->get->{$this->getId()."_rpp"}) !== null)
+			$this->setResPerPage($c_rpp);
+		elseif(isset($elem['res_per_page']))
 	       	$this->setResPerPage((string)$elem['res_per_page']);
 		if(isset($elem['links_per_page']))
 			$this->setLinksPerPage((string)$elem['links_per_page']);
@@ -187,7 +196,7 @@ class WRuler extends WContainer
     {
 		if(!isset($res_per_page) || $res_per_page < 1)
 			return;
-		$this->res_per_page = 0 + $res_per_page;
+		$this->res_per_page = min($this->getMaxResPerPage(), abs(0 + $res_per_page));
     }
     // }}}
     // {{{ getResPerPage 
@@ -201,6 +210,35 @@ class WRuler extends WContainer
     function getResPerPage()
     {
 		return $this->res_per_page;
+    }
+    // }}}
+	
+    // {{{ setMaxResPerPage 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    int $res_per_page    
+    * @return   void
+    */
+    function setMaxResPerPage($max_res_per_page)
+    {
+		if(!isset($max_res_per_page) || $max_res_per_page < 1)
+			return;
+		$this->max_res_per_page = abs(0+$max_res_per_page);
+    }
+    // }}}
+    // {{{ getMaxResPerPage 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   int
+    */
+    function getMaxResPerPage()
+    {
+		return $this->max_res_per_page;
     }
     // }}}
     // {{{ setLinksPerPage

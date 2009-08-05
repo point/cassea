@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<command>
+    <class>CmdClone</class>
+    <name>clone</name>
+    <help>
+        <short>Clone environment.</short>
+        <main>
+    Phpinfo.
+    Usage: env switch [envname][newenv]
+        </main>
+    </help>
+</command>

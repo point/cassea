@@ -76,7 +76,15 @@ abstract class WControl extends WComponent
         /**
         * @var      boolean
         */
-		$name_w_braces = 0
+        $name_w_braces = 0,
+        /**
+        * @var      int
+        */
+		$tabindex= null,
+        /**
+        * @var      boolean
+        */
+		$default = false
 		
 		   ;
     
@@ -122,9 +130,15 @@ abstract class WControl extends WComponent
 		if(isset($elem['readonly']))
 			$this->setReadOnly((string)$elem['readonly'] );
 		if(isset($elem['disabled']))
-	       	$this->setDisabled((string) $elem['disabled']);
+            $this->setDisabled((string) $elem['disabled']);
+        
+        if(isset($elem['tabindex']))
+			$this->setTabIndex((string)$elem['tabindex']);
+		if(isset($elem['defaul']))
+			$this->setTabIndex(1);
 
-		$this->addToMemento(array("value","name","readonly","disabled","alt","additional_id","filter_error_string","name_w_braces"));
+
+		$this->addToMemento(array("value","name","readonly","disabled","alt","additional_id","filter_error_string","name_w_braces","tabindex"));
 
 		parent::parseParams($elem);		    	
     }
@@ -293,6 +307,39 @@ abstract class WControl extends WComponent
     }
     // }}}
     
+    // {{{ setTabIndex 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    boolean $disabled    
+    * @return   void
+    */
+    function setTabIndex($tabindex)
+    {
+		if(!isset($tabindex) || !is_scalar($tabindex))
+            return;
+		$this->tabindex = 0 + $tabindex;
+		
+    }
+    // }}}
+    
+    // {{{ getTabIndex 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+    function getTabIndex()
+    {
+		return $this->tabindex;
+    }
+    // }}}
+
+
+    
     // {{{ getDisabled 
     /**
     * Method description
@@ -442,7 +489,8 @@ abstract class WControl extends WComponent
 			"value"=>Language::encodePair($this->getValue()),
 			//"alt"=>(isset($this->alt))?('alt="'.$this->alt.'"'):'',
 			"readonly"=>($this->getReadonly())?('readonly="'.$this->getReadonly().'"'):'',
-			"disabled"=>($this->getDisabled())?('disabled="'.$this->getDisabled().'"'):''
+            "disabled"=>($this->getDisabled())?('disabled="'.$this->getDisabled().'"'):'',
+            "tabindex"=>($this->getTabIndex())?('tabindex="'.$this->getTabIndex().'"'):''
 			));
         if($this instanceof StringProcessable)
             $this->tpl->setParams(t(new TemplateParams)->set('value',
