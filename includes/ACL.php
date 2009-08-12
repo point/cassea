@@ -129,6 +129,9 @@ class ACL
     }
 	static function in($group) // in('admin') or in(array('admin','admin2'))
 	{
+		if( self::$groups === null)
+			self::init();
+
 		if(empty($group)) return false;
 		
 		if(is_string($group)) $group = array($group);

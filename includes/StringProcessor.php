@@ -236,6 +236,8 @@ class StringProcessor
 	{ return stripslashes($str); }
 	protected function markdown($str)
 	{ return Markdown($str); }
+	protected function whitespace2nbsp($str)
+	{ return str_replace(" ",'&nbsp;',$str); }
 }
 // }}}
 ?>
