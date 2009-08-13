@@ -47,6 +47,7 @@ class SelectorMatcher
 
 		$controller = Controller::getInstance();
         $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$global);
+		$return_cache = true;
 		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
@@ -57,7 +58,6 @@ class SelectorMatcher
 			//if(!self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1))) continue;
 			if(!($ret = self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1)))) return $ret;
 			$w2 = $widget;
-			$return_cache = true;
 			for($i = $sp_c - 1; $i >= 0; $i--)
 			{
 				if($parser->getParsedSplitter($i) == ">")
@@ -73,7 +73,7 @@ class SelectorMatcher
 					{
 						if(!$controller->getAdjacencyList()->hasParent($w2->getId())) return self::FALSE_CACHE;
 						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($controller->getAdjacencyList()->getParentForId($w2->getId()))),
-							$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
+							$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE || $w2->isInsideRoll()) $return_cache = false; continue 2;}
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 					//continue 2;
@@ -127,35 +127,35 @@ class SelectorMatcher
 		//id, quick
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
 		// *
-		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::FALSE_CACHE;
+		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
 		// tag
 		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
 		// [attribute]
 		if(isset($parsed_selector['attr']))
 		   if( !isset($parsed_selector['attr_value'])
 			&& (!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return self::FALSE_CACHE;
+				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// [attr=val]
 			elseif(isset($parsed_selector['attr_value']) && isset($parsed_selector['attr_quant']))
 				if($parsed_selector['attr_quant']  === "=" && 
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return self::FALSE_CACHE;
+                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// [attr!=val]
 				elseif($parsed_selector['attr_quant']  === "!=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return self::FALSE_CACHE;
+					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// [attr^=val]
 				elseif($parsed_selector['attr_quant']  === "^=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return self::FALSE_CACHE;
+					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// [attr$=val]
 				elseif($parsed_selector['attr_quant']  === "$=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return self::FALSE_CACHE;
+					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// [attr*=val]
 				elseif($parsed_selector['attr_quant']  === "*=" &&
 					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return self::FALSE_CACHE;
+					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 
 
 		//pseudo
@@ -163,13 +163,13 @@ class SelectorMatcher
 			// :contains(text) for ->getText() and ->getValue()
 			if($parsed_selector['pseudo'] == "contains" && isset($parsed_selector['pseudo_value']))
 			{
-				if(method_exists($widget,"getText") && $widget->getText() != $parsed_selector['pseudo_value']) return self::FALSE_CACHE;
-				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return FALSE_CACHE;
+				if(method_exists($widget,"getText") && $widget->getText() != $parsed_selector['pseudo_value']) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return $widget->isInsideRoll()?self::FALSE_NOCACHE:FALSE_CACHE;
 			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// :visible
-			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 			// :disable -> widget disable='1'
 			elseif($parsed_selector['pseudo'] === "disable" && $widget->getState()) return self::FALSE_CACHE;
 			// :input

@@ -116,15 +116,17 @@ function show_error_boxes()
 		firstdiv = firstdiv.eq(0);
 
 		var message=firstdiv.text(); 
-		var input=firstdiv.prevAll(":input,:text,:checkbox label,:radio label,:file").eq(0);
+		var input=firstdiv.prevAll(" .wsnaperror, :input,:text,:checkbox label,:radio label,:file").eq(0);
+        if(!input.size()) return;
 		firstdiv.remove();
 		$("div.w_error_box").remove(); 
 		$("<div class='w_error_box'><div class='wrapper'><img class='corner' src='/w_images/c.png'/>"+
 			"<div class='ertop'>&nbsp;</div></div><div class='w_error_message'>"+message+"</div></div>").
 			insertAfter(input)
-		.offset({'top':input.offset().top+input.height()+5, 'left':input.offset().left}).width(Math.max(input.width()+5,200)).css('opacity',1).show()/*.fadeTo('slow',0.8)*/
+		.offset({'top':input.offset().top+input.height()+5, 'left':input.offset().left}).width(Math.max(Math.min(input.width()+5,300),200)).css('opacity',1).show()/*.fadeTo('slow',0.8)*/
 		.one('click',function(){ remove( $(this)); });
-		input.one('click',function(){ remove($("+ .w_error_box",this)); });
+		input.one('click',function(){ remove($("~ .w_error_box",this)); });
+		input.filter(".hasDatepicker").one('focus',function() { remove($("~ .w_error_box",this)); });
 	}
 	$("div.w-error").hide();
 	//$("form").submit(function(){ $("div.w_error_box").remove(); });
