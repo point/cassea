@@ -30,7 +30,7 @@
 // $Id$
 //
 
-class LanguageException extends Exception {}
+class LanguageException extends CasseaException {}
 
 interface iLanguageProcessor{
 	public function init();

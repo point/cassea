@@ -90,17 +90,22 @@ class ACL
         else
             DB::query("update ".self::ACL_TABLE." set groups='".(empty($res[0]['groups'])?$group:($res[0]['groups'].":".$group)).
                 "' where user_id='".$res[0]['user_id']."' and groups not REGEXP '(^|:)".$group."($|:)'");
+		ACL::flushCache($id);
             
     }
     
-    static function delUserFromGroup($id,$group)
+	static function delUserFromGroup($id,$group)
     {
-        $group=Filter::filter($group,'string_quote_encode');
+		$group=Filter::filter($group,'string_quote_encode');
         $id = Filter::filter($id,Filter::INT);
 
-        if(count($res = DB::query("select user_id, groups from ".self::ACL_TABLE." where user_id=".$id." and groups regexp '(^|:)".$group."($|:)'")))
-            DB::query("update ".self::ACL_TABLE." set groups='".implode(":",array_diff(explode(":",$res[0]['groups']),array($group))).
-            "' where user_id='".$id."' limit 1");
+		if(count($res = DB::query("select user_id, groups from ".self::ACL_TABLE." where user_id=".$id." and groups regexp '(^|:)".$group."($|:)'"))){
+			$groups = implode(":",array_diff(explode(":",$res[0]['groups']),array($group)));
+			if (!empty($groups)) $sql = "update ".self::ACL_TABLE." set groups='".$groups."' where user_id='".$id."' limit 1";
+			else $sql ="delete from ".self::ACL_TABLE." where user_id='".$id."' limit 1"; 
+			DB::query($sql);
+		}
+   		ACL::flushCache($id);
     }
 
 
@@ -129,8 +134,8 @@ class ACL
     }
 	static function in($group) // in('admin') or in(array('admin','admin2'))
 	{
-		if( self::$groups === null)
-			self::init();
+        if( self::$groups === null)
+            self::init();
 
 		if(empty($group)) return false;
 		
@@ -151,9 +156,8 @@ class ACL
     {
         if(!is_numeric($user_id)) return;
 
-        DB::query("delete from ".self::ACL_TABLE." where id='".(int)$user_id."' limit 1");
-        if(Config::getInstance()->acl->cache_groups)
-            Storage::create('acl_groups')->un_set($user_id);
+		DB::query("delete from ".self::ACL_TABLE." where id='".(int)$user_id."' limit 1");
+   		ACL::flushCache($user_id);
     }
 	static function flushCache($user_id)
 	{

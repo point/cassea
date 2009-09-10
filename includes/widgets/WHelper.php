@@ -28,8 +28,8 @@
 }}} -*/
 
 
-class BuilderException extends Exception {}
-class ComplexBuilderException extends Exception {}
+class BuilderException extends CasseaException {}
+class ComplexBuilderException extends CasseaException {}
 class WBuilder
 {
 		protected

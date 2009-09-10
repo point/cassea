@@ -28,7 +28,7 @@
 }}} -*/
 
 
-class ConfigException extends Exception {}
+class ConfigException extends CasseaException {}
 class ConfigBase implements IteratorAggregate
 {
 	const CONFIG_DIR = "/config";

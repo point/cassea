@@ -31,7 +31,7 @@
 //
 
 
-class DataObjectException extends Exception{}
+class DataObjectException extends CasseaException{}
 
 //{{{ DataObjectParams
 class DataObjectParams

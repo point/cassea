@@ -29,7 +29,7 @@
 
 // $Id$
 //
-class TemplateException extends Exception{}
+class TemplateException extends CasseaException{}
 
 class Template
 {

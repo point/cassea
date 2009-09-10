@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-class ProfileException extends Exception {}
+class ProfileException extends CasseaException {}
 
 interface iProfile
 {

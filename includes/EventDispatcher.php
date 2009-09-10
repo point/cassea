@@ -100,7 +100,7 @@ class EventDispatcher
 }
 // }}}
 
-class EventException extends Exception {}
+class EventException extends CasseaException {}
 
 // {{{ Event
 class Event

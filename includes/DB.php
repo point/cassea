@@ -59,7 +59,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
  * @package Database
  *
  **/
-class DBException extends Exception
+class DBException extends CasseaException
 {
     /**
      * Запрос вызвавший исключение. 
@@ -116,7 +116,7 @@ class DBException extends Exception
 /**
  * Исключение выбрасывается при ошибке соединения с базой данныйх.
  */
-class DBConnectException extends Exception{}
+class DBConnectException extends CasseaException{}
 // }}}
 
 // {{{ DBStmt

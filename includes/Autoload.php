@@ -1,6 +1,6 @@
 <?php
 
-class AutoloadException extends Exception{
+class AutoloadException extends CasseaException{
 }
 
 class Autoload{

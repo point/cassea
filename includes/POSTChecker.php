@@ -288,7 +288,7 @@ class POSTErrors
 }
 
 //{{{ CheckerException
-class CheckerException extends Exception
+class CheckerException extends CasseaException
 {
 	protected 
 			$widget_name = null,

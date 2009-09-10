@@ -45,7 +45,7 @@ interface StorageEngine
 }
 
 // {{{ StorageException
-class StorageException extends Exception
+class StorageException extends CasseaException
 {
 	function __construct($message)
 	{

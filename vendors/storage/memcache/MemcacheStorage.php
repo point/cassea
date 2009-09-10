@@ -34,6 +34,8 @@
  * @package Storage
  */
 
+class MemcacheException extends StorageException{}
+
 // {{{ MemcacheCnnection
 /**
  * Класс осуществляет соединнение с Memcache сервером(серверами) 
@@ -122,8 +124,9 @@ class MemcacheConnection{
 	// {{{ connect
 	static private function connect(){
 		$s = array_pop(self::$servers);
-		if (isset($s['param']) && isset($s['param']['persistent'] ) && $s['param']['persistent'] == 1 ) self::$memcache->pconnect($s['host'],$s['port']);
-		else  self::$memcache->connect($s['host'],$s['port']);
+		if (isset($s['param']) && isset($s['param']['persistent'] ) && $s['param']['persistent'] == 1 ) $res = @self::$memcache->pconnect($s['host'],$s['port']);
+		else  $res = @self::$memcache->connect($s['host'],$s['port']);
+		if (!$res) throw new MemcacheException ('Can\'t connect to Memcache Server('.$s['host'].':'. $s['port'].')');
 		self::setParams($s);
 	}//}}}
 
@@ -249,4 +252,3 @@ class MemcacheStorage implements StorageEngine, ArrayAccess
     // }}}
 
 }// }}}
-?>

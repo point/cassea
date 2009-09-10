@@ -32,7 +32,7 @@
  * link		http://codeigniter.com/user_guide/libraries/input.html
 */
 
-class FilterException extends Exception {}
+class FilterException extends CasseaException {}
 
 class Filter
 {

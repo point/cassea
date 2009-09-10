@@ -28,7 +28,7 @@
 }}} -*/
 
 
-class UserManagerException extends Exception {}
+class UserManagerException extends CasseaException {}
 
 
 class UserManager

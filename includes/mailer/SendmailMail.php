@@ -29,7 +29,7 @@
 
 require_once 'MailTransport.php';
 
-class MailException extends Exception{}
+class MailException extends CasseaException{}
 
 /*{{{class sendmailMail
  *класс реализует транспорт sendmail
