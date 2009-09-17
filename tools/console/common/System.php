@@ -1,5 +1,5 @@
 <?php
-class SystemException  extends Exception{}
+class SystemException  extends CasseaException{}
 
 class System{
 

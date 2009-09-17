@@ -1,0 +1,7 @@
+Short: Manage enviroments.
+
+
+Command: list
+Short: show current enviroments and list of avaible enviroments
+
+

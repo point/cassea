@@ -2,11 +2,4 @@
 <command>
     <class>CmdSwitch</class>
     <name>switch</name>
-    <help>
-        <short>Switch environment.</short>
-        <main>
-    Phpinfo.
-    Usage: env switch [envname]
-        </main>
-    </help>
 </command>

@@ -2,13 +2,4 @@
 <command>
     <class>CmdController</class>
     <name>controller</name>
-    <hasSubcommands>1</hasSubcommands>
-    <help>
-        <short>Manage controlers</short>
-        <main>
-            Usage: controller [add, remove] [name]</main>
-        <subcommands>
-            <cmd name='ls' description='List of controller'/>
-        </subcommands>
-    </help>
 </command>

@@ -2,14 +2,4 @@
 <command>
     <class>CmdInfo</class>
     <name>info</name>
-    <hasSubcommands>1</hasSubcommands>
-    <default>info</default>
-    <help>
-        <short>Provide information about web-server</short>
-        <main>
-   Usage: info [php] [ext] [extname]</main>
-        <subcommands>
-            <cmd name='php' description='view phpinfo'/>
-        </subcommands>
-    </help>
 </command>

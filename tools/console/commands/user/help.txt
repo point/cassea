@@ -1,0 +1,42 @@
+Short: Manage users
+
+Command: add
+Short: Add site user
+Main:
+Usage: COMMAND_PATH add LOGIN PASSWORD EMAIL 
+Option: --confirmation
+Add user and waiting for confirmation
+           
+Command: del
+Short: Delete user
+Usage: COMMAND_PATH del LOGIN
+Option: --confirm
+Delete not-confirmed user.
+
+Command: delExpired
+Short: Delete all users with delayed confirmation.
+
+
+Command: info
+Short: Show user info
+Main:
+To specify user use LOGIN, EMAIL or ID 
+.
+Usage: COMMAND_PATH info LOGIN 
+       COMMAND_PATH info ID 
+       COMMAND_PATH info EMAIL 
+
+Command: list
+Short: List registred user or users witch not complete reginstration
+Main:
+Option: --not-confirmed
+Show users with incomplete registration
+Option: --count
+Show count of all,not-confirmed users and registered users
+
+Command: password
+Short: Set password for user
+Main:
+Usage: COMMAND_PATH password  LOGIN [PASSWORD]
+
+

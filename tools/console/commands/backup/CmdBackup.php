@@ -14,8 +14,8 @@ class CmdBackup extends Command{
     public function process()
     {
         Console::initCore();
-        if ($r=ArgsHolder::get()->getOption('separate'))$this->separate=$r;
-		if ($r=ArgsHolder::get()->getOption('send-email'))
+        $this->separate = ArgsHolder::get()->getOption('separate');
+        if ($r=ArgsHolder::get()->getOption('send-email'))
 		{
 			$this->send_email = true;
 			$this->email_address = (string)$r;
@@ -24,8 +24,7 @@ class CmdBackup extends Command{
 				io::out( "Incorrect email address format",IO::MESSAGE_FAIL);
 				return;
 			}
-		}
-        if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
+        }
         try{
             $root=Config::get('ROOT_DIR');
             $name=basename($root);
@@ -38,7 +37,7 @@ class CmdBackup extends Command{
 
             if($this->send_email)
             {
-                io::out("~GREEN~Sending email to ~~~".$this->email_address);
+                io::out("Sending email to ~WHITE~".$this->email_address.'~~~', false);
                 $a=Mail::CreateMail();
                 $a->toAdd($this->email_address);
                 $a->setSubject("Backup ".$filename);
@@ -50,8 +49,20 @@ class CmdBackup extends Command{
                     $a->attachAdd($root."/".$sqlname);
                 $r = $a->send();
                 if($r === false)
-                    io::out("Sending email to ".$this->email_address." failed",IO::MESSAGE_FAIL);
-                else io::done("Email sended to ".$this->email_address);
+                    io::out('',IO::MESSAGE_FAIL);
+                else {
+                    io::done();
+                    if ( ArgsHolder::get()->getOption('clean')){
+                        IO::out('Cleaning ', false);
+                        if($this->separate) {
+                            IO::out($sqlname.' ',false);
+                            unlink($root.'/'.$sqlname);
+                        }
+                            IO::out($filename.' ',false);
+                            unlink($root.'/'.$filename);
+                            IO::done();
+                    }
+                }
             }
         }catch(Exception $e){
             io::out( $e->getMessage(),IO::MESSAGE_FAIL);
@@ -66,19 +77,35 @@ class CmdBackup extends Command{
         else
             $sqlname=$name."_".date('Ymd').'.sql';
 
-        $db_db=Config::getInstance()->db->db;
-        $db_user=Config::getInstance()->db->user;
-        $db_password=Config::getInstance()->db->password;
+        $db=Config::getInstance()->db;
+        $db = parse_url($db);
         
         io::out("Creating Mysql dump .....", false);
-        $cmd='mysqldump -R -q --single-transaction '.$db_db.' -u'.$db_user.' --password='.$db_password.' --result-file='.$root.'/'.$sqlname;
+        $cmd='mysqldump -R -q --single-transaction '.trim($db['path'],'/').' -u'.$db['user'].' --password='.(isset($db['pass'])?$db['pass']:"").' --result-file='.$root.'/'.$sqlname.'  2>&1';
         exec($cmd,$out,$return);
-        //if($return) return;//PERMISSIONS for SHOW functions and procedures... 
+        if($return){
+            io::OUt();
+            if (IO::getVerboseLevel()>IO::MESSAGE_FAIL){
+                io::out('mysqldump return code '.print_r($return,true), IO::MESSAGE_FAIL);
+                io::out('~WHITE~Command~~~: '. $cmd);
+                IO::out('~WHITE~Output ~~~:'.implode(PHP_EOL,$out)); 
+            }
+            throw new ConsoleException('mysqldump finished with errors: '.PHP_EOL.implode(PHP_EOL,$out));
+        }
         if($separate)
         {
-            $cmd='bzip2 -9 '.$root.'/'.$sqlname;
+            $cmd='bzip2 -9 '.$root.'/'.$sqlname.' 2>&1';
             exec($cmd,$out,$return);
-            if($return) return;
+            if(!$return) $sqlname.='.bz2';
+            else{
+                io::OUt();
+                if (IO::getVerboseLevel()>IO::MESSAGE_FAIL){
+                    io::out('Bzip  return code '.print_r($return,true), IO::MESSAGE_FAIL);
+                    io::out('~WHITE~Command~~~: '. $cmd);
+                    IO::out('~WHITE~Output ~~~:'.implode(PHP_EOL,$out)); 
+                }
+                throw new ConsoleException('Bzip finished with errors: '.PHP_EOL.implode(PHP_EOL,$out));
+            }
         }
         io::done();
         return $sqlname;
@@ -93,8 +120,8 @@ class CmdBackup extends Command{
             $filename=$name."_".date('Ymd').'.tar';
         //$cmd="tar -cvf ".$root."/".$filename." ".$root." --exclude='*web*' --exclude='*~'";
         chdir($root);
-        IO::out('Packing main... ', false);
-        $cmd="tar --exclude='web' --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." *";
+        IO::out('Packing main... '."\t", false);
+        $cmd="tar --exclude='web' --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." * 2>&1";
         exec($cmd,$out,$return);
         if ($return ==0) io::done();
         if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
@@ -107,7 +134,7 @@ class CmdBackup extends Command{
         }
 
         io::out('Adding web/css, web/js...', false);
-        $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/ ";
+        $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/  2>&1";
         exec($cmd,$out,$return);
         if ($return ==0) io::done();
         if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)

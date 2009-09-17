@@ -5,9 +5,9 @@ class CommandException extends CasseaException {}
 
 class Command {
     protected $name = '';
+    protected $defaultCommand = 'help';
     protected $commandsSeq;
     protected $hasSubcommands = false;
-    //protected $synonym = null;
     protected $help = null;
     /**
      * Working dirrectory of command
@@ -23,17 +23,19 @@ class Command {
         $this->commandsSeq = $commandsSeq;
         $this->commandsSeq[] = $this->name;
         //io::out($this->name.' Working Dir: '. $workingDir);
+        $this->hasSubcommands = count($this->getCommands());
     }
 
     private function parseInfo($info){
         $this->name = $info['name'];
+        if (isset($info['default'])) $this->defaultCommand = $info['default'];
         $this->hasSubcommands = isset($info['hasSubcommands']);
         //$this->synonym = isset($info['synonym'])?$info['synonym']:null;
         $this->help = $info['help'];   
     }
 
 
-    protected function processOptions(){
+    protected function processOptions(ArgsHolder $ah){
     
     }
 
@@ -49,38 +51,71 @@ class Command {
     }
     private function getCommandInfo($cmd){
         $cmd_path = $this->root.'commands/'.$cmd.'/command.xml';
+
         if (!System::is_file($cmd_path)) throw new ConsoleException('Command '.$cmd.' not found in '.$cmd_path);
         $xml = new SimpleXMLElement(file_get_contents($cmd_path));
         $info = array();
 
         //var_dump($xml);
-        $val  = array('class', 'name', 'hasSubcommands');
+        $val  = array('class', 'name', 'default');
         foreach($val as $v) if(isset($xml->$v)) $info[$v] = (string)$xml->$v;
         // Help
-        $info['help']['short'] = isset($xml->help->short)?$xml->help->short:'';
-        if (isset($xml->help))
-            $info['help']['src'] = $xml->help;
-        //print_r($info);
+        $info['help']= $this->parseHelpFile($this->root.'commands/'.$cmd.'/help.txt');
         return $info;
     }
 
-
-
     public function process(){
-            
         //io::out('>>>'.$this->name.'<<<');
         $cmd = ArgsHolder::get()->shiftCommand();
-        if ($cmd === false) $cmd = 'default'; 
+        if ($cmd === false) $cmd = $this->defaultCommand; 
 
-        if ($this->hasSubcommands && in_array($cmd, $this->getCommands())){
+        if (in_array($cmd, $this->getCommands())){
             //IO::out('Proccess Subcommands');
-            $ret = $this->processSubcommands($cmd);
+            return $this->processSubcommands($cmd);
         }
-        elseif (method_exists($this, ($f='cmd'.strtoupper(substr($cmd,0,1)).substr($cmd,1))))
-            $this->$f();
+        
+        elseif ( false !== $this->findInclassCommand($cmd)){
+            try{ return $this->processInclassCommand($cmd); }
+            catch(Exception $e){
+                $this->processException($e, get_class($this));
+            }
+        }
         else
-            $this->commandNotFound($cmd);
+            return $this->commandNotFound($cmd);
     }
+
+    /**
+     * Проверяет существование метода реализующего указнную комманду.
+     *
+     * @param string $cmd комманда
+     * @return bool true if method callable
+     */
+    private function findInclassCommand($cmd){
+        return is_callable(array($this,Command::cmdToMethod($cmd )));
+    }
+
+    private function processInclassCommand($cmd){
+        if (ArgsHolder::get()->isHelp()) $this->cmdHelp($cmd);
+        else
+            return $this->{Command::cmdToMethod($cmd)}();
+    }
+
+    // {{{ cmdToMethod
+    /**
+     * Преобразовывает команду в имя метода.
+     *
+     * Праобразование происходит по схеме:
+     * <code>
+     * $cmd= 'mycommand';
+     * echo cmdToMethod($cmd); // cmdMycommand
+     * </code>
+     *
+     * @param string $cmd
+     * @return string
+     */
+    protected static function cmdToMethod($cmd){
+        return 'cmd'.strtoupper(substr($cmd,0,1)).substr($cmd,1);
+    }//}}}
 
     private function processSubcommands($cmd){
         //IO::out('~RED~ process Subcommand :'.$cmd.'~~~');
@@ -96,43 +131,92 @@ class Command {
         try{
             //IO::out($info['class'].' Process');
             $cmd = new $info['class']($cmdRoot, $info, $this->commandsSeq);
-            $cmd->processOptions(ArgsHolder::get());
-            $cmd->process();
+            if (ArgsHolder::get()->isHelp())  
+                $cmd->cmdHelp();
+            else{
+                $cmd->processOptions(ArgsHolder::get());
+                return  $cmd->process();
+            }
         }
         catch(Exception $e){
-            
-            call_user_func(array($info['class'],'processException'),$e);
+            call_user_func(array($info['class'],'processException'),$e, $info['class']);
         }
+    }
+    protected function parseHelpFile($helpFile = null ){
+        $helpFile = is_null($helpFile)?($this->root.'/help.txt'):$helpFile;
+        if (false === ($h = file_get_contents( $helpFile)) ) throw new CommandException('help.txt for command '.get_class($this).' not found.'.PHP_EOL.'Help File: '.$helpFile);
+        $h = str_replace('COMMAND_PATH', implode(' ', $this->commandsSeq), $h);
+        $ha = explode(PHP_EOL, $h);
+        $command = '';
+        $part = '';
+        $option = null;
+        $help = array(
+            'short' => '',
+            'inclass' => array()
+        );
+
+        $help = array();
+        foreach($ha as $l){            
+            if (trim($l) == '' || substr($l,0,2) == '##') continue;
+            if ($part = 'short') $part = 'main';
+
+            if ( strpos($l, 'Short:')===0) {$part = 'short'; $l = trim(substr($l,strlen('Short:'))); $option=null;}
+            elseif(strpos($l, 'Main:') ===0) {$part = 'main'; $l = trim(substr($l,strlen('Main:'))); $option=null;}
+            elseif(strpos($l, 'Command:') ===0 &&  $command !=($newCommand = strtolower(trim(substr($l,strlen('Command:')))) )) {$command = $newCommand; $option=null; $l ='';}
+            elseif(strpos($l, 'Option:') ===0 &&  $option !=($newOption = trim(substr($l,strlen('Option:'))) )){ $option = $newOption; $l='';}
+            if ($l=='') continue;
+            if (trim($l) == '.') $l = PHP_EOL;
+
+            if (!is_null($option)){
+                if ($l != ''){
+                    if (!isset($help[$command]['options'][$option])) $help[$command]['options'][$option] = '';
+                    $help[$command]['options'][$option]  .=$l.PHP_EOL;
+                }
+            }
+            else {
+                if (!isset($help[$command][$part])) $help[$command][$part] = '';
+                $help[$command][$part]  .=$l.PHP_EOL;
+            }
+        }
+        $r = $help[''];
+        unset($help['']);
+        $r['inclass'] = $help;
+
+        if (empty($r['short'])) $r['short'] = '~RED~TODO~~~ Write Help in '.$helpFile;
+        return $r;
     }
 
 
+    protected function cmdHelp($command = null){
+        $help = $this->parseHelpFile();
+        $subCommands =  is_null($command)?$this->getCommands():array();
 
+        if (!is_null($command))
+            $help = $help['inclass'][$command];
+            
 
-    protected function cmdHelp(){
-        //var_dump($this->help);
-        $help = Command::parseHelpNode($this->help['src']);
-        IO::out($help['main']);
-        IO::out();
-        if (!empty($help['description'])){ IO::out($help['description']);IO::out();}
+        IO::out($help['short']);
+        if (!empty($help['main'])) IO::out($help['main']);
 
-        // SubCommands Short Help
-        if ($this->hasSubcommands || count($help['SubCommands'])){
+        $list = array();
+        foreach ($subCommands as $subCmd ){
+            $i = $this->getCommandInfo($subCmd);
+            $list[$subCmd] = trim($i['help']['short']);
+        }
+        if (isset($help['inclass']) && count($help['inclass']))
+        foreach ($help['inclass'] as $inCmd => $v  ){
+            $list[$inCmd] = trim($v['short']);
+        }
+        if (count($list)){
+            ksort($list, SORT_STRING);
             IO::out("~WHITE~Commands~~~:");
-            if ($this->hasSubcommands){
-                $subCommands = array(); 
-                foreach ($this->getCommands() as $subCmd ){
-                    $i = $this->getCommandInfo($subCmd);
-                    $subCommands[$subCmd] = $i['help']['short'];
-                }
-                ksort($subCommands);
-                $help['SubCommands'] += $subCommands;
-            }
-            IO::outOptions($help['SubCommands']);
+            IO::outOptions($list);
             IO::out();
         }
 
+
         // Command Options
-        if (count($help['options'])){
+        if (isset($help['options']) && count($help['options'])){
             io::out('~WHITE~Options~~~:');
             io::outOptions($help['options']);
             io::out();
@@ -140,23 +224,20 @@ class Command {
 
         // Common IO Help
         IO::out(IO::help());
-
     }
 
 
     private function commandNotFound($cmd = null){
         if ($cmd !== 'default') IO::out('Incorrect command ~WHITE~'.$cmd.'~~~', IO::MESSAGE_FAIL);
-
         return IO::out('Type "~WHITE~'.implode(' ',$this->commandsSeq).' help"~~~ for usage.');
-
-
     }
 
-
-    static function processException($e){
-
+    static function processException($e, $cmdName = ''){
+        IO::out('Command Exception ~WHITE~'.$cmdName.'~~~', IO::MESSAGE_FAIL);
+        Console::processException($e);
     }
 
+    /*
     function parseHelpNode($helpXmlNode){
         $arrHelp = array();
         //$['short'] = isset($xml->help->short)?$xml->help->short:'';o
@@ -180,7 +261,5 @@ class Command {
                 if (!is_null($name)) $arrHelp['options'][$name] = ((string)$attr['description']);
             }
         return $arrHelp;
-    }
+    }  */
 }
-
-

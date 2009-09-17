@@ -2,18 +2,5 @@
 <command>
     <class>CmdGroup</class>
     <name>group</name>
-    <hasSubcommands>1</hasSubcommands>
-    <default>group</default>
-    <help>
-        <short>Manage user groups etc</short>
-        <main>
-  Usage:  group [add, del,userlist][name]
-          group [adduser,deluser] [id]</main>
-        <subcommands>
-            <cmd name='list' description='List of groups'/>
-            <cmd name='userlist' description='List user in given group'/>
-            <cmd name='adduser' description='Add user to group '/>
-            <cmd name='deluser' description='Delete user from group'/>
-        </subcommands>
-    </help>
+    <default>list</default>
 </command>

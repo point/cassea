@@ -1,12 +1,12 @@
 <?php
 require_once ("Console.php");
-
 $c = Console::getInstance();
 try {
     $c->Init();
-    $c->process();
+    $r =  $c->process();
+    exit( $r );
 }
-catch (Exception $e){
+catch (CasseaException $e){
     Console::getInstance()->processException($e);
 }
 

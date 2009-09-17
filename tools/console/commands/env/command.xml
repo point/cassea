@@ -2,11 +2,5 @@
 <command>
     <class>CmdEnv</class>
     <name>env</name>
-    <hasSubcommands>1</hasSubcommands>
-    <default>env</default>
-    <help>
-        <short>Change the site error_reporting, etc...</short>
-        <main>
-   Usage: env [switch] [clone] [remove] </main>
-    </help>
+    <default>list</default>
 </command>

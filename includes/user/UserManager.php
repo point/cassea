@@ -341,7 +341,10 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	{
 		
 		if(!is_numeric($uid) || $uid < 1) return;
+		//TODO check user password REGEXP_PASSWORD
 		$password = Filter::filter($password,Filter::STRING_QUOTE_ENCODE);
+		if (!self::checkPassord($password))
+			throw new UserManagerException('Password not match security standards.');
 
         if ($password === null) $password = $this->generatePassword();
 		

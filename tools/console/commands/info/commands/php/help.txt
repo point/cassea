@@ -1,0 +1,10 @@
+Short: Show the phpinfo() command adapted for console
+Main: 
+Usage: COMMAND_PATH 
+Show Core configurations values for PHP derectives.
+.
+Usage: COMMAND_PATH ext 
+Show loaded extensions(modules) and their respective settings.
+.
+Usage: COMMAND_PATH ext EXTENSION_NAME
+Show setting for single extension(module)

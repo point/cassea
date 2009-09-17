@@ -2,18 +2,4 @@
 <command>
     <class>CmdUser</class>
     <name>user</name>
-    <hasSubcommands>1</hasSubcommands>
-    <default>help</default>
-    <help>
-        <short>Manage users groups etc</short>
-        <main>
-            Usage: user [add, del, info, list, setpasswd] [login]</main>
-        <subcommands>
-            <cmd name='add' description='Add user'/>
-            <cmd name='del' description='Delete user'/>
-            <cmd name='info' description='Get profile of user by id,login or E-mail '/>
-            <cmd name='list' description='Get count and  list of users'/>
-            <cmd name='password' description='Set password for user'/>
-        </subcommands>
-    </help>
 </command>

@@ -1,49 +1,20 @@
 <?php
 class CmdPhpInfo extends Command{
     
-    function process()
-    {        
-       
-        Console::initCore();
-        if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
-        if (!$c) return $this->configInfo();
-        if ($c=='ext')
-        { 
-            $ext = ArgsHolder::get()->shiftCommand();
-            if($ext)
-                return $this->infoByExt($ext);
-        }
-        else
-        {
-           io::out('Incorrect param '.$c, IO::MESSAGE_FAIL);
-           return;
-        }
-            
-        try{
-            $this->allExtInfo();
-        }catch(Exception $e){
-            echo $e;
-        }
+    public function cmdExt(){
+        if($ext = ArgsHolder::get()->shiftCommand())
+            return $this->infoByExt($ext);
+        else return $this->allExtInfo();
     }
 
-
-    public function allExtInfo()
-    {
-        $ext=$this->extInfo();
-        foreach($ext as $k=>$v)
-            if($k<>"")
-                $this->infoByExt($k);
-
-    }
-    public function configInfo()
+    public function cmdConfig()
     { 
         ob_start(); 
         phpinfo(4);
         $s = ob_get_contents(); 
         ob_end_clean(); 
         
-        $NL =  "\n";
-        $lines = explode($NL, $s);
+        $lines = explode(PHP_EOL,  $s);
         $c=count($lines);
         $out=array();
         for($i=0;$i<$c;$i++)
@@ -62,8 +33,17 @@ class CmdPhpInfo extends Command{
             }
         io::out("");
     }
+
+    private function allExtInfo()
+    {
+        $ext=$this->extInfo();
+        foreach($ext as $k=>$v)
+            if($k<>"")
+                $this->infoByExt($k);
+
+    }
     
-    public function infoByExt($ext)
+    private function infoByExt($ext)
     {
         $info=$this->extInfo();
         if (isset($info[$ext]))
@@ -82,30 +62,23 @@ class CmdPhpInfo extends Command{
                                 io::out(sprintf("%-40s %s",$k,"~CYAN~".$v."~~~"));
 
             io::out('');
-            //print_r($info[$ext]);
         }
         else 
            io::out('No such extension  '.$ext, IO::MESSAGE_FAIL);
     }
 
-    public function extInfo()
+    private function extInfo()
     { 
         ob_start(); 
         phpinfo(8);
         $s = ob_get_contents(); 
         ob_end_clean();
 
-        //print_pre($s); die ();
-
-        $NL =  "\n";
-
-        $lines = explode($NL, $s);
+        $lines = explode(PHP_EOL, $s);
         $c= count($lines) + 1;
 
         $list = get_loaded_extensions();
         $list[] = 'Module Name';
-
-        //print_pre($list); die();
 
         $res = array();
 

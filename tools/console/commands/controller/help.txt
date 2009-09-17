@@ -1,0 +1,15 @@
+Short: Manage controlers
+
+Command: ls,list
+Short: Print list of controllers
+
+Command: add
+Short: Create frame for new controller
+Option: --copy=_source_controller_
+Copy controller, pages and models from _source_controller_
+
+Command: remove
+Short: Remove controller
+Delete controller, model and page for this controller.
+Usage: controller remove _name_
+

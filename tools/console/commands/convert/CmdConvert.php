@@ -5,11 +5,6 @@ class CmdConvert extends Command{
 	private $output_file = null;
 	private $tidy_only = false;
 
-    public function __construct( $workingDir = '.', $info, $commandsSeq = array())
-    {
-        parent::__construct( $workingDir, $info, $commandsSeq);
-    }
-      
     public function process()
     {
         Console::initCore();
@@ -17,42 +12,30 @@ class CmdConvert extends Command{
 		$version = array();
 		exec('tidy -v 2>&1',$version, $ret);
 		$version = implode("\n",$version);
-		if($ret != 0)
-		{
-			io::out("You should install tidy to use converter. Exiting.");
-			return 1;
-		}
+		if($ret != 0) return io::out("You should install tidy to use converter. Exiting.") | 1;
 
-		if (ArgsHolder::get()->getOption('show-body-only'))$this->show_body_only = 1;
-		if (ArgsHolder::get()->getOption('tidy-only'))$this->tidy_only = 1;
+        $ah = ArgsHolder::get();
+        $this->show_body_only = $ah->getOption('show-body-only');
+        $this->tidy_only = $ah->getOption('tidy_only');
 		if (($f = ArgsHolder::get()->getOption('output'))) $this->output_file = trim($f,"/");
 
-        if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
-
-		if($c === false)
-		{
-			io::out("Choose file to convert. Exiting.",IO::MESSAGE_FAIL);
-			return 2;
-		}
-		$filename = $c;
+		if(($filename = ArgsHolder::get()->shiftCommand()) === false){
+            $this->cmdHelp();
+            return io::out("Choose file to convert. Exiting.",IO::MESSAGE_FAIL) | 2;
+        }
 
 		if(!file_exists($filename))
 			$filename = getcwd()."/".trim($filename,"/");
 		touch($filename);
 		if(!file_exists($filename))
-		{
-			io::out("File ".$filename." not found",IO::MESSAGE_FAIL);
-			return 2;
-		}
+            return io::out("File ".$filename." not found",IO::MESSAGE_FAIL) | 2;
+
 		if(!empty($this->output_file))
 		{
 			if(dirname($this->output_file) == "")
 				$this->output_file = getcwd()."/".$this->output_file;
 			if(!is_dir(dirname($this->output_file)))
-			{
-				io::out("Output direcotory doesn't exists",IO::MESSAGE_FAIL);
-				return 4;
-			}
+				return io::out("Output direcotory doesn't exists",IO::MESSAGE_FAIL) | 4;
 			touch($this->output_file);
 		}
 
@@ -62,43 +45,30 @@ class CmdConvert extends Command{
 			(" --error-file ".escapeshellarg(dirname(__FILE__))."/error.log ").
 			escapeshellarg($filename),$output,$ret);
 
-		if($ret == 0)
-			io::done('Tidy-ize done. ');
+        if($ret == 0) 
+            io::done('Tidy-ize done. ');
 		elseif($ret == 1)
-		{
 			io::out('Tidy-ize done, but with warnings. ('.dirname(__FILE__)."/error.log) ",IO::MESSAGE_WARN);
-			io::out('Tidy-ize done, but with warnings. ('.dirname(__FILE__)."/error.log) ");
-		}
 		else 
-		{
-			io::out("Tidy-ize failed. ",IO::MESSAGE_FAIL);
-			return 3;
-		}
+			return io::out("Tidy-ize failed. ",IO::MESSAGE_FAIL) | 3;
+
 
 		if($this->tidy_only)
 		{
 			if(!empty($this->output_file))
 			{
-				io::done('Writing html to file. ');
+				io::out('Writing html to file ');
 				$_r = file_put_contents($this->output_file,implode("\n",$output));
 				if($_r === false)
-				{
-					io::out("Can't write to file. May be permission denied? ",IO::MESSAGE_FAIL);
-					return 5;
-				}
+                    return io::out("Can't write to file. May be permission denied? ",IO::MESSAGE_FAIL) | 5;
+                io::done();
 			}
 			else 
 				echo implode("\n",$output)."\n";
-
-			io::done('Done. ');
 			return 0;
-
 		}
 		
-		//echo "=====================";
-		//echo implode("\n",$output);//die();
 		$doc = new DOMDocument('1.0','utf-8');
-		//$doc->loadXML(implode("\n",$output));
 		$doc->loadHTML(implode("\n",$output));
 		$doc->encoding="utf-8";
 		
@@ -181,12 +151,10 @@ class CmdConvert extends Command{
 					else
 						$n_dn->appendChild($cnl->item($j)->cloneNode(true));
 				}
-
 				$cn->parentNode->replaceChild($n_dn,$cn);
-				
 			}
 		}
-		io::done('Dumping XML...');
+		io::out('Dumping XML...', false);
 		if($this->show_body_only)
 		{
 			$doc2 = new DOMDocument('1.0','utf-8');
@@ -204,6 +172,6 @@ class CmdConvert extends Command{
 			else
 				echo $doc->saveXML();
 	
-		io::done('Dumping XML done. ');
+		io::done();
     }
 }

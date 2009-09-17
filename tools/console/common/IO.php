@@ -1,6 +1,6 @@
 <?php
 
-class IOException extends Exception{}
+class IOException extends CasseaException{}
 
 class IO{
 
@@ -18,14 +18,14 @@ class IO{
     const TYPE_FLOAT = '3';
     const TYPE_CHAR = '4';
 
-    /* Message const */
-    const MESSAGE_OK   = -1;
+     /* Message const */
     const MESSAGE_FAIL = 1;
-    const MESSAGE_TEXT = 2;
-    const MESSAGE_WARN = -2;
-    const MESSAGE_INFO = 4;
+    const MESSAGE_WARN = 2;
+    const MESSAGE_OK   = 3;
+    const MESSAGE_TEXT = 4;
+    const MESSAGE_INFO = 8;
 
-    static private $answText = array(
+   static private $answText = array(
         IO::NONE => "Press Enter",
         IO::OK => 'Ok',
         IO::CANCEL => 'Cancel',
@@ -148,7 +148,16 @@ class IO{
 
         $format = "  %-".$maxKey."s  %s";
         foreach($opts as $k => $v){
-            IO::out(sprintf($format, $k, $v));
+            $v = trim($v);
+            if (strpos($v, PHP_EOL) === false)
+                IO::out(sprintf($format, $k, $v));
+            else{
+                $v = explode(PHP_EOL, $v);
+
+                IO::out(sprintf($format, $k, array_shift($v)));
+                foreach($v as $l)
+                    IO::out(sprintf($format,'', $l));
+            }
         }
     
     }

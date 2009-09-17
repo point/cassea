@@ -83,8 +83,9 @@ class FilesystemStorage implements StorageEngine, ArrayAccess
 	function set($var,$val)
 	{
 		$m = md5($var);
+		$val = serialize($val);	
 		$this->vars[$m] = $val;
-		$r = file_put_contents($this->real_storage_path."/".$m.".cache",serialize($val));
+		$r = file_put_contents($this->real_storage_path."/".$m.".cache", $val);
 		if($r === false) return false;
 		return true;
     }// }}}
@@ -99,7 +100,7 @@ class FilesystemStorage implements StorageEngine, ArrayAccess
 		    unlink($this->real_storage_path."/".$m.".cache");
 	}
 	function get($var)
-    {
+	{
         $var = md5($var);
 		if(isset($this->vars[$var]))
 			return unserialize($this->vars[$var]);

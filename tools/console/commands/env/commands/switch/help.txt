@@ -1,0 +1,5 @@
+Short:Switch environment
+Usage: COMMAND_PATH  ENVIROMENT
+For avaible enviroments see command ~WHITE~ env list~~~.
+
+

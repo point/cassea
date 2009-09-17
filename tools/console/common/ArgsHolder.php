@@ -44,7 +44,7 @@ class ArgsHolder{
         array_shift($args);
         $this->args = $args;
         foreach($args as $arg)
-            if (preg_match('#^[a-zA-Z0-9.@_]+$#', $arg)) $this->commands[] = strtolower($arg); 
+            if (preg_match('#^[a-zA-Z0-9.@_/~]+$#', $arg)) $this->commands[] = strtolower($arg); 
             elseif( preg_match('#^--([a-zA-Z0-9-]+)(=(.*))?$#', $arg, $m)){ 
                 if(isset($m[2])) $this->options[$m[1]] = $m[3];
                 else $this->options[$m[1]] = true;
@@ -77,6 +77,16 @@ class ArgsHolder{
         if (count($this->commands))
             return array_shift($this->commands);
         return false;
+    }//}}}
+
+    // {{{ isHelp
+    /**
+     * проверяет является ли превая комманда в очереди коммандой 'help'
+     * 
+     * @return bool
+     */
+    function isHelp(){
+        return isset($this->commands[0]) && $this->commands[0] == 'help';
     }//}}}
 
 

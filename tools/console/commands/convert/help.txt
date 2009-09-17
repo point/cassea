@@ -1,0 +1,11 @@
+Short: Convert html to widget-compatible form.
+Usage: COMMAND_PATH _filename_
+Option: --show-body-only
+This option specifies if it should print only the contents of the body tag as an HTML fragment
+
+Option: --output=_filename_
+Defines file to output converted XML
+
+Option: --tidy-only
+Clean out code only
+

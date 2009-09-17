@@ -1,0 +1,24 @@
+Short: Manage ACL user groups
+
+Command: adduser 
+Short: Add site user to group
+Main:  
+Usage: COMMAND_PATH adduser LOGIN GROUPNAME
+
+Command: deluser 
+Short:Delete user from group
+Main:
+Usage: COMMAND_PATH deluser LOGIN GROUPNAME
+
+Command: list 
+Short: List of groups
+Main: 
+Usage: COMMAND_PATH list
+
+
+Command: userlist
+Short: List user in given group
+Main: 
+Usage: COMMAND_PATH userlist [GROUP_NAME]
+
+

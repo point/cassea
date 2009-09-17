@@ -65,22 +65,13 @@ class CmdCheck extends Command{
             'log_errors'                       => '0',
             'display_errors'                   => '1',
             'error_reporting '                 => '-1',
-        ),
-        $generate =null;
+        );
     
-    protected function processOptions()
-    {
-        if (ArgsHolder::get()->getOption('generate-ini'))
-            $this->generate = true;
-    }
-
 
     function process()
     {        
-        Console::initCore();
         $root=Config::get('ROOT_DIR');
         $file_array =file_get_contents($root.'/config/config.ini');
-        if (($c = ArgsHolder::get()->shiftCommand()) == 'help') return $this->cmdHelp();
         try{
             IO::out('');
                 $toini=array();
@@ -99,7 +90,7 @@ class CmdCheck extends Command{
                             {IO::out($k.' = '.$output[0],IO::MESSAGE_OK);continue;}
                         else
                             {io::out($k.' = '.$output[0].' this must be >='.$v,IO::MESSAGE_FAIL);continue;}
-                    }
+                   }
 
                     if($v==$output[0])
                         IO::out($k.' = '.$output[0],IO::MESSAGE_OK);
@@ -201,12 +192,14 @@ class CmdCheck extends Command{
 
                     }
 
+                IO::out();
 
                 
-                if($this->generate)
+                if(ArgsHolder::get()->getOption('generate-ini'))
                 {
                     if(!empty($toini))
                     {
+                        io::out('Generating php.ini', false);
                         $res=array();
                         if(file_exists(Config::get('ROOT_DIR').'/php.ini'))
                         {
@@ -235,16 +228,15 @@ class CmdCheck extends Command{
                         } else 
                             echo "Couldn't get the lock!";
                         fclose($f);
+                        IO::done();
 
                     }
                 }
 
         }catch(exception $e){
-         io::out( $e->getmessage(),IO::MESSAGE_FAIL);
-         return;
+            io::out( $e->getmessage(),IO::MESSAGE_FAIL);
+            return;
         }
-        IO::out();
-        IO::done('Ckecking completed successfully.'); 
     }
 }
 ?>

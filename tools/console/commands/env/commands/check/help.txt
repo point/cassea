@@ -1,0 +1,5 @@
+Short: Hosting checker
+Usage: COMMAND_PATH
+Check the hosting for needed  params
+Option:--generate-ini
+Generate the php.ini file with needed setting in document root.

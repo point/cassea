@@ -3,14 +3,4 @@
     <class>CmdBackup</class>
     <name>backup</name>
     <default>backup</default>
-    <help>
-        <short>Backup the files to tar.bz2 archieve and create MySQL DB dump. </short>
-        <main>
-   Usage: backup</main>
-    <options>
-            <option name='--separate' description='Create separated files for MySQL and the project'/>
-			<option name='--send-email=_address_' description='Create backup file and send it via mail on _address_'/>
-    </options>
-
-    </help>
 </command>
