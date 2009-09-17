@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-PHP=php
+PHP=`which php`
 INCDIR=`dirname $0`
 CASSEACMD=$0;
 
@@ -13,7 +13,7 @@ exec $PHP -C -q $INCARG\
     -d register_argc_argv="On" \
     -d auto_prepend_file="" \
     -d auto_append_file="" \
-    $INCDIR/common/casseacmd.php "$@"
+    $INCDIR/_console/common/casseacmd.php "$@"
 unset CASSEACMD
 
 exit;
