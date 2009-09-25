@@ -27,33 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-interface StringProcessable{};
+// $Id$
 
-class StringProcessorFactory
-{
-    static function create($str)
-    {
-        $o = new StringProcessor;
-        if(empty($str)) return $o;
-
-        $processors = explode("|",$str);
-        $m = array();
-        foreach($processors as $proc)
-        {
-            $proc = trim($proc);;
-            $p1 = explode("'",$proc);
-            $p2 = array();
-            for($i = 0, $c = count($p1); $i < $c; $i++)
-                if($i%2)
-                    $p2[] = trim($p1[$i]);
-                else
-                    $p2 = array_merge($p2,explode(" ",trim($p1[$i])));
-            foreach($p2 as &$v) if($v === "null") $v = null;
-            $o->addProcessor($p2[0],array_slice($p2,1));
-        }
-        return $o;
-    }
-}
 // {{{ StringProcessor 
 class StringProcessor
 {

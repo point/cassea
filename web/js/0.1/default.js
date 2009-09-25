@@ -107,17 +107,18 @@ function show_error_boxes()
 		//el.fadeTo('slow',0).remove();
 		el.hide();
 		el.remove();
-		show_error_boxes_int();
+		//show_error_boxes_int();
 	}
 	function show_error_boxes_int()
 	{
-		var firstdiv=$("div.w-error");
+		var firstdiv=$("span.w-error");
 		if(!firstdiv.size()) return;
 		firstdiv = firstdiv.eq(0);
 
 		var message=firstdiv.text(); 
-		var input=firstdiv.prevAll(" .wsnaperror, :input,:text,:checkbox label,:radio label,:file").eq(0);
+		var input=firstdiv.prevAll(" .wsnaperror, :input,:text,:checkbox label,:radio label,:file");
         if(!input.size()) return;
+		input = input.eq(input.length - 1);
 		firstdiv.remove();
 		$("div.w_error_box").remove(); 
 		$("<div class='w_error_box'><div class='wrapper'><img class='corner' src='/w_images/c.png'/>"+
@@ -128,7 +129,7 @@ function show_error_boxes()
 		input.one('click',function(){ remove($("~ .w_error_box",this)); });
 		input.filter(".hasDatepicker").one('focus',function() { remove($("~ .w_error_box",this)); });
 	}
-	$("div.w-error").hide();
+	$("span.w-error").hide();
 	//$("form").submit(function(){ $("div.w_error_box").remove(); });
 	show_error_boxes_int();
 }

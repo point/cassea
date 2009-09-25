@@ -28,7 +28,6 @@
 }}} -*/
 
 // $Id$
-//
 
 // {{{ Navigator
 
@@ -41,7 +40,7 @@ class Navigator
     const MAX_PATH = 20;
 	function Navigator($controller_name)
 	{
-		$this->storage = Storage::createWithSession('AdminNavigator'.Controller::getInstance()->getPoolName());
+		$this->storage = Storage::createWithSession('AdminNavigator'.Controller::getInstance()->getStoragePostfix());
 
 		if(!isset($controller_name))
 			$this->storage->un_set("user_path");

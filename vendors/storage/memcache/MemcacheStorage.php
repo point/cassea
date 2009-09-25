@@ -177,7 +177,7 @@ class MemcacheConnection{
 /**
  *
  */
-class MemcacheStorage implements StorageEngine, ArrayAccess
+class MemcacheStorage implements iStorageEngine, ArrayAccess
 {
 	private $storage_name = null,
             $ttl = null,

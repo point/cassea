@@ -32,7 +32,7 @@
 // $Id:$
 //
 WidgetLoader::load("WComponent");
-Autoload::addVendorDir("feed");
+Autoload::addVendor("feed");
 //{{{ WFeedLink
 class WFeedLink extends WComponent
 {

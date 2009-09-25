@@ -40,7 +40,7 @@ class AdjacencyListCell
 		$this->parent = $parent;
 	}
 }
-class WidgetAdjacencyList
+class WidgetsAdjacencyList
 {
 	public $list = array();
 	private $parent_cache = array();

@@ -28,97 +28,10 @@
 }}} -*/
 
  
-$GLOBALS['__m_cache'] = array();
 // $Id$
-//
-class WidgetResultSet implements IteratorAggregate
-{
-	private
-		$properties = array(),
-		$def = null
-		;
-	function merge($arr)
-	{
-        if(!is_array($arr)) return;
-		foreach($arr as $k => $v)
-			if(is_scalar($k) && !is_resource($v))
-				$this->properties[$k] = $v;
-	}
-	function get($key)
-	{
-		return (isset($this->properties[$key]))?$this->properties[$key]:null;
-	}
-	function setDef($value)
-	{
-		if(!isset($value) || is_resource($value)) return;
-		$this->def = $value;
-	}
-	function getDef()
-	{
-		return $this->def;
-	}
-	function __get($key)
-	{
-		return $this->get($key);
-	}
-	function __isset($key)
-	{
-		return isset($this->properties[$key]);
-	}
-	function isEmpty()
-	{
-		return (empty($this->properties) && empty($this->def));
-	}
-	// implements
-	function getIterator(){	return t(new ArrayObject($this->properties))->getIterator();}
 
-}
-class RSIndexer
-{
-    static function index($inp)
-    {
-        if(is_numeric($inp))
-            return $inp;
-        if(is_array($inp) && count($inp) == 1)
-            return $inp[0];
-        if(is_array($inp) && count($inp) > 1)
-            return serialize($inp);
-        return null;
-    }
-    static function getLastIndex($s_index)
-    {
-        if(is_numeric($s_index))
-            return $s_index;
-        if(!isset($s_index)) return null;
+$GLOBALS['__m_cache'] = array();
 
-		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
-			return $GLOBALS['__rsindexer_cache'][$s_index][0];
-
-        $us_index = unserialize($s_index);
-        if($us_index === false || !is_array($us_index) || empty($us_index))
-            $us_index = array(null);
-
-		$us_index = array_reverse($us_index);
-		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
-        return $us_index[0];
-    }
-    static function toArray($s_index)
-    {
-        if(!isset($s_index)|| is_numeric($s_index)) return array();
-
-		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
-            return array_slice($GLOBALS['__rsindexer_cache'][$s_index],1);
-
-        $us_index = unserialize($s_index);
-        if($us_index === false || !is_array($us_index) || empty($us_index))
-			$us_index = array(null);
-		$us_index = array_reverse($us_index);
-
-		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
-        return array_slice($us_index,1);
-    }
-
-}
 class ResultSet
 {
 	private 
@@ -313,4 +226,51 @@ class ResultSet
 		if($name === 'f') return $this->f($arguments[0]);
 		return $this->set($name,$arguments[0]);
 	}
+}
+
+class RSIndexer
+{
+    static function index($inp)
+    {
+        if(is_numeric($inp))
+            return $inp;
+        if(is_array($inp) && count($inp) == 1)
+            return $inp[0];
+        if(is_array($inp) && count($inp) > 1)
+            return serialize($inp);
+        return null;
+    }
+    static function getLastIndex($s_index)
+    {
+        if(is_numeric($s_index))
+            return $s_index;
+        if(!isset($s_index)) return null;
+
+		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
+			return $GLOBALS['__rsindexer_cache'][$s_index][0];
+
+        $us_index = unserialize($s_index);
+        if($us_index === false || !is_array($us_index) || empty($us_index))
+            $us_index = array(null);
+
+		$us_index = array_reverse($us_index);
+		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
+        return $us_index[0];
+    }
+    static function toArray($s_index)
+    {
+        if(!isset($s_index)|| is_numeric($s_index)) return array();
+
+		if(isset($GLOBALS['__rsindexer_cache'][$s_index]))
+            return array_slice($GLOBALS['__rsindexer_cache'][$s_index],1);
+
+        $us_index = unserialize($s_index);
+        if($us_index === false || !is_array($us_index) || empty($us_index))
+			$us_index = array(null);
+		$us_index = array_reverse($us_index);
+
+		$GLOBALS['__rsindexer_cache'][$s_index] = $us_index;
+        return array_slice($us_index,1);
+    }
+
 }

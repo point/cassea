@@ -62,7 +62,7 @@ class WForm extends WContainer
 		$form_signature = null
 		;
     const signature_name = "__sig";
-    const formid_name = "__formname";
+    //const formid_name = "__formname";
     
     // {{{ __construct
     /**
@@ -74,6 +74,7 @@ class WForm extends WContainer
     function __construct($id = null)
     {
 		parent::__construct($id);
+		$this->form_signature = $this->getId().":".md5(mt_rand()*time());
     }
     // }}}
     
@@ -244,7 +245,7 @@ class WForm extends WContainer
 				}
 
 		if(strpos($this->getAction(),"http://") === false)
-			Controller::getInstance()->addFormSignature(($this->form_signature = md5(mt_rand()*time())));
+			Controller::getInstance()->addFormSignature($this->getSignature());
 /*		$controller->dispatcher->deleteSubscriber("valuechecker_puttosubmit",$this->id);
 
 
@@ -263,6 +264,18 @@ class WForm extends WContainer
     }
 	// }}}    
 
+    // {{{ getSignature
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void
+    * @return   string
+    */
+	function getSignature()
+	{
+		return $this->form_signature;
+	}
     // {{{ assignVars
     /**
     * Method description
@@ -282,14 +295,14 @@ class WForm extends WContainer
             "vc_messages"=>!empty($this->vc_messages)?Language::encodePair(implode(", ",$this->vc_messages)):null,
 			"signature"=>$this->getMethod() != "post"?null:$this->form_signature,
 			"signature_name"=>$this->getMethod() != "post"?null:self::signature_name,
-            "formid_name" =>$this->getMethod() != "post"?null: self::formid_name,
+            //"formid_name" =>$this->getMethod() != "post"?null: self::formid_name,
 			"widget_id"=>$this->getId()
 		));
 		
 		parent::assignVars();
     }
 	// }}}	
-    function handleEvent($event)
+    function handleEvent(WidgetEvent $event)
 	{
 		if($event->getName() == "have_valuechecker" && ($id = $event->getParam('id')))
             $this->inner_valuecheckers[$id] = 1;

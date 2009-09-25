@@ -26,19 +26,86 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+/**
+ * This file contains class for manage and check user's rights.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id$
+ * @package system
+ * @since 
+ */
 
-
-// $Id$
-// {{{ ACL
+//{{{ ACL
+/** 
+ * ACL is based on user and groups. Each user may consists in one or more groups. 
+ * If user doesn't have any membership group, it will automatically droped into 
+ * group "guest". 
+ *
+ * ACL can be applied to a single widget with "allow" or "deny" attribute:
+ * <pre><code>
+ * <WText allow="admin">Super secret text 1 </WText>
+ * <WText deny="guest"> Super secret text 2 </WText>
+ * <WText deny="user" allow="super">Super secret text 3 </WText>
+ * </code></pre>
+ * In theese cases, "text 1" would be shown, only if current user has membership in 
+ * group "admin".
+ * "text 2" would be shown only if current user doesn't belong to group "guest".
+ * "text 3" would be shown only if current user doesn't belong to group "user" and 
+ * belong to "super".
+ *
+ * This kind of checks may be applied not only for simple widgets, like WText, but 
+ * for composite too. Like {@link WBlock}, {@link WRoll}, etc. All inner widgets 
+ * won't be shown.
+ *
+ * Group name may contain alphnumeric characters only. By default 
+ * they are stored in `acl` table, in comma-separated view per one user.
+ *
+ * Additionally, <code>allow</code> and <code>deny</code> contstructions are supported in
+ * root section of a page, in included page, in extended page, 
+ * in include block (in case of including not whole page).
+ *
+ * In order to have program access to groups checker, use {@link in} method.
+ *
+ * Groups are managing by direct `acl` table updates, or by console command family 
+ * <code>console group</code>
+ *
+ * You can cache parsed groups in {@link Storage} by defining config fiag 
+ * <code>acl.use = 0</code>
+ *
+ * You can switch off acl subsystem to eliminate overhead on using DB by defining config flag
+ * <code>acl.cache_groups=0</code>
+ */
 class ACL
 {
+	/**
+	 * Name of a table, where groups are stored
+	 */
     const ACL_TABLE = "acl";
 
+	/**
+	 * @var array Parsed groups from DB
+	 */
     static protected 
         $groups  = null
     ;
+	/**
+	 * @var string The name of a group for not-authenticated user
+	 */
 	static private $guest_group = "guest";
 
+	
+	//{{{ init
+	/**
+	 * Init method for lazy-loading groups.
+	 * Called only if "acl.use" config flag has true value.
+	 *
+	 * To reduce DB calls set "acl.cache_groups" config flag to true value. 
+	 * Groups for particular user will be strored in {@link Storage} with default ttl.
+	 *
+	 * @param null
+	 * @return null
+	 */
     static function init()
     {
         if(Config::getInstance()->acl->cache_groups && is_array($g = Storage::create('acl_groups')->get(User::get()->getId())) &&!empty($g))
@@ -62,6 +129,16 @@ class ACL
         }
     }
 
+
+	//{{{ getGroups
+	/**
+	 * Returns sorted array of unique groups for current user. 
+	 *
+	 * Used for console subsystem to display groups.
+	 *
+	 * @param null
+	 * @return array array of groups
+	 */
     static function getGroups()
     {
         $groups=array();
@@ -73,46 +150,123 @@ class ACL
 		return $groups;
     }
     
+
+	//{{{getUserByGroups
+	/**
+	 * If $group parameter is null, returns enumerated array of array("groups"=>$groups,"login"=>$login),
+	 * ordered by groups
+	 * Else returns array of users, which are included in given group
+	 * Used for console subsystem.
+	 *
+	 * @param mixed group name. It can be either a string or an array
+	 * @return array
+	 */
     static function getUserByGroups($group=null)
     {
-        $group=Filter::filter($group,'string_quote_encode');
+        $group=trim(Filter::filter($group,'string_quote_encode'));
         if($group===null)
             return $res = DB::query("select ".self::ACL_TABLE.".groups,".AbstractUserManager::TABLE.".login from ".self::ACL_TABLE." left join ".AbstractUserManager::TABLE." on ".self::ACL_TABLE.".user_id=".AbstractUserManager::TABLE.".id order by ".self::ACL_TABLE.".groups");
         else
             return $res = DB::query("select user_id from ".self::ACL_TABLE." where groups REGEXP  '(^|:)".$group."($|:)'");
     }
     
+
+	//{{{ addUserToGroup
+	/**
+	 * Adds given user id  to given group.
+	 *
+	 * Used by console subsystem.
+	 *
+	 * @param int user id 
+	 * @param string group name. Alphanumeric symbols only. Case sensitive.
+	 * @return null
+	 * @throws ACLException if 'group' or 'id' parameter has incorrect format.
+	 * @throws ACLException if trying to add group for nonexistent user.
+	 */
     static function addUserToGroup($id,$group)
     {
-        $group=Filter::filter($group,'string_quote_encode');
+        $group=trim(Filter::filter($group,'string_quote_encode'));
+        $id = Filter::filter($id,Filter::INT);
+
+		if(empty($group))
+			throw new ACLException("Parameter 'group' has incorrect format");
+
+		if(empty($id))
+			throw new ACLException("Parameter 'id' has incorrect format");
+
+		//check whenever to insert or update. Caching the result to catch selected gropus
         if(!count($res = DB::query("select user_id,groups from ".self::ACL_TABLE." where user_id=".$id)))
-            return DB::query("insert into ".self::ACL_TABLE." set user_id='".(int)$id."', groups='".$group."'");
+            DB::query("insert into ".self::ACL_TABLE." set user_id='".(int)$id."', groups='".$group."'");
         else
+			try{
             DB::query("update ".self::ACL_TABLE." set groups='".(empty($res[0]['groups'])?$group:($res[0]['groups'].":".$group)).
                 "' where user_id='".$res[0]['user_id']."' and groups not REGEXP '(^|:)".$group."($|:)'");
-		ACL::flushCache($id);
+			}
+		catch(DBException $e)
+		{	throw new ACLException("Trying to add group for nonexistent user or unrecoverable DB error"); }
             
+		self::flushCache($id);
     }
     
+
+	//{{{ delUserFromGroup
+	/**
+	 * Delete given group from the list of user's groups. 
+	 *
+	 * Used by console subsystem.
+	 *
+	 * @param int user id 
+	 * @param string group name. Alphanumeric symbols only. Case sensitive.
+	 * @return null
+	 * @throws ACLException if 'group' or 'id' parameter has incorrect format.
+	 */
 	static function delUserFromGroup($id,$group)
     {
 		$group=Filter::filter($group,'string_quote_encode');
         $id = Filter::filter($id,Filter::INT);
 
-		if(count($res = DB::query("select user_id, groups from ".self::ACL_TABLE." where user_id=".$id." and groups regexp '(^|:)".$group."($|:)'"))){
-			$groups = implode(":",array_diff(explode(":",$res[0]['groups']),array($group)));
-			if (!empty($groups)) $sql = "update ".self::ACL_TABLE." set groups='".$groups."' where user_id='".$id."' limit 1";
-			else $sql ="delete from ".self::ACL_TABLE." where user_id='".$id."' limit 1"; 
-			DB::query($sql);
-		}
-   		ACL::flushCache($id);
+		if(empty($group))
+			throw new ACLException("Parameter 'group' has incorrect format");
+
+		if(empty($id))
+			throw new ACLException("Parameter 'id' has incorrect format");
+
+		if(count($res = DB::query("select user_id, groups from ".self::ACL_TABLE." where user_id=".$id.
+                " and groups regexp '(^|:)".$group."($|:)'"))){
+            $groups = implode(":",array_diff(explode(":",$res[0]['groups']),array($group)));
+            if (!empty($groups)) $sql = "update ".self::ACL_TABLE." set groups='".$groups."' where user_id='".$id."' limit 1";
+            else $sql ="delete from ".self::ACL_TABLE." where user_id='".$id."' limit 1";
+            DB::query($sql);
+        }
+        ACL::flushCache($id);
     }
 
 
 
+	/**
+	 * Check whenever to allow or deny access to some resource. 
+	 * Most frequently this method is used to define to show or not the widget.
+	 * Example of using:
+	 * <pre><code>
+	 * ACL::check("admin,  authors","guest")
+	 * </code></pre>
+	 * Or in XML file
+	 * <pre><code>
+	 * <WBlock allow="admin, authors" deny="guest"/>
+	 * </code></pre>
+	 * If current user belongs to group guest return false without other checks.
+	 * If not, checking if user belongs to one of groups: "admin" or "authors".
+	 *
+	 * @param string with groups, for which access allowed. Groups are coma-separated.
+	 * @param string with groups, for which access is prohibited. Theese groups are also coma-separated.
+	 * @param string optional delimeter of groups in $allows and $denies parameters.
+	 * @return boolean true in case of access allowed or not using acl or $allows or $denies is empty. False if access denied.
+	 * @see in
+	 * @see ACL
+	 */
     static function check($allows = "", $denies = "", $delimiter = ",")
     {
-        if(!Config::getInstance()->acl->use_acl) return true;
+        if(!Config::getInstance()->acl->use) return true;
         if( self::$groups === null)
             self::init();
 
@@ -121,17 +275,34 @@ class ACL
 
         if(!empty($denies))
             if(($_d = explode($delimiter,$denies)) && count(array_intersect($_d,self::$groups))) return false;
-            else return true;
+			//else return true;
 
         if(!empty($allows))
             if(($_a = explode($delimiter,$allows)) && count(array_intersect($_a,self::$groups))) return true;
             else return false;
 
-        /*if(!empty($denies) || !empty($allows))
-            return false;*/
         return true;
 
     }
+	//}}}
+	
+	//{{{ in
+	/**
+	 * Check if current user belong to one of given groups
+	 * Example of using:
+	 * <pre><code>
+	 * ACL::in("admin");
+	 * </code></pre>
+	 * Or 
+	 * <pre><code>
+	 * ACL::in(array("admin","admin2"));
+	 * </code></pre>
+	 *
+	 * @param mixed string or array of groups to check
+	 * @return boolean true if user is in given group, false otherwise
+	 * @see check
+	 * @see ACL
+	 */
 	static function in($group) // in('admin') or in(array('admin','admin2'))
 	{
         if( self::$groups === null)
@@ -143,7 +314,12 @@ class ACL
 
 		return (bool)count(array_intersect($group,self::$groups));
 	}
-    static function add($user_id = null, $groups = array())
+	//}}}
+
+	//{{{ ==deprecated==
+	/* Deprecated. Use addUserToGroup() and delUserFromGroup() instead */
+	
+	/*static function add($user_id = null, $groups = array())
     {
         if(!is_numeric($user_id) || empty($groups) || !is_array($groups)) return;
         
@@ -152,18 +328,32 @@ class ACL
             Storage::create('acl_groups')->un_set($user_id);
 
     }
+*/
     static function delete($user_id = null)
     {
         if(!is_numeric($user_id)) return;
 
 		DB::query("delete from ".self::ACL_TABLE." where id='".(int)$user_id."' limit 1");
-   		ACL::flushCache($user_id);
-    }
+        ACL::flushCache($user_id);
+	}
+   		
+
+	//{{{ flushCache
+	/**
+	 * Flushes cached groups for given user. 
+	 * Used only if acl.use and acl.cache_groups config flags are set to true values
+	 *
+	 * @param int id of user to flush cache
+	 * @return null
+	 */
 	static function flushCache($user_id)
 	{
-        if(Config::getInstance()->acl->cache_groups)
+		if(!isset($user_id) || !is_numeric($user_id))
+			throw new ACLException("Parameter 'user_id' has incorrect format");
+        if(Config::getInstance()->acl->use && Config::getInstance()->acl->cache_groups)
             Storage::create('acl_groups')->un_set($user_id);
 	}
+	//}}}
 }
 // }}}
 ?>

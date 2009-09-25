@@ -820,10 +820,10 @@ EOD;
     * method description
     *
     * more detailed method description
-    * @param    Event $event
+    * @param    WidgetEvent $event
     * @return   void
     */
-    function handleEvent($event)
+    function handleEvent(WidgetEvent $event)
     {
 		if($event->getName() === "increment_id" /*&& $event->inDst($this->getId())*/)
 		{

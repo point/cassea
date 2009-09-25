@@ -32,7 +32,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WText
-class WText extends WContainer implements StringProcessable
+class WText extends WContainer implements iStringProcessable
 {
     protected
 

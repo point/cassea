@@ -126,7 +126,8 @@ class WValueChecker extends WObject
 		foreach($this->getWidgetFullNames() as $i => $w_name)
 		{
 			$w = Controller::getInstance()->getWidget($this->widget_ids[$i])->getName();
-			Controller::getInstance()->setChecker($form_id,$w,'filter',$this->filter);
+			$form_sig = Controller::getInstance()->getWidget($form_id)->getSignature();
+			Controller::getInstance()->setChecker($form_sig,$w,'filter',$this->filter);
 			$t1 = "'".$w_name."'".": {\n";
 			foreach($this->rules as $i=>$r)
 			{
@@ -140,7 +141,7 @@ class WValueChecker extends WObject
 				}
 				else
 					$t2 .= "true";
-                Controller::getInstance()->setChecker($form_id,$w,$r,isset($this->values[$i])?$this->values[$i]:"true", !is_null($this->messages[$i])?Language::encodePair($this->messages[$i]):null);
+                Controller::getInstance()->setChecker($form_sig,$w,$r,isset($this->values[$i])?$this->values[$i]:"true", !is_null($this->messages[$i])?Language::encodePair($this->messages[$i]):null);
 				$ta2[] = $t2;
 			}
 			$t1 .= implode(",\n",$ta2)."\n}";

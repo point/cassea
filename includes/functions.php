@@ -27,6 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+require_once("markdown.php");
+
 function print_pre($var)
 {
 	echo "<pre>";

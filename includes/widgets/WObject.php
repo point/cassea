@@ -74,7 +74,7 @@ abstract class WObject
     */
     function setID($id = null)
 	{
-		if(!isset($id) || is_numeric(substr($id,0,1)))
+		if(empty($id) || is_numeric(substr($id,0,1)))
 			$id = "__s".(self::$s_counter++);
         else
             $id = (string)$id;

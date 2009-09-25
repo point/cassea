@@ -27,21 +27,54 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
-//
-set_include_path('.');
-error_reporting(0);
-
-class CasseaException extends Exception{}
-class ControllerException extends CasseaException{}
-class IdExistsException extends CasseaException{}
+/**
+ * This file contains classes that encapsulates main logic of the application 
+ * such as Controller and AjaxController plus several helper classes.
+ *
+ * It should be included (or required) first of all other. Typical front controller logic 
+ * consists of theese statements:
+ *
+ * <pre><code>
+ * require("../includes/Controller.php");
+ * $c = Controller::getInstance();
+ * $c->init();
+ * $c->getHeadBodyTail(1);
+ * </code></pre>
+ *
+ * This code could be founded at <root_dir>/controllers/common.php.inc
+ * If this behaviour is enough for particular front controller, user may simply
+ * require <root_dir>/controllers/common.php.inc file.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @author billy <alexey.mirniy@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id$
+ * @package system
+ * @since 
+ */
 
 /**
- *
+ * Need for properly booting of app
+ */
+require_once(dirname(__FILE__)."/Boot.php");
+
+//{{{ WidgetLoader
+/**
+ * Helper class to include files with widgets.
+ * Used instead of default autoload mechanism, because in calling side 
+ * need to know does such widget exists.
  */
 class WidgetLoader
 {
-	static function load($name = null)
+	//{{{ load
+	/**
+	 * Tries to include file and class with given widget name.
+	 *
+	 * @param string name of the widget to load
+	 * @returm mixed it can be boolean false -- indicates that such widget doesn't exists. 
+	 * Or string -- name of class/file (without extension)
+	 */
+	static function load($name)
 	{
 		if(is_null($name))return false;
 		if (class_exists($name,false)) return $name;
@@ -55,50 +88,239 @@ class WidgetLoader
 		require($p);
 		return $name;
 	}
+	//}}}
 }
-class Controller
+//}}}
+
+//{{{ Controller
+class Controller extends EventBehaviour
 {
+	/**
+	 * Max count of form signatures per user to store
+	 */
+	const MAX_SIGNATURES = 32; //per user
+
+	/**
+	 * @var instance of Controller class
+	 * @static
+	 */
 	static  $instance = null;
-	public	$p1 = null,
-			$p2 = array(),
-			$post = null,
-            $get = null,
-            $cookie = null
+	
+	public	
+		/**
+		 * Parameters of current request
+		 *
+		 * @var mixed
+		 */
+		$p1 = null,
+		/**
+		 * "p2" parameters of current request.
+		 * @var array
+		 */
+		$p2 = array(),
+		/**
+		 * Holds all filtered and checked POST data. Use $_POST in extreme cases.
+		 *
+		 * @var HTTPParamHolder
+		 */
+		$post = null,
+		/**
+		 * Holds all filtered and checked GET data. Use $_GET in extreme cases.
+		 *
+		 * @var HTTPParamHolder 
+		 */
+		$get = null,
+		/**
+		 * Holds all filtered and checked COOKIE data. Use $_COOKIE in extreme cases.
+		 *
+		 * @var object of HTTPParamHolder class. 
+		 */
+		$cookie = null
 		;
 
 	protected 
-			$register_step = 1,
-			$pool_name = "default",
-            $inited = false,
-			$header = null,
-			$page = "index",
-			$page_function = null,
-			$datasets = array(),
-			$datahandlers = array(),
-			$navigator = null,
-			$controller_name = null,
-			$final_html = "",
-			$dispatcher = null,
-			$scripts = array(),
-			$css = array(),
-			$valuecheckers = array(),
-			$widgets = array(),
-			$system_widgets = array(),
-			$display_mode_params = null,
-			$adjacency_list = null,
-			$form_signatures = array(),
-			$checker_rules = array(),
-			$checker_messages = array(),
-            $pagehandler = null,
-            $ie_files = array(), //included and extending files
-            $captcha_name = null,
-            $notifyStorage = null,
-            $is_ajax = false,
-            $responce_string = null
-			;
+	
+		/**
+		 * Defines whenever to reqister step in Navigator
+		 *
+		 * @var bool
+		 */
+		$register_step = 1,
+		/**
+		 * Defines postfix to add to storage name. 
+		 * Used for prevent mixing of stored values in case of AJAX requests.
+		 *
+		 * @var string
+		 */
+		$storage_postfix = "default",
+		/**
+		 * This flag sets to true if {@link init} was made completly.
+		 * 
+		 * @var bool
+		 */
+		$inited = false,
+		/**
+		 * Header cached object
+		 *
+		 * @var Header
+		 */
+		$header = null,
+		/**
+		 * Finded page name. Default is "index".
+		 *
+		 * @var string
+		 */
+		$page = "index",
+		/**
+		 * Function that should be used to retrieve name of the page
+		 *
+		 * @var callable
+		 */
+		$page_function = null,
+		/**
+		 * List of DataSets used on the page
+		 *
+		 * @var array
+		 */
+		$datasets = array(),
+		/**
+		 * List of DataHandlers used on the page
+		 *
+		 * @var array
+		 */
+		$datahandlers = array(),
+		/**
+		 * Tracks steps on pages. Used to rewind.
+		 *
+		 * @var Navigator
+		 */
+		$navigator = null,
+		/**
+		 * Name of the current front controller (index, about, catalog etc).
+		 *
+		 * @var string
+		 */
+		$controller_name = null,
+		/**
+		 * Widget event dispatcher. Used to pass events from/to widgets
+		 *
+		 * @var WidgetEventDispatcher
+		 */
+		$dispatcher = null,
+		/**
+		 * List of javascripts, used on the current page
+		 *
+		 * @var array
+		 */
+		$scripts = array(),
+		/**
+		 * List of CSS, used on the current page
+		 *
+		 * @var array
+		 */
+		$css = array(),
+		/**
+		 * List of {@link WValueChecker valuecheckers} used on the current page.
+		 *
+		 * @var array
+		 */
+		$valuecheckers = array(),
+		/**
+		 * List of non-system widgets, used on the current page.
+		 *
+		 * @var array
+		 */
+		$widgets = array(),
+		/**
+		 * List of system widgets, used on the current page.
+		 *
+		 * @var array
+		 */
+		$system_widgets = array(),
+		/**
+		 * Defines various parameters of page display
+		 *
+		 * @var array
+		 */
+		$display_mode_params = null,
+		/**
+		 * Holds list of widget's predeccessors.
+		 *
+		 * @var WidgetAdjacencyList
+		 */
+		$adjacency_list = null,
+		/**
+		 * List of form signatures used to check authority of the incoming post data
+		 *
+		 * @var array
+		 */
+		$form_signatures = array(),
+		/**
+		 * List of rules to check incoming POST data
+		 *
+		 * @var array
+		 */
+		$checker_rules = array(),
+		/**
+		 * List of custom error messages for checking POST data
+		 *
+		 * @var array
+		 */
+		$checker_messages = array(),
+		/**
+		 * PageHandler object. It manages where to go after post handling.
+		 *
+		 * @var PageHandlerObject
+		 */
+		$pagehandler = null,
+		/**
+		 * List of files that are included in current page or 
+		 * located up by the extending hierarchy tree.
+		 *
+		 * @var array
+		 */
+		$ie_files = array(), //included and extending files
+		$captcha_name = null,
 
+		/**
+		 * Storage object that holds notify messages
+		 *
+		 * @var Storage
+		 */
+		$notifyStorage = null,
+		/**
+		 * This flag setted to true if current request was made via XMLHTTPRequest
+		 *
+		 * @var bool
+		 */
+		$is_ajax = false,
+		/**
+		 * Alternative responce string. Set it if you whant to suppress standard output,
+		 * obtained by widgets render mechanism. Usefull in ajax responces.
+		 *
+		 * @var string
+		 */
+		$responce_string = null
+		;
+
+	//{{{ __construct
+	/**
+	 * This function called when calling {@link getInstance} at first time.
+	 * 
+	 * It checks controller name, makes base cheks, initializes post, get and cookie variables,
+	 * parse "p1" and "p2" parameters.
+	 *
+	 * It triggers "BeforeConstruct" and "AfterConstruct" events. $this passed as 1st argument.
+	 *
+	 * @param null
+	 * @return null
+	 * @throws ControllerException if controller name wasn't defined
+	 * @see parseP1P2
+	 */
 	protected function __construct()
 	{
+		$this->trigger("BeforeConstruct",$this);
+
 		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
 			$this->controller_name = $m[1];
 		else throw new ControllerException('controller name not defined');
@@ -107,7 +329,7 @@ class Controller
         if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
             Header::redirect(str_replace("_","-",requestURI(1)), 301);
 
-		self::makeEnv();
+		$this->storage_postfix = $this->controller_name;
 
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
@@ -116,53 +338,19 @@ class Controller
 
 		$this->parseP1P2();	
 
-	}
-	static function makeEnv()
-	{
-		require("functions.php");
-		require('Autoload.php');
-		require("Config.php");
-		require("Storage.php");
-		require("Filter.php");
-		require("HTTPParamHolder.php");
-		require("File.php");
-		require("Header.php");
-		require("Navigator.php");
-		require("Template.php");
-		require("EventDispatcher.php");
-		require("DataObject.php");
-		require("SelectorMatcher.php");
-		require("DataPools.php");
-		require("ResultSet.php");
-		require("WidgetsAdjacencyList.php");
-		require("DB.php");
-		require("Language.php");
-		require("user/Profile.php");
-		require("user/Session.php");
-		require("user/User.php");
-		require("user/UserManager.php");
-		require("POSTChecker.php");
-		require("markdown.php");
-		require("LTC.php");
-		require("mailer/Mail.php");
-		require("ACL.php");
-		require("StringProcessor.php");
-		require("env/Loader.php");
-
-		if(defined('CONFIG') && defined('CONFIG_SECTION'))
-			Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
-		else Config::init(new IniDBConfig("config.ini","config"));
-
-		Autoload::init();
-		Storage::init();
-		$config = Config::getInstance();
-        DB::init($config->db);
-
-		$tz = Config::get('timezone');
-		if(!empty($tz))
-			date_default_timezone_set($tz);
+		$this->trigger("AfterConstruct",$this);
 
 	}
+	//}}}
+
+	//{{{ getInstance
+	/**
+	 * Singleton method. Used to construct or retrun controller object. Depending on type of request
+	 * Controller or AjaxController instance will be returned.
+	 *
+	 * @param null
+	 * @retrun Controller object
+	 */ 
 	static function getInstance()
 	{
         if(!isset(self::$instance))
@@ -174,64 +362,130 @@ class Controller
         }
 		return self::$instance;
 	}
+	//}}}
+	
+	//{{{ setPageFunc
+	/**
+	 * Sets callback to function, that defines name of the page to be displayed.
+	 *
+	 * This function must be called before {@link init} method. Only callable 
+	 * parameter allowed.
+	 *
+	 * @param callable function to be called.
+	 * @return null
+	 */
 	function setPageFunc($func)
 	{
 		if(is_callable($func))
 			$this->page_function = $func;
-    }
-    // static
+	}
+	//}}}
+
+	//{{{ setPageClassMethod
+	/**
+	 * As {@link setPageFunc} this function also sets function that defines page name.
+	 * But it sets class static method to be used as callback. This classshould be required
+	 * at the calling moment.
+	 *
+	 * @param string name of the class
+	 * @param string static method name that should be called
+	 * @return null
+	 */
 	function setPageClassMethod($class_name,$func)
 	{
 		if(is_callable($class_name,$func))
 			$this->page_function = $class_name."::".$func;
 	}
+	//}}}
+
+	//{{{ init
+	/**
+	 * This method inits lots of inner components of the system.
+	 * It designed to be called directly by user.
+	 *
+	 * It also calls handler for POST data if current request method is post.
+	 * Otherwise application continues to initialize data for GET request,
+	 * adds essential javascript and css files, parse current page
+	 * and sets flag initied to "true". 
+	 * 
+	 * Triggers "BeforeInit", "BeforeHandlePOST", "BeforeAddScript", "AfterInit" events.
+	 * $this passed as 1st argument in all of this events.
+	 * @param null
+	 * @return null
+	 * @throws ControllerException if system can't load page file
+	 */
 	function init()
     {
-		Session::init();
-        User::get();
+		$this->trigger("BeforeInit",$this);
 
-        Language::Init();
+		Boot::setupAll();
         
         $this->header = Header::get();
-		$this->dispatcher = new EventDispatcher();
+		$this->dispatcher = new WidgetEventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
-		$this->adjacency_list = new WidgetAdjacencyList();
-
-
-		POSTErrors::restoreErrorList();
+		$this->adjacency_list = new WidgetsAdjacencyList();
 
 		$this->navigator = new Navigator($this->controller_name);
 
         $full_path = $this->findPage();
-        if($_SERVER['REQUEST_METHOD'] == "POST")
-		    $this->handlePOST();
-
-		//$this->addCSS("ns_reset.css");
-		$this->addScript("jquery.js",null,1);
-		$this->addScript("jquery.cookie.js",null,1);
-		$this->addScript("jquery.bgiframe.js",null,1);
-		$this->addScript("jquery.tooltip.js",null,1);
-		$this->addCSS("jquery.tooltip.css");
-		//$this->addScript("jquery.treeview.js");
-		$this->addCSS("default.css");
-		$this->addScript("default.js");
-
 
 		$dom = new DomDocument;
         if($dom->load($full_path) === false)
             throw new ControllerException("Can not load XML ".$full_path);
 
-	
+		POSTErrors::restoreErrorList();
+		
+		$this->trigger("BeforeHandlePOST",$this);
+
+        if($_SERVER['REQUEST_METHOD'] == "POST")
+		{
+			$this->restoreSignatures();
+			$this->restoreCheckers();
+			$this->parsePageOnPOST($this->processPage($dom));
+			$this->handlePOST();
+			exit();
+		}
+
+		$this->trigger("BeforeAddScript",$this);
+
+		$this->addScript("jquery.js",null,5);
+		$this->addScript("jquery.cookie.js",null,5);
+		$this->addScript("jquery.bgiframe.js",null,5);
+		$this->addScript("jquery.tooltip.js",null,5);
+		$this->addCSS("jquery.tooltip.css",null,5);
+		$this->addCSS("default.css",null,5);
+		$this->addScript("default.js",null,5);
+
 		if($this->register_step)
 			$this->navigator->addStep($this->page);
 
-        $this->parsePage($this->processPage($dom));
+        $this->parsePageOnGET($this->processPage($dom));
         
 		$this->inited = true;
 
+		$this->trigger("AfterInit",$this);
     }
+	//}}}
+	
+	//{{{ findPage
+	/**
+	 * Tries to find page to display basing on "p1", "p2" parameters
+	 *
+	 * Pages will be looked-up page in XMLPAGES_DIR. If no pages were found 
+	 * 404 error and ControllerException will be raised.
+	 *
+	 * If page is marked as internal, ControllerException will be raised.
+	 *
+	 * Triggers "BeforeFindPage" and "AfterFindPage" events. $this passed as 1st argument.
+	 *
+	 * @param null
+	 * @return string full path to the page (from the server's root).
+	 * @throws ControllerException in case of error.
+	 */
     protected function findPage()
     {
+		$this->trigger("BeforeFindPage",$this);
+
         $ret = null;
 		if(is_string($this->page_function))
 			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
@@ -243,6 +497,8 @@ class Controller
 		else
 			$this->page = $ret;
 
+		$this->trigger("PageFinded",array($this,$this->page));
+
 		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml"))){
 			Header::error(Header::NOT_FOUND);
 			throw new ControllerException('page file '.$this->page.'.xml not found');
@@ -250,9 +506,21 @@ class Controller
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
             throw new ControllerException('page '.$this->page.' is for internal use only');
-        //Header::error();
+
+		$this->trigger("AfterFindPage",$this);
+
         return $full_path;
-    }
+	}
+	//}}}
+	
+	//{{{ parseP1P2
+	/**
+	 * Retrieves and parses "p1" and "p2" parameters from GET.
+	 * Used by internal functions at the initialization time.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	protected final function parseP1P2()
 	{
 		$this->get->bindFilter('__p1',Filter::STRING_QUOTE_ENCODE);
@@ -263,11 +531,6 @@ class Controller
 		if(isset($this->get->__p2))
 		{
 			$this->p2 = urldecode($this->get->__p2);
-			/*if ( strpos($this->p2,'/') === 0 ) 
-				$this->p2 = substr($this->p2, 1);
-
-			if ( strlen($this->p2) -1 ===  strrpos($this->p2,'/'))		
-                $this->p2 = substr($this->p2, 0, -1);*/
 
             $this->p2 = trim($this->p2,"/");
 
@@ -276,13 +539,34 @@ class Controller
             else $this->p2 = array();
 		}
     }
+	//}}}
+	
+	//{{{ pagePath
+	/**
+	 * Returns full page path based on given src.
+	 * 
+	 * If $src is a string with leading slash, page will be looked-up 
+	 * from XMLPAGES_DIR. Otherwise it will be looked-up from the dir
+	 * with paages for current controller.
+	 *
+	 * If page not found in XMLPAGES_DIR, {@link vendorPagePath} will be
+	 * called to try to find the page.
+	 * 
+	 * @param string partial src of the page to find
+	 * @param bool if set to true page will be looking-up in the vendor
+	 * dir only.
+	 * @retrun string full path to the page from server's root.
+	 * @see vendorPagePath
+	 * @throws ControllerException if unable to find page path
+	 */
     protected final function pagePath($src, $vendor_only = false)
     {
         if(empty($src))
 			throw new ControllerException('page file not set');
 
 		if ($vendor_only) return  $this->vendorPagePath($src);
-		else{
+		else
+		{
 			// models page
 			$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
 			$src = ($src{0} != "/")?('/'.$this->controller_name.'/'.$src):$src;
@@ -290,11 +574,23 @@ class Controller
 			if(file_exists($src2)) return $src2;
 
 			// vendor pages
-			return $this->vendorPagePath($src);
+			try{
+				return $this->vendorPagePath($src);
+			}
+			catch(ControllerException $e)
+			{throw new ControllerException('page file '.$src.' not found');}
 		}
-		throw new ControllerException('page file '.$src.' not found');
+		
 	}
 
+	//{{{ vendorPagePath
+	/**
+	 * Trying to retrieve full page path in vendor dir only.
+	 *
+	 * @param string partial src of the page to find
+	 * @retrun string full path to the page from server's root.
+	 * @throws ControllerException if unable to find page path
+	 */
     protected final function vendorPagePath($src)
     {
 		$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
@@ -304,17 +600,70 @@ class Controller
 		if(file_exists($src2)) return $src2;
 		throw new ControllerException('vendor page file '.$src.' not found', 1);
 	}
+	//}}}
 
-
+	//{{{ processPage
+	/**
+	 * It makes all transformation with page's DOM model in order to make
+	 * checks, extending and including functions.
+	 *
+	 * If current page is not allowed to show, Header::FORBIDDEN HTTP code will be returned.
+	 *
+	 * While extending page, system tries to overload ascending <block>'s with 
+	 * blocks on the current page with same names. For example
+	 * <pre><code>
+	 * Page base.xml:
+	 * <root>
+	 *		<block id="b1">
+	 *			<WText>Hello base.xml</WText>
+	 *		</block>
+	 *		<WText>Common text</WText>
+	 * </root>
+	 * 
+	 * Page derived.xml:
+	 * <root extends="base">
+	 *		<block id="b1">
+	 *			<WText>Hello derived.xml</WText>
+	 *		</block>
+	 * </root>
+	 * </pre></code>
+	 *
+	 * Since page derived.xml is extending base.xml, system tries to find base.xml in current controller's 
+	 * directory and tries to substitute block "b1" in base.xml with derived.xml "b1". 
+	 *
+	 * Also, <pre><code> <parent id="b1"/> </code></pre> may be used to include parent's block with id "b1".
+	 *
+	 * Ascending pages always checking upto ACL
+	 *
+	 * In case of including, 
+	 * <pre><code> 
+	 * <include src="base.xml" block="b1" allow="admin"/> 
+	 * </code></pre> syntax is used.
+	 *
+	 * It includes block "b1" (may be optional) from the file "base.xml" and allows it only for group
+	 * "admin" (optional too).
+	 *
+	 * Triggers "BeforeExtendsLookup", "BeforeParentLookup", "BeforeExtending", "BeforeIncluding",
+	 * AfterProcess events. $this passed as 1st argument, $dom passed as 2nd parameter.
+	 *
+	 * @param DomDocument object to make transformation
+	 * @return DomDocument object that have been transofrmed
+	 * @throws ControllerException in case of unrecoverable error
+	 * @see ACL::check
+	 */
     protected function processPage(DomDocument $dom)
     {
+		$this->trigger("BeforeProcessPage",array($this,$dom));
+
         if(! $dom instanceof DOMNode || !isset($dom->firstChild))
             throw new ControllerException("XML document not valid");
         // check rights
         $a = $dom->firstChild->getAttribute('allow');
         $d = $dom->firstChild->getAttribute('deny');
         if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
-           //die("ACL!");
+        
+
+		$this->trigger("BeforeExtendsLookup",array($this,$dom));
 
         // extends
         $adj_list = array($dom);
@@ -325,15 +674,18 @@ class Controller
             $t_dom = new DomDocument;
             try { $t_dom->load(($pp = $this->pagePath($e_src))); }
             catch(ControllerException $e) { throw new ControllerException('extends page not found');}
-            //$included_pages[] = $e_src;
+			
             $_a = $t_dom->firstChild->getAttribute('allow');
             $_d = $t_dom->firstChild->getAttribute('deny');
             if(!ACL::check($_a,$_d)) Header::error(Header::FORBIDDEN);
-           //die("ACL!");
+           
             array_unshift($included_pages,$e_src);
             array_unshift($adj_list,$t_dom);
             $this->ie_files[] = $pp;
         }
+
+		$this->trigger("BeforeParentLookup",array($this,$dom));
+
         // searching for <parent> blocks
         for($i = 1, $c = count($adj_list);$i < $c;$i++)
         {
@@ -352,6 +704,8 @@ class Controller
                 }
         }
         // extending
+
+		$this->trigger("BeforeExtending",array($this,$dom));
 
         if(count($adj_list) > 1)
             for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
@@ -386,6 +740,8 @@ class Controller
                 $el->parentNode->insertBefore($el_cn->item($j)->cloneNode(true),$el);
             $el->parentNode->removeChild($el);
         }
+
+		$this->trigger("BeforeIncluding",array($this,$dom));
 
         // include
         $node = $dom->getElementsByTagName("include");
@@ -436,10 +792,33 @@ class Controller
             $this->ie_files[] = $src;
             
         }
+
+		$this->trigger("AfterProcess",array($this,$dom));
+
         return $dom;
     }
-	protected function parsePage(DomDocument $dom)
+	//}}}
+	
+	//{{{ parsePageOnGET
+	/**
+	 * This method creates all necessary objects to make GET request, so to dislpay page.
+	 * This is DataSets, Styles, JavaScripts, ValueCheckers objects and widgets directly 
+	 * (via {@link buildWidget} function.
+	 *
+	 * It's called only if current request method is GET.
+	 *
+	 * Triggers "BeforeParsePageOnGET" and "AfterParsePageOnGET" events.
+	 * $this passed as 1st argument, $dom as 2nd argument.
+	 *
+	 * @param DomDocument object on the base of which all inner components 
+	 * would be created.
+	 * @return null
+	 * @see buildWidget
+	 */
+	protected function parsePageOnGET(DomDocument $dom)
 	{
+		$this->trigger("BeforeParsePageOnGET",array($this,$dom));
+
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
@@ -448,15 +827,6 @@ class Controller
 			$this->addDataSet(simplexml_import_dom($el));
 			$el->parentNode->removeChild($el);
 		}
-		$node = $dom->getElementsByTagName("WDataHandler");
-		for($i = 0, $c = $node->length;$i < $c;$i++)
-		{
-			$el = $node->item(0);
-			if(empty($el)) continue;
-			$this->addDataHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
-		}
-
 		$node = $dom->getElementsByTagName("WStyle");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
@@ -475,15 +845,6 @@ class Controller
 		}
 		unset($xpath);
 
-		$node = $dom->getElementsByTagName("WPageHandler");
-		for($i = 0, $c = $node->length;$i < $c;$i++)
-		{
-			$el = $node->item(0);
-			if(empty($el)) continue;
-			$this->addPageHandler(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
-		}
-
 		$node = $dom->getElementsByTagName("WValueChecker");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
@@ -496,12 +857,74 @@ class Controller
 		$sxml = simplexml_import_dom($dom);
 		foreach($sxml as $elem)
 			$this->buildWidget($elem);
-		$this->getDispatcher()->notify(new Event("all_build_complete"));
+		$this->getDispatcher()->notify(new WidgetEvent("all_build_complete"));
 		unset($d);
-		
+
+		$this->trigger("AfterParsePageOnGET",array($this,$dom));
+
 	}
+	//}}}
+	
+	//{{{ parsePageOnPOST
+	/**
+	 *
+	 * This method creates all necessary objects to make POST request.
+	 * This is DataHandler, PageHandler objects.
+	 *
+	 * It's called only if current request method is POST.
+	 *
+	 * Triggers "BeforeParsePageOnPOST" and "AfterParsePageOnPOST" events.
+	 * $this passed as 1st argument, $dom as 2nd argument.
+	 *
+	 * @param DomDocument object on the base of which all inner components 
+	 * would be created.
+	 * @return null
+	 */
+	protected function parsePageOnPOST(DomDocument $dom)
+	{
+		$this->trigger("BeforeParsePageOnPOST",array($this,$dom));
+
+		$node = $dom->getElementsByTagName("WDataHandler");
+		for($i = 0, $c = $node->length;$i < $c;$i++)
+		{
+			$el = $node->item(0);
+			if(empty($el)) continue;
+			$this->addDataHandler(simplexml_import_dom($el));
+			$el->parentNode->removeChild($el);
+		}
+		$node = $dom->getElementsByTagName("WPageHandler");
+		for($i = 0, $c = $node->length;$i < $c;$i++)
+		{
+			$el = $node->item(0);
+			if(empty($el)) continue;
+			$this->addPageHandler(simplexml_import_dom($el));
+			$el->parentNode->removeChild($el);
+		}
+
+		$this->trigger("BeforeParsePageOnPOST",array($this,$dom));
+	}
+	//}}}
+
+	//{{{ buildWidget
+	/**
+	 * This function creates new instance of widget and setups all need environment,
+	 * such as javascripts, styles, etc.
+	 *
+	 * If widget class could not be found it silently exists.
+	 *
+	 * System widgets are kept in other list, so if widget creates internally, it should be
+	 * marked as system.
+	 *
+	 * Triggers "BeforeBuildWidget" event.
+	 * $this passed as 1st argument, $elem as 2nd, $system as 3rd.
+	 *
+	 * @param SimpleXMLElement object which prepresents widget
+	 * @return null
+	 */
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
+		$this->trigger("BeforeBuildWidget",array($this,$elem,$system));
+
 		if(($widget_name = WidgetLoader::load($elem->getName())) === false) return;
 
 		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
@@ -527,15 +950,6 @@ class Controller
 		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
 					$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
 
-		/*if($widget instanceof WControl && isset($elem['datahandler']) && isset($this->datahandlers[(string)$elem['datahandler']]))
-		{
-			$this->corresp_map[$widget->getName()]['dh'] = (string)$elem['datahandler'];
-			$widget->setDataHandler((string)$elem['datahandler']);
-			if(!empty($elem['filter']))
-				$this->corresp_map[$widget->getName()]['filter'] = (string)$elem['filter'];
-			if(!empty($elem['apply_filter']))
-				$this->corresp_map[$widget->getName()]['apply_filter'] = (string)$elem['apply_filter'];
-        }*/
 		if($widget instanceof WComponent && $widget->getState())
 			$widget->buildComplete();
 		if($system)
@@ -546,6 +960,15 @@ class Controller
 		else
 			$this->widgets[$w_id] = $widget;
 	}
+	//}}}
+	
+	//{{{ checkACL
+	/**
+	 * Iternal function that checks rights upon given parsed XML, representing single widget.
+	 *
+	 * @param SimpleXMLElement parsed part of XML tree, representing single widget
+	 * @return bool result of checking ACL rights
+	 */
 	private function checkACL(SimpleXMLElement $elem)
 	{
 		$a = $d = null;
@@ -555,23 +978,47 @@ class Controller
             $d = (string)$elem['deny'];
         return ACL::check($a,$d);
 	}
+	//}}}
+	
+	//{{{ addDataSet
+	/** 
+	 * Adds DataSet widget to current datasets list. 
+	 *
+	 * Triggers "BeforeAddDataSet" event.
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing single dataset.
+	 * @return null
+	 */
 	function addDataSet(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddDataSet",array($this,$elem));
+
 		if(WidgetLoader::load("WDataSet") === false) return;
 
 		if(!$this->checkACL($elem)) return;
 
 		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
-		
-		if(isset($this->datasets[$ds->getId()]))
-			throw new IdExistsException('DataSet with id '.$ds->getId().' already exists');
 			
 		$ds->parseParams($elem);
-		$this->datasets[(string)$ds->getId()] = $ds;
+		$this->datasets[] = $ds;
 	}
+	//}}}
 
+	//{{{ addDataHandler
+	/** 
+	 * Adds DataHandler widget to current datahandlers list. 
+	 *
+	 * Triggers "BeforeAddDataHandler" event.
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing single datahandler.
+	 * @return null
+	 */
 	function addDataHandler(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddDataHandler",array($this,$elem));
+
 		if(WidgetLoader::load("WDataHandler") === false) return;
 
 		if(!$this->checkACL($elem)) return;
@@ -580,8 +1027,25 @@ class Controller
 		$dh->parseParams($elem);
 		$this->datahandlers[] = $dh;
 	}
+	//}}}
+	
+	//{{{ addStyle
+	/**
+	 * Adds style to styles list. Each widget could declare 
+	 * <code> style="id"</code> construction to use one of
+	 * created style. This style are located in this list.
+	 *
+	 * Triggers "BeforeAddStyle" event. 
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing single style.
+	 * @return null
+	 * @throws IdExistsException in case of such style already exists.
+	 */ 
 	protected function addStyle(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddStyle",array($this,$elem));
+
 		WidgetLoader::load("WStyle");
 		if(empty($elem['id'])) return;
 
@@ -595,8 +1059,25 @@ class Controller
 		$s->parseParams($elem);
 		$this->styles[$s->getId()] = $s;
 	}
+	//}}}
+	
+	//{{{ addJS
+	/**
+	 * Adds js to inner js list. Each widget could declare 
+	 * <code>javascript="id"</code> construction to use one of
+	 * created script object. 
+	 *
+	 * Triggers "BeforeAddJS" event.
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing single js.
+	 * @return null
+	 * @throws IdExistsException in case of such javascript already exists.
+	 */
 	protected function addJS(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddJS",array($this,$elem));
+
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
 
 		if(!$this->checkACL($elem)) return;
@@ -605,16 +1086,28 @@ class Controller
 
 		$j->parseParams($elem);
 		
-		if($j->getId())
-		{
-			if(isset($this->javascripts[$j->getId()]))
-				throw new IdExistsException('WJavaScript with id '.$j->getId().' already exists');
+		if(isset($this->javascripts[$j->getId()]))
+			throw new IdExistsException('WJavaScript with id '.$j->getId().' already exists');
 
-			$this->javascripts[$j->getId()] = $j;
-		}
+		$this->javascripts[$j->getId()] = $j;
 	}	
+	//}}}
+	
+	//{{{ addPageHandler
+	/**
+	 * Sets PageHandler for current request. It uses to detect location 
+	 * to redirect while doing POST request.
+	 *
+	 * Triggers "BeforeAddPageHandler" event.
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing pagehandler.
+	 * @return null
+	 */
 	protected function addPageHandler(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddPageHandler",array($this,$elem));
+
 		if(WidgetLoader::load("WPageHandler") === false) return;
 
 		if(!$this->checkACL($elem)) return;
@@ -623,8 +1116,26 @@ class Controller
         $this->pagehandler = new WPageHandler();
         $this->pagehandler->parseParams($elem);
 	}
+	//}}}
+	
+	//{{{ addValueChecker
+	/**
+	 * Adds valuechecker to inner list. Each widget could declare 
+	 * <code>valuechecker="id"</code> construction to use one of
+	 * created objects. It's handy method to do both client-side
+	 * and server-side data checks.
+	 *
+	 * Triggers "BeforeAddValueChecker" event.
+	 * $this passed as 1st element, $elem as 2nd.
+	 *
+	 * @param SimpleXMLElement  parsed part of XML tree, representing single js.
+	 * @return null
+	 * @throws IdExistsException in case of such valuechecker already exists.
+	 */
 	protected function addValueChecker(SimpleXMLElement $elem)
 	{
+		$this->trigger("BeforeAddValueChecker",array($this,$elem));
+
 		if(!isset($elem['id'])) return;
 
 		if(!$this->checkACL($elem)) return;
@@ -639,13 +1150,32 @@ class Controller
 		$vc->parseParams($elem);
 		$this->valuecheckers[$vc->getId()] = $vc;
 	}	
+	//}}}
+
+	//{{{ getValueChecker
+	/**
+	 * Returns valuechecker with given id.
+	 *
+	 * @param string id of valuechecker to return
+	 * @return WValueChecker asked valuechecker object
+	 */
 	function getValueChecker($id)
 	{
 		if(isset($id) && isset($this->valuecheckers[$id]))
 			return $this->valuecheckers[$id];
 		return null;
 	}
+	//}}}
 
+	//{{{ getWidget
+	/**
+	 * Returns widget with given id.
+	 *
+	 * Both common and system widget lists are checked.
+	 *
+	 * @param string id of widget to return
+	 * @retrun WComponent requested object or null if nothing was found.
+	 */
 	function getWidget($id)
 	{
 		$o = null;
@@ -655,13 +1185,34 @@ class Controller
 			return $this->system_widgets[$id];
 		else return $o;
 	}
+	//}}}
+
+	//{{{ allHTML
+	/**
+	 * Returns html representation of current page. 
+	 * 
+	 * First of all it loads delayed datasets to manage data that depends of 
+	 * final widgets states.
+	 * Then {@WComponent::preRender} method and {@WComponent::messageInterchange} method
+	 * are called upon all widgets.
+	 *
+	 * At final, all widgets generates HTML and system triggers {@WComponent::postRender} method.
+	 *
+	 * Triggers "BeforeAllHTML" and "AfterAllHTML" events.
+	 * $this passed as 1st argument.
+	 *
+	 * @param null
+	 * @return string HTML representation
+	 */ 
 	function allHTML()
 	{
+		$final_html = "";
+		$this->trigger("BeforeAllHTML",$this);
+
 		foreach($this->datasets as $d)
 			$d->loadDelayed();
 
 		if(!is_array($this->widgets)) return "";
-		reset($this->widgets);					
 
 		foreach($this->widgets as $name=>$widget)
 		{
@@ -676,7 +1227,7 @@ class Controller
         foreach($this->widgets as $name => $widget)
         {
             if(!$widget->getState() || !$widget instanceof WComponent) continue;
-			$this->final_html .= $this->widgets[$name]->generateHTML();
+			$final_html .= $this->widgets[$name]->generateHTML();
         }
 		foreach($this->widgets as $name=>$widget)
 		{
@@ -684,48 +1235,141 @@ class Controller
 			$this->widgets[$name]->postRender();				
         }
 
-        $this->final_html.= $this->processNotifications();
-            
+        $final_html.= $this->processNotifications();
 
-		return $this->final_html;
+		$this->trigger("AfterAllHTML",$this);
+
+		return $final_html;
 	}
+	//}}}
 
+	//{{{ head
+	/**
+	 * Returns or echo's head of HTML document: from doctype to body tag.
+	 *
+	 * If responce_string {@link setResponceString} is setted, this content
+	 * will be echo'd or retrurned.
+	 *
+	 * It adds css and js to {@Header} in order to their priority.
+	 * Depending of argument it echo's result string to output or 
+	 * returns it as string.
+	 *
+	 *
+	 * Triggers "BeforeHead" event with $this as 1st argument. 
+	 * And "AfterHead" event with $this as 1st argument and 
+	 * result string as 2nd.
+	 *
+	 * @param bool echo to output or return as string
+	 * @return mixed this could be either null or string, depending on argument value.
+	 * @see setResponceString
+	 * @see getHeadBodyTail
+	 * @see tail
+	 * @see addScript
+	 * @see addCSS
+	 */
 	function head($echo = 1)
 	{
-		$h = Header::get();
+		$this->trigger("BeforeHead",$this);
+	
+        if(isset($this->responce_string))
+            if ($echo) echo $this->responce_string;
+            else return $this->responce_string;
 
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
 			 else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->scripts as $v)
-			$h->addScript($v['src'],$v['cond']);
+			$this->header->addScript($v['src'],$v['cond']);
 
 		usort($this->css,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
 			 else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->css as $v)
-			$h->addCSS($v['src'],$v['cond'],$v['media']);
-		$v = $h->send();
+			$this->header->addCSS($v['src'],$v['cond'],$v['media']);
+		$v = $this->header->send();
 		$v .= "<body>\n";
+
+		$this->trigger("AfterHead",array($this,$v));
+
 		if($echo)
 			echo $v;
 		else return $v;
 	}
+	//}}}
+	
+	//{{{ tail
+	/**
+	 * Return enclosing tags of HTML document
+	 *
+	 * If responce_string {@link setResponceString} is setted nothing will be returned or echo'd
+	 *
+	 * Triggers "BeforeTail" event with $this as 1st argument.
+	 *
+	 * @param bool echo to output or return as string
+	 * @return mixed this could be either null or string, depending on argument value.
+	 * @see head
+	 * @see getHeadBodyTail
+	 * @see setResponceString
+	 */
 	function tail($echo = 1)
 	{
+		$this->trigger("BeforeTail",$this);
+
+        if(isset($this->responce_string)) return;
+
         $v = "\n</body></html>";
 		if($echo)
 			echo $v;
 		else return $v; 
-    }
+	}
+	//}}}
+
+	//{{{
+	/**
+	 * Set responce string directly. If setted outputed instead of 
+	 * standard allHTML-mechanism.
+	 *
+	 * Set it to output non-html data, or data for AJAX.
+	 *
+	 * @param string string to be outputed
+	 * @return null
+	 * @see head
+	 * @see tail
+	 * @see getHeadBodyTail
+	 */
     function setResponceString($str)
     {
         if(!isset($str) || !is_scalar($str)) return ;
         $this->responce_string = $str;
-    }
-    function getHeadBodyTail($echo = 1){
+	}
+	//}}}
+
+	//{{{ getHeadBodyTail
+	/**
+	 * Returns or echo's head, body and tail of HTML document: from doctype to 
+	 * end body tag. It consist of sequential call of {@link allHTML}, 
+	 * {@link head} and {@link tail} methods.
+	 *
+	 * If responce_string {@link setResponceString} is setted, this content
+	 * will be echo'd or retrurned.
+	 *
+	 * Preffered to use this method instead of head(), tail() and allHTML() 
+	 * due to unobvious call sequence. First of all  allHTML() called to 
+	 * allow user-code to call some Header functions. Then head() and
+	 * tail() method called.
+	 *
+	 * Triggers "BeforeHeadBodyTail" event with $this as 1st argument. 
+	 * result string as 2nd.
+	 *
+	 * @param bool defines whenever to echo or return content directly.
+	 * @return mixed null or string depending on argument.
+	 */
+	function getHeadBodyTail($echo = 1)
+	{
+		$this->trigger("BeforeHeadBodyTail",$this);
+		
         if(isset($this->responce_string))
             if ($echo) echo $this->responce_string;
             else return $this->responce_string;
@@ -735,32 +1379,107 @@ class Controller
             $head = $this->head(0);
             $tail = $this->tail(0);
             if ($echo) echo $head,$body,$tail;
-            else return $head.$body.$tail;
-        }
-    }
+            else return ($head.$body.$tail);
+		}
+	}
+	//}}}
 
+	//{{{ getDispatcher
+	/**
+	 * Return dispatcher used for routing widget's events.
+	 *
+	 * Primarily used by widgets. Not for external use.
+	 * 
+	 * @param null
+	 * @retrun WidgetEventDispatcher object. It must be single for request.
+	 */
 	function getDispatcher()
 	{
 		return $this->dispatcher;
 	}
-	function getAdjacencyList()
+	//}}}
+	
+	//{{{ getAdjacencyList
+	/**
+	 * Returns widgets adjacency list.
+	 *
+	 * Primarily used by internal function. Not for external use.
+	 *
+	 * @param null
+	 * @retrun WidgetAdjacencyList object. It must be single for request.
+	 */
+	function getAdjacencyList() 
 	{
 		return $this->adjacency_list;
 	}
+	//}}}
+	
+	//{{{ getStyleByName
+	/**
+	 * Retruns style object by given id.
+	 *
+	 * @param string id of style object.
+	 * @return mixed WStyle object or null if nothing was found.
+	 */
 	function getStyleByName($name = null)
 	{
 		if(!isset($name) ||empty($this->styles["".$name]))
 			return null;
 		return $this->styles["".$name];
 	}
+	//}}}
+	
+	//{{{ getJavaScriptByName
+	/**
+	 * Returns javascript object by given id.
+	 *
+	 * @param string id of javascript object.
+	 * @return mixed WJavaScript object or null if nothing was found.
+	 */
 	function getJavaScriptByName($name = null)
 	{
 		if(!isset($name) || empty($this->javascripts["".$name]))
 			return null;
 		return $this->javascripts["".$name];
 	}
+	//}}}
+
+	//{{{ addScript
+	/**
+	 * Add script to be included to the head part of HTML document.
+	 * Additionally, condition parameter may be setted. In this case
+	 * link to js file will be wrapped into conditional comment. For example
+	 * 
+	 * <pre><code>
+	 * $controller->addScript("ie_fix.js","lt IE 7", 20);
+	 * </code></pre>
+	 *
+	 * will produce
+	 * <pre><code>
+	 * <!--[if IE 7]>
+	 * <script src="/0.1/ie_fix.js" type="text/javascript"></script>
+	 * <![endif]-->
+	 * </code></pre>
+	 *
+	 * Priority defines relative position in <head> section.
+	 * Scripts with higher priority will be positioned later than scripts
+	 * with lower priority.
+	 *
+	 * Scripts with equal priorities positioned in order of method invocation.
+	 *
+	 * Triggers "BeforeAddScript" event with $this as 1st argument,
+	 * $src as 2nd, $cond as 3rd, $priority as 4th.
+	 *
+	 * @param string name of js to load
+	 * @param string conditional comment to wrap the script tag. Default is null i.e.
+	 * no conditional comment is used.
+	 * @param numeric position priority. Default is 10.
+	 * @see addCSS
+	 */
 	function addScript($src = null,$cond = null,$priority=10)
 	{
+		$this->trigger("BeforeAddScript",array($this,$src,$cond,$priority));
+
 		if(empty($src)) return;
 		$priority = (int)$priority;
 		if($priority < 1) $priority=10;
@@ -770,8 +1489,46 @@ class Controller
 			strpos($src,"http://") === false?
 			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond,'priority'=>$priority,"ind"=>count($this->scripts));
 	}
+	//}}}
+	
+	//{{{ addCSS
+	/**
+	 * Similar to {@link addScript}, adds link to css file to the head part 
+	 * of HTML document.
+	 * Additionally, condition parameter may be setted. In this case
+	 * link to css  will be wrapped into conditional comment. For example
+	 * 
+	 * <pre><code>
+	 * $controller->addCSS("ie.css","IE", "screen, projection", 20);
+	 * </code></pre>
+	 *
+	 * will produce
+	 * <pre><code>
+	 * <!--[if IE]>
+	 * <link  href="/0.1/ie.css" type="text/css" rel="stylesheet" media="screen, projection"/>
+	 * <![endif]-->
+	 * </code></pre>
+	 *
+	 * Priority defines relative position in <head> section.
+	 * Links with higher priority will be positioned later than links
+	 * with lower priority.
+	 *
+	 * Links with equal priorities positioned in order of method invocation.
+	 *
+	 * Triggers "BeforeAddCSS" event with $this as 1st argument,
+	 * $src as 2nd, $cond as 3rd, $media as 4th and $priority as 5th.
+	 *
+	 * @param string name of css file to load
+	 * @param string conditional comment to wrap the link tag. Default is null, i.e. no 
+	 * conditional comments is used.
+	 * @param string media. Default is null i.e. no media is specified
+	 * @param numeric position priority. Default is 10.
+	 * @see addScript
+	 */
 	function addCSS($src = null,$cond = null,$media = null,$priority = 10)
 	{
+		$this->trigger("BeforeAddCSS",array($this,$src,$cond,$media, $priority));
+
 		if(empty($src)) return;
 
 		$priority = (int)$priority;
@@ -782,20 +1539,72 @@ class Controller
 			strpos($src,"http://") === false?
 			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media,'priority'=>$priority,"ind"=>count($this->css));
 	}
+	//}}}
+	
+	//{{{ getNavigator
+	/**
+	 * Return instance of page navigator, used in the system.
+	 * Primarily for internal usage.
+	 *
+	 * @param null
+	 * @return Navigator object.
+	 */
 	function getNavigator()
 	{
 		return $this->navigator;
 	}
-	function makeURL($page = null, $p2 = null,$controller_name = null, $get = null)
+	//}}}
+	
+	//{{{ makeURL
+	/**
+	 * Used for easy way of creating various URLs, inside the system and userland models.
+	 * It hide the kitchen of building user-friendly URL from developer and 
+	 * simply operates with base definitions, such as "p1" or "p2".
+	 *
+	 * @param scalar p1 parameter. It could be null, then current p1 parameter will be taken.
+	 * For example, if we are at URL <code>http://example.com/blog/1.html</code> and call
+	 * <code>$controller->makeURL("2.html");</code>, URL <code>http://example.com/blog/2.html</code>
+	 * will be returned. 
+	 * In case if <code>$controller->makeURL()</code>, URL <code>http://example.com/blog/</code> 
+	 * will be returned.
+	 *
+	 * @param array p2 parameters. It could be assoc or int-based.
+	 * In case of assoc, method will be looking for values in p2 that equals 
+	 * to keys of parametr's array.
+	 * For example, if URL is <code>http://example.com/blog/dir1/dir2/dir3/2.html</code>
+	 * and <code>$controller->makeURL(null,array("dir2"=>"dir0"));</code> is called,
+	 * <code>http://example.com/blog/dir1/dir0/dir3/2.html</code> will be returned.
+	 * 
+	 * To unset some of "p2" parameters use null as a value:
+	 * <code>$controller->makeURL(null,array("dir2"=>null));</code> will return
+	 * <code>http://example.com/blog/dir1/dir3/2.html</code>.
+	 *
+	 * Also, key of passing "p2" parameter may starts from "/", that indicates of using 
+	 * regular expression to find thing to substitute. For example:
+	 * <code>$controller->makeURL(null,array("/dir(\d)/"=>"d\\1"));</code>
+	 * will return <code>http://example.com/blog/d1/d2/d3/2.html</code>. Null value
+	 * may be used also to unset.
+	 *
+	 * If no keys was found new value will be added to "p2" list.
+	 *
+	 * To receive access to p2 variables by their position order, use int-based array.
+	 * For example <code>$controller->makeURL(null,array(0=>null));</code> will 
+	 * unset 0 parameter. As a result <code>http://example.com/blog/dir2/dir3/2.html</code>
+	 * will be returned. 
+	 * Similar, use this method to replace or add parameter to "p2":
+	 * <code>$controller->makeURL(null, array(1=>"dir0"));</code> will return
+	 * <code>http://example.com/blog/dir1/dir0/dir3/2.html</code>.
+	 */
+	function makeURL($p1 = null, $p2 = null,$controller_name = null, $get = null, $lang = null)
 	{
-		if(!isset($controller_name) || !is_scalar($controller_name))
+		if(!isset($controller_name) || !is_scalar($controller_name) || strlen($controller_name) < 3)
 			$controller_name = $this->controller_name;
-		if($this->controller_name == "index" && empty($p2))
-			$controller_name = "";
 
-		if(!isset($page) || !is_scalar($page))
+		if(!isset($p1) || !is_scalar($p1))
 			if($this->p1 !== "index")
-				$page = $this->p1;
+				$p1 = $this->p1;
+			else $p1 = null;
+
 		$n_p2 = $this->p2;
 		$n_get = array();
 		if(isset($p2) && is_array($p2))
@@ -809,76 +1618,70 @@ class Controller
 			{
 				$c_p2 = array_flip($this->p2);
 				foreach($p2 as $k=>$v)
-				{
 					if(isset($c_p2[$k]))
-					{
-						$n_p2_k = null;
-						if($v == null)
-							{unset($n_p2[$c_p2[$k]]);continue;}
+						if($v === null)
+							unset($n_p2[$c_p2[$k]]);
 						else
 							$n_p2[$c_p2[$k]] = $v;
-					}
 					elseif(substr($k,0,1) == "/")
 					{
-						$flag = 0;
+						$replaced = false;
 						foreach($this->p2 as $temp_k_p2 => $temp_v_p2)
 							if(preg_match($k,$temp_v_p2))
-							{ 
 								if($v === null)
-								{
-									unset($n_p2[$temp_k_p2]);
-									$flag = 1;break;
-								}
+									{ unset($n_p2[$temp_k_p2]); $replaced = true; }
 								else 
-								{
-									$n_p2[$temp_k_p2] = preg_replace($k,$v,$temp_v_p2); 
-									$flag = 1; break;
-								}
-							}
-						if(!$flag && !empty($v))
+									{ $n_p2[$temp_k_p2] = preg_replace($k,$v,$temp_v_p2); $replaced = true; }
+						if(!empty($v) && !$replaced)
 							$n_p2[] = $v;
 					}
-					elseif(!empty($k))
-						$n_p2[] = $k;
-				}
+					elseif(!empty($v))
+						$n_p2[] = $v;
 			}
 			else
 				foreach($p2 as $k=>$v)
-				{
 					if($v == null)
-					{unset($n_p2[(int)$k]);continue;}
-					$n_p2[(int)$k] = $v;
-				}
+						unset($n_p2[(int)$k]);
+					else
+						$n_p2[(int)$k] = $v;
 		}
-		$n_get = $c_get = $this->get->getAllChecked();
+
+		$n_p2 = array_values(array_map('urlencode',array_filter($n_p2)));
+
+		$c_get = $n_get = $this->get->getAllChecked();
+
 		foreach($n_get as $k=>$v)
 			if(substr($k,0,2) == "__") unset($n_get[$k]);
+
 		if(isset($get) && is_array($get))
-		{
 			foreach($get as $k=>$v)
 			{
 				if(substr($k,0,2) == "__") continue;
 				if(isset($c_get[$k]))
-					if($v == null)
-						unset($n_get[$k]);
-					else
-						$n_get[$k] = $v;
-				else
-					$n_get[$k] = $v;
+					if($v === null)
+					{ unset($n_get[$k]); continue; }
+				$n_get[$k] = $v;
 			}
-		}
+		
+		if($controller_name == "index" && empty($n_p2))
+			$controller_name = null;
 
 		$n_get2 = array();
 		foreach($n_get as $k=>$v)
 			$n_get2[] = urlencode($k)."=".urlencode($v);
-		foreach($n_p2 as $k=>&$v)
-            if(empty($v)) unset($n_p2[$k]);
-            else $v = urlencode($v);
-        return Header::makeHTTPHost(). 
+		unset($n_get);
+
+		$lang = "en";
+		if($lang == Language::currentName() || strlen($lang) != 2 )
+			$lang = null;
+		
+		return Header::makeHTTPHost(). 
+			((!empty($lang))?"/".$lang:"").
             ((!empty($controller_name))?"/".$controller_name:"")."/".
-			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($page) && strpos($page,".") === false?$page.".html":$page).
+			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($p1) && strpos($p1,".") === false?$p1.".html":$p1).
 			(!empty($n_get2)?"?".implode("&",$n_get2):"");
     }
+	//}}}
 
 	function getDisplayModeParams()
 	{
@@ -903,38 +1706,44 @@ class Controller
 	}
 	protected function handlePOST()
     {
+		$this->trigger("BeforeHandlePOST",$this);
+
 		if($this->post->isEmpty()) return;
 
-		$this->restoreSignatures();
-        WidgetLoader::load("WForm");
-		if(!in_array($this->post->{WForm::signature_name},$this->form_signatures))
+		WidgetLoader::load("WForm");
+
+		$this->trigger("BeforeCheckSignature",$this);
+
+		if(!$this->checkSignature($this->post->{WForm::signature_name}))
             $this->gotoStep_0();
 
 		POSTErrors::flushErrors();
-		$this->restoreCheckers();
-        $this->restorePageHandler();
+        //$this->restorePageHandler();
 
-        $checked_by_captcha = 1;
+		//TODO: move to vendor and use events
+		//
         $this->restoreCAPTCHA();
         if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
-        {
-            $checked_by_captcha = 0;
             POSTErrors::addError($this->captcha_name,null,Language::message('widgets',"captcha_error"));
-        }
 
-        $formid_name = $this->post->{WForm::formid_name};
-		if(!isset($formid_name))
-			$this->gotoStep_0();
-		POSTChecker::checkByRules($this->post,$formid_name,$this->checker_rules);
-		if(POSTErrors::hasErrors() || !$checked_by_captcha)
+		$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
+
+		POSTChecker::checkByRules($this->post,$this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
+		if(POSTErrors::hasErrors())
         {
 			POSTErrors::saveErrorList();
 			$this->gotoStep_0();
 		}
-		DataUpdaterPool::restorePool();
+		//DataUpdaterPool::restorePool();
+		list($formid) = explode(":",$this->post->{WForm::signature_name});
+		if(empty($formid))
+			$this->gotoStep_0();
+
+		$this->trigger("BeforeCallHandlers",array($this,$formid));
+
 		try
 		{
-			DataUpdaterPool::callCheckers($formid_name);
+			DataUpdaterPool::callCheckers($formid);
 		}
 		catch(CheckerException $e)
 		{
@@ -945,15 +1754,14 @@ class Controller
 			POSTErrors::saveErrorList();
 			$this->gotoStep_0();
 		}
-		DataUpdaterPool::callHandlers($formid_name);
-		DataUpdaterPool::callFinilze($formid_name);
+		DataUpdaterPool::callHandlers($formid);
+		DataUpdaterPool::callFinilze($formid);
         $ret = null;
         if(isset($this->pagehandler))
             $ret = $this->pagehandler->handle();
 
+		$this->trigger("AfterHandlePOST",array($this,$ret));
 
-        /*var_dump($ret);
-        die("BBBBBBBBB");*/
         if(is_numeric($ret))
             $this->gotoLocation($this->navigator->getStepURL($ret));
         elseif(is_string($ret))
@@ -965,6 +1773,7 @@ class Controller
 	{
 		$s = $this->navigator->getStep(0);
         Header::redirect( isset($s,$s['url'])?$s['url']:"/");
+		exit();
     }
     protected function gotoLocation($loc)
     {
@@ -975,31 +1784,48 @@ class Controller
         exit();
     }
 	// checkers
-	function setChecker($form_id,$name,$rule,$rule_value, $message = null)
+	function setChecker($form_sig,$name,$rule,$rule_value, $message = null)
     {
-		if(!isset($form_id,$name,$rule,$rule_value)) return;
-        $this->checker_rules[$form_id][$name][$rule] = trim($rule_value);
-        if (!is_null($message)) $this->checker_messages[$form_id][$name] = $message;
+		if(!isset($form_sig,$name,$rule,$rule_value)) return;
+        $this->checker_rules[$form_sig][$name][$rule] = trim($rule_value);
+        if (!is_null($message)) $this->checker_messages[$form_sig][$name] = $message;
 	}
 	protected function restoreCheckers()
 	{
-		$storage = Storage::createWithSession("controller".$this->getPoolName());
-		$this->checker_rules = $storage['checker_rules'];
-		$this->checker_messages = $storage['checker_messages'];
-		$storage->un_set('checker_rules');
-		if(!is_array($this->checker_rules))
-			$this->checker_rules = array();
+		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
+		$_cr = $storage['checker_rules'];
+		if(!empty($_cr) && is_array($_cr))
+			$this->checker_rules = $_cr;
+		unset($_cr);
+		$_cm = $storage['checker_messages'];
+		if(!empty($_cm) && is_array($_cm))
+			$this->checker_messages = $_cm;
+		unset($_cm);
 	}
 	// signatures
-	function addFormSignature($sig = null)
+	function addFormSignature($sig)
 	{
 		if(!isset($sig)) return;
+		if(count($this->form_signatures) >= self::MAX_SIGNATURES)
+		{
+			$first_sig = array_shift($this->form_signatures);
+			if(array_key_exists($first_sig,$this->checker_rules))
+				unset($this->checker_rules[$first_sig]);
+			if(array_key_exists($first_sig,$this->checker_messages))
+				unset($this->checker_messages[$first_sig]);
+		}
 		$this->form_signatures[] = $sig;
 	}
 	protected function checkSignature($sig = null)
 	{
 		if(!isset($sig)) return false;
-		return in_array($sig,$this->form_signatures);
+		if(($k = array_search($sig,$this->form_signatures)) !== false)
+		{
+			unset($this->form_signatures[$k]);
+			$this->form_signatures = array_values($this->form_signatures);
+			return true;
+		}
+		return false;
 	}
     function setCAPTCHA($captcha_input_name = null)
     {
@@ -1008,25 +1834,18 @@ class Controller
     }
     protected function restoreCAPTCHA()
     {
-		$storage = Storage::createWithSession("controller".$this->getPoolName());
+		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
         $this->captcha_name = $storage->get('captcha_name');
 		$storage->un_set('captcha_name');
     }
 	protected function restoreSignatures()
 	{
-		$storage = Storage::createWithSession("controller".$this->getPoolName());
+		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
 		$this->form_signatures = $storage->get('signatures');
-		$storage->un_set('signatures');
+		//$storage->un_set('signatures');
 		if(!is_array($this->form_signatures))
 			$this->form_signatures = array();
 	}
-    protected function restorePageHandler()
-    {
-        if(WidgetLoader::load("WPageHandler") === false) return;
-		$storage = Storage::createWithSession("controller".$this->getPoolName());
-		$this->pagehandler = $storage->get('pagehandler');
-		$storage->un_set('pagehandler');
-    }
     public function addNotify($text){
         if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
         $notes = $this->notifyStorage['notify'];
@@ -1035,6 +1854,8 @@ class Controller
     }
     
     private function processNotifications(){
+		$this->trigger("BeforeProcessNotifications",$this);
+
         if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
         $notes = $this->notifyStorage['notify'];
         if (!is_array($notes) || empty($notes)) return '';
@@ -1058,26 +1879,31 @@ class Controller
     {
         //do it only if init was completed
         if($this->inited)
-        {
-		    $storage = Storage::createWithSession("controller".$this->getPoolName());
+		{
+			$this->trigger("DestructInited",$this);
+
+		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
 		    $storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
 		    $storage->set('captcha_name',$this->captcha_name);
-		    DataUpdaterPool::savePool();
-            $storage->set('pagehandler',$this->pagehandler);
+		    //DataUpdaterPool::savePool();
+            //$storage->set('pagehandler',$this->pagehandler);
             POSTErrors::flushErrors();
         }
+
+		$this->trigger("Destruct",$this);
+
 		DB::close();
 	}
-	function setPoolName($name)
+	function setStoragePostfix($name)
 	{
 		if(!isset($name) || !is_string($name)) return ;
-		$this->pool_name = (string)$name;
+		$this->storage_postfix = (string)$name;
 	}
-	function getPoolName()
+	function getStoragePostfix()
 	{
-		return $this->pool_name;
+		return $this->storage_postfix;
 	}
 	function registerStep($reg = 1)
 	{
@@ -1086,6 +1912,7 @@ class Controller
 		$this->register_step = 0 + $reg;
 	}
 }
+//}}}
 class DisplayModeParams
 {
 	protected 
@@ -1183,9 +2010,9 @@ class AjaxController extends Controller
         Language::Init();
         
         $this->header = Header::get();
-		$this->dispatcher = new EventDispatcher();
+		$this->dispatcher = new WidgetEventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
-		$this->adjacency_list = new WidgetAdjacencyList();
+		$this->adjacency_list = new WidgetsAdjacencyList();
 
 
         try{
@@ -1194,9 +2021,12 @@ class AjaxController extends Controller
             $dom = new DomDocument;
             $dom->load($full_path);
 
-            $this->parsePage($this->processPage($dom));
+            $this->parsePageOnGET($this->processPage($dom));
             if($_SERVER['REQUEST_METHOD'] == "POST")
-                $this->handlePOST();
+			{
+				$this->parsePageOnPOST($this->processPage($dom));
+				$this->handlePOST();
+			}
 
         }catch(Exception $e){}
         

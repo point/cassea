@@ -81,6 +81,7 @@ class User
 
     }//}}}
 
+	// {{{
 	static function renew()
 	{
 		self::$instance = null;
@@ -136,7 +137,7 @@ class User
     {
 		if(isset($this->profile))
 			return $this->profile;
-		else return $this->profile = Profile::get();
+		else return $this->profile = Profile::get($this->id);
 	}
 	// }}}
 

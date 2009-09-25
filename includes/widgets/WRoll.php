@@ -144,7 +144,7 @@ class WRoll extends WContainer
 
 		if($this->getRuler())
 			$controller->getDispatcher()->notify(
-				new Event("ruler_settotal",$this->getId(),$this->getRuler(),array('total_count'=>$this->getCount()
+				new WidgetEvent("ruler_settotal",$this->getId(),$this->getRuler(),array('total_count'=>$this->getCount()
 				)));
 		else
 			Controller::getInstance()->getDisplayModeParams()
@@ -252,7 +252,7 @@ class WRoll extends WContainer
     }
     // }}}
 
-    function handleEvent($event)
+    function handleEvent(WidgetEvent $event)
     {
 		if($event->getName() == "roll_setlimits")
 		{

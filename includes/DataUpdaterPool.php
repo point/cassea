@@ -27,80 +27,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//
-// $Id$
-//
+// $Id:$
 
-class ResultSetPool
-{
-	static $pool = array();	
-    const SYSTEM_PRIORITY = 1000;
-	
-	static function set(ResultSet $rs,$priority = 0)
-	{
-		self::$pool[] = array('priority'=>$priority,
-			'result_set'=>$rs);
-		usort(self::$pool,create_function('$a,$b',
-			'return ($a["priority"] < $b["priority"])?-1:1;'));
-	}
-	static function findMatched($widget_id)
-	{
-        $wrs = new WidgetResultSet;
-        $flag = false;
-		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
-
-        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
-		foreach(self::$pool as $v)
-        {
-			$rs = $v['result_set'];
-            $wrs = $rs->findMatched($widget);
-            if($wrs->isEmpty()) continue;
-            $widget->{$data_setter}($wrs);
-            $flag = true;
-		}
-		return $flag;
-	}
-}
-
-class DataObjectPool
-{
-	static $pool = array();
-
-	static function set(DataObject $do, $priority = 0)
-	{
-		self::$pool[] = array('priority'=>$priority,
-			'data_object'=>$do);
-
-		usort(self::$pool,create_function('$a,$b',
-			'return ($a["priority"] < $b["priority"])?-1:1;'));
-	}
-
-	static function findDefault($widget_id)
-	{
-		$wrs = new WidgetResultSet;
-		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
-
-        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
-		foreach(self::$pool as $v)
-		{
-			$d_o = $v['data_object'];
-			if(($def = $d_o->getData($widget_id)) !== null && !$def instanceof WidgetResultSet)
-		        $wrs->setDef($def);
-		}
-        $widget->{$data_setter}($wrs);
-	}
-}
-
-class DataRetriever
-{
-	static function manageData($widget_id)
-	{
-		if(!ResultSetPool::findMatched($widget_id))
-			DataObjectPool::findDefault($widget_id);
-	}
-}
-
-
+//{{{ DataUpdaterPool
 class DataUpdaterPool
 {
 	static $pool = array();
@@ -121,16 +50,16 @@ class DataUpdaterPool
                 return $o['data_handler_object'];
         return null;
     }
-	static function savePool()
+	/*static function savePool()
 	{
-		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getPoolName());
+		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getStoragePostfix());
 		$storage->set('pool',self::$pool);
 	}
 	static function restorePool()
 	{
-		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getPoolName());
+		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getStoragePostfix());
 		self::$pool = $storage->get('pool');
-	}
+	}*/
 	static function callCheckers($form_id = null)
 	{
 		$controller = Controller::getInstance();
@@ -170,4 +99,4 @@ class DataUpdaterPool
 		return $dhls;
 	}
 }
-?>
+// }}}

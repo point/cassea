@@ -27,16 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-class ProfileException extends CasseaException {}
-
-interface iProfile
-{
-	static function addUser($user_id);
-	function __get($name) ;
-	function set($field_name, $value);
-	function __set($field_name, $value);
-}
-
 class Profile
 {
 
@@ -72,44 +62,3 @@ class Profile
 }
 
 //{{{ Profile
-class CasseaProfile implements iProfile
-{
-
-	const TABLE = 'profile';
-
-	protected $user_id = null;
-	protected $fields = array();
-
-	function __construct($user_id)
-	{
-		if(!is_numeric($user_id) || $user_id < 0)
-			throw new ProfileException("Unknown user id '".$user_id."'");
-
-		$r = DB::query("select * from ".self::TABLE." where user_id='".$user_id."' limit 1");
-		if(count($r))
-			$this->fields = array_shift($r);
-		$this->user_id = $user_id;
-	}
-	static function addUser($user_id)
-	{
-		DB::query("insert into ".self::TABLE." set user_id='".$user_id."'");
-	}
-	function __get($name)
-	{
-		return isset($this->fields[$name])?$this->fields[$name]:null;
-	}
-
-	function set($field_name, $value){$this->$field_name = $value;}
-
-	function __set($field_name, $value)
-	{
-		if(!is_scalar($value) || !isset($this->fields[$field_name])) return;
-		$this->fields[$field_name] = $value;
-		
-		$field_name = Filter::filter($field_name,Filter::STRING_QUOTE_ENCODE);
-		$value = Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
-		DB::query("update ".self::TABLE." set ".$field_name." = '".$value."' where user_id='".$this->user_id."' limit 1");
-	}
-}// }}}
-
-?>

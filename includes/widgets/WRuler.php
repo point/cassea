@@ -155,7 +155,7 @@ class WRuler extends WContainer
 	function messageInterchange()
 	{
 		Controller::getInstance()->getDispatcher()->notify(
-			new Event("ruler_has_another_instance",$this->getId(),null));
+			new WidgetEvent("ruler_has_another_instance",$this->getId(),null));
 	}
 	//}}}	
 
@@ -325,7 +325,7 @@ class WRuler extends WContainer
     }
     // }}}
 
-    function handleEvent($event)
+    function handleEvent(WidgetEvent $event)
     {
 		if($event->getName() == "ruler_settotal")
 		{
@@ -333,7 +333,7 @@ class WRuler extends WContainer
 			$this->calc();
 
 			Controller::getInstance()->getDispatcher()->notify(
-				new Event("roll_setlimits",$this->getId(),$event->getSrc(),array('from'=>($this->current_page-1)*$this->res_per_page,
+				new WidgetEvent("roll_setlimits",$this->getId(),$event->getSrc(),array('from'=>($this->current_page-1)*$this->res_per_page,
 				"limit"=>(($_r = $this->total_count - $this->current_page*$this->res_per_page) < 0)?$this->res_per_page+$_r:$this->res_per_page
 			
 			)));

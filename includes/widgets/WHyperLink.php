@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WHyperLink
-class WHyperLink extends WContainer implements StringProcessable
+class WHyperLink extends WContainer implements iStringProcessable
 {
     
 	protected

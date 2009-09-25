@@ -411,7 +411,7 @@ class MixedCollection extends WidgetCollection
 	function generateAllHTML()
 	{
 		if(isset($this->str))
-            if(($p = Controller::getInstance()->getWidget($this->parent_id)) instanceof StringProcessable)
+            if(($p = Controller::getInstance()->getWidget($this->parent_id)) instanceof iStringProcessable)
                 return StringProcessorFactory::create($p->getStringProcess())->process(Language::encodePair($this->str));
             else return Language::encodePair($this->str);
 		return parent::generateAllHTML();

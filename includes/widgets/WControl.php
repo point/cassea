@@ -413,7 +413,7 @@ abstract class WControl extends WComponent
     	{
 			$this->valuechecker->addWidgetId($this->getId());
 
-			$event = new Event("have_valuechecker",$this->getId());
+			$event = new WidgetEvent("have_valuechecker",$this->getId());
 			$event->setParams(array('id' => $this->valuechecker->getId()));
 			Controller::getInstance()->getDispatcher()->notify($event);
 		}
@@ -492,7 +492,7 @@ abstract class WControl extends WComponent
             "disabled"=>($this->getDisabled())?('disabled="'.$this->getDisabled().'"'):'',
             "tabindex"=>($this->getTabIndex())?('tabindex="'.$this->getTabIndex().'"'):''
 			));
-        if($this instanceof StringProcessable)
+        if($this instanceof iStringProcessable)
             $this->tpl->setParams(t(new TemplateParams)->set('value',
                 StringProcessorFactory::create($this->getStringProcess())->process(Language::encodePair($this->getValue()))));
         else
@@ -500,7 +500,7 @@ abstract class WControl extends WComponent
 
 		if(isset($this->filter_error_string))
 			$this->tpl->setParamsArray(array("error_string"=>
-            "<div class=\"w-error\">".Language::encodePair($this->getFilterError())."</div>"));
+            "<span class=\"w-error\">".Language::encodePair($this->getFilterError())."</span>"));
 
 		parent::assignVars();
     }

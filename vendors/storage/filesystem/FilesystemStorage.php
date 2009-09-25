@@ -38,7 +38,7 @@
 /**
  *
  */
-class FilesystemStorage implements StorageEngine, ArrayAccess
+class FilesystemStorage implements iStorageEngine, ArrayAccess
 {
 	private $storage_name = null,
 			$vars = array(),

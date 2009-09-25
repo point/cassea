@@ -27,32 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-/**
- *
- *
- *
- * @package Storage
- */
-
-interface StorageEngine
-{
-	function set($var, $val);
-	function get($var);
-	function is_set($var);
-	function un_set($var);
-    function sync();
-    function close();
-}
-
-// {{{ StorageException
-class StorageException extends CasseaException
-{
-	function __construct($message)
-	{
-		parent::__construct($message);
-	}
-}// }}}
-
 // {{{ Storage
 class Storage 
 {
