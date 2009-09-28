@@ -16,7 +16,7 @@ class CmdConvert extends Command{
 
         $ah = ArgsHolder::get();
         $this->show_body_only = $ah->getOption('show-body-only');
-        $this->tidy_only = $ah->getOption('tidy_only');
+        $this->tidy_only = $ah->getOption('tidy-only');
 		if (($f = ArgsHolder::get()->getOption('output'))) $this->output_file = trim($f,"/");
 
 		if(($filename = ArgsHolder::get()->shiftCommand()) === false){
@@ -40,7 +40,7 @@ class CmdConvert extends Command{
 		}
 
 		$output = $ret = null;
-		exec("LANG=en_EN.UTF8 tidy -config ".escapeshellarg(dirname(__FILE__)."/tidy.config")." -q ".
+		exec("tidy -config ".escapeshellarg(dirname(__FILE__)."/tidy.config")." -q ".
 			(($this->show_body_only)?" --show-body-only yes ":" ").
 			(" --error-file ".escapeshellarg(dirname(__FILE__))."/error.log ").
 			escapeshellarg($filename),$output,$ret);
@@ -157,14 +157,11 @@ class CmdConvert extends Command{
 		io::out('Dumping XML...', false);
 		if($this->show_body_only)
 		{
-			$doc2 = new DOMDocument('1.0','utf-8');
-			$doc2->encoding = "utf-8";
-
-			$doc2->appendChild($doc2->importNode($doc->getElementsByTagName("root")->item(0),true));
 			if(!empty($this->output_file))
-				$doc2->save($this->output_file);
+				file_put_contents($this->output_file, 
+					utf8_decode($doc->saveXML($doc->getElementsByTagName("root")->item(0))));
 			else
-				echo $doc2->saveXML();
+				echo utf8_decode($doc->saveXML($doc->getElementsByTagName("root")->item(0)));
 		}
 		else
 			if(!empty($this->output_file))
