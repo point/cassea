@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
+// $Id:$
 
 // {{{ StringProcessor 
 class StringProcessor

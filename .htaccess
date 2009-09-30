@@ -13,7 +13,7 @@ ErrorDocument 404 /error_pages/50x.html
 ErrorDocument 503 /error_pages/50x.html
 
 RewriteEngine On
-Options +FollowSymLinks -MultiViews
+Options +FollowSymLinks -MultiViews -Indexes -Includes
 
 RewriteBase /
 RewriteRule \.htaccess - [F]

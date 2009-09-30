@@ -128,7 +128,7 @@ class ACL
                 Storage::create('acl_groups')->set(User::get()->getId(),self::$groups);
         }
     }
-
+	//}}}
 
 	//{{{ getGroups
 	/**
@@ -149,7 +149,7 @@ class ACL
 		sort($groups);
 		return $groups;
     }
-    
+	//}}}
 
 	//{{{getUserByGroups
 	/**
@@ -169,7 +169,7 @@ class ACL
         else
             return $res = DB::query("select user_id from ".self::ACL_TABLE." where groups REGEXP  '(^|:)".$group."($|:)'");
     }
-    
+	//}}}
 
 	//{{{ addUserToGroup
 	/**
@@ -207,7 +207,7 @@ class ACL
             
 		self::flushCache($id);
     }
-    
+	//}}}
 
 	//{{{ delUserFromGroup
 	/**
@@ -240,9 +240,9 @@ class ACL
         }
         ACL::flushCache($id);
     }
+	//}}}
 
-
-
+	//{{{ check
 	/**
 	 * Check whenever to allow or deny access to some resource. 
 	 * Most frequently this method is used to define to show or not the widget.
@@ -336,7 +336,7 @@ class ACL
 		DB::query("delete from ".self::ACL_TABLE." where id='".(int)$user_id."' limit 1");
         ACL::flushCache($user_id);
 	}
-   		
+	//}}}
 
 	//{{{ flushCache
 	/**

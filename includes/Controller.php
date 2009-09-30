@@ -582,6 +582,7 @@ class Controller extends EventBehaviour
 		}
 		
 	}
+	//}}}
 
 	//{{{ vendorPagePath
 	/**
