@@ -29,7 +29,7 @@
 
 
 //
-// $Id$
+// $Id: WForm.php 104 2009-05-29 15:39:01Z point $
 //
 WidgetLoader::load("WContainer");
 //{{{ WForm
@@ -56,12 +56,14 @@ class WForm extends WContainer
         /**
         * @var     string
         */
+		$no_check = 0,
 		$inner_valuecheckers = array(),
 		$vc_rules = array(),
 		$vc_messages = array(),
 		$form_signature = null
 		;
     const signature_name = "__sig";
+	const no_check_attribute = "no_check";
     //const formid_name = "__formname";
     
     // {{{ __construct
@@ -95,6 +97,12 @@ class WForm extends WContainer
 
 		if(isset($elem['method']))
 			$this->setMethod((string)$elem['method']);
+
+		if(isset($elem['no_check']))
+			if($this->id[0] == "_")
+				trigger_error("In order to use no_check set proper id for the form");
+			else
+				$this->no_check = 0+$elem['no_check'];
 
 		$this->items = new WidgetCollection($this->getId(),$elem);
 
@@ -245,7 +253,7 @@ class WForm extends WContainer
 				}
 
 		if(strpos($this->getAction(),"http://") === false)
-			Controller::getInstance()->addFormSignature($this->getSignature());
+			Controller::getInstance()->addSignature($this->getSignature());
 /*		$controller->dispatcher->deleteSubscriber("valuechecker_puttosubmit",$this->id);
 
 

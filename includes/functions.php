@@ -133,7 +133,7 @@ function recalcSizeArray($arr,$max_width = null,$max_height = null)
 	return recalcSize($arr['width']?$arr['width']:$arr[0],$arr['height']?$arr['height']:$arr[0],$max_width,$max_height);
 }
 
-function pageChanged($path,$time)
+function fileChanged($path,$time)
 {
 	if(!file_exists($path))
 	{

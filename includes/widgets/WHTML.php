@@ -108,7 +108,7 @@ class WHTML extends WComponent
 				$changed = 0;
 				if($this->getSrc())
 				{
-                    if(pageChanged($this->getSrc(),$p['cache_time']) ||
+                    if(fileChanged($this->getSrc(),$p['cache_time']) ||
                         Controller::getInstance()->XMLPageChanged($p['cache_time']))
                     {
                         $this->page_text = $this->getSrc()?file_get_contents($this->getSrc()):"";

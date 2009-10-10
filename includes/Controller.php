@@ -48,7 +48,7 @@
  * @author point <alex.softx@gmail.com>
  * @author billy <alexey.mirniy@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id$
+ * @version $Id: $
  * @package system
  * @since 
  */
@@ -300,7 +300,14 @@ class Controller extends EventBehaviour
 		 *
 		 * @var string
 		 */
-		$responce_string = null
+		$responce_string = null,
+		/**
+		 * Hodls ids of forms which should not be checked by signature checker and 
+		 * by value checkers
+		 *
+		 * @var array of form ids
+		 */
+		$no_check_forms = array()
 		;
 
 	//{{{ __construct
@@ -345,11 +352,11 @@ class Controller extends EventBehaviour
 
 	//{{{ getInstance
 	/**
-	 * Singleton method. Used to construct or retrun controller object. Depending on type of request
+	 * Singleton method. Used to construct or return controller object. Depending on type of request
 	 * Controller or AjaxController instance will be returned.
 	 *
 	 * @param null
-	 * @retrun Controller object
+	 * @return Controller object
 	 */ 
 	static function getInstance()
 	{
@@ -555,7 +562,7 @@ class Controller extends EventBehaviour
 	 * @param string partial src of the page to find
 	 * @param bool if set to true page will be looking-up in the vendor
 	 * dir only.
-	 * @retrun string full path to the page from server's root.
+	 * @return string full path to the page from server's root.
 	 * @see vendorPagePath
 	 * @throws ControllerException if unable to find page path
 	 */
@@ -589,7 +596,7 @@ class Controller extends EventBehaviour
 	 * Trying to retrieve full page path in vendor dir only.
 	 *
 	 * @param string partial src of the page to find
-	 * @retrun string full path to the page from server's root.
+	 * @return string full path to the page from server's root.
 	 * @throws ControllerException if unable to find page path
 	 */
     protected final function vendorPagePath($src)
@@ -902,6 +909,17 @@ class Controller extends EventBehaviour
 			$el->parentNode->removeChild($el);
 		}
 
+		WidgetLoader::load("WForm");
+		$node = $dom->getElementsByTagName("WForm");
+		for($i = 0, $c = $node->length;$i < $c;$i++)
+		{
+			$el = $node->item(0);
+			if(empty($el)) continue;
+			if($el->getAttribute(WForm::no_check_attribute) && ($id = $el->getAttribute("id")))
+				$this->no_check_forms[] = $id;
+			$el->parentNode->removeChild($el);
+		}
+
 		$this->trigger("BeforeParsePageOnPOST",array($this,$dom));
 	}
 	//}}}
@@ -1175,7 +1193,7 @@ class Controller extends EventBehaviour
 	 * Both common and system widget lists are checked.
 	 *
 	 * @param string id of widget to return
-	 * @retrun WComponent requested object or null if nothing was found.
+	 * @return WComponent requested object or null if nothing was found.
 	 */
 	function getWidget($id)
 	{
@@ -1392,7 +1410,7 @@ class Controller extends EventBehaviour
 	 * Primarily used by widgets. Not for external use.
 	 * 
 	 * @param null
-	 * @retrun WidgetEventDispatcher object. It must be single for request.
+	 * @return WidgetEventDispatcher object. It must be single for request.
 	 */
 	function getDispatcher()
 	{
@@ -1407,7 +1425,7 @@ class Controller extends EventBehaviour
 	 * Primarily used by internal function. Not for external use.
 	 *
 	 * @param null
-	 * @retrun WidgetAdjacencyList object. It must be single for request.
+	 * @return WidgetAdjacencyList object. It must be single for request.
 	 */
 	function getAdjacencyList() 
 	{
@@ -1578,7 +1596,7 @@ class Controller extends EventBehaviour
 	 * 
 	 * To unset some of "p2" parameters use null as a value:
 	 * <code>$controller->makeURL(null,array("dir2"=>null));</code> will return
-	 * <code>http://example.com/blog/dir1/dir3/2.html</code>.
+	 * <code></code>.
 	 *
 	 * Also, key of passing "p2" parameter may starts from "/", that indicates of using 
 	 * regular expression to find thing to substitute. For example:
@@ -1595,6 +1613,33 @@ class Controller extends EventBehaviour
 	 * Similar, use this method to replace or add parameter to "p2":
 	 * <code>$controller->makeURL(null, array(1=>"dir0"));</code> will return
 	 * <code>http://example.com/blog/dir1/dir0/dir3/2.html</code>.
+	 *
+	 * @param string new controller name. It could be null, then current controller name
+	 * will be taken.
+	 * To change controller name in the hyperlink, use $controller_name parameter. E.g.
+	 * <code>$controller->makeURL(null,null,'new_blog');</code>
+	 * will return 
+	 * <code>http://example.com/new_blog/dir1/dir2/di3/2.html</code>
+	 *
+	 * @param array $_GET variables. This parameter could be null, so current 
+	 * $_GET parameters will stay in resulting URL link.
+	 * 
+	 * if you whant to change $_GET parameters (following after ? in the URL), 
+	 * pass assoc array to $get. It works similar to assoc arrays in case of "p2" parameters, 
+	 * but without regular expressions on keys. Keep in mind, that system parameters (i.e. that
+	 * started with "__") are filtered and wont be presented in final URL link. 
+	 * Null values caused to unset specified key.
+	 *
+	 * So, <code>$controller->makeURL(null,null,null,array('get_key'=>'get_value','unset_me'=>null))</code>
+	 * on URL <code>http://example.com/blog/dir1/dir3/2.html?unset_me=yep</code>
+	 * will return 
+	 * <code>http://example.com/blog/dir1/dir3/2.html?get_key=get_value</code>.
+	 *
+	 * In order to specify language, that should be used on the page use the last parameter $lang 
+	 * by passing 2 letter-name of the language.
+	 * If this language is not default, it will be presented in the URL link.
+	 *
+	 * @see Language
 	 */
 	function makeURL($p1 = null, $p2 = null,$controller_name = null, $get = null, $lang = null)
 	{
@@ -1647,7 +1692,7 @@ class Controller extends EventBehaviour
 						$n_p2[(int)$k] = $v;
 		}
 
-		$n_p2 = array_values(array_map('urlencode',array_filter($n_p2)));
+		$n_p2 = array_values(array_map('rawurlencode',array_filter($n_p2)));
 
 		$c_get = $n_get = $this->get->getAllChecked();
 
@@ -1669,12 +1714,11 @@ class Controller extends EventBehaviour
 
 		$n_get2 = array();
 		foreach($n_get as $k=>$v)
-			$n_get2[] = urlencode($k)."=".urlencode($v);
+			$n_get2[] = rawurlencode($k)."=".rawurlencode($v);
 		unset($n_get);
 
-		$lang = "en";
-		if($lang == Language::currentName() || strlen($lang) != 2 )
-			$lang = null;
+		//if(Language::isDefault($lang) || strlen($lang) != 2 )
+		//	$lang = null;
 		
 		return Header::makeHTTPHost(). 
 			((!empty($lang))?"/".$lang:"").
@@ -1684,62 +1728,145 @@ class Controller extends EventBehaviour
     }
 	//}}}
 
+	//{{{ getDisplayModeParams
+	/**
+	 * Retruns object with information of current display mode parameters.
+	 *
+	 * Primarily used by internal functions.
+	 *
+	 * @param null
+	 * @return DisplaModeParams object
+	 * @see DisplayModeParams
+	 */
 	function getDisplayModeParams()
 	{
 		return $this->display_mode_params;
 	}
+	//}}}
+	
+	//{{{ getPage
+	/**
+	 * Returns name of the current page. 
+	 *
+	 * It could be either string or numeric, depending
+	 * of current URL formatting strategy.
+	 *
+	 * I.e. in case <code>http://example.com/2.html<code>
+	 * numeric "2" will be returned.
+	 *
+	 * @param null
+	 * @return mixed current page
+	 * @see Controller::makeURL
+	 */
 	function getPage()
 	{
 		return $this->page;
 	}
+	//}}}
+	
+	//{{{ getControllerName
+	/**
+	 * Returns name of the current controller.
+	 *
+	 * It always presented, and if 
+	 * <code>http://example.com/2.html</code> URL is used, 
+	 * this method returns "index" as a result.
+	 *
+	 * @param null
+	 * @return string alphanumeric string with current controller name
+	 */
 	function getControllerName()
 	{
 		return $this->controller_name;
 	}
+	//}}}
+	
+	//{{{ XMLPageChanged
+	/**
+	 * Checks if current page changed since the specified time.
+	 *
+	 * Primarily used by internal functions.
+	 *
+	 * @param int time to check
+	 * @return bool result of checking
+	 */
 	function XMLPageChanged($mtime)
 	{
 		if(!isset($mtime)) return true;
 		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml";
-        if(pageChanged($file,$mtime)) return true;
+        if(fileChanged($file,$mtime)) return true;
         foreach($this->ie_files as $f)
-            if(pageChanged($f,$mtime)) return true;
+            if(fileChanged($f,$mtime)) return true;
         return false;
 	}
+	//}}}
+
+	//{{{ handlePOST
+	/**
+	 * Process incoming POST data. 
+	 * This happens only if current request method is POST and it not empty.
+	 *
+	 * It consists of sequence of checks and calls:
+	 *
+	 * <ol>
+	 * <li>"BeforeHandlePOST" event is called with $this parameter.</li>
+	 * <li>It decides whenever form shold be checked upon trusted signatures.</li>
+	 * <li>If the form should be checked, "BeforeCheckSignature" event is called with
+	 * $this parameter.</li>
+	 * <li>Checks incoming form signature to detect POST data from the form, that user didn't visit.</li>
+	 * <li>"BeforeCheckByRules" event is called with $post as a first parameter and real 
+	 * complete form signature value, that has been passed by the client's UA.
+	 * <li>Checks incoming form data with pointed value checkers. And if error occured, 
+	 * it shows error message. No data will be passed to declared data handlers.</li>
+	 * <li>"BeforeCallHandlers" event is called with $this and $formid (just id, no signature field).</li>
+	 * <li>All registered checkers are called to perform form data cheks in userland.
+	 * If CheckerException is raised, error message will be shown without calling declared 
+	 * handlers.</li>
+	 * <li>Declared data handlers and finilaizers are called.</li>
+	 * <li>"AfterHandlePOST" event is called with $this parameter and $ret string, which points
+	 * where to redirect after data processing.</li>
+	 *
+	 * @param null
+	 * @return null
+	 * @see DataHandlerObject
+	 * @see PageHandlerObject
+	 */
 	protected function handlePOST()
     {
 		$this->trigger("BeforeHandlePOST",$this);
 
-		if($this->post->isEmpty()) return;
+		if($this->post->isEmpty()) $this->gotoStep0();
 
 		WidgetLoader::load("WForm");
-
-		$this->trigger("BeforeCheckSignature",$this);
-
-		if(!$this->checkSignature($this->post->{WForm::signature_name}))
-            $this->gotoStep_0();
-
-		POSTErrors::flushErrors();
-        //$this->restorePageHandler();
-
-		//TODO: move to vendor and use events
-		//
-        $this->restoreCAPTCHA();
-        if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
-            POSTErrors::addError($this->captcha_name,null,Language::message('widgets',"captcha_error"));
-
-		$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
-
-		POSTChecker::checkByRules($this->post,$this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
-		if(POSTErrors::hasErrors())
-        {
-			POSTErrors::saveErrorList();
-			$this->gotoStep_0();
-		}
-		//DataUpdaterPool::restorePool();
 		list($formid) = explode(":",$this->post->{WForm::signature_name});
 		if(empty($formid))
 			$this->gotoStep_0();
 
+
+		if(!in_array($formid,$this->no_check_forms))
+		{
+			$this->trigger("BeforeCheckSignature",$this);
+			if(!$this->checkSignature($this->post->{WForm::signature_name}))
+				$this->gotoStep_0();
+
+			POSTErrors::flushErrors();
+
+			//TODO: move to vendor and use events
+			//
+			$this->restoreCAPTCHA();
+			if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
+				POSTErrors::addError($this->captcha_name,null,Language::message('widgets',"captcha_error"));
+
+			$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
+
+			POSTChecker::checkByRules($this->post,$this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
+			if(POSTErrors::hasErrors())
+			{
+				POSTErrors::saveErrorList();
+				$this->gotoStep_0();
+			}
+			//DataUpdaterPool::restorePool();
+		}
 		$this->trigger("BeforeCallHandlers",array($this,$formid));
 
 		try
@@ -1770,27 +1897,75 @@ class Controller extends EventBehaviour
 
 		$this->gotoStep_0();
 	}
+	//}}}
+	
+	//{{{ gotoStep_0
+	/**
+	 * Redirects to the current URL and halts script execution.
+	 * Primarily for internal use.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	protected function gotoStep_0()
 	{
 		$s = $this->navigator->getStep(0);
         Header::redirect( isset($s,$s['url'])?$s['url']:"/");
 		exit();
     }
+	//}}}
+	
+	//{{{ gotoLocation
+	/**
+	 * Redirects to specified location or page.
+	 *
+	 * @param string location, ie "/blog/2.html" or page "2.html". In the last case, all 
+	 * current parameters will be saved and only page will be changed.
+	 * return null
+	 */
     protected function gotoLocation($loc)
     {
-        if(isset($loc)){
-            if(strpos($loc,"/") === false) $loc = $this->makeURL($loc);//suggest $loc is a page to which redirect to.
-            Header::redirect($loc, Header::SEE_OTHER);
-        }
-        exit();
+		if(!isset($loc)) exit();
+		if(strpos($loc,"/") === false) 
+			$loc = $this->makeURL($loc);//suggest $loc is a page to which redirect to.
+		Header::redirect($loc, Header::SEE_OTHER);
     }
+	//}}}
+	
 	// checkers
+
+	//{{{ setChecker
+	/**
+	 * Set checker rules for html control with specified name.
+	 * Used by POSTChecker and should be placed in storage. It will be 
+	 * restored during POST request. 
+	 * Primarily for internal use by WValueChecker class.
+	 *
+	 * @param string complete form signature, that will come via POST
+	 * @param string name name of the HTML control, which should be checked upon the rules
+	 * @param string name of the rule to apply ("required", "min", "max" etc)
+	 * @param string value for rule. May be empty if rule doesn't need value (such as required).
+	 * @param string optional message to be displayed, if default doesn't feet for particular needs.
+	 */
 	function setChecker($form_sig,$name,$rule,$rule_value, $message = null)
     {
 		if(!isset($form_sig,$name,$rule,$rule_value)) return;
         $this->checker_rules[$form_sig][$name][$rule] = trim($rule_value);
         if (!is_null($message)) $this->checker_messages[$form_sig][$name] = $message;
 	}
+	//}}}
+
+	//{{{ restoreCheckers
+	/**
+	 * Restore checkers, setted and saved during GET request by {@link setChecker} method.
+	 * Used only while POST request when system must check incoming data upon the rules.
+	 * All checkers are saved in persistent {@link Storage}.
+	 *
+	 * Primarily for internal use by Controller class.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	protected function restoreCheckers()
 	{
 		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
@@ -1803,8 +1978,23 @@ class Controller extends EventBehaviour
 			$this->checker_messages = $_cm;
 		unset($_cm);
 	}
+	//}}}
+
 	// signatures
-	function addFormSignature($sig)
+
+	//{{{ addSignature
+	/**
+	 * Adds form signature to the list of valid signatures. 
+	 * While POST request incoming form singnature will be checked upon this list.
+	 * It gives some defense from CSRF attacks.
+	 *
+	 * The list made as leaky bucket. Maximum number of elements defines with MAX_SIGNATURES 
+	 * constant. Default is 32.
+	 *
+	 * @param string signature to be added
+	 * @return null
+	 */
+	function addSignature($sig)
 	{
 		if(!isset($sig)) return;
 		if(count($this->form_signatures) >= self::MAX_SIGNATURES)
@@ -1817,6 +2007,16 @@ class Controller extends EventBehaviour
 		}
 		$this->form_signatures[] = $sig;
 	}
+	//}}}
+
+	//{{{ checkSignature
+	/**
+	 * Checks whenever given signature is valid, so located in list.
+	 * If so, it will be removed and true value returned.
+	 * 
+	 * @param string signature to be checked
+	 * @return bool if signature is valid
+	 */
 	protected function checkSignature($sig = null)
 	{
 		if(!isset($sig)) return false;
@@ -1828,6 +2028,27 @@ class Controller extends EventBehaviour
 		}
 		return false;
 	}
+	//}}}
+	
+	//{{{ restoreSignatures
+	/**
+	 * Restore signatures, setted and saved during GET request by {@link addSignature} method.
+	 * Used only while POST request when system must check incoming signature.
+	 * All checkers are saved in persistent {@link Storage}.
+	 *
+	 * Primarily for internal use by Controller class.
+	 */
+	protected function restoreSignatures()
+	{
+		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
+		$this->form_signatures = $storage->get('signatures');
+		//$storage->un_set('signatures');
+		if(!is_array($this->form_signatures))
+			$this->form_signatures = array();
+	}
+	//}}}
+
+	// TODO: remove to vendors
     function setCAPTCHA($captcha_input_name = null)
     {
         if(empty($captcha_input_name)) return;
@@ -1839,14 +2060,8 @@ class Controller extends EventBehaviour
         $this->captcha_name = $storage->get('captcha_name');
 		$storage->un_set('captcha_name');
     }
-	protected function restoreSignatures()
-	{
-		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
-		$this->form_signatures = $storage->get('signatures');
-		//$storage->un_set('signatures');
-		if(!is_array($this->form_signatures))
-			$this->form_signatures = array();
-	}
+
+	// TODO: move to vendors and plugins
     public function addNotify($text){
         if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
         $notes = $this->notifyStorage['notify'];
@@ -1869,15 +2084,34 @@ class Controller extends EventBehaviour
         unset($this->notifyStorage['notify']);
         return $tpl->getHTML();
     }
+
+	//{{{ isAjax
+	/**
+	 * Need to detect whenever current request was made via AJAX
+	 *
+	 * @param null
+	 * @return bool true if request made via AJAX
+	 */
     function isAjax()
     {
         return $this->is_ajax;
-    }
+	}
+	//}}}
 
 
 	// destructor
+	//{{{ __destruct
+	/**
+	 * Managed some routine functions such as saving signatures, rules, 
+	 * closes DB connection. Some methods are called only if current request was GET,
+	 * so inited flag was setted.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function __destruct()
     {
+		$this->trigger("BeforeDestruct",$this);
         //do it only if init was completed
         if($this->inited)
 		{
@@ -1888,8 +2122,6 @@ class Controller extends EventBehaviour
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
 		    $storage->set('captcha_name',$this->captcha_name);
-		    //DataUpdaterPool::savePool();
-            //$storage->set('pagehandler',$this->pagehandler);
             POSTErrors::flushErrors();
         }
 
@@ -1897,36 +2129,100 @@ class Controller extends EventBehaviour
 
 		DB::close();
 	}
+	//}}}
+	
+	//{{{ setStoragePostfix
+	/**
+	 * It sets postifx, that will be added to the storage name to store
+	 * all internal data and structures. In some cases we should protect current 
+	 * internal structures and set new. For example, while filling form and markdown 
+	 * text field we whant to insert picture via editor's browser. We need to save
+	 * page's data but we also need to store data, used by the browser. Different 
+	 * postfixes will solve this problem. 
+	 *
+	 * By default postfix equals to the current controller name
+	 *
+	 * @param string new postfix string
+	 * @return null
+	 */
 	function setStoragePostfix($name)
 	{
 		if(!isset($name) || !is_string($name)) return ;
 		$this->storage_postfix = (string)$name;
 	}
+	//}}}
+	
+	//{{{ getStoragePostfix
+	/** 
+	 * Returns currently used postfix string
+	 *
+	 * @param null
+	 * @return string
+	 * @see setStoragePostfix
+	 */
 	function getStoragePostfix()
 	{
 		return $this->storage_postfix;
 	}
+	//}}}
+	
+	//{{{ registerStep
+	/**
+	 * Sets flag that defines whenever to set or not current page to the
+	 * {@link Navigator}.
+	 *
+	 * @param bool flag
+	 * @return null
+	 */
 	function registerStep($reg = 1)
 	{
 		if(!isset($reg) || !is_scalar($reg)) return;
 
 		$this->register_step = 0 + $reg;
 	}
+	//}}}
 }
 //}}}
+
+//{{{ DisplayModeParams
+/**
+ * Holds params for displaying various widgets. 
+ * Currently, only iterable containers use this class.
+ */
 class DisplayModeParams
 {
 	protected 
+		/**
+		 * Params for displaying.
+		 * @var array
+		 */
         $widget_params = array(),
-        $matched_index = null,
-        $collection_prerender_existent = false
+		/**
+		 * Index of selector that have been matched.
+		 * @var int
+		 */
+        $matched_index = null
         ;
 	public 
+		/**
+		 * Sets predicted limit for displaying iterable containers.
+		 */
 		$predicted_from = null,
 		$predicted_limit = null
 		;
 		
 
+	//{{{ set
+	/**
+	 * Set parameters for display for given widget.
+	 * Primarily used by internal functions
+	 *
+	 * @param string id of widget
+	 * @param int index of the first element of displayed container
+	 * @param int number of items to show
+	 * @param int total count of items that container holds
+	 * @return null
+	 */
 	function set($widget_id,$from,$limit,$count)
 	{
 		if(!isset($widget_id) || !is_numeric($from) || !is_numeric($limit) || !is_numeric($count)) return;
@@ -1937,10 +2233,29 @@ class DisplayModeParams
 			"current"=>$from
 			);
 	}
+	//}}}
+
+	//{{{ getFrom
+	/**
+	 * Returns from component of parameters.
+	 * 
+	 * @param string id of widget to be looked up
+	 * @return int 
+	 */
 	function getFrom($widget_id)
 	{
 		return !isset($this->widget_params[$widget_id])?$this->widget_params[$widget_id]['from']:0;
 	}
+	//}}}
+
+	//{{{ getLimit
+	/**
+	 * Returns limit component of holding parameters. 
+	 * It computes  considering count parameter.
+	 *
+	 * @param string id of widget to be looked up
+	 * @return int
+	 */
 	function getLimit($widget_id)
 	{
 		if(!isset($this->widget_params[$widget_id])) return 0;
@@ -1948,6 +2263,16 @@ class DisplayModeParams
 			return $this->widget_params[$widget_id]['count'] - $this->widget_params[$widget_id]['from'];
 		return $this->widget_params[$widget_id]['limit'];
 	}
+	//}}}
+
+	//{{{ getCurrent
+	/**
+	 * Returns index of currently processing widget.
+	 *
+	 * @param id of widget to be looked up
+	 * @param string scope of index. Might be 'local' or 'global'
+	 * @return int
+	 */
 	function getCurrent($widget_id,$scope)
 	{
 		if(!isset($this->widget_params[$widget_id])) return;
@@ -1956,7 +2281,15 @@ class DisplayModeParams
 		else
 			return $this->widget_params[$widget_id]['current'] - $this->widget_params[$widget_id]['from'];
 	}
+	//}}}
 
+	//{{{ incCurrent
+	/**
+	 * Increments current index for given widget
+	 *
+	 * @param string id of widget to be looked up
+	 * @return null
+	 */
 	function incCurrent($widget_id)
 	{
 		if(!isset($this->widget_params[$widget_id])) return;
@@ -1965,12 +2298,31 @@ class DisplayModeParams
 
 		$this->widget_params[$widget_id]['current']++;
 	}
+	//}}}
+
+	//{{{ resetCurrent
+	/**
+	 * Resets current parameter for given widget
+	 *
+	 * @param string id of widget to be looked up
+	 * @return null
+	 */
 	function resetCurrent($widget_id)
 	{
 		if(!isset($this->widget_params[$widget_id])) return ;
 		$this->widget_params[$widget_id]['current'] = $this->widget_params[$widget_id]['from'];
 		
 	}
+	//}}}
+
+	//{{{ isFirst
+	/**
+	 * It defines whenever current iteration is the first.
+	 *
+	 * @param string id of widget_params to be looked up
+	 * @param string scope of current request. Might be 'local' or 'global'
+	 * @return bool
+	 */
 	function isFirst($widget_id,$scope)
 	{
 		if(!isset($this->widget_params[$widget_id])) return false;
@@ -1979,6 +2331,16 @@ class DisplayModeParams
 		else
 			return $this->widget_params[$widget_id]['current'] == $this->widget_params[$widget_id]['from'];
 	}
+	//}}}
+
+	//{{{ isLast
+	/**
+	 * It defines whenever current iteration is the last.
+	 *
+	 * @param string id of widget_params to be looked up
+	 * @param string scope of current request. Might be 'local' or 'global'
+	 * @return bool
+	 */
 	function isLast($widget_id,$scope)
 	{
 		if(!isset($this->widget_params[$widget_id])) return false;
@@ -1987,85 +2349,179 @@ class DisplayModeParams
 		return $this->widget_params[$widget_id]['current'] == 
 			$this->widget_params[$widget_id]['from'] + $this->widget_params[$widget_id]['limit'] -1;
 		
-    }
+	}
+	//}}}
+	
+	//{{{ getMatchedIndex
+	/**
+	 * Returns matched index
+	 *
+	 * @param null
+	 * @retrun int
+	 */
     function getMatchedIndex()
     {
         return $this->matched_index;
-    }
+	}
+	//}}}
+
+	//{{{ setMatchedIndex
+	/**
+	 * Sets matched index.
+	 *
+	 * @param int index to set
+	 * @return null
+	 */
     function setMatchedIndex($ind = null)
     {
         if(!isset($ind)) return;
         $this->matched_index = $ind;
-    }
+	}
+	//}}}
 }
+//}}}
+
+//{{{ AjaxController
+/** 
+ * Used when current request came via AJAX
+ * Need to simplify workflow and remove unneccessary code blocks.
+ */
 class AjaxController extends Controller
 {
 
+	//{{{ __construct
+	/**
+	 * Constructor
+	 */
     protected function __construct()
     {
         $this->is_ajax = true;
         parent::__construct();
     }
+	//}}}
+
+	//{{{ init
+	/**
+	 * Like {@link Controller::init} but without signature and form checks.
+	 * Scripts and stylesheets are not added.
+	 *
+	 * "BeforeAddScript" event is not raising.
+	 * @param null
+	 * @return nul
+	 */
 	function init()
     {
-        Language::Init();
+		$this->trigger("BeforeInit",$this);
+
+		Boot::setupAll();
         
         $this->header = Header::get();
 		$this->dispatcher = new WidgetEventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
+		$this->navigator = new Navigator($this->controller_name);
 
-        try{
-            $full_path = $this->findPage();
+        $full_path = $this->findPage();
 
-            $dom = new DomDocument;
-            $dom->load($full_path);
+		$dom = new DomDocument;
+        if($dom->load($full_path) === false)
+            throw new ControllerException("Can not load XML ".$full_path);
 
-            $this->parsePageOnGET($this->processPage($dom));
-            if($_SERVER['REQUEST_METHOD'] == "POST")
-			{
-				$this->parsePageOnPOST($this->processPage($dom));
-				$this->handlePOST();
-			}
+		$this->trigger("BeforeHandlePOST",$this);
 
-        }catch(Exception $e){}
-        
+        if($_SERVER['REQUEST_METHOD'] == "POST")
+		{
+			$this->parsePageOnPOST($this->processPage($dom));
+			$this->handlePOST();
+			exit();
+		}
+
+        $this->parsePageOnGET($this->processPage($dom));
+		$this->inited = true;
+		$this->trigger("AfterInit",$this);
     }
+	//}}}
 
+	//{{{ head
+	/**
+	 * Returns empty head, due to it doesn't need while AJAX request.
+	 * 
+	 * @param bool unused. Leaved for compatibility with Controller::head
+	 * @return string empty string
+	 */
 	function head($echo = 1)
 	{
         return "";
 	}
+	//}}}
+
+	//{{{ tail
+	/**
+	 * Returns empty tail, due to it doesn't need while AJAX request.
+	 *
+	 * @param bool unused. Leaved for compatibility with Controller::head
+	 * @return string empty string
+	 */
 	function tail($echo = 1)
 	{
         return "";
 	}
+	//}}}
 
+	//{{{ handlePOST
+	/**
+	 * Handles POST data while AJAX request.
+	 * It works like {Controller::handlePOST} but signature will not be checked,
+	 * form data won't be checked too. Page handler doesn't creating.
+	 * 
+	 * Events "BeforeCheckSignature", 
+	 * "BeforeCheckByRules" are not raised.
+	 *
+	 * Considering that formid is not populating, all chekers and handlers 
+	 * will be called.
+	 * 
+	 * @param null
+	 * @return null
+	 */
 	protected function handlePOST()
-	{
-		if($this->post->isEmpty()) return;
+    {
+		$this->trigger("BeforeHandlePOST",$this);
+
+		if($this->post->isEmpty()) $this->gotoStep0();
+
+		$formid = null;
+
+		$this->trigger("BeforeCallHandlers",array($this,$formid));
 
 		try
 		{
-			DataUpdaterPool::callCheckers();
+			DataUpdaterPool::callCheckers($formid);
 		}
 		catch(CheckerException $e)
 		{
-            exit("");
+			exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName);
 		}
-		if(POSTErrors::hasErrors())
-		{
-            exit("");
-		}
-		DataUpdaterPool::callHandlers();
-        DataUpdaterPool::callFinilze();
-	}
+		DataUpdaterPool::callHandlers($formid);
+		DataUpdaterPool::callFinilze($formid);
 
-	// destructor
+		$this->trigger("AfterHandlePOST",array($this,$ret));
+
+	}
+	//}}}
+	
+	//{{{ __destruct
+	/**
+	 * Just closes database connection
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function __destruct()
 	{
 		DB::close();
 	}
+	//}}}
 }
+//}}}
 ?>
