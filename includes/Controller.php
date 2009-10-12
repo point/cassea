@@ -32,7 +32,7 @@
  * such as Controller and AjaxController plus several helper classes.
  *
  * It should be included (or required) first of all other. Typical front controller logic 
- * consists of theese statements:
+ * consists of these statements:
  *
  * <pre><code>
  * require("../includes/Controller.php");
@@ -154,7 +154,7 @@ class Controller extends EventBehaviour
 		 */
 		$storage_postfix = "default",
 		/**
-		 * This flag sets to true if {@link init} was made completly.
+		 * This flag sets to true if {@link init} was made completely.
 		 * 
 		 * @var bool
 		 */
@@ -295,14 +295,14 @@ class Controller extends EventBehaviour
 		 */
 		$is_ajax = false,
 		/**
-		 * Alternative responce string. Set it if you whant to suppress standard output,
-		 * obtained by widgets render mechanism. Usefull in ajax responces.
+		 * Alternative response string. Set it if you want to suppress standard output,
+		 * obtained by widgets render mechanism. Useful in ajax responses.
 		 *
 		 * @var string
 		 */
-		$responce_string = null,
+		$response_string = null,
 		/**
-		 * Hodls ids of forms which should not be checked by signature checker and 
+		 * Holds ids of forms which should not be checked by signature checker and 
 		 * by value checkers
 		 *
 		 * @var array of form ids
@@ -314,7 +314,7 @@ class Controller extends EventBehaviour
 	/**
 	 * This function called when calling {@link getInstance} at first time.
 	 * 
-	 * It checks controller name, makes base cheks, initializes post, get and cookie variables,
+	 * It checks controller name, makes base checks, initializes post, get and cookie variables,
 	 * parse "p1" and "p2" parameters.
 	 *
 	 * It triggers "BeforeConstruct" and "AfterConstruct" events. $this passed as 1st argument.
@@ -413,7 +413,7 @@ class Controller extends EventBehaviour
 	 * It also calls handler for POST data if current request method is post.
 	 * Otherwise application continues to initialize data for GET request,
 	 * adds essential javascript and css files, parse current page
-	 * and sets flag initied to "true". 
+	 * and sets flag inited to "true". 
 	 * 
 	 * Triggers "BeforeInit", "BeforeHandlePOST", "BeforeAddScript", "AfterInit" events.
 	 * $this passed as 1st argument in all of this events.
@@ -809,7 +809,7 @@ class Controller extends EventBehaviour
 	
 	//{{{ parsePageOnGET
 	/**
-	 * This method creates all necessary objects to make GET request, so to dislpay page.
+	 * This method creates all necessary objects to make GET request, so to display page.
 	 * This is DataSets, Styles, JavaScripts, ValueCheckers objects and widgets directly 
 	 * (via {@link buildWidget} function.
 	 *
@@ -1266,8 +1266,8 @@ class Controller extends EventBehaviour
 	/**
 	 * Returns or echo's head of HTML document: from doctype to body tag.
 	 *
-	 * If responce_string {@link setResponceString} is setted, this content
-	 * will be echo'd or retrurned.
+	 * If response_string {@link setResponseString} is setted, this content
+	 * will be echo'd or returned.
 	 *
 	 * It adds css and js to {@Header} in order to their priority.
 	 * Depending of argument it echo's result string to output or 
@@ -1280,7 +1280,7 @@ class Controller extends EventBehaviour
 	 *
 	 * @param bool echo to output or return as string
 	 * @return mixed this could be either null or string, depending on argument value.
-	 * @see setResponceString
+	 * @see setResponseString
 	 * @see getHeadBodyTail
 	 * @see tail
 	 * @see addScript
@@ -1290,9 +1290,9 @@ class Controller extends EventBehaviour
 	{
 		$this->trigger("BeforeHead",$this);
 	
-        if(isset($this->responce_string))
-            if ($echo) echo $this->responce_string;
-            else return $this->responce_string;
+        if(isset($this->response_string))
+            if ($echo) echo $this->response_string;
+            else return $this->response_string;
 
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
@@ -1322,7 +1322,7 @@ class Controller extends EventBehaviour
 	/**
 	 * Return enclosing tags of HTML document
 	 *
-	 * If responce_string {@link setResponceString} is setted nothing will be returned or echo'd
+	 * If response_string {@link setResponseString} is setted nothing will be returned or echo'd
 	 *
 	 * Triggers "BeforeTail" event with $this as 1st argument.
 	 *
@@ -1330,13 +1330,13 @@ class Controller extends EventBehaviour
 	 * @return mixed this could be either null or string, depending on argument value.
 	 * @see head
 	 * @see getHeadBodyTail
-	 * @see setResponceString
+	 * @see setResponseString
 	 */
 	function tail($echo = 1)
 	{
 		$this->trigger("BeforeTail",$this);
 
-        if(isset($this->responce_string)) return;
+        if(isset($this->response_string)) return;
 
         $v = "\n</body></html>";
 		if($echo)
@@ -1345,9 +1345,9 @@ class Controller extends EventBehaviour
 	}
 	//}}}
 
-	//{{{
+	//{{{ setResponseString
 	/**
-	 * Set responce string directly. If setted outputed instead of 
+	 * Set response string directly. If setted outputed instead of 
 	 * standard allHTML-mechanism.
 	 *
 	 * Set it to output non-html data, or data for AJAX.
@@ -1358,10 +1358,10 @@ class Controller extends EventBehaviour
 	 * @see tail
 	 * @see getHeadBodyTail
 	 */
-    function setResponceString($str)
+    function setResponseString($str)
     {
         if(!isset($str) || !is_scalar($str)) return ;
-        $this->responce_string = $str;
+        $this->response_string = $str;
 	}
 	//}}}
 
@@ -1371,11 +1371,11 @@ class Controller extends EventBehaviour
 	 * end body tag. It consist of sequential call of {@link allHTML}, 
 	 * {@link head} and {@link tail} methods.
 	 *
-	 * If responce_string {@link setResponceString} is setted, this content
-	 * will be echo'd or retrurned.
+	 * If response_string {@link setResponseString} is setted, this content
+	 * will be echo'd or returned.
 	 *
-	 * Preffered to use this method instead of head(), tail() and allHTML() 
-	 * due to unobvious call sequence. First of all  allHTML() called to 
+	 * Preferred to use this method instead of head(), tail() and allHTML() 
+	 * due to not obviuos call sequence. First of all  allHTML() called to 
 	 * allow user-code to call some Header functions. Then head() and
 	 * tail() method called.
 	 *
@@ -1389,9 +1389,9 @@ class Controller extends EventBehaviour
 	{
 		$this->trigger("BeforeHeadBodyTail",$this);
 		
-        if(isset($this->responce_string))
-            if ($echo) echo $this->responce_string;
-            else return $this->responce_string;
+        if(isset($this->response_string))
+            if ($echo) echo $this->response_string;
+            else return $this->response_string;
         else
         {
             $body = $this->allHTML();
@@ -1435,7 +1435,7 @@ class Controller extends EventBehaviour
 	
 	//{{{ getStyleByName
 	/**
-	 * Retruns style object by given id.
+	 * Returns style object by given id.
 	 *
 	 * @param string id of style object.
 	 * @return mixed WStyle object or null if nothing was found.
@@ -1589,7 +1589,7 @@ class Controller extends EventBehaviour
 	 *
 	 * @param array p2 parameters. It could be assoc or int-based.
 	 * In case of assoc, method will be looking for values in p2 that equals 
-	 * to keys of parametr's array.
+	 * to keys of parameter's array.
 	 * For example, if URL is <code>http://example.com/blog/dir1/dir2/dir3/2.html</code>
 	 * and <code>$controller->makeURL(null,array("dir2"=>"dir0"));</code> is called,
 	 * <code>http://example.com/blog/dir1/dir0/dir3/2.html</code> will be returned.
@@ -1624,7 +1624,7 @@ class Controller extends EventBehaviour
 	 * @param array $_GET variables. This parameter could be null, so current 
 	 * $_GET parameters will stay in resulting URL link.
 	 * 
-	 * if you whant to change $_GET parameters (following after ? in the URL), 
+	 * if you want to change $_GET parameters (following after ? in the URL), 
 	 * pass assoc array to $get. It works similar to assoc arrays in case of "p2" parameters, 
 	 * but without regular expressions on keys. Keep in mind, that system parameters (i.e. that
 	 * started with "__") are filtered and wont be presented in final URL link. 
@@ -1730,7 +1730,7 @@ class Controller extends EventBehaviour
 
 	//{{{ getDisplayModeParams
 	/**
-	 * Retruns object with information of current display mode parameters.
+	 * Returns object with information of current display mode parameters.
 	 *
 	 * Primarily used by internal functions.
 	 *
@@ -1810,16 +1810,16 @@ class Controller extends EventBehaviour
 	 *
 	 * <ol>
 	 * <li>"BeforeHandlePOST" event is called with $this parameter.</li>
-	 * <li>It decides whenever form shold be checked upon trusted signatures.</li>
+	 * <li>It decides whenever form should be checked upon trusted signatures.</li>
 	 * <li>If the form should be checked, "BeforeCheckSignature" event is called with
 	 * $this parameter.</li>
 	 * <li>Checks incoming form signature to detect POST data from the form, that user didn't visit.</li>
 	 * <li>"BeforeCheckByRules" event is called with $post as a first parameter and real 
 	 * complete form signature value, that has been passed by the client's UA.
-	 * <li>Checks incoming form data with pointed value checkers. And if error occured, 
+	 * <li>Checks incoming form data with pointed value checkers. And if error occurred, 
 	 * it shows error message. No data will be passed to declared data handlers.</li>
 	 * <li>"BeforeCallHandlers" event is called with $this and $formid (just id, no signature field).</li>
-	 * <li>All registered checkers are called to perform form data cheks in userland.
+	 * <li>All registered checkers are called to perform form data checks in userland.
 	 * If CheckerException is raised, error message will be shown without calling declared 
 	 * handlers.</li>
 	 * <li>Declared data handlers and finilaizers are called.</li>
@@ -2136,7 +2136,7 @@ class Controller extends EventBehaviour
 	 * It sets postifx, that will be added to the storage name to store
 	 * all internal data and structures. In some cases we should protect current 
 	 * internal structures and set new. For example, while filling form and markdown 
-	 * text field we whant to insert picture via editor's browser. We need to save
+	 * text field we want to insert picture via editor's browser. We need to save
 	 * page's data but we also need to store data, used by the browser. Different 
 	 * postfixes will solve this problem. 
 	 *
@@ -2357,7 +2357,7 @@ class DisplayModeParams
 	 * Returns matched index
 	 *
 	 * @param null
-	 * @retrun int
+	 * @return int
 	 */
     function getMatchedIndex()
     {
@@ -2384,7 +2384,7 @@ class DisplayModeParams
 //{{{ AjaxController
 /** 
  * Used when current request came via AJAX
- * Need to simplify workflow and remove unneccessary code blocks.
+ * Need to simplify workflow and remove unnecessary code blocks.
  */
 class AjaxController extends Controller
 {
