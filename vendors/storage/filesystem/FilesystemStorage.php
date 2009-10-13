@@ -69,11 +69,14 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
 
 		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
 
-        foreach(glob($this->real_storage_path."/*.cache") as $f)
+		$l = glob($this->real_storage_path."/*.cache");
+        foreach((is_array($l)?$l:array()) as $f)
         {
             $this->vars[basename($f,".cache")] = file_get_contents($f);
         }
-	}
+	}// }}}
+
+	// {{{
 	function is_set($var)
 	{
 		return isset($this->vars[md5($var)]);
@@ -110,7 +113,8 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
     // {{{ sync
     function sync()
 	{
-		foreach(glob($this->real_storage_path."/*.cache") as $f)
+		$l = glob($this->real_storage_path."/*.cache");
+        foreach((is_array($l)?$l:array()) as $f)
 			$this->vars[basename($f,".cache")] = unserialize($f);
     }// }}}
 
@@ -118,7 +122,8 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
 	static function cleanup()
 	{
 		$dir = Config::get('ROOT_DIR').Config::get('STORAGE_DIR');
-		foreach(glob($dir."/*/*.ttl") as $f)
+		$l = glob($dir."/*/*.ttl");
+		foreach((is_array($l)?$l:array()) as $f)
 			if(intval(file_get_contents($f)) < time())
 				deltree(dirname($f));
     }// }}}

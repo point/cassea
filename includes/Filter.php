@@ -337,12 +337,13 @@ return $matches[1].str_ireplace(
 		* but it's unlikely to be a problem.
 		*
 		*/
+		// TODO It's a very slow expression
 		$str = preg_replace("#([^><]+?)([^a-z_\-]on\w*|xmlns)(\s*=\s*[^><]*)([><]*)#i", "<\\1\\4", $str);
 
 
 		// Standardize newlines
 		if (strpos($str, "\r") !== false)
-			$str = str_replace(array("\r\n", "\r"), "\n", $str);
+			$str = str_replace(array("\r\n", "\r"), PHP_EOL, $str);
 		return $str;
     }
 }

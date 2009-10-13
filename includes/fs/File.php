@@ -120,24 +120,44 @@ class File extends FileSystemObject implements iFile{
         throw new FileSystemException('Unable copy file '.$this.' to '.$tFile);
     }// }}}
 
-    // {{{ move (rename)
+    // {{{ rename
     /**
-     * Перемещение(переименование) файла
+     * Переименование файла.
+     * 
+     * Если $newName строка, не содержащая '/',
+     * то метод переименует файл.
+     * Во всех других случаях метод проксирует вызов методу {@link File::move()}.
+     *
+     * @throws FileSystemException
+     * @return Dir объект перемещенной директории
+     */
+    public function rename($newName){
+        if( !($newName instanceof iFileSystemObject) && strpos($this->concat($newName), '/') === false  )  
+            $newName = $this->getParent()->getFile($newName);
+        return $this->move($newName);
+    }
+    // }}}
+
+    // {{{ move  
+    /**
+     * Перемещение файла
      *
      * Если $target - директрия, то файл будет перемещен в нутрь папки
      * в тем же именем.
      *
      * Если $target - файла произойдет переименование
-     * TODO Модифицировать объект, а возвращать результат работы rename
      *
      * @throws FileSystemException
      * @return File объект перемещенного файла.
      */
-    public function move(iFileSystemObject $target){
+    public function move($target){
+        if(!($target instanceof iFileSystemObject))
+            $target = (is_dir($target))?t(new Dir($target, true)):t(new File($target, true));
+
         if (!rename($this, ($tFile = $this->verifySourceTarget($target))))
             throw new FileSystemException('Unable move file '.$this.' to '.$tFile);
-        $this->path = ''.$tFile;
-        return true;
+        if (!($this instanceof TempFile))
+            $this->path = ''.$tFile;
     }// }}}
 
     // {{{ verifySourceTarget
@@ -184,8 +204,8 @@ class File extends FileSystemObject implements iFile{
      */
     public function delete(){
         if (!$this->exists()) return true;
-        //if (!$this->canWrite()) return false;
-        ////throw new FileSystemException('Unable delete file. there is no write permission:'.$target); 
-        return  unlink($this->path);
+        $re = unlink($this->path);
+        $this->path= null;
+        return $re;
     }// }}}
 }// }}}

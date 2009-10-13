@@ -40,6 +40,7 @@ class SingleLanguageProcessor implements iLanguageProcessor
 
 	function current(){return $this->current;}
 	function currentName(){return $this->currentName;}
+	function isDefault($lang = null){return true;}
 	function encodePair($value){ return $value;}
 	function getConst($key){ return $key;}
 	function getLangList($raw = false){

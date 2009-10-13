@@ -27,26 +27,4 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
-
-// {{{ Decorator
-class Decorator /*implements iFile */{
-    protected $file;
-    
-    public function __construct ( $file){
-        if ($file instanceof iFile || $file instanceof Decorator)
-            $this->file = $file;
-        else throw DecoratorException('$file parameter in Decortor contructoe must be instance of iFile or Decorator');
-    }
-
-    public function __toString(){
-        return ''.$this->file;
-    }
-
-    public function __call($method, $arguments){
-        //print_pre(get_class($this).' '.$method);
-        $r= call_user_func_array(array($this->file, $method), $arguments);
-        return $r;
-    }
-
-}// }}}
+class DelayedJobException extends CasseaException {}

@@ -727,7 +727,7 @@ class DB{
 		if (self::$mysqli instanceof DBMysqliLazyLoad){
 			$p = self::parseDSN($dsn);
             self::$mysqli = new mysqli( $p['host'], $p['username'], $p['password'], $p['database'], $p['port'], $p['socket']);
-            if ( mysqli_connect_errno()) throw ( new DBConnectException(mysqli_connect_error(), mysqli_connect_errno()));
+			if ( mysqli_connect_errno()) throw new DBConnectException(mysqli_connect_error(), mysqli_connect_errno());
             if (!(self::$mysqli->set_charset('utf8'))) throw ( new DBException('Unable set charset "utf8":'.self::$mysqli->error)); 
         }
     }// }}}
@@ -1090,8 +1090,7 @@ class DB{
 		//print_pre($dsn);
         // $dsn = somehost:port/database
 		if (preg_match('#^([^(:]+)?(:(\d+))?/(.+)$#', $dsn, $m)){
-			//print_pre($m);
-			if ($m[1] != '') $prased['host'] = $m[1];
+			if ($m[1] != '') $parsed['host'] = $m[1];
 			if ($m[2] != '') $parsed['port'] = $m[2];
 			$parsed['protocol'] = 'tcp';
 			$dsn = $m[4];

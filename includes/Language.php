@@ -36,6 +36,7 @@ interface iLanguageProcessor{
 	public function init();
 	public function current();
 	public function currentName();
+	public function isDefault($lang = null);
 	public function encodePair($value);
 	public function getConst($key);
 	public function getLangList($raw = false);

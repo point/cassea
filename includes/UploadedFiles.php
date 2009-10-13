@@ -112,6 +112,35 @@ class UploadedFiles
             if (!isset($this->http_error_files[$name])) $uploaded[] = $info;
         return $uploaded;
     }
+
+	// {{{ isUploaded
+	/**
+	 * Проверяет пытался ли пользователь загрузить 
+	 * файл или оставил поле для выбора с файлом пустым
+	 *
+	 * Необходима для обработки необзательных полей WFile.
+	 *
+	 * <code>
+	 * ...
+	 *
+	 * function imageChecker($post){
+	 *		$uf = new UploadedFiles('image');
+	 *		if (!$uf->isUploaded('image')) return; // ползователь не выбрал изображение
+	 *
+	 *      $uf->allowedMimesLike('image/')->allowedSize(0, 4000*1024)->count(1);
+	 *      if ($uf->hasErrors()) throw new CheckerException ($uf->getErrorsFor('image'), 'image');
+	 * }
+	 * </code>
+	 *
+	 * @param string $w_name 
+	 * @param string $additional_id
+	 * @param bool 
+	 */
+	function isUploaded($w_name, $additional_id=null){
+		$name = isset($additional_id)?$w_name."\\".$additional_id:$w_name;
+		return  ( !isset( $this->http_error_files[$name][0][0]) ||  $this->http_error_files[$name][0][0] != UPLOAD_ERR_NO_FILE );
+	}
+
     function hasErrors()
     {
         return !empty($this->http_error_files);

@@ -29,7 +29,12 @@
 
 // $Id:$
 
-//{{{ Dir
+ // {{{ Dir
+/**
+ *
+ *
+ *
+ */
 class Dir extends FileSystemObject implements iDir{
     const LS_BOTH = 0;
     const LS_FILE = 1;
@@ -119,7 +124,7 @@ class Dir extends FileSystemObject implements iDir{
         if ($flag == Dir::LS_DIR) $gflag |= GLOB_ONLYDIR;
         $list = glob( $this->concat($this->path,$pattern), $gflag);
         $res = array();
-        foreach ( $list as $fname ){
+        foreach ( (is_array($list)?$list:array()) as $fname ){
             $fname = substr($fname,strlen($this->path));
             $isDir = substr($fname,-1) =='/';
             if (($flag == Dir::LS_DIR || $flag == Dir::LS_BOTH) &&  $isDir) $res[] = new Dir( $this->concat( $this->path , $fname), true); 
@@ -157,11 +162,11 @@ class Dir extends FileSystemObject implements iDir{
         $res = array();
         foreach(func_get_args() as $dir){
             if(is_null($dir) || empty($dir)) throw new FileSystemException('Directory name is empty or not set.');
-            $part = explode('/', $this->concat($dir));
+			$part = explode('/', $this->concat($dir));
             if ( ($c = count($part)) > 0){
-                for($i = 0, $p = $this->path; $i < $c; $i++)
-                    if(!file_exists($p = $this->concat($p,$part[$i])))
-                        if (!mkdir($p, Dir::MODE)) throw new FileSystemException('Create directory fail. Dir: '.$p);
+                for($i = 0, $p = $this; $i < $c; $i++)
+					if(!file_exists($p = $p->getDir($part[$i])))
+						if (!mkdir($p, Dir::MODE)) throw new FileSystemException('Create directory fail. Dir: '.$p);
                 $res[] = $this->getDir($dir);
             }
             else throw new FileSystemException('Incorrect directory name: '.$dir);
@@ -181,7 +186,7 @@ class Dir extends FileSystemObject implements iDir{
     public function upload(UploadedFiles $uf){
         $res = array();
         foreach($uf->getUploaded() as $f)
-            if (move_uploaded_file($f['tmp_name'], $this->concat($this, $f['name'])))  $res[] = $this->getFile($f['name']);
+            if (move_uploaded_file($f['tmp_name'], ($f = $this->getFile($f['name']))))  $res[] = $f;
             else throw new FileSystemException('Fail in move_uploaded_file: '.$f['name']);
         return $res;
     }// }}}
@@ -213,14 +218,23 @@ class Dir extends FileSystemObject implements iDir{
     /**
      * Переименование директории.
      *
+     * Если в качестве параметра указана строка, не содержащая '/',
+     * то происходит переименование директории.
+     * Если переданная строка содержит '/' то она воспринимается
+     * как путь для переименования(относительно коння хранилищиа{@link FileSystemObject::$root});
+     *
      * @throws FileSystemException
-     * @return Dir объект перемещенной директории
+     * @return iDir объект перемещенной директории
      */
-    public function rename(iDir $target){
-        $this->verifySourceTarget($target);
+    public function rename($target){
+        if( !($target instanceof iDir)) 
+            if( strpos($this->concat($target), '/') === false  ) $target = $this->getParent()->getDir($target);
+            else $target = new Dir($target);
+
+        $this->verifySourceTarget($this->getParent());
         if(!rename($this, $target))
             throw new FileSystemException('Unable move directory '.$this.' to '.$target);
-        $this->path = ''.$tDir;
+        $this->path = ''.$target;
         return $this;
     }// }}}
 
@@ -233,13 +247,13 @@ class Dir extends FileSystemObject implements iDir{
      */
     public function move(iDir $target){
         $this->verifySourceTarget($target);
-        if(!rename($this, ($tDir = new Dir($this->concat($target, $this->getName()),true))))
+        if(!rename($this, ($tDir = $target->getDir($this->getName()))))
             throw new FileSystemException('Unable move directory '.$this.' to '.$target); 
         $this->path = ''.$tDir;
         return $this;
     }// }}}
 
-    // {{{ verifySourceTarget
+     // {{{ verifySourceTarget
     /**
      * Проверяет существование директории и возможность записи в директорию $target.
      *
@@ -253,7 +267,7 @@ class Dir extends FileSystemObject implements iDir{
         if ($target instanceof Dir){  
             if (!is_dir($target)) throw new FileSystemException('Expecting directory as target. Given:'.$target.'. Is directory exist?');
         }
-        else throw new FileSystemException('Function operate obly with instances of class Dir');
+        else throw new FileSystemException('Function operate only with instances of class Dir');
 
         if (!$target->exists()) throw new FileSystemException('Target dir not exists. Dir:'.$target);
         if (!$target->canWrite()) throw new FileSystemException('Target dir not writable. Dir:'.$target);
@@ -280,6 +294,8 @@ class Dir extends FileSystemObject implements iDir{
         $list = $this->ls(null, Dir::LS_BOTH, GLOB_NOSORT);
         foreach($list as $o)
             if (!$o->delete()) throw new FileSystemException('Can\'t delete '.get_class($o).' '.$o);
-        return rmdir($this);
+        $r = rmdir($this);
+        $this->path= null;
+        return $r;
     }// }}}
 }// }}}

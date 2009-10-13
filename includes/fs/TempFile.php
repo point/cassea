@@ -29,7 +29,10 @@
 
 // $Id:$
 
-//{{{ TempFile
+// {{{ TempFile
+/**
+ *
+ */
 class TempFile extends File{
     // {{{ __construct
     /**
@@ -38,8 +41,11 @@ class TempFile extends File{
      * @param string $prefix 
      */
     public function __construct($path = null,$prefix = 'cassea_'){
-        if (is_null($path)) $path = sys_get_temp_dir();
-        if (!is_dir($path)) throw new FileSystemException('Temporary directory not exists: '.$path);
+        $path = !is_null($path)&is_writable($path)?$path:
+            (is_writable($s = sys_get_temp_dir())?$s:(
+                is_writable($p = ini_get('upload_tmp_dir'))?$p:
+                    Config::get('root_dir').Config::get('temp_dir')));
+        if (!is_writable($path)) throw new FileSystemException('Temporary directory not writable: '.$path);
         parent::__construct(tempnam($path, $prefix), true);
     }// }}}
 
@@ -50,4 +56,4 @@ class TempFile extends File{
     public function __destruct(){
         $this->delete();
     }// }}}
-}//}}}
+}// }}}

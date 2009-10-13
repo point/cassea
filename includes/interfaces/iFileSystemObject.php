@@ -29,14 +29,13 @@
 
 //{{{ iFileSystemObject
 interface iFileSystemObject{
-
     public function getName();
     public function getPath();
     public function getAbsPath();
+    public function getParent();
     public function exists();
     public function canWrite();
     public function __toString();
-
 }
- //}}}
+//}}}
 

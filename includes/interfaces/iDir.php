@@ -36,8 +36,7 @@ interface iDir extends iFileSystemObject{
     public function upload(UploadedFiles $uf);
     public function copy(iDir $target, $createDirectory = true);
     public function move(iDir $target);
-    public function rename(iDir $target);
+    public function rename($newName);
     public function delete();
-}
-// }}}
+}// }}}
 

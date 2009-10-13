@@ -45,6 +45,18 @@
 // {{{ FileSystemObject
 class FileSystemObject implements iFileSystemObject{
     /**
+     * Массив подстановок в именах фалов и директорий.
+     * Замена '\' => '/' необходима для корректной работы в Windows.
+     *
+     * @var array 
+     */
+	static $name_replacements = array(
+				'\\'=> '/',
+				'[' => '_',
+				']' => '_'
+				#'/' => '_'
+			);
+    /**
      * Абсолютный путь файла
      * @var string
      */
@@ -71,7 +83,7 @@ class FileSystemObject implements iFileSystemObject{
         $this->path =($absPath)?$this->concat($path):$this->concat(self::$root, $path);
     }// }}}
 
-    // {{{
+    // {{{ getRoot
     /**
      *
      */
@@ -83,7 +95,7 @@ class FileSystemObject implements iFileSystemObject{
     /**
      *
      */
-    public function setRoot($root){
+    static public function setRoot($root){
         self::$root = $root;
     }// }}}
     
@@ -111,7 +123,7 @@ class FileSystemObject implements iFileSystemObject{
      */
     public function getPath(){
         if (strlen($this->path) <= strlen(self::$root)) return '';
-        return substr(dirname($this->path),strlen(self::$root));
+        return substr($this->getParent(),strlen(self::$root));
     }// }}}
 
     // {{{ getAbsPath
@@ -122,6 +134,16 @@ class FileSystemObject implements iFileSystemObject{
      */
     public function getAbsPath(){
         return $this->path;
+    }// }}}
+
+    // {{{ getParent
+    /**
+     * Возвращает объект родительской директории.
+     *
+     * @return Dir
+     */
+    public function getParent(){
+        return new Dir(dirname($this->path), true);
     }// }}}
 
     // {{{ exists
@@ -170,32 +192,23 @@ class FileSystemObject implements iFileSystemObject{
     /** path utility functions **/
     // {{{ concat
     /**
-     * соединяет переданные части пути в один.
+     * Cоединяет переданные части пути в один.
+     *
+     * Проверяет наличее в пути ".",".." и  на совместимость с файловой системой.
+     *
      * @return string
      */
-    protected function concat(){
-        $args = array();
-        foreach(func_get_args() as $k) if (!is_null($k) && !empty($k)) $args[] = $k;
-        $path = implode('/', $args);
-        $path = preg_replace('#/{2,}#', '/', $path);
-        return $this->checkPath(rtrim($path, '/'));
-    }// }}}
-
-    // {{{ checkPath
-    /**
-     * Проверяет наличее ".","..".
-     *
-     * TODO проверять полученный путь 
-     * на совместимость с файловой системой.
-     *
-     * @throw FileSystemException
-     * @return string 
-     */
-    private function checkPath($path){
-        $c = explode('/', $path);
-        if (in_array('.', $c) || in_array('..', $c))
-            throw new FileSystemException('Incorrect path: '. $path);
-        return $path;
+    protected function concat($p){
+        $path = array();
+        $res = array() ;
+        foreach(func_get_args() as $k) 
+            if (!is_null($k) && !empty($k))
+                foreach(explode('/',$k) as $d)
+                    if (!empty($d))
+                        if (in_array($d, array(',','..'))) throw new FileSystemException('Incorrect path: '. $path);
+                        else $res[] = strtr($d, self::$name_replacements);
+        
+        return (substr($p,0,1) == '/'?'/':'').implode('/',$res);
     }// }}}
 
 }// }}}

@@ -37,7 +37,8 @@ function print_pre($var)
 }
 function deltree($f) {
   if (is_dir($f)) {
-    foreach(glob($f.'/*') as $sf) {
+	  $l = glob($f.'/*');
+    foreach((is_array($l)?$l:array()) as $sf) {
       if (is_dir($sf) && !is_link($sf)) {
         deltree($sf);
       } else {

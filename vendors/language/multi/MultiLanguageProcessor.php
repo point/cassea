@@ -45,8 +45,13 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
         if (Config::getInstance()->language->cache_consts)
             self::$const_cache = Storage::create('__Language::consts__');
 
-        if (!isset(self::$langs_cache['__default__']) || !isset(self::$langs_cache['__list__']) ){
-            $r = DB::query('select * from '.self::LANGUAGE_TABLE); 
+		if (!isset(self::$langs_cache['__default__']) || !isset(self::$langs_cache['__list__']) ){
+			try{
+				$r = DB::query('select * from '.self::LANGUAGE_TABLE); 
+			}catch (DBException $e){
+				if ($e->getCode() == 1146) throw new LanguageException('Table "'.self::LANGUAGE_TABLE.'" not exists.', 1);
+				throw $e;
+			}
             $list = array();
             for ($i = 0, $c = count($r); $i < $c;  $i++ ){
                 $cl = $r[$i];
@@ -56,7 +61,9 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
             }
             self::$langs_cache['__list__'] = $list;
         }
-        self::determine();
+		if (count(self::$langs_cache['__list__']) == 0) throw new LanguageException('There isn\'t langauges (rows) in table "'.self::LANGUAGE_TABLE.'"',2);
+		if (!isset(self::$langs_cache['__default__'])) throw new LanguageException('Default language is not defined in table "'.self::LANGUAGE_TABLE.'"',3);
+		self::determine();
     }// }}}
 
     // {{{ determine
@@ -88,7 +95,12 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
     // {{{ currentName
     public function currentName(){
         return $this->getLangName(self::$current);
-    }// }}}
+	}// }}}
+
+	// {{{ isDefault
+	public function isDefault($lang = null){
+		return (is_null($lang)?self::$current:$lang)  == self::$langs_cache['__default__']; 
+	}// }}}
 
 	// {{{ encodePair "
 	/**

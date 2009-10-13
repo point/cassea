@@ -32,7 +32,8 @@ interface iFile extends iFileSystemObject{
     public function getUrl();
     public function size();
     public function copy(iFileSystemObject $target);
-    public function move(iFileSystemObject $target);
+    public function rename($newName);
+    public function move($target);
     public function delete();
 }
 //}}}
