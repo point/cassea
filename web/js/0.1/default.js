@@ -126,7 +126,9 @@ function show_error_boxes()
 			insertAfter(input)
 		.offset({'top':input.offset().top+input.height()+5, 'left':input.offset().left}).width(Math.max(Math.min(input.width()+5,300),200)).css('opacity',1).show()/*.fadeTo('slow',0.8)*/
 		.one('click',function(){ remove( $(this)); });
-		input.one('click',function(){ remove($("~ .w_error_box",this)); });
+		input.one('click',function(){ remove($("~ .w_error_box",this)); })
+		.one('keypress',function(){ remove($("~ .w_error_box",this)); })
+
 		input.filter(".hasDatepicker").one('focus',function() { remove($("~ .w_error_box",this)); });
 	}
 	$("span.w-error").hide();

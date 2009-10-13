@@ -177,6 +177,8 @@ class WValueChecker extends WObject
 			unset($ta2);
 			$ta1[] = $t1;
 		}
+		$this->widget_ids = array();
+		$this->widget_fnames = array();
 		return implode(",\n",$ta1);
 	}
     // }}}

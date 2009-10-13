@@ -1,7 +1,7 @@
 <?php if(count($p->href)) { ?>
 <script type="text/javascript">
 $(document).ready(function(){
-		var tabs = $("#<?php echo $p->id?> > ul").tabs({selected:<?php echo $p->selected?>,cache:true});
+		var tabs = $("#<?php echo $p->id?> ").tabs({selected:<?php echo $p->selected?>,cache:true});
 		});
 </script>
 <?php } ?>

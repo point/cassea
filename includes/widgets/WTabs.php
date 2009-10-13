@@ -83,7 +83,7 @@ class WTabs extends WContainer
 
 		$controller = Controller::getInstance();
 		$controller->addScript("jquery.ui.js");
-		$controller->addCSS("jquery.ui.css");
+		$controller->addCSS("jquery-ui.css");
 
 		$this->tabs->filter("WTab");
 		parent::buildComplete();
@@ -106,7 +106,7 @@ class WTabs extends WContainer
 		{
 			if($this->tabs->getItem($i)->getHref())
 				$hrefs[$i] = $this->tabs->getItem($i)->getHref();
-			else $hrefs[$i] = "#".$this->tabs->getItem($i)->getId();
+			else $hrefs[$i] = "#".$this->tabs->getItem($i)->getHTMLId();
 			$titles[$i] = Language::encodePair($this->tabs->getItem($i)->getTabTitle());
 			if($this->tabs->getItem($i)->getSelected())
 				$selected = $i;

@@ -27,59 +27,97 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
+// $Id: DataObject.php 117 2009-06-14 15:14:12Z billy $
 
 //{{{ DataObject
+/**
+ * Abstract class, parent for {@link DataSourceObject} and 
+ * {@link DataHandlerObject}. It declares base facilities for those
+ * classes. 
+ * This class parses base params from XML node, passing by 
+ * {@link WDataSet} or {@link WDataHandler}, manages the search
+ * for a file to require and creates object
+ * upon given parameters.
+ */
 abstract class DataObject
 {
 	protected 
 		/**
-		* @var  string
-		*/
-		$objectDir = null,
+		 * Holds full path to the directory where system should search 
+		 * files to require. 
+		 * @var  string
+		 */
+		$object_dir = null,
 		/**
-		* @var  string
-		*/
+		 * Name of the class for current dataobject.
+		 * @var  string
+		 */
 		$classname = null,
 		/**
-		* @var  boolean
-		*/
+		 * Defines whenever methods should be called statically in the 
+		 * kept model object.
+		 * @var  boolean
+		 */
 		$is_static = false,
 		/**
-		* @var  string
-		*/
+		 * Holds name of the method, that should be called after 
+		 * constructing the object. If methods are calling statically, 
+		 * it will be called first of all.
+		 * @var  string
+		 */
 		$init_method = null,
 		/**
-		* @var  array
-		*/
+		 * Parameters for passing to the init method, if it exists.
+		 * @var  DataObjectParams
+		 */
 		$init_params = null,
 		/**
-		* @var  string
-		*/
+		 * Holds name of the method that will return desired model object.
+		 * It might be used to give control over the process of creating an object to 
+		 * userland method.
+		 * @var  string
+		 */
 		$factory_method = null,
 		/**
-		* @var  boolean
-		*/
+		 * Defines whenever factory method should be called statically.
+		 * @var  boolean
+		 */
 		$factory_method_static = false,
 		/**
-		* @var  array
-		*/
+		 * Parameters for passing to the factory method if it exists.
+		 * @var  DataObjectParams
+		 */
 		$factory_params = null,
 		/**
-		* @var  string
-		*/
+		 * Name of the method that should be called to finalize all 
+		 * changes, made by DataSourceObject or DataHandlerObject.
+		 * @var  string
+		 */
 		$finalize_method = null,
 		/**
-		* @var  array
-		*/
+		 * Parameter for passing to the finalize method if it exists.
+		 * @var  DataObjectParams
+		 */
 		$finalize_params = null,
 		/**
-		* @var  stdClass&
-		*/
+		 * Created object to manipulate with.
+		 * @var  stdClass&
+		 */
 		$object = null
 		;
+	/**
+	 * Need to indicated whenever classes have already been required.
+	 */
 	private $classes_required = false;
 
+	//{{{ __construct
+	/**
+	 * Constructs this class and initialize init_params, factory_params, factory_params
+	 *
+	 * @param bool defines whenever methods should be called statically in the 
+	 * kept model object.
+	 * @return null
+	 */
 	function __construct($is_static = false)
 	{
 		$this->is_static = 0+$is_static;
@@ -87,14 +125,39 @@ abstract class DataObject
 		$this->factory_params = new DataObjectParams();		
 		$this->finalize_params = new DataObjectParams();		
 	}
+	//}}}
+
+	//{{{ parseParams
+	/**
+	 * Parse parameters received from WDataSet or WDataHandler.
+	 *
+	 * It trying to find directory with the model's files to include. If the <model> section is defined
+	 * 'models_dir' will be explored.
+	 * If <vendor> section is defined, 'vendor_dir' will be explored.
+	 *
+	 * If <init> section is defined, parameters inside this section will be passed to constructor or
+	 * method, specified by 'method' parameter. In all cases, __construct() method of the target object
+	 * will be called.
+	 *
+	 * If you want to use factory method design pattern, use <factory> section instead. It defines
+	 * 'method' attribute that will be called in order to retrieve object. 'static' attribute points
+	 * to necessity to call 'method' statically. Parameters to this method are defined by the body of the section.
+	 * 
+	 * @param SimpleXMLElement params to parse.
+	 * @return null
+	 * @throws DataObjectException with explanations about the causes of errors.
+	 */
 	function parseParams(SimpleXMLElement $elem)
 	{
 		if(isset($elem->model))
-			$this->objectDir = Config::get('ROOT_DIR')."/models/".(string)$elem->model;
+			$this->object_dir = Config::get('ROOT_DIR').Config::get('models_dir')."/".(string)$elem->model;
 		elseif(isset($elem->vendor)) 
-			$this->objectDir = Config::get('ROOT_DIR').Config::get('vendors_dir')."/".(string)$elem->vendor;
+			$this->object_dir = Config::get('ROOT_DIR').Config::get('vendors_dir')."/".(string)$elem->vendor;
 		else
 			throw new DataObjectException("Model name  or Vendor name for data object does not set");
+
+		if(!is_dir($this->object_dir) || !is_readable($this->object_dir))
+			throw new DataObjectException("Directory ".$this->object_dir." doesn't exists or not readable");
 
 		if(isset($elem->classname))
 			$this->classname = (string)$elem->classname;
@@ -103,9 +166,6 @@ abstract class DataObject
 		if(isset($elem->static))
 			$this->is_static = 0+(string)$elem->static;
 
-		/*if(!$this->is_static && !isset($elem->init))
-			throw new DataObjectException("Init section was not found");*/
-	
 		if(isset($elem->init))
 		{
 			if(isset($elem->init['method']))
@@ -113,6 +173,7 @@ abstract class DataObject
 
 			$this->init_params = new DataObjectParams($elem->init);		
 		}
+		// if init section does not exists
         elseif(isset($elem->factory))
         {
 			if(isset($elem->factory['method']))
@@ -131,25 +192,56 @@ abstract class DataObject
 			$this->finalize_params = new DataObjectParams($elem->finalize);		
         }
 	}
+	//}}}
+
+	//{{{ requireClasses
+	/**
+	 * It tries to require model's files to find class, specified at the <classname>
+	 * section.
+	 *
+	 * In trivial cases you should give name to file as the class has and place it 
+	 * to the <model> directory. 
+	 * For example
+	 * <code>
+	 * <model>news</model>
+	 * <classname>NewsList</classname>
+	 * </code>
+	 * System will tries to find file NewsList.php in the "/models/news/" folder.
+	 *
+	 * If you want to use more complicated files layout, define autoload.php at the root 
+	 * of the folders hierarchy (ie /models/news). Then the system will require this file and
+	 * no other lookups will be occurred.
+	 *
+	 * @param null
+	 * @return null
+	 */
     protected function requireClasses()
     {
 		if($this->classes_required) return;
 
-        if(file_exists($this->objectDir."/autoload.php"))
-            require_once($this->objectDir."/autoload.php");
+        if(file_exists($this->object_dir."/autoload.php"))
+            require_once($this->object_dir."/autoload.php");
 
-        if(!class_exists($this->classname, false) && file_exists($this->objectDir."/".$this->classname.".php"))
-            require_once($this->objectDir."/".$this->classname.".php");
+        if(!class_exists($this->classname, false) && file_exists($this->object_dir."/".$this->classname.".php"))
+            require_once($this->object_dir."/".$this->classname.".php");
 
 		$this->classes_required = true;
     }
+	//}}}
+
+	//{{{ createObject
+	/**
+	 * On the basis of specified parameters this method will create an object.
+	 *
+	 * All introspection are made with ReflectionClass class.
+	 *
+	 * @param null
+	 * @retrun bool It could be either true if object was created, or false if error occurred.
+	 * @see parseParams
+	 * @see requireClasses
+	 */
 	function createObject()
 	{
-        /*if(file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php"))
-            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/autoload.php");
-
-        if(!class_exists($this->classname) && file_exists(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php"))
-            require_once(Config::get('ROOT_DIR')."/models/".$this->model."/".$this->classname.".php");*/
         $this->requireClasses();
 
 		try{
@@ -184,12 +276,32 @@ abstract class DataObject
                     $this->object = $r->newInstance();
         }catch(ReflectionException $e){ return false;}
         return $this->object !== null;
-    }
+	}
+	//}}}
+	
+	//{{{ getObject
+	/**
+	 * Returns object, created by the {@link createObject} method.
+	 *
+	 * @params null
+	 * @return mixed It could be either instance of class, specified during the 
+	 * setup in {@link parseParams} or null, if object have not been created.
+	 */
     function getObject()
     {
         return $this->object;
     }
+	//}}}
 
+	//{{{ finalize
+	/**
+	 * This method will be called when all operations with the model's object
+	 * completed. Finalize method could be called statically or dynamically,
+	 * depending on the "static" flag.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function finalize()
 	{
 		if(!$this->is_static)
@@ -216,6 +328,7 @@ abstract class DataObject
 		}
 		return ;
 	}
+	//}}}
 }
 // }}} 
 

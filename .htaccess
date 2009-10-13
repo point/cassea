@@ -1,3 +1,4 @@
+#PHP_VALUE magick_quotes_gpc Off
 #PHP_VALUE mbstring.internal_encoding UTF-8
 #PHP_VALUE default_charset UTF-8
 #PHP_VALUE mbstring.http_output UTF-8
@@ -51,23 +52,6 @@ RewriteRule ^/?(.*\.css) /web/css/$1 [L]
 
 #for swf
 RewriteRule ^/?(.*\.swf) /web/flash/$1 [L]
-
-##for images
-#RewriteCond %{DOCUMENT_ROOT}/web/$1/$2 !-f
-#RewriteRule ^/?web/(.*\.(jpg|png|jpeg|gif|ico)) /web/images/$1 [L]
-
-##for js
-#RewriteCond %{REQUEST_URI} ^/?(.*\.js)
-#RewriteRule ^(.*) /web/js/$1 [L]
-
-##for css
-#RewriteCond %{REQUEST_URI} ^/?(.*\.css)
-#RewriteRule ^(.*) /web/css/$1 [L]
-
-##for swf
-#RewriteCond %{REQUEST_URI} ^/?(.*\.swf)
-#RewriteRule ^(.*) /web/flash/$1 [L]
-
 
 RewriteCond $1 !^/?(router\.php)
 RewriteRule ^(.*)$ /router.php [L] 

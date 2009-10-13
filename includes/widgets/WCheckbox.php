@@ -154,10 +154,6 @@ class WCheckbox extends WControl
 	{
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
-		if(!isset($this->text))
-			$this->setText($this->getValue());
-        if(empty($this->value) && !is_numeric($this->value))
-            $this->setValue('checkbox');
 		parent::buildComplete();
 	}    
 	// }}}
@@ -171,6 +167,11 @@ class WCheckbox extends WControl
     */
     function assignVars()
     {
+		//move to messageInterchange
+		if(!isset($this->text))
+			$this->setText($this->getValue());
+        if(empty($this->value) && !is_numeric($this->value))
+            $this->setValue('checkbox');
 		$this->tpl->setParamsArray(array(
 			"text"=>Language::encodePair($this->getText()),
 			"checked"=>($this->getChecked())?'checked="1"':''

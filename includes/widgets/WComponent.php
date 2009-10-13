@@ -622,6 +622,7 @@ abstract class WComponent extends WObject
 		if(isset($params['title'])) $this->setTitle((string)$params['title']);
 		if(isset($params['visible'])) $this->setVisible(0+$params['visible']);
 		if(isset($params['html_id'])) $this->setHTMLId((string)$params['html_id']);
+		else $this->setHTMLId($this->getId());
 
         if(isset($params['class'])) 
             $this->setStyleClass((string)$params['class']);
@@ -740,6 +741,8 @@ abstract class WComponent extends WObject
 		if(!isset($html_id) || !is_scalar($html_id)) 
 			return;
 
+		$html_id = ltrim($html_id,"_");
+
 		if(strpos($html_id,'[') !== false || strpos($html_id,']') !== false)
 			$html_id = str_replace('[','_',
 				str_replace(']','_',$html_id));
@@ -773,20 +776,22 @@ abstract class WComponent extends WObject
     {
 
 		if(!$this->getState()) return;
+		//TODO rework this part
 		if(!empty($this->html_id))
         {
             $final_html_id = $this->getHTMLId();
         }
-		elseif($this->inside_roll || $this->do_increment)
+		if($this->inside_roll || $this->do_increment)
 		{
-			$final_html_id = ltrim($this->id,"_")."_".$this->add_html_id;
-			$this->setHTMLId($final_html_id);
+			//$final_html_id = ltrim($this->id,"_")."_".$this->add_html_id;
+			//$this->setHTMLId($final_html_id);
+			$this->setHTMLId($final_html_id = $this->html_id."_".$this->add_html_id);
 		}
-		else 
+		/*else 
 		{
 			$final_html_id = ltrim($this->id,"_");
 			$this->setHTMLId($final_html_id);
-		}
+		}*/
 		if(isset($this->tooltip))
 		{
 			$html_id = $this->getHTMLId();
