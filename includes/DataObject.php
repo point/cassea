@@ -29,6 +29,17 @@
 
 // $Id: DataObject.php 117 2009-06-14 15:14:12Z billy $
 
+/**
+ * This file contains abstract class for calling and passing data 
+ * to user's models.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
+
 //{{{ DataObject
 /**
  * Abstract class, parent for {@link DataSourceObject} and 

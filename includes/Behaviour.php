@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class for managed behaviour.
+ * This file contains class for managing behaviours.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/

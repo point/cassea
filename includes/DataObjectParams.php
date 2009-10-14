@@ -29,16 +29,110 @@
 
 // $Id:$
 
+/**
+ * This file contains class retrieving and passing parameters
+ * for user's model.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
+
 //{{{ DataObjectParams
+/**
+ * Encapsulates logic of data retrieval from
+ * "p1", "p2" and GET parameters. It also 
+ * filters and re-arrange data in convenience way for
+ * particular model and it's methods arguments.
+ */
 class DataObjectParams
 {
 	protected 
 		/**
+		 * Collected parameters.
+		 *
 		 * @var  array
 		 */
 		$params = array(),
+		/**
+		 * Cache information about the source of the data.
+		 * @var array
+		 */
 		$params_from = array()
 		;
+	//{{{ __construct
+	/**
+	 * Parses given XML node and extracting info about from where to
+	 * take parameters for user's models methods.
+	 * Additionally, it filters and re-arrange this data to give more
+	 * flexibility to the models design.
+	 *
+	 * Base syntax is 
+	 * <pre><code>
+	 * <param from="p2" count="2" offset="1">
+	 *		<filter>int</filter>
+	 * </param>
+	 * </code></pre>
+	 *
+	 * It takes two parameters ("count" attribute), starting from 
+	 * the second ("offset" attribute). Indexing is zero-based.  
+	 * Then, received values  might be passed to, for example, dataset as first and second parameters.
+	 * Besides, {@link Filter} int applies to each parameter. If parameters were 
+	 * strings, after applying they becomes NULL values.
+	 *
+	 * Offset and count attributes are valid only while retrieving "p2" parameters.
+	 *
+	 * Another example:
+	 * <pre><code>
+	 * <param from="p2" count="2" offset="1" as="array">
+	 *		<filter>array_int</filter>
+	 * </param>
+	 * </code></pre>
+	 *
+	 * Here "as" attribute was presented. If "as" equals to "array", than collected data will be
+	 * passed to the model's method as single parameter as int-indexed array. "array_int" 
+	 * filter will be applied to the obtained array. Applying "int" filter int this case will cause
+	 * to receiving a NULL value.
+	 *
+	 * To receive "p1" parameter, you should use this syntax:
+	 * <pre><code>
+	 * <param from="p1">
+	 *		<filter>int</filter>
+	 * </param>
+	 * </code></pre>
+	 *
+	 * Specifying "count" and "offset" attributes will give no effect. There is single "p1" parameter.
+	 * It also may be filtered.
+	 *
+	 * System allows you to retrieve certain $_GET parameters. To do so use such syntax:
+	 * <pre><code>
+	 * <param from="p3" var="q">
+	 *		<filter>int</filter>
+	 * </param>
+	 * </code></pre>
+	 *
+	 * For example, if current url is <code>http://example.com/index.html?q=123</code>, value "123" will be
+	 * passed to the model's method.
+	 *
+	 * If you want to pass some constant value to the method (ie some flag), use syntax:
+	 * <pre><code>
+	 * <param constant="1">
+	 * </param>
+	 * </code></pre>
+	 *
+	 * Internal pagination system could pass predicted 'from' and 'limit' values to the model.
+	 * Use:
+	 * <pre><code>
+	 * <param from="limit">
+	 * </param>
+	 * </code></pre>
+	 * In this case, <code>array("from"=>$from, "limit"=>$limit)</code> will be passed.
+	 *
+	 * @param SimpleXMLElement XML document node with parameters.
+	 * @return null
+	 */
 	function __construct(SimpleXMLElement $elem = null)
 	{
 		if(!isset($elem,$elem->param)) return;
@@ -50,48 +144,51 @@ class DataObjectParams
 			if($param['from'] == "p1")
 			{
 				$this->params_from[] = "p1";
-				//$p = (isset($param['as']) && $param['as'] == "array")?array($controller->p1):$controller->p1;
 				$p = $controller->p1;
+				if((isset($param['as']) && $param['as'] == "array"))
+					$p = array($p); //slightly idiotic usage
 				if(isset($param->filter))
 					$p = Filter::filter($p,(string)$param->filter);
-				if((isset($param['as']) && $param['as'] == "array"))
-					$this->params[] = array($p);
-				else $this->params[] = $p;
+				$this->params[] = $p;
 			}
 			elseif($param['from'] == "p2")
 			{
-				$this->params_from[] = "p2";
 
-				$c = count($controller->p2);
+				$total_count = count($controller->p2);
+				if(isset($param['offset']) && (int)$param['offset'] > 0)
+					$p2_cursor = (int)$param['offset'];
+
+				$c = 1;
 				if(isset($param['count']))
 					$c = abs(0+$param['count']);
 
 				$p = array();
-				for($i = 0; $i < $c;$i++,$p2_cursor++)
-				{
-					//if(!isset($controller->p2[$i])) continue;
+				for($i = 0; $i < $c;$p2_cursor++,$i++)
 					$p[$i] = isset($controller->p2[$p2_cursor])?$controller->p2[$p2_cursor]:null;
-					if(isset($param->filter[$i]))
-						$p[$i] = Filter::filter($p[$i],(string)$param->filter[$i]);
-				}
+
 				if(isset($param['as']) && $param['as'] == "array")
-					$this->params[] = array_filter($p);
+				{
+					$this->params[] = Filter::filter($p,(string)$param->filter);
+					$this->params_from[] = "p2";
+				}
 				else
 					foreach($p as $_p)
-						$this->params[] = $_p;
+					{
+						$this->params[] = Filter::filter($_p,(string)$param->filter);
+						$this->params_from[] = "p2";
+					}
 			}
 			elseif($param['from'] == "p3" && isset($param['var']))
 			{
 				$this->params_from[] = "p3";
 
-				/*$p = (isset($param['as']) && $param['as'] == "array")?array($controller->get->$param['var']):
-					$controller->get->$param['var'];*/
 				$p = $controller->get->$param['var'];
+				if(isset($param['as']) && $param['as'] == "array")
+					$p = array($p);
 				if(isset($param->filter))
 					$p = Filter::filter($p,(string)$param->filter);
-				if(isset($param['as']) && $param['as'] == "array")
-					$this->params[] = array($p);
-				else $this->params[] = $p;
+
+				$this->params[] = $p;
 			}
 			elseif(isset($param['constant']))
 			{
@@ -111,14 +208,43 @@ class DataObjectParams
 		
 		}
 	}
+	//}}}
+	
+	//{{{ getParams
+	/**
+	 * Returns collected parameters in the form, compatible
+	 * with method calling mechanism.
+	 * 
+	 * @param null
+	 * @return array
+	 */
 	function getParams()
 	{
 		return $this->params;
 	}
+	//}}}
+
+	//{{{ getParamsFrom
+	/**
+	 * Returns source for the each element of the data, 
+	 * passed to the method.
+	 *
+	 * @param null
+	 * @retrun array
+	 */
 	function getParamsFrom()
 	{
 		return $this->params_from;
 	}
+	//}}}
+
+	//{{{ replaceLimitParams
+	/**
+	 * Replacing parameters, marked as "from='limit'" with real values.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function replaceLimitParams()
 	{
 		$controller = Controller::getInstance();
@@ -127,5 +253,6 @@ class DataObjectParams
 				$this->params[$k] = array(	'from'=>$controller->getDisplayModeParams()->predicted_from,
 					'limit'=>$controller->getDisplayModeParams()->predicted_limit);
 	}
+	//}}}
 }
 //}}}

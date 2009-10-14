@@ -28,7 +28,7 @@
 }}} -*/
 
 /**
- * This file contains classes for access to configuration values.
+ * This file contains classes for accessing to configuration values.
  * Here is the class for reading config from ini file 
  * and class for mixed storage: in database plus ini file.
  *

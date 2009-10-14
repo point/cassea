@@ -29,6 +29,16 @@
 
 // $Id:$
 
+/**
+ * This file contains class for managing incoming POST data.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
+
 //{{{ DataHandlerObject
 /**
  * Holds parameters and object that should be triggered to process data, coming

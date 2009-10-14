@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class for manage and check user's rights.
+ * This file contains class for managing and check user's rights.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
