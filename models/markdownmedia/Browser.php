@@ -53,8 +53,11 @@ class Browser
 		foreach($dir->ls() as $k => $f)
 		{
 			$df = new MimeDecorator(new StatDecorator($f));
-			if(strpos($df->getMime(),"image") === false) continue;
+			//if(strpos($df->getMime(),"image") === false) continue;
+			try{
 			$df = new ImageDecorator($df);
+			}catch(DecoratorException $e)
+			{ continue; }
 			$stat = $df->stat();
 			$r->f("#fname",$k)->text($df->getName())
 				->f("#fdel",$k)->additional_id($df->getName())
