@@ -27,13 +27,35 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
+/**
+ * This file contains class that centralize retreiving 
+ * data for widget.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
+//{{{ DataRetriever
+/**
+ * It centralize retreiving data for given widget.
+ */
 class DataRetriever
 {
+	//{{{ manageData
+	/**
+	 * Trigger data propagation to given widget
+	 * 
+	 * @param string id of the widget
+	 * @return null
+	 */
 	static function manageData($widget_id)
 	{
 		if(!ResultSetPool::findMatched($widget_id))
 			DataObjectPool::findDefault($widget_id);
 	}
+	//}}}
 }
+//}}}

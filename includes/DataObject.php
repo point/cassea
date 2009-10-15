@@ -27,8 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id: DataObject.php 117 2009-06-14 15:14:12Z billy $
-
 /**
  * This file contains abstract class for calling and passing data 
  * to user's models.

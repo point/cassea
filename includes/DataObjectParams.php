@@ -27,8 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
-
 /**
  * This file contains class which retrieves and passes parameters
  * to the user's model.

@@ -27,8 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
-
 /**
  * This file contains class for storing DataObjects created by WDataSet.
  *
