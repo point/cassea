@@ -29,11 +29,37 @@
 
 // $Id:$
 
+/**
+ * This file contains class for storing DataObjects created by WDataSet.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
+
 //{{{ DataObjectPool
+/**
+ * Holds all DataObjects created by {@link WDataSet} and
+ * sorting them by priority.
+ * Also it managing default data for widget, if no result set was provided
+ * by the model.
+ */
 class DataObjectPool
 {
+	/**
+	 * @var array pool of dataobject, sorted by priority
+	 */
 	static $pool = array();
 
+	//{{{ set
+	/**
+	 * Stores dataobject on the pool and sort it.
+	 *
+	 * @param DataObject object to store.
+	 * @return null
+	 */
 	static function set(DataObject $do, $priority = 0)
 	{
 		self::$pool[] = array('priority'=>$priority,
@@ -42,7 +68,21 @@ class DataObjectPool
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
+	//}}}
 
+	//{{{ findDefault
+	/**
+	 * Tries to find default data, composing it to the 
+	 * {@link WidgetResultSet} and injecting this result set 
+	 * to the data-setter method of particular widget, specified
+	 * by widget_id parameter.
+	 *
+	 * If no data was found, empty {@link WidgetResultSet}
+	 * will be passed to widget.
+	 *
+	 * @param string id of the widget for which to make a lookup
+	 * @return WidgetResultSet with default data
+	 */
 	static function findDefault($widget_id)
 	{
 		$wrs = new WidgetResultSet;
@@ -57,5 +97,6 @@ class DataObjectPool
 		}
         $widget->{$data_setter}($wrs);
 	}
+	//}}
 }
 // }}}

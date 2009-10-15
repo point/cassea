@@ -30,8 +30,8 @@
 // $Id:$
 
 /**
- * This file contains class retrieving and passing parameters
- * for user's model.
+ * This file contains class which retrieves and passes parameters
+ * to the user's model.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
