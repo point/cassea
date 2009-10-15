@@ -99,6 +99,8 @@ class DataHandlerObject extends DataObject
 	/**
 	 * Parse params, coming directly from WDataHandler object.
 	 *
+	 * Nodes, other from "<handler>" and "<checker>" are ignored.
+	 *
 	 * @param SimpleXMLElement instance of WDataHandler node of
 	 * the document tree.
 	 * @return null
@@ -197,10 +199,11 @@ class DataHandlerObject extends DataObject
 	 * It called when POST data has come and it should be processed. 
 	 * POST data encapsulates in HTTPParamHolder object.
 	 *
-	 * If this this object was created with $static flag with true value, 
-	 * all handler methods in target model object will be called 
-	 * statically. If given method doesn't declare
-	 * as static, it won't be called silently.
+	 * If the object was created with $static flag with true value, 
+	 * all handler methods in target model class will be called 
+	 * statically (if method in the desired class doesn't declare
+	 * as static, it won't be called silently). Otherwise object of 
+	 * particular class will be created.
 	 *
 	 * $post always will be passed to handler method as first argument.
 	 * All other parameters, declared via <param> tag will be passed 
@@ -209,7 +212,8 @@ class DataHandlerObject extends DataObject
 	 * All operations to search method in object/class are made by 
 	 * Reflection mechanism and ReflectionExceptions are suppressed.
 	 *
-	 * If no handler methods are passed, we will try to handle 
+	 * If no handler methods are passed (but "handler" section was introduced),
+	 * system will try to handle 
 	 * post data basing on the POST fields names and 
 	 * methods names in the models object/class. 
 	 * See {@link handleInStatic} for static type, and 
