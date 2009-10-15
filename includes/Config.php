@@ -34,11 +34,19 @@
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id$
+ * @version $Id: $
  * @package system
  * @since 
  */
 
+//{{{ ConfigException
+/**
+ * Exception for Config's classes. 
+ * It's not derived from CasseaException because at the moment of
+ * declaration, Autoload isn't inited.
+ */
+class ConfigException extends Exception {}
+//}}}
 
 //{{{ ConfigBase
 /**
@@ -57,7 +65,7 @@ class ConfigBase implements IteratorAggregate
 		 * @var array stores internal hierarchical data
 		 */
 		$data = array();
-
+			 
 	//{{{ __construct
 	/**
 	 * Constructs new instance. Converts input array of plain values to hierarchy of objects.
@@ -67,7 +75,7 @@ class ConfigBase implements IteratorAggregate
 	 * @return null
 	 * @see parseArray
 	 */
-    function __construct(array $array = array())
+    protected function __construct(array $array = array())
     {
 		$this->data['root_dir'] = dirname(dirname(__FILE__));
 		$this->parseArray($array);
@@ -89,7 +97,7 @@ class ConfigBase implements IteratorAggregate
         foreach ($array as $key => $value) 
             if (is_array($value)) 
                 $this->data[$key] = new self($value);
-             else 
+             else
                 $this->data[$key] = (string)$value;
 	}
 	//}}}
@@ -113,7 +121,7 @@ class ConfigBase implements IteratorAggregate
             return $this->data[$name];
         else
             throw new ConfigException("Config value ".$name." doesn't exists");
-    }
+	}
 	//}}}
 
 	//{{{ __get
@@ -145,7 +153,7 @@ class ConfigBase implements IteratorAggregate
 	 * @throws ConfigException with error message explains the exceptional situation.
 	 */
     function __set($name, $value)
-    {
+	{
 		if(!isset($name) || !is_scalar($name))
 			throw new ConfigException("Wrong name for config value");
 		if(!is_scalar($value) && !is_array($value) && !$value instanceof ConfigBase || !isset($value))
@@ -164,7 +172,7 @@ class ConfigBase implements IteratorAggregate
     function __isset($name)
     {
         return isset($this->data[$name]);
-    }
+	}
 	 */
 	//}}}
 
@@ -181,7 +189,7 @@ class ConfigBase implements IteratorAggregate
     {
         if(isset($this->data[$name]))
             unset($this->data[$name]);
-    }
+	}
 	//}}}
 	
 	//{{{ toArray
@@ -242,7 +250,7 @@ class ConfigBase implements IteratorAggregate
              else 
                  $this->$key = $item;
             
-        return $this;
+		return $this;
     }
 	//}}}
 }
@@ -301,6 +309,7 @@ class ConfigBase implements IteratorAggregate
 class IniConfig extends ConfigBase
 {
 	const CONFIG_DIR = "/config";
+	const CONFIG_CACHE_FILE = "/cache/config.cache";
 
 	protected
 		/**
@@ -314,7 +323,12 @@ class IniConfig extends ConfigBase
 		/**
 		 * @var string symbol used as inheritance separator. Default is ":".
 		 */
-		$inherit_separator = ":";
+		$inherit_separator = ":",
+		/**
+		 * @var string cached path for root dir
+		 */
+		$rd = ""
+		;
 
 	//{{{ __construct
 	/**
@@ -327,7 +341,7 @@ class IniConfig extends ConfigBase
 	 */
 	function __construct($filename, $section = null,  $inherit_separator = ":")
     {
-        $_r = (!empty($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
+        $_r = (!empty($_SERVER['DOCUMENT_ROOT']) && is_readable($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
 		if(empty($filename) || !file_exists($_r) || !file_exists($this->filename = $_r.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
@@ -337,10 +351,17 @@ class IniConfig extends ConfigBase
 		if(!isset($section))
 			throw new ConfigException("Section ".$section." doesn't exists");
 
+		$this->rd = $_r;
 
 		$this->section = $section;
 		$this->inherit_separator = (string)$inherit_separator;
 
+		if($this->checkCache())
+		{
+			include($this->rd.self::CONFIG_CACHE_FILE);
+			$this->parseArray($__config_cache);
+			return;
+		}
 		$parsed_ini = parse_ini_file($this->filename,true);
 
 		list($sect_key,$sect_val) = $this->findSection($parsed_ini,$this->section);
@@ -449,7 +470,63 @@ class IniConfig extends ConfigBase
     function getSectionName()
     {
         return $this->section;
-}
+    }
+	//}}}
+	
+	//{{{
+	/**
+	 * It cheks if config.cache file is valid to be used.
+	 * This checks are based on the modtification times and
+	 * estimating cache file size.
+	 *
+	 * @param null
+	 * @return bool true if cache is in actual state
+	 */
+	function checkCache()
+	{
+		$synced = false;
+		$fp = fopen($this->filename, 'r');
+		if(flock($fp, LOCK_SH))
+		{
+			$config_stat = stat($this->filename);
+			$config_cache_stat = @stat($this->rd.self::CONFIG_CACHE_FILE);
+			if(!empty($config_stat) && !empty($config_cache_stat) 
+				&& $config_stat['mtime'] == $config_cache_stat['mtime'] 
+				&& $config_cache_stat['size'] > 30)
+				$synced = true;
+			flock($fp,LOCK_UN);
+		}
+		fclose($fp);
+
+		return $synced;
+
+	}
+	//}}}
+	
+	//{{{ __destruct
+	/**
+	 * Here in destructor sync cache with actual config values will be
+	 * started.
+	 */
+	function __destruct()
+	{
+		if(!$this->checkCache())
+		{
+			$fp = fopen($this->root_dir.self::CONFIG_CACHE_FILE,"a");
+			if(flock($fp,LOCK_EX))
+			{
+				ftruncate($fp,0);
+				fputs($fp,'<?php'.PHP_EOL.'$__config_cache = '.var_export($this->toArray(),true).';');
+				$time = time();
+				touch(self::CONFIG_CACHE_FILE,$time);
+				touch($this->filename,$time);
+				fflush($fp);
+				flock($fp,LOCK_UN);
+			}
+			fclose($fp);
+		}
+	}
+	//}}}
 }
 //}}}
 
@@ -466,7 +543,7 @@ class IniDBConfig extends IniConfig
 	/**
 	 * @var array config data from DB
 	 */
-    private $table_data = null;
+	private $table_data = null;
 	/**
 	 * Table name to store config values
 	 */
@@ -487,7 +564,7 @@ class IniDBConfig extends IniConfig
         foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
             $this->table_data[$v['key']] = $v['value'];
         }catch(DBConnectException $e) {}
-    }
+	}
 	//}}}
 	
 	//{{{ get
@@ -516,9 +593,9 @@ class IniDBConfig extends IniConfig
             if(isset($this->table_data[$name]))
                 return $this->table_data[$name];
             else
-                throw new ConfigException("Config value ".$name." doesn't exists");
+				throw new ConfigException("Config value ".$name." doesn't exists");
         }
-    }
+	}
 	//}}}
 	
 	//{{{ __get
@@ -569,7 +646,7 @@ class IniDBConfig extends IniConfig
     function __isset($name)
     {
         return isset($this->table_data[$name]) || parent::__isset($name);
-    }
+	}
 	 */
 	//}}}
 
@@ -589,7 +666,7 @@ class IniDBConfig extends IniConfig
 		if(isset($this->table_data[$name]))
             DB::query("delete from ".self::TABLE_NAME." where `key`='".Filter::filter($name,'STRING_QUOTE')."' limit 1");
         parent::__unset($name);
-        }
+	}
 	//}}}
 }
 
