@@ -40,7 +40,7 @@
 //{{{ Behaviour
 /**
  * Class Behaviour defines behaviour, that could be disabled/enabled. 
- * If you need just simple behaviour action, see {@link EventBehaviour} instead/
+ * If you need just simple behaviour action, see {@link EventBehaviour} instead.
  */
 class Behaviour
 {

@@ -1339,6 +1339,9 @@ class Controller extends EventBehaviour
         if(isset($this->response_string)) return;
 
         $v = "\n</body></html>";
+
+		$this->trigger("AfterTail",array($this,$v));
+
 		if($echo)
 			echo $v;
 		else return $v; 
@@ -1380,7 +1383,10 @@ class Controller extends EventBehaviour
 	 * tail() method called.
 	 *
 	 * Triggers "BeforeHeadBodyTail" event with $this as 1st argument. 
-	 * result string as 2nd.
+	 * "AfterHeadBodyTailResponce" if response string outputed 
+	 * with $this as the first argument, and response_string as the second.
+	 * "AfterHeadBodyTailRegular" on regular output with such
+	 * arguments: $this, $head string, $body string, and $tail string.
 	 *
 	 * @param bool defines whenever to echo or return content directly.
 	 * @return mixed null or string depending on argument.
@@ -1390,13 +1396,17 @@ class Controller extends EventBehaviour
 		$this->trigger("BeforeHeadBodyTail",$this);
 		
         if(isset($this->response_string))
+		{
+			$this->trigger("AfterHeadBodyTailResponce",array($this,$this->response_string));
             if ($echo) echo $this->response_string;
-            else return $this->response_string;
+			else return $this->response_string;
+		}
         else
         {
             $body = $this->allHTML();
             $head = $this->head(0);
             $tail = $this->tail(0);
+			$this->trigger("AfterHeadBodyTailRegular",array($this,$head,$body,$tail));
             if ($echo) echo $head,$body,$tail;
             else return ($head.$body.$tail);
 		}
