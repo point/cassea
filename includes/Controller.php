@@ -1822,7 +1822,7 @@ class Controller extends EventBehaviour
 	 * <li>All registered checkers are called to perform form data checks in userland.
 	 * If CheckerException is raised, error message will be shown without calling declared 
 	 * handlers.</li>
-	 * <li>Declared data handlers and finilaizers are called.</li>
+	 * <li>Declared data handlers and finalizers are called.</li>
 	 * <li>"AfterHandlePOST" event is called with $this parameter and $ret string, which points
 	 * where to redirect after data processing.</li>
 	 *
@@ -1883,7 +1883,7 @@ class Controller extends EventBehaviour
 			$this->gotoStep_0();
 		}
 		DataUpdaterPool::callHandlers($formid);
-		DataUpdaterPool::callFinilze($formid);
+		DataUpdaterPool::callFinalize($formid);
         $ret = null;
         if(isset($this->pagehandler))
             $ret = $this->pagehandler->handle();
@@ -2503,7 +2503,7 @@ class AjaxController extends Controller
 			exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName);
 		}
 		DataUpdaterPool::callHandlers($formid);
-		DataUpdaterPool::callFinilze($formid);
+		DataUpdaterPool::callFinalize($formid);
 
 		$this->trigger("AfterHandlePOST",array($this,$ret));
 

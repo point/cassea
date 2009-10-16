@@ -53,12 +53,12 @@ class DataObjectPool
 
 	//{{{ set
 	/**
-	 * Stores dataobject on the pool and sort it.
+	 * Stores dataobject in the pool and sort it.
 	 *
 	 * @param DataObject object to store.
 	 * @return null
 	 */
-	static function set(DataObject $do, $priority = 0)
+	static function set(DataSourceObject $do, $priority = 0)
 	{
 		self::$pool[] = array('priority'=>$priority,
 			'data_object'=>$do);

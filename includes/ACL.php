@@ -31,7 +31,7 @@
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id$
+ * @version $Id: ACL.php 163 2009-10-15 15:00:34Z point $
  * @package system
  * @since 
  */
@@ -93,7 +93,6 @@ class ACL
 	 * @var string The name of a group for not-authenticated user
 	 */
 	static private $guest_group = "guest";
-
 	
 	//{{{ init
 	/**
@@ -151,27 +150,29 @@ class ACL
     }
 	//}}}
 
-	//{{{getUserByGroups
+	//{{{getUsers
 	/**
-	 * If $group parameter is null, returns enumerated array of array("groups"=>$groups,"login"=>$login),
+	 * Returns associative array of array("group"=>array("login1","login2")),
 	 * ordered by groups
-	 * Else returns array of users, which are included in given group
 	 * Used for console subsystem.
 	 *
-	 * @param mixed group name. It can be either a string or an array
 	 * @return array
 	 */
-    static function getUserByGroups($group=null)
+    static function getUsers()
     {
-        $group=trim(Filter::filter($group,'string_quote_encode'));
-        if($group===null)
-            return $res = DB::query("select ".self::ACL_TABLE.".groups,".AbstractUserManager::TABLE.".login from ".self::ACL_TABLE." left join ".AbstractUserManager::TABLE." on ".self::ACL_TABLE.".user_id=".AbstractUserManager::TABLE.".id order by ".self::ACL_TABLE.".groups");
-        else
-            return $res = DB::query("select user_id from ".self::ACL_TABLE." where groups REGEXP  '(^|:)".$group."($|:)'");
-    }
-	//}}}
+        $ret= array();
+        $r = DB::query("select ".self::ACL_TABLE.".groups,".AbstractUserManager::TABLE.".login 
+            from ".self::ACL_TABLE." left join ".AbstractUserManager::TABLE." 
+            on ".self::ACL_TABLE.".user_id=".AbstractUserManager::TABLE.".id order by ".self::ACL_TABLE.".groups"); 
 
-	//{{{ addUserToGroup
+        foreach(self::getGroups() as $group)
+            foreach($r as $l)
+                if(preg_match('/(^|:)'.$group.'($|:)/', $l['groups']))
+                    $ret[$group][]= $l['login'];
+        return $ret;
+    }//}}}
+
+	//{{{ addUser
 	/**
 	 * Adds given user id  to given group.
 	 *
@@ -183,7 +184,7 @@ class ACL
 	 * @throws ACLException if 'group' or 'id' parameter has incorrect format.
 	 * @throws ACLException if trying to add group for nonexistent user.
 	 */
-    static function addUserToGroup($id,$group)
+    static function addUser($id,$group)
     {
         $group=trim(Filter::filter($group,'string_quote_encode'));
         $id = Filter::filter($id,Filter::INT);
@@ -206,10 +207,10 @@ class ACL
 		{	throw new ACLException("Trying to add group for nonexistent user or unrecoverable DB error"); }
             
 		self::flushCache($id);
-    }
+	}
 	//}}}
 
-	//{{{ delUserFromGroup
+	//{{{ delUser
 	/**
 	 * Delete given group from the list of user's groups. 
 	 *
@@ -220,7 +221,7 @@ class ACL
 	 * @return null
 	 * @throws ACLException if 'group' or 'id' parameter has incorrect format.
 	 */
-	static function delUserFromGroup($id,$group)
+	static function delUser($id,$group)
     {
 		$group=Filter::filter($group,'string_quote_encode');
         $id = Filter::filter($id,Filter::INT);
@@ -328,7 +329,10 @@ class ACL
             Storage::create('acl_groups')->un_set($user_id);
 
     }
-*/
+     */
+    //}}}
+    
+    //{{{delete
     static function delete($user_id = null)
     {
         if(!is_numeric($user_id)) return;

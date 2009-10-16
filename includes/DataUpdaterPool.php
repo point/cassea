@@ -27,13 +27,37 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
+/**
+ * This file contains class for managing callbacks for updating model.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
 //{{{ DataUpdaterPool
+/**
+ * Holds all DataObjects, created by {@link WDataHandler} which
+ * intended to update model's state with incoming POST data.
+ *
+ * Placed DataObjects are sorted by their priorities.
+ */
 class DataUpdaterPool
 {
+	/**
+	 * @var array pool of DataHandlerObjects sorted by priority
+	 */
 	static $pool = array();
 
+	//{{{ set
+	/**
+	 * Stores DataHandlerObject in the pool and sort it.
+	 *
+	 * @param DataHandlerObject object to store.
+	 * @return null
+	 */
 	static function set(DataHandlerObject $dho, $priority = 0,$id = null,$form_ids = null)
 	{
 		self::$pool[] = array('priority'=>$priority,
@@ -43,29 +67,70 @@ class DataUpdaterPool
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
+	//}}}
+
+	//{{{ getById
+	/**
+	 * Returns stored DataHandlerObject by id of {@link WDataHandler}
+	 *
+	 * @param string id to search
+	 * @return mixed it could be either DataHandlerObject or null 
+	 * if nothing was found
+	 */
     static function getById($id)
     {
         foreach(self::$pool as $o)
             if($o['id'] == $id)
                 return $o['data_handler_object'];
         return null;
-    }
-	/*static function savePool()
-	{
-		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getStoragePostfix());
-		$storage->set('pool',self::$pool);
 	}
-	static function restorePool()
-	{
-		$storage = Storage::createWithSession("DataUpdaterPool".Controller::getInstance()->getStoragePostfix());
-		self::$pool = $storage->get('pool');
-	}*/
+	//}}}
+
+	//{{{ callCheckers
+	/**
+	 * Calls checker methods of the model's object/class. 
+	 *
+	 * It walks through the pool and if checkers are defined, tries to
+	 * call them.
+	 *
+	 * This kind of methods
+	 * are useful to check incoming POST before any of datahandlers is
+	 * called. 
+	 *
+	 * As datahandler could be snapped to the form, checkers are also could be snapped to 
+	 * particular form.
+	 *
+	 * @param string optional id of the form. If passed, only checkers, snapped to this form
+	 * will be called.
+	 * @return null
+	 * @see lookupDHs
+	 * @see callHandlers
+	 * @see callFinalize
+	 */
 	static function callCheckers($form_id = null)
 	{
 		$controller = Controller::getInstance();
 		foreach(self::lookupDHs($form_id) as $dho)
 			$dho->check($controller->post);
 	}
+	//}}}
+
+	//{{{ callHandlers
+	/**
+	 * Calls handler methods of the model's object/class. 
+	 *
+	 * It walks through the pool and calls specified methods to handle 
+	 * incoming POST data.
+	 *
+	 * As datahandler could be snapped to the form, handlers are also could be snapped to 
+	 * particular form.
+	 *
+	 * @param string optional id of the form. If passed, only handlers, snapped to this form
+	 * will be called.
+	 * @return null
+	 * @see callCheckers
+	 * @see callFinalize
+	 */
 	static function callHandlers($form_id = null)
 	{
 		$controller = Controller::getInstance();
@@ -73,12 +138,44 @@ class DataUpdaterPool
 			$dho->handle($controller->post);
 
 	}
-	static function callFinilze($form_id = null)
+	//}}}
+
+	//{{{ callFinalize
+	/**
+	 * Calls finalizing methods of the model's object/class. 
+	 *
+	 * It walks through the pool and if finalizers are defined, tries to
+	 * call them.
+	 *
+	 * This kind of methods are useful to make some actions when all datahandlers was called.
+	 *
+	 * As datahandler could be snapped to the form, finalizers are also could be snapped to 
+	 * particular form.
+	 *
+	 * @param string optional id of the form. If passed, only finalizers, snapped to this form
+	 * will be called.
+	 * @return null
+	 * @see lookupDHs
+	 * @see callCheckers
+	 * @see callHandlers
+	 */
+	static function callFinalize($form_id = null)
 	{
 		$controller = Controller::getInstance();
 		foreach(self::lookupDHs($form_id) as $dho)
 			$dho->finalize($controller->post);
 	}
+	//}}}
+
+	//{{{ lookupDHs
+	/**
+	 * Internal helper method that tries to find DataHandlerObjects, snapped
+	 * to the given form id.
+	 * If no snapping is used, all DataHandlerObjects will be returned.
+	 *
+	 * @param string id of the form
+	 * @return array of founded DataHandlerObjects
+	 */
 	private static function lookupDHs($form_id)
 	{
 		$dhls = array();
@@ -98,5 +195,6 @@ class DataUpdaterPool
 
 		return $dhls;
 	}
+	//}}}
 }
 // }}}
