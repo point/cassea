@@ -32,8 +32,23 @@
  * link		http://codeigniter.com/user_guide/libraries/input.html
 */
 
-// $Id:$
+/**
+ * This file contains class for filtering arbitrary values. 
+ *
+ * @author point <alex.softx@gmail.com>
+ * @author billy <a.mirniy@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
+//{{{ Filter
+/**
+ * Filtering given values upon the specified rule. 
+ * Tightly integrating with filters, that used in DataSets/DataHandlers
+ * and ValueCheckers. But it could be used anywhere in the application.
+ */
 class Filter
 {
 	const NONE = 0;
@@ -53,16 +68,35 @@ class Filter
 	const ARRAY_DOUBLE = 14;
 	const ARRAY_FLOAT = 15;
 	const ARRAY_INT_KEYS = 16;
+	const NATURAL = 17;
 
+	//Search these symbols to substitute for quotation
 	private static $quote_original = array('"','\'','`','\\');
+	//Substitute previous symbols with these
 	private static $quote_replacement = array('&quot;','&#039;','&#096;','&#092;');
 
+	//Search these HTML symbols to substitute for encoding
 	private static $encode_original = array('&','<','>');
+	//Substitute previous symbols with these
     private static $encode_replacement = array('&amp;','&lt;','&gt;');
 
+	//allowed tags for STRING_QUOTE_ENCODE_PARTIALY
     private static $allowed_tags = array('br', 'i', 'b', 'h1');
 
+	//{{{ __construct
 	function __construct(){}	
+	//}}}
+		
+	//{{{ getFilter
+	/**
+	 * Returns code of the filter rule basing on the string representation.
+	 * Internal functions for convenience and performance are using numeric 
+	 * representation of the filter rules.
+	 *
+	 * @param string filter rule to search
+	 * @return int code of the filter rule
+	 * @throws FilterException in case of error
+	 */
 	static function getFilter($type)
 	{
         if(is_int($type)) return $type;
@@ -71,8 +105,16 @@ class Filter
 		$type = strtoupper($type);
 		if(isset($c[$type])) return $c[$type];
         throw new FilterException('Filter '.$type.' doesn\'t exists');
-		//return self::NONE;
 	}
+	//}}}
+
+	//{{{ filter
+	/**
+	 * Makes filtering of given value, applying specified rule.
+	 *
+	 * @param mixed variable to filter
+	 * @param mixed string representation or integer code of the filter rule
+	 */
 	static function filter($var = null,$type)
 	{
 		$ret = null;
@@ -81,33 +123,62 @@ class Filter
 			$type = self::getFilter($type);
 		switch($type)
 		{
+			/**
+			 * No filtering. Passed value returns back.
+			 */
 			case self::NONE:
 				$ret = $var;
 				break;
+			/**
+			 * Filters value as integer. If it's not a numeric or
+			 * not hits to the [-PHP_INT_MAX..PHP_INT_MAX] range, null 
+			 * value will be returned.
+			 */
 			case self::INT:
 				if(!is_numeric($var)) break;
-				$ret = (int)$var;
 				if($ret < -PHP_INT_MAX || $ret > PHP_INT_MAX)
 					$ret = null;
+				$ret = (int)$var;
 				break;
+			/**
+			 * Filters value as positive integer ie in the range 
+			 * [0..PHP_INT_MAX]. If value doesn't hits to this range, null value
+			 * will be returned.
+			 */
 			case self::UINT:
 				if(!is_numeric($var)) break;
-				$ret = (int)$var;
-				if($ret < 0)
+				if($ret > PHP_INT_MAX || $ret < 0)
 					$ret = null;
+				$ret = (int)$var;
 				break;
+			/**
+			 * Filters value as float. If value is not numeric, null value 
+			 * will be returned.
+			 */
 			case self::FLOAT:
 				if(!is_numeric($var)) break;
 				$ret = (float)$var;
 				break;
+			/**
+			 * Filters value as double. If value is not numeric, null value 
+			 * will be returned.
+			 */
 			case self::DOUBLE:
 				if(!is_numeric($var)) break;
 				$ret = (double)$var;
 				break;
+			/**
+			 * Filters value as non-empty array. Else null value will be returned.
+			 */
 			case self::ARR:
 				if(is_array($var) && !empty($var))
 					$ret = $var;
 				break;
+			/**
+			 * Filters value as non-empty array of integer values. Non int values 
+			 * will be deleted from the input array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_INT:
 				if(is_array($var) && !empty($var))
 				{
@@ -116,7 +187,13 @@ class Filter
 						$v = self::filter($v,self::INT);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
+				if(empty($ret)) $ret = null;
 				break;
+			/**
+			 * Filters value as non-empty array of float values. Non float values 
+			 * will be deleted from the input array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_FLOAT:
 				if(is_array($var) && !empty($var))
 				{
@@ -125,7 +202,13 @@ class Filter
 						$v = self::filter($v,self::FLOAT);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
+				if(empty($ret)) $ret = null;
 				break;
+			/**
+			 * Filters value as non-empty array of double values. Non double values 
+			 * will be deleted from the input array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_DOUBLE:
 				if(is_array($var) && !empty($var))
 				{
@@ -134,14 +217,26 @@ class Filter
 						$v = self::filter($v,self::DOUBLE);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
+				if(empty($ret)) $ret = null;
 				break;
+			/**
+			 * Filters value as non-empty array of strings. These strings will be quoted and 
+			 * null items be deleted from this array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_STRING_QUOTE:
 				if(!is_array($var) || empty($var)) break;
 				$ret = $var;
 				foreach($ret as $k => &$v)
 					 $v = self::quote($v);
                 $ret = array_filter($ret,create_function('$v','return $v !== null;'));
+				if(empty($ret)) $ret = null;
 				break;
+			/**
+			 * Filters value as non-empty array of strings. These strings will be encoded and 
+			 * null items be deleted from this array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_STRING_ENCODE:
 				if(!is_array($var) || empty($var)) break;
 				$ret = $var;
@@ -149,6 +244,11 @@ class Filter
 					 $v = self::encode($v);
                 $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				break;
+			/**
+			 * Filters value as non-empty array of strings. These strings will be quoted and encoded.  
+			 * Null items be deleted from this array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_STRING_QUOTE_ENCODE:
 				if(!is_array($var) || empty($var)) break;
 				$ret = $var;
@@ -156,14 +256,23 @@ class Filter
 					 $v = self::quote(self::encode($v));
                 $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				break;
+			/*
+			 * Quotes single string be the {@link quote} function.
+			 */
 			case self::STRING_QUOTE:
 				if(!is_string((string)$var)) break;
 				$ret = self::quote((string)$var);
 				break;
+			/*
+			 * Encodes single string be the {@link encode} function.
+			 */
 			case self::STRING_ENCODE:
 				if(!is_string((string)$var)) break;
 				$ret = self::encode((string)$var);
 				break;
+			/*
+			 * Quotes and encodes single string be internal functions.
+			 */
 			case self::STRING_QUOTE_ENCODE:
 				if(!is_string((string)$var)) break;
 				$ret = self::quote(self::encode((string)$var));
@@ -179,6 +288,12 @@ class Filter
 
 				}
 				break;
+			
+			/**
+			 * Filters value as non-empty array with integer keys.Non int keys
+			 * will be deleted from the input array. If resulting array become empty, 
+			 * null value will be returned.
+			 */
 			case self::ARRAY_INT_KEYS:
 				if(!is_array($var)) return;
 				$ret0 = array();
@@ -187,17 +302,62 @@ class Filter
 				if(!empty($ret0)) $ret = $ret0;
 				unset($ret0);
 				break;
+			/**
+			 * Filters value as natural. If it's not a numeric or
+			 * not hits to the [1..PHP_INT_MAX] range, null 
+			 * value will be returned. Usefull for checking DB index.
+			 */
+			case self::NATURAL:
+				if(!is_numeric($var) || (int)$var != $var || $var < 1) break;
+				$ret = (int)$var;
+				break;
 		}
 		return $ret;
 	}
+	//}}}
+
+	//{{{ quote
+	/**
+	 * Quotes given string. Used to escaping string for inserting to the DB.
+	 *
+	 * It's based on substituting symbols from $quote_original to the 
+	 * $quote_replacement equivalent.
+	 *
+	 * @param string input string to quote
+	 * @return string quoted string
+	 */
 	static function quote($var)
 	{
 		return str_replace(self::$quote_original,self::$quote_replacement,trim($var));
 	}
+	//}}}
+	
+	//{{{ encode
+	/**
+	 * Encodes given string. Used to escaping string for inserting to the DB and 
+	 * to prevent XSS.
+	 *
+	 * It's based on substituting symbols from $encode_original to the 
+	 * $encode_replacement equivalent.
+	 *
+	 * @param string input string to encode
+	 * @return encoded string
+	 */
 	static function encode($var)
 	{
 		return str_replace(self::$encode_original,self::$encode_replacement,trim($var));
 	}
+	//}}}
+
+	//{{{ sanitizeVars
+	/**
+	 * Used for remove unwanted characters from incoming request.
+	 *
+	 * Based on the CodeIgnitier Input.php module.
+	 *
+	 * @param string to sanitize
+	 * @retrun string filtered string
+	 */
     static function sanitizeVars($str)
     {
 		/*
@@ -346,6 +506,8 @@ return $matches[1].str_ireplace(
 			$str = str_replace(array("\r\n", "\r"), PHP_EOL, $str);
 		return $str;
     }
+	//}}}
 }
+//}}}
 
 
