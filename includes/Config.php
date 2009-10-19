@@ -512,13 +512,13 @@ class IniConfig extends ConfigBase
 	{
 		if(!$this->checkCache())
 		{
-			$fp = fopen($this->root_dir.self::CONFIG_CACHE_FILE,"a");
+			$fp = fopen($this->rd.self::CONFIG_CACHE_FILE,"a");
 			if(flock($fp,LOCK_EX))
 			{
 				ftruncate($fp,0);
 				fputs($fp,'<?php'.PHP_EOL.'$__config_cache = '.var_export($this->toArray(),true).';');
 				$time = time();
-				touch(self::CONFIG_CACHE_FILE,$time);
+				touch($this->rd.self::CONFIG_CACHE_FILE,$time);
 				touch($this->filename,$time);
 				fflush($fp);
 				flock($fp,LOCK_UN);
