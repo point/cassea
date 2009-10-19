@@ -80,9 +80,6 @@ class Filter
 	//Substitute previous symbols with these
     private static $encode_replacement = array('&amp;','&lt;','&gt;');
 
-	//allowed tags for STRING_QUOTE_ENCODE_PARTIALY
-    private static $allowed_tags = array('br', 'i', 'b', 'h1');
-
 	//{{{ __construct
 	function __construct(){}	
 	//}}}
@@ -136,7 +133,7 @@ class Filter
 			 */
 			case self::INT:
 				if(!is_numeric($var)) break;
-				if($ret < -PHP_INT_MAX || $ret > PHP_INT_MAX)
+				if($var < -PHP_INT_MAX || $var > PHP_INT_MAX)
 					$ret = null;
 				$ret = (int)$var;
 				break;
@@ -147,7 +144,7 @@ class Filter
 			 */
 			case self::UINT:
 				if(!is_numeric($var)) break;
-				if($ret > PHP_INT_MAX || $ret < 0)
+				if($var > PHP_INT_MAX || $var < 0)
 					$ret = null;
 				$ret = (int)$var;
 				break;
@@ -260,33 +257,22 @@ class Filter
 			 * Quotes single string be the {@link quote} function.
 			 */
 			case self::STRING_QUOTE:
-				if(!is_string((string)$var)) break;
+				if(!is_scalar($var)) break;
 				$ret = self::quote((string)$var);
 				break;
 			/*
 			 * Encodes single string be the {@link encode} function.
 			 */
 			case self::STRING_ENCODE:
-				if(!is_string((string)$var)) break;
+				if(!is_scalar($var)) break;
 				$ret = self::encode((string)$var);
 				break;
 			/*
 			 * Quotes and encodes single string be internal functions.
 			 */
 			case self::STRING_QUOTE_ENCODE:
-				if(!is_string((string)$var)) break;
+				if(!is_scalar($var)) break;
 				$ret = self::quote(self::encode((string)$var));
-				break;
-			case self::STRING_QUOTE_ENCODE_PARTIALY:
-				if(!is_string((string)$var)) break;
-                $ret = self::quote(self::encode((string)$var));
-
-                for ($i = 0, $c = count(self::$allowed_tags); $i < $c ; $i++){
-                    $tag = self::$allowed_tags[$i];
-                    $ret = preg_replace('#&lt;(/?)'.self::$allowed_tags[$i].'(/?)&gt;#','<$1'.self::$allowed_tags[$i].'$2>', $ret );
-                    //str_replace('&lt;'.self::$allowed_tags[$i].'&gt', '<'.self::$allowed_tags[$i].'>', $res);
-
-				}
 				break;
 			
 			/**
@@ -351,7 +337,7 @@ class Filter
 
 	//{{{ sanitizeVars
 	/**
-	 * Used for remove unwanted characters from incoming request.
+	 * Used to remove unwanted characters from incoming request (like XSS, CSRF etc)
 	 *
 	 * Based on the CodeIgnitier Input.php module.
 	 *
