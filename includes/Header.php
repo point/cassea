@@ -77,20 +77,21 @@ class Header
         * Текущий DOCTYPE
         * @var      string
         */
-        private $doctype = null;
+        private $doctype = 'html401strict';
         /**
         * Массив с предопределенными DOCTYPES
         * @var      array
         */
 		private $predefine_doctypes = array (
 			''  => '',
-            'strict'                => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">',
-            'transitional'          => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">',
-            'frameset'              => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">',
+            'html401strict'                => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">',
+            'html401transitional'          => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">',
+            'html401frameset'              => '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">',
             'xhtml11'               =>'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
 			'xhtml10strict'         => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
 			'xhtml10transitional'   => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
-			'xhtml10frameset'       => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">'
+			'xhtml10frameset'       => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">',
+			'html5'					=> '<!DOCTYPE html>'
 	            );
         /**
         * Заголовок документа
@@ -139,8 +140,10 @@ class Header
 
     /** {{{ __construct
     */
-    protected function __construct ($doctype = 'strict')
+    protected function __construct ($doctype = null)
 	{
+		if(!isset($doctype))
+			$doctype = Config::get('doctype');
         $this->setDoctype($doctype);
 
         if(Config::get('x_ua_compatible')== 'on')
@@ -201,9 +204,10 @@ GO;
      * @return string
      */
     static public function makeHTTPHost(){
-        return (empty($_SERVER['HTTPS'])?'http://':'https://').
-            $_SERVER['HTTP_HOST'].
-            (($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
+		return (empty($_SERVER['HTTPS'])?'http://':'https://').
+			$_SERVER['HTTP_HOST'].
+			(($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
+
     }// }}}
 
     /** {{{ error
