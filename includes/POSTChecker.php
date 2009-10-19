@@ -27,12 +27,78 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ * This file contains class for checking incooming POST data upon given rules
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: ACL.php 162 2009-10-15 14:45:31Z skai $
+ * @package system
+ * @since 
+ */
+
+// performs
+//{{{ POSTChecker
+/**
+ * Checks POST data with the passed rules and sets error message, if this data
+ * doesn't validate.
+ */
 class POSTChecker
 {
+	/**
+	 * Regexp for checking email
+	 * @var string
+	 */
 	static $email_regexp = "/[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|museum)/i";
+	/**
+	 * Regexp for checking URL
+	 * @var string
+	 */
 	static $url_regexp = "/^(((https?):\/\/)?(?:([a-zA-Z\d\-_]+)@?([a-zA-Z\d\-_]+)\:)?((?:(?:(?:(?:[a-zA-Z\d](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?)\.)*([a-zA-Z](?:(?:[a-zA-Z\d]|-)*[a-zA-Z\d])?))|(?:(?:\d+)(?:\.(?:\d+)){3}))(?::(\d+))?)(?:\/((?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*)(?:\/(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))*)(\?(?:(?:(?:[a-zA-Z\d$\-_.+!*'(),~]|(?:%[a-fA-F\d]{2}))|[;:@&=])*))?)?)$/i";
+	/**
+	 * Regexp for checking date in ISO representation
+	 * @var string
+	 */
 	static $date_iso = "/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/";
+	/**
+	 * Regexp for checking for a digits
+	 * @var string
+	 */
 	static $digits = "/^\d+$/";
+
+	//{{{ checkByRules
+	/**
+	 * Performs verification of specified post data. 
+	 * Usually calls from Controller, when POST data arrives.
+	 *
+	 * There is such rules:
+	 * <ul>
+	 * <li>required. Fires, that this filed must be filled.</li>
+	 * <li>minlength. Sets minimum length of the string for this field.</li>
+	 * <li>maxlength. Sets maximum length of the string for this field.</li>
+	 * <li>rangelength. Sets minimum and maximum length of the string for this field (in [4,6] format).</li>
+	 * <li>min. Sets minimum value of the field.</li>
+	 * <li>max. Sets maximum value of the field.</li>
+	 * <li>range. Sets minimum and maximum value of the field (in [10,20] format).</li>
+	 * <li>email. Fires that this field must be a valid email. $email_regexp is used.</li>
+	 * <li>url. Fires that this filed must be a valid URL. $url_regexp is used.</li>
+	 * <li>date. Fires that this filed must be a valid date to be parsed by strtotime().</li>
+	 * <li>dateISO. Fires that this filed must be a valid date in ISO format.$date_iso regexp is used.</li>
+	 * <li>number. Fires that this filed must be a valid number (float, integer).</li>
+	 * <li>digits. Fires that this filed must consists only of the digits.No other symbols are allowed.</li>
+	 * </ul>
+	 *
+	 * These rules are compatible with jQuery validation plugin, which is used for client-side form 
+	 * validation.
+	 *
+	 * If no custom messages defined, built-in are used.
+	 *
+	 * @param HTTPParamHolder object with post data to check
+	 * @param string signature of the form that comes 
+	 * @param array array of rules
+	 * @param array optional array of custom messages
+	 * @return null
+	 */
 	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules, $messages=array())
 	{
 		if(empty($rules) || empty($rules[$formid_name])) return;
@@ -49,8 +115,7 @@ class POSTChecker
 			foreach($cr as $rule=>$rule_value)
             {
 				if($rule === 'required' && $rule_value === 'true')
-					if(!isset($p_val) ||
-                        (/*is_string($p_val) &&*/ ($p_val === null || $p_val === "")))
+					if(!isset($p_val) || $p_val === null || $p_val === "")
 						POSTErrors::addError($name,null,Language::message('checkers','REQUIRED'));
 					elseif(is_array($p_val))
 						foreach($p_val as $add_id => $p_val2)
@@ -195,6 +260,7 @@ class POSTChecker
 			}
 		}
 	}
+	//}}}
 }
+//}}}
 
-?>
