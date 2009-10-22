@@ -28,7 +28,7 @@
 }}} -*/
 
 //
-// $Id$
+// $Id: SelectorMatcher.php 138 2009-08-13 08:34:58Z point $
 //
 
 class SelectorMatcher
@@ -128,6 +128,9 @@ class SelectorMatcher
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
 		// *
 		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
+		//id starts with
+		if(isset($parsed_selector['starts_with']) 
+			&& substr($widget->getIdLower(),0,strlen($parsed_selector['starts_with'])) != $parsed_selector['starts_with']) return self::FALSE_CACHE;
 		// tag
 		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
 		// [attribute]
@@ -356,6 +359,9 @@ class SelectorParser
 	//const pattern_splitter = "/\s*([+>~\s])\s*([a-zA-Z#.*:\[]*)/"	;
 	//const pattern_splitter = '/\s*([a-zA-Z#.*:\[]*)\s*([+>~\s])/'	;
 	const pattern_splitter = '/([^+>~\s]+)(\s*[+>~\s])?/'	;
+
+	const pattern_starts_with = "/^%([\w-]+)/";
+	const pattern_quick_starts_with = "/^%([\w-]+)$/";
 	
 /*		$patterns = array(
 		"id"=> "/#([\w-]+)/",
@@ -408,6 +414,8 @@ class SelectorParser
 	{
 		if(preg_match(self::pattern_quick_id,$selector,$m))
 		{$this->selectors[0]['id'] = strtolower($m[1]); $this->selectors_count = 1;return;}
+		if(preg_match(self::pattern_quick_starts_with,$selector,$m))
+		{$this->selectors[0]['starts_with'] = strtolower($m[1]); $this->selectors_count = 1;return;}
 		if(preg_match(self::pattern_quick_tag,$selector,$m))
 		{$this->selectors['0']['tag'] = strtolower($m[1]) ; $this->selectors_count = 1; return;}
 
@@ -421,18 +429,23 @@ class SelectorParser
 			if(isset($v[2]))
 				$this->splitters[] = (trim($v[2]) === "")?" ":trim($v[2]);
 
-			if(preg_match(self::pattern_quick_tag,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['tag'] = strtolower($m[1]) and $flag = 1;
 			if(preg_match(self::pattern_quick_id,$v[1],$m) && !empty($m[1]))
 				$this->selectors[$i]['id'] = strtolower($m[1]) and $flag = 1;
+			if(preg_match(self::pattern_quick_starts_with,$v[1],$m) && !empty($m[1]))
+				$this->selectors[$i]['starts_with'] = strtolower($m[1]) and $flag = 1;
+			if(preg_match(self::pattern_quick_tag,$v[1],$m) && !empty($m[1]))
+				$this->selectors[$i]['tag'] = strtolower($m[1]) and $flag = 1;
 
 			if($flag) {$i++;continue;}
 
-			if(preg_match(self::pattern_tag,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
-
 			if(preg_match(self::pattern_id,$v[1],$m) && !empty($m[1]))
 				$this->selectors[$i]['id'] = strtolower($m[1]) ;
+
+			if(preg_match(self::pattern_starts_with,$v[1],$m) && !empty($m[1]))
+				$this->selectors[$i]['starts_with'] = strtolower($m[1]) ;
+
+			if(preg_match(self::pattern_tag,$v[1],$m) && !empty($m[1]))
+				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
 
 			while(preg_match(self::pattern_combined,$v[1],$m) && !empty($m[0]))
 			{
