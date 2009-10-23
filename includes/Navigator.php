@@ -115,6 +115,11 @@ class Navigator
 	{
 		return array_reverse($this->user_path);
 	}
+	function injectSteps(array $steps)
+	{
+		if(!count($steps)) return;
+		$this->user_path = array_reverse($steps);
+	}
 	function clean()
 	{
 		$this->storage->un_set("user_path");

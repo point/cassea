@@ -204,7 +204,7 @@ GO;
      * @return string
      */
     static public function makeHTTPHost(){
-		return (empty($_SERVER['HTTPS'])?'http://':'https://').
+		return ((empty($_SERVER['HTTPS'])||(stripos($_SERVER['SERVER_PROTOCOL'],"https") === false))?'http://':'https://').
 			$_SERVER['HTTP_HOST'].
 			(($_SERVER['SERVER_PORT'] != 80)?":".$_SERVER['SERVER_PORT']:"");
 

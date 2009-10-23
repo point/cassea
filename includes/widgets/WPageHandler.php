@@ -35,7 +35,9 @@ WidgetLoader::load("WObject");
 //{{{ WPageHandler
 class WPageHandler extends WObject
 {
-    var
+	const MAX_STORED_STEPS = 32;
+
+    protected
 
         /**
         * @var      string
@@ -194,6 +196,22 @@ class WPageHandler extends WObject
     }
     // }}}
     
+	function storeSteps()
+	{
+		$storage = Storage::createWithSession('pagehandler_steps');
+		$steps = $storage->get('steps');
+		$steps[requestURI()] = Controller::getInstance()->getNavigator()->getSteps();
+		if(count($steps) > self::MAX_STORED_STEPS)
+			$steps = array_slice($steps,-self::MAX_STORED_STEPS);
+		$storage->set('steps',$steps);
+	}
+	function restoreSteps()
+	{
+		$storage = Storage::createWithSession('pagehandler_steps');
+		$steps = $storage->get('steps');
+		if(isset($steps[requestURI()]))
+			Controller::getInstance()->getNavigator()->injectSteps($steps[requestURI()]);
+	}
 }
 //}}}
 

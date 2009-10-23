@@ -440,13 +440,13 @@ class Controller extends EventBehaviour
         if($dom->load($full_path) === false)
             throw new ControllerException("Can not load XML ".$full_path);
 
+		$this->restoreSignatures();
 		POSTErrors::restoreErrorList();
 		
 		$this->trigger("BeforeHandlePOST",$this);
 
         if($_SERVER['REQUEST_METHOD'] == "POST")
 		{
-			$this->restoreSignatures();
 			$this->restoreCheckers();
 			$this->parsePageOnPOST($this->processPage($dom));
 			$this->handlePOST();
@@ -827,6 +827,13 @@ class Controller extends EventBehaviour
 	{
 		$this->trigger("BeforeParsePageOnGET",array($this,$dom));
 
+		$node = $dom->getElementsByTagName("WPageHandler");
+		if($node->length)
+		{
+			$el = $node->item(0);
+			$this->addPageHandler(simplexml_import_dom($el),true);
+		}
+
 		$node = $dom->getElementsByTagName("WDataSet");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
 		{
@@ -901,10 +908,9 @@ class Controller extends EventBehaviour
 			$el->parentNode->removeChild($el);
 		}
 		$node = $dom->getElementsByTagName("WPageHandler");
-		for($i = 0, $c = $node->length;$i < $c;$i++)
+		if($node->length)
 		{
 			$el = $node->item(0);
-			if(empty($el)) continue;
 			$this->addPageHandler(simplexml_import_dom($el));
 			$el->parentNode->removeChild($el);
 		}
@@ -1121,9 +1127,10 @@ class Controller extends EventBehaviour
 	 * $this passed as 1st element, $elem as 2nd.
 	 *
 	 * @param SimpleXMLElement  parsed part of XML tree, representing pagehandler.
+	 * @param bool defines, true if this method was called while GET request, false if it was POST
 	 * @return null
 	 */
-	protected function addPageHandler(SimpleXMLElement $elem)
+	protected function addPageHandler(SimpleXMLElement $elem, $is_get = false)
 	{
 		$this->trigger("BeforeAddPageHandler",array($this,$elem));
 
@@ -1133,7 +1140,12 @@ class Controller extends EventBehaviour
 
 
         $this->pagehandler = new WPageHandler();
-        $this->pagehandler->parseParams($elem);
+		$this->pagehandler->parseParams($elem);
+		if($is_get)
+			$this->pagehandler->storeSteps();
+		else
+			$this->pagehandler->restoreSteps();
+
 	}
 	//}}}
 	
@@ -1905,7 +1917,9 @@ class Controller extends EventBehaviour
         elseif(is_string($ret))
             $this->gotoLocation($ret);
 
-		$this->gotoStep_0();
+		//$this->gotoStep_0();
+        Header::redirect(requestURI(true), Header::SEE_OTHER); 
+		exit();
 	}
 	//}}}
 	
@@ -1919,6 +1933,8 @@ class Controller extends EventBehaviour
 	 */
 	protected function gotoStep_0()
 	{
+		//TODO: review mb delete
+		//deprecated
 		$s = $this->navigator->getStep(0);
         Header::redirect( isset($s,$s['url'])?$s['url']:"/");
 		exit();
@@ -1936,8 +1952,10 @@ class Controller extends EventBehaviour
     protected function gotoLocation($loc)
     {
 		if(!isset($loc)) exit();
-		if(strpos($loc,"/") === false) 
+		if(($pos = strpos($loc,"/")) === false) 
 			$loc = $this->makeURL($loc);//suggest $loc is a page to which redirect to.
+		elseif($pos == 0)
+			$loc = Header::makeHTTPHost().$loc;
 		Header::redirect($loc, Header::SEE_OTHER);
     }
 	//}}}
@@ -1994,7 +2012,7 @@ class Controller extends EventBehaviour
 
 	//{{{ addSignature
 	/**
-	 * Adds form signature to the list of valid signatures. 
+	 * Adds form signature of non-anonymous user to the list of valid signatures. 
 	 * While POST request incoming form singnature will be checked upon this list.
 	 * It gives some defense from CSRF attacks.
 	 *
@@ -2007,6 +2025,7 @@ class Controller extends EventBehaviour
 	function addSignature($sig)
 	{
 		if(!isset($sig)) return;
+		if(User::get()->isGuest()) return;
 		if(count($this->form_signatures) >= self::MAX_SIGNATURES)
 		{
 			$first_sig = array_shift($this->form_signatures);
@@ -2023,12 +2042,14 @@ class Controller extends EventBehaviour
 	/**
 	 * Checks whenever given signature is valid, so located in list.
 	 * If so, it will be removed and true value returned.
+	 * For anonymous user it will return true everytime.
 	 * 
 	 * @param string signature to be checked
 	 * @return bool if signature is valid
 	 */
 	protected function checkSignature($sig = null)
 	{
+		if(User::get()->isGuest()) return true;
 		if(!isset($sig)) return false;
 		if(($k = array_search($sig,$this->form_signatures)) !== false)
 		{
@@ -2043,13 +2064,14 @@ class Controller extends EventBehaviour
 	//{{{ restoreSignatures
 	/**
 	 * Restore signatures, setted and saved during GET request by {@link addSignature} method.
-	 * Used only while POST request when system must check incoming signature.
+	 * Used only while POST request of non-anonymous user when system must check incoming signature.
 	 * All checkers are saved in persistent {@link Storage}.
 	 *
 	 * Primarily for internal use by Controller class.
 	 */
 	protected function restoreSignatures()
 	{
+		if(User::get()->isGuest()) return;
 		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
 		$this->form_signatures = $storage->get('signatures');
 		//$storage->un_set('signatures');
@@ -2128,7 +2150,7 @@ class Controller extends EventBehaviour
 			$this->trigger("DestructInited",$this);
 
 		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
-		    $storage->set('signatures',$this->form_signatures);
+			$storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
 		    $storage->set('captcha_name',$this->captcha_name);

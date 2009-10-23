@@ -61,7 +61,8 @@ function &t(&$o)
 {return $o;}
 function requestURI($full = 0)
 {	
-	$s = $full?((stripos($_SERVER['SERVER_PROTOCOL'],"https") === false)?"http://":"https://").$_SERVER['HTTP_HOST']:"";
+	//$s = $full?((stripos($_SERVER['SERVER_PROTOCOL'],"https") === false)?"http://":"https://").$_SERVER['HTTP_HOST']:"";
+	$s = $full?Header::makeHTTPHost():"";
 	$uri = $_SERVER['REQUEST_URI'];
 	if(strpos($uri,"javascript:") !== false)
 		$uri = str_replace("javascript:","",$uri);
