@@ -44,7 +44,12 @@ require_once 'IMailObject.php';
 
 class MailObject implements IMailObject{
 	
-    /*{{{class variables
+    //{{{class variables
+    
+    const cteb64 =    "Content-Transfer-Encoding: base64";
+	const rn     = "\r\n";
+
+    /**
      *содержит адрес отправителя
      *    
      *@var string
@@ -71,18 +76,18 @@ class MailObject implements IMailObject{
      *@var string
      *@access private
      */
-	private $htmlMsg        =null;
-    private $subject        ='';
+	private $htmlMsg        = null;
+    private $subject        = '';
     /*
      *$bound,$boundary,$boundaryEnd устанавливают разделитель,который будет разделять части письма типа multipart/mixed
      *    
      *@var string
      *@access private
      */
-	private $bound			='sender0405ABB00B';
-	private $boundary       ='--sender0405ABB00B';
-	private $boundaryEnd    ='--';
-    private $contentType    ='text/plain';
+	private $bound			= 'sender0405ABB00B';
+	private $boundary       = '--sender0405ABB00B';
+	private $boundaryEnd    = '--';
+    private $contentType    = 'text/plain';
     /*
      *$xMailer содержит название мейлера, с помощью которого будет отослано письмо
      *Оно будет добавлено в заголовок письма
@@ -90,54 +95,63 @@ class MailObject implements IMailObject{
      *@var string
      *@access private
      */
-	private $xMailer        ='X-Mailer: The Sender(v0.0.0.1)Testing';
-	private $rn             ="\r\n";
-	private $msgFlag		='';
-    private $er				="false";
+	private $xMailer        = 'X-Mailer: The Sender(v0.0.0.1)Testing';
+	private $msgFlag		= '';
+    private $er				= "false";
     /*
      *Массив адресов получателей
      *    
      *@var array
      *@access private     */
-    private $to             =array();
+    private $to             = array();
     /*
      *Массив получателей отмеченных как "carbon copy" 
      *    
      *@var array
      *@access private
      */
-    private $cc             =array();
+    private $cc             = array();
     /*
      *Массив получателей, отмеченных как "blind carbon copy" 
      *    
      *@var array
      *@access private
      */
-    private $bcc            =array();
+    private $bcc            = array();
     /*
      *Список адресов,на которые можно отсылать ответ на текущеее письмо 
      *    
      *@var array
      *@access private
      */
-    private $replyTo        =array();
+    private $replyTo        = array();
     /*
-     *Массивы,которые хранят информмацию о приклеплённых к письму файлах, а так же их содержимое в кодировке base64
+     *Массивы,которые хранят информмацию о приклеплённых к письму файлах, а так же их содержимое 
+     *в кодировке base64
      *    
      *@var array
      *@access private
      */
-	private $attachmentName =array();
-	private $attachmentType =array();
-	private $attachmentCod  =array();
-    private $attachDispos   =array();
+	private $attachmentName = array();
+	private $attachmentType = array();
+	private $attachmentPath  = array();
+    private $attachDispos   = array();
+    private $attachSize     = null;
     /*
      *Хранит тип транспорта, с помощью которого будет отправлено письмо
      *    
      *@var string
      *@access private
      */
-	private $transport		='';
+    private $transport		= '';
+
+    /**
+     * Флаг для перехода в режим работы с файлами большого размера. 
+     * Устанавливаеться в true если суммарный размер прикреплённых файлов больше чем memory_limit
+     * 
+     */
+    public $memoryLimit    = false;
+        
     /*}}}*/
 
     /*{{{__construct
@@ -274,20 +288,19 @@ class MailObject implements IMailObject{
      *формирует данные, необходимые для приложения файла к письму(имя файла,тип, код) 
      */
     public function attachAdd($path){
-        if (!is_file($path))
-    		{$this->errMsg('invalidFile',$path);
-    		 $this->er="true";
-    	     return false;
-    		}
-	        $filename = basename($path);
-			$fop = fopen($path, "r");
-			$codeFile = chunk_split(base64_encode(fread($fop, filesize($path))));
-			fclose($fop);
-			$this->attachmentName[] =$filename;
-			$this->attachmentType[] =$this->fileTypes($path);
-			$this->attachmentCod[]  =$codeFile;
-			$this->attachDispos[]   ="attachment";
-
+        if (!is_file($path)|| !is_readable($path))
+    	{
+            $this->errMsg('invalidFile',$path);
+    		$this->er="true";
+    	    return false;
+        }
+        $filename = basename($path);
+        $this-> attachmentName[] = $filename;
+        $this-> attachmentType[] = $this->fileTypes($path);
+        $this-> attachmentPath[]  = $path;
+        $this-> attachDispos[]   = "attachment";
+        $this-> attachSize      += filesize($path);
+        if($this->attachSize >= max(sizeFromString(ini_get("memory_limit")),4*1048576)) $this->memoryLimit = true;
     }
     /*}}}*/
     
@@ -315,18 +328,17 @@ class MailObject implements IMailObject{
      *
      */
     public function inlineAdd($path){
-    	if (!is_file($path)){
+    	if (!is_file($path)|| !is_readable($path)){
     		$this->errMsg('invalidFile',$path);
     		return false;
     	}
 		$filename = basename($path);
-		$fop = fopen($path, "r");
-		$codeFile = chunk_split(base64_encode(fread($fop, filesize($path))));
-		fclose($fop);
-		$this->attachmentName[] =$filename;
-		$this->attachmentType[] =$this->fileTypes($path);
-		$this->attachmentCod[]  =$codeFile;
-		$this->attachDispos[]   ="inline";
+		$this-> attachmentName[] =$filename;
+		$this-> attachmentType[] =$this->fileTypes($path);
+		$this->attachmentPath[]  =$path;
+        $this-> attachSize      += filesize($path);
+        $this-> attachDispos[]   ="inline";
+        if($this->attachSize >= max(sizeFromString(ini_get("memory_limit")),4*1048576)) $this->memoryLimit = true;
     }
     /*}}}*/
     
@@ -334,92 +346,232 @@ class MailObject implements IMailObject{
      *формирует все необходимые заголовки письма(тема, отправитель,получатели,cc,bcc,Contente-Type)
      */
     public function createHeader(){	
-        //$headers="Date:".date("D, j M Y G:i:s").$this->rn;
+
+        //$headers="Date:".date("D, j M Y G:i:s").self::rn;
         $headers = "";
-    	$headers.="From: =?UTF-8?B?".base64_encode($this->fromName)."?=<".$this->from.">".$this->rn;
-        //$headers.=$this->xMailer.$this->rn;
+    	$headers.="From: =?UTF-8?B?".base64_encode($this->fromName)."?=<".$this->from.">".self::rn;
+        //$headers.=$this->xMailer.self::rn;
         if (count($this->replyTo)>0){
             $reply=implode(",",$this->replyTo);
-	        $headers.="Reply-To: ".$reply.$this->rn;
+	        $headers.="Reply-To: ".$reply.self::rn;
 	    }
-        $headers.="X-Priority: 3 (Normal)".$this->rn;
-        //$headers.="Message-ID: <0405.".date("YmjHis")."Sender>".$this->rn;
-        $headers.="To:".implode(",",$this->to).$this->rn;
+        $headers.="X-Priority: 3 (Normal)".self::rn;
+        //$headers.="Message-ID: <0405.".date("YmjHis")."Sender>".self::rn;
+        $headers.="To:".implode(",",$this->to).self::rn;
         if((count($this->cc))>0){
-            $headers.="cc:".implode(",",$this->cc).$this->rn; }
+            $headers.="cc:".implode(",",$this->cc).self::rn; }
         if((count($this->bcc))>0){
-  	  		$headers.="bcc:".implode(",",$this->bcc).$this->rn;
+  	  		$headers.="Bcc:".implode(",",$this->bcc).self::rn;
         }
         if(!empty($this->subject)){
-            $headers.="Subject: =?UTF-8?B?".base64_encode($this->subject)."?=".$this->rn;
+            $headers.="Subject: =?UTF-8?B?".base64_encode($this->subject)."?=".self::rn;
         }
-        $headers.="MIME-Version: 1.0".$this->rn;
+        $headers.="MIME-Version: 1.0".self::rn;
 
         if ((count($this->attachmentName)>0)&& $this->contentType=='plain'){
-	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".$this->rn;
+	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".self::rn;
             $this->msgFlag="1";
         }
         if (count($this->attachmentName)>0 && $this->contentType=='html'){
-	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".$this->rn;
+	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".self::rn;
 	        $this->msgFlag="2";
         }
         if (count($this->attachmentName)>0 && $this->contentType=='alternative'){
-	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".$this->rn;
+	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".self::rn;
 	        $this->msgFlag="3";
         }
         if (count($this->attachmentName)==0 && ($this->contentType=='plain')){
-	        $headers.="Content-Type: text/plain; charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64".$this->rn;
+	        $headers.="Content-Type: text/plain; charset= UTF-8".self::rn.self::cteb64.self::rn;
 	        $this->msgFlag="4";
         }
         if (count($this->attachmentName)==0 && $this->contentType=='html'){
-	        $headers.="Content-Type: text/html; charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64".$this->rn;
+	        $headers.="Content-Type: text/html; charset= UTF-8".self::rn.self::cteb64.self::rn;
 	        $this->msgFlag="5";
         }
 
         if (count($this->attachmentName)==0 && $this->contentType=='alternative'){
-	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".$this->rn;
+	        $headers.="Content-Type: multipart/mixed; boundary=\"".$this->bound."\";".self::rn;
 	        $this->msgFlag="6";
         }
         return $headers;
     }
     /*}}}*/
+    
+    //{{{largeBody
+    /**
+     *Используеться в случае, если флаг memoryLimit=true, т.е. к сообщению приложенны файлы большого размера.
+     *С помощью этого метода тело письма отсылаеться порциями по 4096 байт, добавляя закодированые в base64 фрагменты файла в поток.
+     *Формирует само тело письма, учитывая его Contente-Type и приложенные файлы(inline,attach).
+     *В качестве параметров использует ресурс соединения к smtp серверу а так же имя функции, с помощью которой происходит запись в поток.
+     */
+    public function largeBody($connect,$func){
+        switch($this->msgFlag){
+        case '1':
+                $func($connect,$this->boundary.self::rn."Content-Type:text/plain;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->msg)).self::rn);
 
-    /*{{{mailBody
-     *формирует само тело письма, учитывая его Contente-Type и приложенные файлы(inline,attach)
+                for($i=0;$i<count($this->attachmentName);$i++){
+
+                    $func($connect,$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64." \r\n"."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn);
+                    $file= fopen($this->attachmentPath[$i],'r');
+                    $this->base64Encode($file,$connect,$func);
+                }
+       			$func($connect,$this->boundary.$this->boundaryEnd);
+   			break;
+            
+            case '2':
+                $func($connect,$this->boundary.self::rn."Content-Type:text/html;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->htmlMsg)).self::rn);
+
+                for($i=0;$i<count($this->attachmentName);$i++){
+
+                    $func($connect,$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64." ".self::rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn);
+                    
+                    $file= fopen($this->attachmentPath[$i],'rb');
+                    $this->base64Encode($file,$connect,$func);
+                }
+                $func($connect,$this->boundary.$this->boundaryEnd);
+   			break;
+            case '3':
+                $func($connect,$this->boundary.self::rn."Content-Type:text/plain;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->msg)).self::rn.$this->boundary.self::rn."Content-Type:text/Html;charset= UTF-8".self::rn.
+                    self::cteb64." ".self::rn.self::rn.base64_encode($this->htmlMsg).self::rn);
+
+                for($i=0;$i<count($this->attachmentName);$i++){
+
+                    $func($connect,$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64." ".self::rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn);
+                    $file= fopen($this->attachmentPath[$i],'r');
+                    $this->base64Encode($file,$connect,$func);
+                }
+       			$func($connect,$this->boundary.$this->boundaryEnd);
+            break;
+        }
+    }
+    //
+    //}}}
+
+    //{{{base64Encode
+    /**
+     *Метод base64Encode производит последовательное кодирование фрагментов по 4К файла $handler в формат base64 и отправку закодированного фрагмента в поток $connect. 
+     *В качестве параметров использует ресурс соединения к smtp серверу, открытый на бинарное чтения файл, а так же имя функции, с помощью которой происходит запись в поток.
+     */
+    public function base64Encode($handler,$connect,$func){
+        
+
+        $cache = ''; 
+        $eof = false; 
+
+        while (1) { 
+
+            if (!$eof) { 
+                if (!feof($handler)) { 
+                    $row = fgets($handler, 4096); 
+                } else { 
+                    $row = ''; 
+                    $eof = true; 
+                } 
+            } 
+
+            if ($cache !== '') 
+                $row = $cache.$row; 
+            elseif ($eof) 
+                break; 
+
+            $b64 = base64_encode($row); 
+            $put = ''; 
+
+            if (strlen($b64) < 76) { 
+                if ($eof) { 
+                    $put = $b64."\n"; 
+                    $cache = ''; 
+                } else { 
+                    $cache = $row; 
+                } 
+
+            } elseif (strlen($b64) > 76) { 
+                do { 
+                    $put .= substr($b64, 0, 76)."\n"; 
+                    $b64 = substr($b64, 76); 
+                } while (strlen($b64) > 76); 
+
+                $cache = base64_decode($b64); 
+
+            } else { 
+                if (!$eof && $b64{75} == '=') { 
+                    $cache = $row; 
+                } else { 
+                    $put = $b64."\n"; 
+                    $cache = ''; 
+                } 
+            } 
+
+            if ($put !== '') { 
+                $func($connect, $put); 
+        } 
+    } 
+
+    fclose($handler);
+
+}
+//}}}
+
+//{{{mailBody
+    /**
+     *Формирует само тело письма, учитывая его Contente-Type и приложенные файлы(inline,attach)
      */
     public function mailBody(){
         $attach='';
- 		$inline='';
+        $inline='';
         switch($this->msgFlag){
             case '1':
-   				for($i=0;$i<count($this->attachmentName);$i++){
-       			$attach.=$this->boundary.$this->rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".$this->rn."Content-Transfer-Encoding: base64 \r\n"."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".$this->attachmentName[$i]."\" \r\n".$this->rn.$this->attachmentCod[$i];
-       			}
+                for($i=0;$i<count($this->attachmentName);$i++){
+                    $attach.=$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64." ".self::rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn.chunk_split(base64_encode(file_get_contents($this->attachmentPath[$i])));
+                }
        			$attach.=$this->boundary.$this->boundaryEnd;
-            	$body=$this->boundary.$this->rn."Content-Type:text/plain;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.chunk_split(base64_encode($this->msg)).$this->rn.$attach;
+                $body=$this->boundary.self::rn."Content-Type:text/plain;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->msg)).self::rn.$attach;
    			break;
-   			case '2':
-   				for($i=0;$i<count($this->attachmentName);$i++){
-       			$attach.=$this->boundary.$this->rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".$this->rn."Content-Transfer-Encoding: base64".$this->rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".$this->attachmentName[$i]."\" \r\n".$this->rn.$this->attachmentCod[$i];
-       			}
+            case '2':
+                for($i=0;$i<count($this->attachmentName);$i++){
+                    $attach.=$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64.self::rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn.chunk_split(base64_encode(file_get_contents($this->attachmentPath[$i])));
+                }
+
        			$attach.=$this->boundary.$this->boundaryEnd;
-            	$body=$this->boundary.$this->rn."Content-Type:text/html;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.chunk_split(base64_encode($this->htmlMsg)).$this->rn.$attach;
+                $body=$this->boundary.self::rn."Content-Type:text/html;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->htmlMsg)).self::rn.$attach;
    			break;
    			case '3':
-   				for($i=0;$i<count($this->attachmentName);$i++){
-       			$attach.=$this->boundary.$this->rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".$this->rn."Content-Transfer-Encoding: base64".$this->rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".$this->attachmentName[$i]."\" \r\n\r\n".$this->attachmentCod[$i];
-       			}
+                for($i=0;$i<count($this->attachmentName);$i++){
+                    $attach.=$this->boundary.self::rn."Content-Type:".$this->attachmentType[$i]."; name=\"".$this->attachmentName[$i]."\"".self::rn.
+                        self::cteb64.self::rn."Content-Disposition: ".$this->attachDispos[$i]."; filename=\"".
+                        $this->attachmentName[$i]."\" ".self::rn.self::rn.chunk_split(base64_encode(file_get_contents($this->attachmentPath[$i])));
+                }
+
        			$attach.=$this->boundary.$this->boundaryEnd;
-            	$body=$this->boundary.$this->rn."Content-Type:text/plain;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.chunk_split(base64_encode($this->msg)).$this->rn.$this->boundary.$this->rn."Content-Type:text/Html;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.base64_encode($this->htmlMsg).$this->rn.$attach;
+                $body=$this->boundary.self::rn."Content-Type:text/plain;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->msg)).self::rn.$this->boundary.self::rn."Content-Type:text/Html;charset= UTF-8".self::rn.
+                    self::cteb64." ".self::rn.self::rn.base64_encode($this->htmlMsg).self::rn.$attach;
    			break;
    			case '4':
-   				$body=chunk_split(base64_encode($this->msg)).$this->rn;
+   				$body=chunk_split(base64_encode($this->msg)).self::rn;
    			break;
    			case '5':
-   				$body=chunk_split(base64_encode($this->htmlMsg)).$this->rn;
+   				$body=chunk_split(base64_encode($this->htmlMsg)).self::rn;
    			break;
    			case '6':
-   				$body=$this->boundary.$this->rn."Content-Type:text/plain;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.chunk_split(base64_encode($this->msg)).$this->rn.$this->boundary.$this->rn."Content-Type:text/Html;charset= UTF-8".$this->rn."Content-Transfer-Encoding: base64 \r\n".$this->rn.base64_encode($this->htmlMsg).$this->rn."\r\n".$this->boundary.$this->boundaryEnd;
+                $body=$this->boundary.self::rn."Content-Type:text/plain;charset= UTF-8".self::rn.self::cteb64." ".self::rn.
+                    self::rn.chunk_split(base64_encode($this->msg)).self::rn.$this->boundary.self::rn."Content-Type:text/Html;charset= UTF-8".self::rn.
+                    self::cteb64." ".self::rn.self::rn.base64_encode($this->htmlMsg).self::rn.self::rn.$this->boundary.$this->boundaryEnd;
    			break;
    		}
         return $body;
@@ -443,7 +595,6 @@ class MailObject implements IMailObject{
     	$error=array(
     		'invalidMail'	=>'Error: illegal E-mail address:',
     		'invalidFile'	=>'Error: illegal file name:',
-    		//'smtp'			=>'Error: smtp error ',
     		'rcptAddress'	=>'Enter recipient E-mail address!'
         );
         // FOR DEBUG - UNCOMMENT
@@ -463,5 +614,5 @@ class MailObject implements IMailObject{
     /*}}}*/
 
 }
-/*}}}*/
+//}}}
 ?>

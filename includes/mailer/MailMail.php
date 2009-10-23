@@ -39,6 +39,7 @@ class MailMail extends MailTransport{
      *@return true если отправка выполнилась успешно
      */
     public function Send($pointer){
+        if($pointer->memoryLimit) throw new Exception("The size of attachment more then memory limit!");
         return mail(implode(",",$pointer->getTo()),$pointer->getSubject(),$pointer->mailBody(),$pointer->createHeader());
     }
     /*}}}*/

@@ -29,7 +29,7 @@
 
 require_once 'MailTransport.php';
 
-class SmtpException extends CasseaException{}
+class SmtpException extends Exception{}
 
 /*{{{class smtpMail
  *класс содержит методы для отправки писем с помощью smtp протокола
@@ -170,8 +170,16 @@ class SmtpMail extends MailTransport{
 
 			fputs($this->smtpCt,"DATA \r\n");
 			$code = substr($this->getData($this->smtpCt),0,3);
-			if($code != 354) {$this->errMsg('data',' ');fclose($this->smtpCt);return false;}
-	        fputs($this->smtpCt,$pointer->createHeader()."\r\n".$pointer->mailBody()."\r\n.\r\n");
+            if($code != 354) {$this->errMsg('data',' ');fclose($this->smtpCt);return false;}
+            if($pointer->memoryLimit)
+            {
+                fputs($this->smtpCt,$pointer->createHeader()."\r\n");
+                $pointer->LargeBody($this->smtpCt,'fputs');
+                fputs($this->smtpCt,"\r\n.\r\n");
+            }
+            else
+                fputs($this->smtpCt,$pointer->createHeader()."\r\n".$pointer->mailBody()."\r\n.\r\n");
+
 			$code = substr($this->getData($this->smtpCt),0,3);
 			if($code != 250) {$this->errMsg('sendMessage',' ');fclose($this->smtpCt);return false;}
 			fputs($this->smtpCt,"QUIT"."\r\n");
@@ -198,7 +206,7 @@ class SmtpMail extends MailTransport{
             'tls'           =>'Error of STARTTLS'
         );
         // UNCOMMENT FOR DEBUG
-    	//echo"<strong>".$error[$err]."</strong> ".$add."<br />";
+    	echo"<strong>".$error[$err]."</strong> ".$add."<br />";
     }
     /*}}}*/
 

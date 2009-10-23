@@ -29,7 +29,7 @@
 
 require_once 'MailTransport.php';
 
-class MailException extends CasseaException{}
+class MailException extends Exception{}
 
 /*{{{class sendmailMail
  *класс реализует транспорт sendmail
@@ -55,11 +55,14 @@ class SendmailMail extends MailTransport{
 			if ( ! is_resource($fp))
 				{
 					throw new MailException("<b>Cannot open {$this->sendmail}!!!!</b> ");
-				}
-
-			fwrite($fp,$pointer->createHeader()."\r\n");
-			fwrite($fp,$pointer->mailBody()."\r\n");
-			fwrite($fp, "\n");
+                }
+            
+            if($pointer->memoryLimit)
+            {
+			    fwrite($fp,$pointer->createHeader()."\r\n");
+                $pointer->LargeBody($fp,'fwtite');
+			    fwrite($fp, "\r\n\n");
+            }
 			pclose($fp);
         }catch (MailException $e){echo $e->getMessage();return false;}
         return true;
