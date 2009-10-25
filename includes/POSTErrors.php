@@ -27,41 +27,137 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ * This file contains class for managing error messages, occurred
+ * while checking POST data.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
+
 //{{{ POSTErrors
+/**
+ * Handle error messages for control widgets, data from which wasn't validated.
+ * If custom messages are specified, they will be used instead of system default.
+ */
 class POSTErrors
 {
 
+	/**
+	 * Array of error messages for each widget
+	 * @var array
+	 */
 	private static $errors = array();
+	/**
+	 * Holds POST data for the widget with error in validating.
+	 * @var array 
+	 */
 	private static $post_data = array();
+	/**
+	 * Array of custom messages for built-in validators.
+	 * @var array
+	 */
     private static $custom_messages = array();
 
+	//{{{ setCustomMessages
+	/**
+	 * Set custom messages to display if POST data wasn't validated 
+	 * by the valuecheker(s).
+	 *
+	 * Primarily for internal use.
+	 *
+	 * @param array array of messages per widget
+	 * @return null
+	 */
     static function setCustomMessages($messages){
         self::$custom_messages = $messages;
     }
+	//}}}
 
+	//{{{
+	/**
+	 * Adds error message to the specified widget.
+	 * Widget is defined by the name and optional additional_id which
+	 * appear if particular widget consist as a part of WRoll widget.
+	 *
+	 * All POST data for the widget with error will be saved for 
+	 * further restoring of non validated values.
+	 * 
+	 * @param string name property of the widget
+	 * @param string additional_id in case of WRoll
+	 * @param string message to be shown. If custom message was early defined,
+	 * this parameter will be ignored.
+	 */
 	static function addError($widget_name, $additional_id,$message)
 	{
 		self::$errors[$widget_name][] = array('additional_id'=>$additional_id,'message'=> isset(self::$custom_messages[$widget_name])?self::$custom_messages[$widget_name]:$message);
 		if(!isset(self::$post_data[$widget_name]))
 			self::$post_data[$widget_name] = Controller::getInstance()->post->{$widget_name};
 	}
+	//}}}
+
+	//{{{ hasErrors
+	/**
+	 * Returns true if there is non validated widget.
+	 *
+	 * @param null
+	 * @return bool
+	 */
 	static function hasErrors()
 	{
 		return !empty(self::$errors);
 	}
+	//}}}
+
+	//{{{ saveErrorList
+	/**
+	 * Saves errors and data for non validated widgets in persistent storage in 
+	 * order to restore while the next GET request with the same URL.
+	 *
+	 * Primarily for internal use.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	static function saveErrorList()
 	{
-		self::savePostData();
+		self::savePOSTData();
 		$storage = Storage::createWithSession("post_errors",300);
 		$storage->set('errors',self::$errors);
 		$storage->set('data',self::$post_data);
 	}
+	//}}}
+
+	//{{{ restoreErrorList
+	/**
+	 * Restores previously saved error list and data array for non validated 
+	 * widgets. 
+	 *
+	 * Primarily for internal use.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	static function restoreErrorList()
 	{
 		$storage = Storage::createWithSession("post_errors");
 		self::$errors = $storage->get('errors');
 		self::$post_data = $storage->get('data');
 	}
+	//}}}
+
+	//{{{ flushErrors
+	/**
+	 * Resets array of errors and appropriate data.
+	 * Additionally persistent storage will be cleaned 
+	 * too.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	static function flushErrors()
 	{
 		$storage = Storage::createWithSession("post_errors");
@@ -70,6 +166,21 @@ class POSTErrors
 		self::$errors = array();
 		self::$post_data = array();
 	}
+	//}}}
+
+	//{{{ getErrorFor
+	/**
+	 * Returns error for specified widget.
+	 * Usually called from WControl to retrieve error message
+	 * that should be displayed on the page.
+	 *
+	 * As of {@link addError} widget is defined by the name
+	 * and additional_id.
+	 *
+	 * @param string name of the widget
+	 * @param string additional id for this widget
+	 * @param array with the messages or null if messages wasn't defined.
+	 */
 	static function getErrorFor($name,$additional_id = null)
 	{
 		if(!isset(self::$errors[$name])) return null;
@@ -88,6 +199,21 @@ class POSTErrors
         //unset(self::$errors[$name]);
 		return $e2;
 	}
+	//}}}
+
+	//{{{ getPOSTData
+	/**
+	 * Returns POST data, passed by the submited form.
+	 * It used for restoring inputed value to edit.
+	 *
+	 * As of {@link addError} widget is defined by the name
+	 * and additional_id.
+	 * 
+	 * @param string name of the widget
+	 * @param string additional id for this widget
+	 * @param string value of the specified filed or null if 
+	 * nothing was found.
+	 */
 	static function getPOSTData($name,$additional_id = null)
 	{
 		if(!isset(self::$post_data[$name])) return null;
@@ -109,7 +235,19 @@ class POSTErrors
 			return is_scalar(self::$post_data[$name])?self::$post_data[$name]:null;
 	
 	}
-	static function savePostData()
+	//}}}
+
+	//{{{ savePOSTData
+	/**
+	 * Saves POST data to further restoring and accessing to it 
+	 * via {@link getPOSTData} method.
+	 *
+	 * Primarily for internal use.
+	 *
+	 * @param null
+	 * @return null
+	 */
+	static function savePOSTData()
 	{
 		$post = Controller::getInstance()->post;
 		if(!isset($post)) return;
@@ -117,6 +255,7 @@ class POSTErrors
 			if(!isset(self::$post_data[$name]))
 				self::$post_data[$name] = $v;
 	}
+	//}}}
 }
-// }}}
+//}}}
 

@@ -37,7 +37,6 @@
  * @since 
  */
 
-// performs
 //{{{ POSTChecker
 /**
  * Checks POST data with the passed rules and sets error message, if this data

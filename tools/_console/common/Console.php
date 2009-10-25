@@ -50,7 +50,7 @@ error_reporting(E_ALL | E_STRICT);
 /**
  * Подключение необходимых классов
  */
-require_once(dirname(__FILE__)."/../../../includes/Controller.php");
+require_once(dirname(__FILE__)."/../../../includes/Boot.php");
 require_once('ArgsHolder.php');
 require_once('IO.php');
 require_once('Command.php');
@@ -143,12 +143,14 @@ class Console{
         if ($isConnected) return;
         $v = IO::getVerboseLevel();
         if ($v > IO::MESSAGE_TEXT ) IO::out('Connecting to Cassea...', false);
-        try{
+		/*
+		 * point. TODO: remove due to Boot bootstrapper is used.
+		 * try{
             Controller::makeEnv();
         }
         catch(Exception $e){
             self::processException($e);
-        }
+		}*/
         if ($v > IO::MESSAGE_TEXT ) IO::done();
         $isConnected = true;
     }// }}}
