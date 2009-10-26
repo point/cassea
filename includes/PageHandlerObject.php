@@ -27,27 +27,52 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
+/**
+ * This file contains class holds object 
+ * which manages redirection after processing POST data.
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
 //{{{ PageHandlerObject
+/**
+ * This object is created during initialization of WPageHandler and 
+ * aimed to compute redirection URL after processing
+ * POST data by the DataHandlers.
+ *
+ * @see DataObject
+ * @see DataHandlerObject
+ * @see DataSourceObject
+ */
 class PageHandlerObject extends DataObject
 {
 	protected
 		/**
-		* @var  string
-		*/
+		 * Name of the method which will be called to retrieve 
+		 * redirect URL
+		 * @var  string
+		 */
 		$handler_method = null,
 		/**
-		* @var  DataObjectParams
-		*/
+		 * Params to be passed to the handler method
+		 * @var  DataObjectParams
+		 */
 		$handler_params = null
 
 	;
 
-	function __construct($static = false)
-	{
-		parent::__construct($static);
-	}
+	//{{{ parseParams
+	/**
+	 * Parse params, coming directly from WPageHandler object.
+	 *
+	 * @param SimpleXMLElement instance of WPageHandler node of
+	 * the document tree.
+	 * @return null
+	 * @throws DataObjectException
+	 */
 	function parseParams(SimpleXMLElement $elem)
 	{
 		parent::parseParams($elem);
@@ -61,7 +86,29 @@ class PageHandlerObject extends DataObject
 		}
 		$this->handler_params = new DataObjectParams($elem->handler);		
 	}
+	//}}}
 
+	//{{{ handle
+	/**
+	 * Creates specified object and calls handler method to retrieve URL to redirect.
+	 *
+	 * If the object was created with $static flag with true value, 
+	 * method in target model class will be called statically 
+	 * (if method in the desired class doesn't declare
+	 * as static, it won't be called silently). Otherwise object of 
+	 * particular class will be created and handler method will be called 
+	 * dynamically.
+	 *
+	 * All parameters, declared via <param> tag will be passed 
+	 * in the order of document.
+	 * 
+	 * All operations to search method in object/class are made by 
+	 * Reflection mechanism and ReflectionExceptions are suppressed.
+	 *
+	 * @param null
+	 * @return mixed string to specify full URL to redirect to, or numeric (N)
+	 * to jump N-pages back by the history.
+	 */
 	function handle()
 	{
 		if(!$this->is_static)
@@ -89,5 +136,6 @@ class PageHandlerObject extends DataObject
 		}
 		return null;
 	}
+	//}}}
 }
-// }}}
+//}}}

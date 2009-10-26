@@ -136,7 +136,7 @@ class DataSourceObject extends DataObject
 	 * Reflection mechanism and ReflectionExceptions are suppressed.
 	 *
 	 * If no datasource methods are passed (but "datasource" attribute was introduced), 
-	 * syste will try to find model's object/class methods basing on the id of the widget.
+	 * system will try to find model's object/class methods basing on the id of the widget.
 	 * See {@link findValueInStatic} for static type, and 
 	 * {@link findValueInObject} for non-static case.
 	 */

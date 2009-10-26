@@ -32,7 +32,7 @@
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id: ACL.php 162 2009-10-15 14:45:31Z skai $
+ * @version $Id:$
  * @package system
  * @since 
  */
