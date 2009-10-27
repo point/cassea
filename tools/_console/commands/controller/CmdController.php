@@ -7,7 +7,8 @@ class cmdController extends Command{
     public function __construct( $workingDir = '.', $info, $commandsSeq = array()){
         parent::__construct( $workingDir, $info, $commandsSeq);
         Console::initCore();
-        $this->root_dir = Config::get('ROOT_DIR');
+        $this->root_dir   = Config::get('ROOT_DIR');
+        $this->models_dir = Config::get('models_dir');
     }
 
 
@@ -49,7 +50,7 @@ class cmdController extends Command{
             return io::out( 'Controller with name ~WHITE~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
         io::done('    controllers ');
         
-        if (file_exists($this->root_dir.'/models/'.$name))
+        if (file_exists($this->root_dir.$this->models_dir.'/'.$name))
             return io::out( 'Model with name ~WHITE~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
         io::done('    models');
 
@@ -60,10 +61,10 @@ class cmdController extends Command{
 
         IO::out('~WHITE~Creating:~~~');
         // TODO models_dir
-        if (mkdir($this->root_dir . '/models/' . $name,0775)) IO::done('    /models/' . $name);
-        else return IO::out('Error while creating directory /models/' . $name, IO::MESSAGE_FAIL);
-        if ( copy(dirname(__FILE__) . '/templates/autoload.tpl', $this->root_dir . '/models/'.$name.'/autoload.php') ) io::done('    /models/'.$name.'/autoload.php');
-        else return IO::out('Error while creating /models/'.$name.'/autoload.php', IO::MESSAGE_FAIL);
+        if (mkdir($this->root_dir . $this->models_dir. '/' . $name, 0775)) IO::done("    $this->models_dir / " . $name);
+        else return IO::out("Error while creating directory $this->models_dir / " . $name, IO::MESSAGE_FAIL);
+        if ( copy(dirname(__FILE__) . '/templates/autoload.tpl', $this->root_dir . $this->models_dir . '/' . $name . '/autoload.php') ) io::done("    $this->models_dir /".$name.'/autoload.php');
+        else return IO::out('Error while creating '.$this->models_dir.'/'.$name.'/autoload.php', IO::MESSAGE_FAIL);
         // TODO xmlpages_dir
         if ( mkdir($this->root_dir . '/pages/' . $name,0775))  IO::done('    /pages/' . $name);
         else return IO::out('Error while creating directory /pages/' . $name, IO::MESSAGE_FAIL);
@@ -81,7 +82,7 @@ class cmdController extends Command{
             return io::out( 'Controller with name ~WHITE~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
         io::done('    controllers ');
         
-        if (file_exists($this->root_dir.'/models/'.$name))
+        if (file_exists($this->root_dir.$this->models_dir.'/'.$name))
             return io::out( 'Model with name ~WHITE~'.$name.'~~~ exist!',IO::MESSAGE_FAIL);
         io::done('    models');
 
@@ -96,7 +97,7 @@ class cmdController extends Command{
             return io::out( 'Controller with name ~RED~'.$src.'~~~ not exist ',IO::MESSAGE_FAIL);
         io::done('    controller ');
 
-        if (!file_exists($this->root_dir.'/models/'.$src))
+        if (!file_exists($this->root_dir.$this->models_dir.'/'.$src))
             io::out( 'Model with name ~RED~'.$src.'~~~ not exist!',IO::MESSAGE_WARN);
         io::done('    model ');
        
@@ -107,7 +108,7 @@ class cmdController extends Command{
         IO::out('~WHITE~Copying:~~~');
         copy($this->root_dir . '/controllers/' . $src . '.php',$this->root_dir . '/controllers/' . $name . '.php');
         io::done('    controller');
-        self::rCopy($this->root_dir . '/models/' . $src,$this->root_dir . '/models/' . $name);
+        self::rCopy($this->root_dir . $this->models_dir. '/' . $src,$this->root_dir . $this->models_dir. '/' . $name);
         io::done('    model');
         self::rCopy($this->root_dir . '/pages/' . $src,$this->root_dir . '/pages/' . $name);
         io::done('    pages');
@@ -125,8 +126,8 @@ class cmdController extends Command{
                 IO::out('~WHITE~Removing:~~~');
                 self::rRem($this->root_dir . '/controllers/' . $name . '.php');
                 io::done('     controllers/'.$name.'.php');
-                self::rRem($this->root_dir . '/models/' . $name);
-                io::done('     models/'.$name);
+                self::rRem($this->root_dir . $this->models_dir. '/' . $name);
+                io::done('     '.$this->models_dir.'/'.$name);
                 self::rRem($this->root_dir . '/pages/' . $name);
                 io::done('     pages/'.$name);
             }
@@ -136,7 +137,7 @@ class cmdController extends Command{
     }// }}}
 
 
-    // {{{ Util    
+    // {{{ Util     
     //
     private static function rCopy($src,$dist) 
     { 

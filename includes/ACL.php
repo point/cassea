@@ -31,7 +31,7 @@
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id: ACL.php 163 2009-10-15 15:00:34Z point $
+ * @version $Id: ACL.php 172 2009-10-27 11:57:52Z point $
  * @package system
  * @since 
  */
@@ -210,7 +210,7 @@ class ACL
 	}
 	//}}}
 
-	//{{{ delUser
+	//{{{ deleteUserFromGroup
 	/**
 	 * Delete given group from the list of user's groups. 
 	 *
@@ -221,7 +221,7 @@ class ACL
 	 * @return null
 	 * @throws ACLException if 'group' or 'id' parameter has incorrect format.
 	 */
-	static function delUser($id,$group)
+	static function deleteUserFromGroup($id,$group)
     {
 		$group=Filter::apply($group,'string_quote_encode');
         $id = Filter::apply($id,Filter::INT);

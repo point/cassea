@@ -1,6 +1,5 @@
 Short:Backup the files to tar.bz2 archieve and create MySQL DB dump.
-##eeeeee
-##ewerewr
+
 Option:--separate
 Create separated files for MySQL and the project
 
@@ -10,3 +9,5 @@ Create backup file and send it via mail on _address_
 Option:--clean
 With option --send-email remove backup files when mail has sended.
 
+Option:--all
+Create backup of the files to tar.bz2 archieve including all files.
