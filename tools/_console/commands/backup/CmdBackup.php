@@ -15,7 +15,6 @@ class CmdBackup extends Command{
     {
         Console::initCore();
         $this->separate = ArgsHolder::get()->getOption('separate');
-        $this->all = ArgsHolder::get()->getOption('all');
         if ($r=ArgsHolder::get()->getOption('send-email'))
 		{
 			$this->send_email = true;
@@ -122,10 +121,7 @@ class CmdBackup extends Command{
         //$cmd="tar -cvf ".$root."/".$filename." ".$root." --exclude='*web*' --exclude='*~'";
         chdir($root);
         IO::out('Packing main... '."\t", false);
-        if($this->all)
-            $cmd="tar --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." * 2>&1";
-        else
-            $cmd="tar --exclude='web' --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." * 2>&1";
+        $cmd="tar --exclude='web' --exclude='.svn' --exclude='*~' -cvf ".$root."/".$filename." * 2>&1";
         exec($cmd,$out,$return);
         if ($return ==0) io::done();
         if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
@@ -137,13 +133,10 @@ class CmdBackup extends Command{
             return;
         }
 
-        if(!$this->all)
-        {
-            $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/  2>&1";
-            io::out('Adding web/css, web/js...', false);
-        }
+        io::out('Adding web/css, web/js...', false);
+        $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/  2>&1";
         exec($cmd,$out,$return);
-        if (($return ==0) && !$this->all) io::done();
+        if ($return ==0) io::done();
         if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
             foreach($out as $o)
                 io::out($o);

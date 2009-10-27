@@ -96,7 +96,6 @@ class Autoload
 		self::addDir(self::$rd.'/includes/fs');
 		self::addDir(self::$rd.'/includes/exceptions');
 		self::addDir(self::$rd.'/includes/interfaces');
-		self::addDir(self::$rd.'/includes/mailer');
 
 		//self::addDir(self::$rd.'/includes/widgets');
 
