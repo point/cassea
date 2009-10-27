@@ -1209,12 +1209,11 @@ class Controller extends EventBehaviour
 	 */
 	function getWidget($id)
 	{
-		$o = null;
 		if(isset($this->widgets[$id]))
 			return $this->widgets[$id];
 		elseif(isset($this->system_widgets[$id]))
 			return $this->system_widgets[$id];
-		else return $o;
+		else return null;
 	}
 	//}}}
 
