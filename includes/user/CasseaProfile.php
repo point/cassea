@@ -62,8 +62,8 @@ class CasseaProfile implements iProfile
 		if(!is_scalar($value) || !isset($this->fields[$field_name])) return;
 		$this->fields[$field_name] = $value;
 		
-		$field_name = Filter::filter($field_name,Filter::STRING_QUOTE_ENCODE);
-		$value = Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
+		$field_name = Filter::apply($field_name,Filter::STRING_QUOTE_ENCODE);
+		$value = Filter::apply($value,Filter::STRING_QUOTE_ENCODE);
 		DB::query("update ".self::TABLE." set ".$field_name." = '".$value."' where user_id='".$this->user_id."' limit 1");
 	}
 }// }}}

@@ -630,8 +630,8 @@ class IniDBConfig extends IniConfig
 			$this->loadData();
         if(isset($this->table_data[$name],$name,$value))
         {
-            $name = Filter::filter($name,'STRING_QUOTE');
-            $value = Filter::filter($value,'STRING_QUOTE');
+            $name = Filter::apply($name,'STRING_QUOTE');
+            $value = Filter::apply($value,'STRING_QUOTE');
             $this->table_data[$name] = $value;
             DB::query("update ".self::TABLE_NAME." set value='".$value."' where `key`='".$name."' limit 1");
         }
@@ -664,7 +664,7 @@ class IniDBConfig extends IniConfig
 		if(!isset($table_data))
 			$this->loadData();
 		if(isset($this->table_data[$name]))
-            DB::query("delete from ".self::TABLE_NAME." where `key`='".Filter::filter($name,'STRING_QUOTE')."' limit 1");
+            DB::query("delete from ".self::TABLE_NAME." where `key`='".Filter::apply($name,'STRING_QUOTE')."' limit 1");
         parent::__unset($name);
 	}
 	//}}}

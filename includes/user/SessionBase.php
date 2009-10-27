@@ -132,7 +132,7 @@ abstract class SessionBase
         if ($strRemoteIP != $strIP && !empty($strIp)) {
             $strIP = $strRemoteIP . ', ' . $strIP;
         }
-        return Filter::filter($strIP,Filter::STRING_QUOTE_ENCODE);
+        return Filter::apply($strIP,Filter::STRING_QUOTE_ENCODE);
     }// }}}
 
    // {{{ getUserIP

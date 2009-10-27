@@ -129,7 +129,7 @@ class Navigator
 		if(empty($url) || !isset($title)) return;
 		for($i = 0; $i < count($this->user_path);$i++)
 			if($this->user_path[$i]['url'] == $url)
-				$this->user_path[$i]['title'] = Filter::filter($title,Filter::STRING_QUOTE_ENCODE);
+				$this->user_path[$i]['title'] = Filter::apply($title,Filter::STRING_QUOTE_ENCODE);
 		$this->storage->set("user_path",$this->user_path);
 	}
 }

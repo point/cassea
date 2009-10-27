@@ -72,7 +72,7 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
         if (isset(self::$langs_cache[$GETLang])) self::$current = self::$langs_cache[$GETLang];
         elseif(isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
         {
-            $languages = strtolower(Filter::filter($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
+            $languages = strtolower(Filter::apply($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
             //$languages = 'ru;q=0.5, fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
             $languages = str_replace( ' ', '', $languages );
             $languages = explode( ",", $languages );

@@ -391,13 +391,13 @@ class WRuler extends WContainer
 		{
 			foreach(Controller::getInstance()->p2 as $v)
 				if(preg_match("/^page(\d+)$/",$v,$m) && is_numeric($m[1]) && $m[1] > 0)
-					$this->current_page = Filter::filter(0+$m[1],Filter::INT);
+					$this->current_page = Filter::apply(0+$m[1],Filter::INT);
 		}
 		else
 		{
 			$page = Controller::getInstance()->get->{"page".$this->id};
 			if($page !== null && is_numeric($page) && $page > 0)
-				$this->current_page = Filter::filter(0+$page,Filter::INT);
+				$this->current_page = Filter::apply(0+$page,Filter::INT);
 		}
 	}
 }

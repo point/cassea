@@ -112,7 +112,7 @@ class Filter
 	 * @param mixed variable to filter
 	 * @param mixed string representation or integer code of the filter rule
 	 */
-	static function filter($var = null,$type)
+	static function apply($var = null,$type)
 	{
 		$ret = null;
 		if(!isset($var)) return null;

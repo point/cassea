@@ -241,7 +241,7 @@ abstract class WControl extends WComponent
     {
 		if(!isset($value) || !is_scalar($value))
 			return;
-		$this->value = $value;//Filter::filter($value,Filter::STRING_QUOTE_ENCODE);
+		$this->value = $value;//Filter::apply($value,Filter::STRING_QUOTE_ENCODE);
     }
     // }}}
     

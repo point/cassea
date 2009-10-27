@@ -146,7 +146,7 @@ class DataObjectParams
 				if((isset($param['as']) && $param['as'] == "array"))
 					$p = array($p); //slightly idiotic usage
 				if(isset($param->filter))
-					$p = Filter::filter($p,(string)$param->filter);
+					$p = Filter::apply($p,(string)$param->filter);
 				$this->params[] = $p;
 			}
 			elseif($param['from'] == "p2")
@@ -166,13 +166,13 @@ class DataObjectParams
 
 				if(isset($param['as']) && $param['as'] == "array")
 				{
-					$this->params[] = Filter::filter($p,(string)$param->filter);
+					$this->params[] = Filter::apply($p,(string)$param->filter);
 					$this->params_from[] = "p2";
 				}
 				else
 					foreach($p as $_p)
 					{
-						$this->params[] = Filter::filter($_p,(string)$param->filter);
+						$this->params[] = Filter::apply($_p,(string)$param->filter);
 						$this->params_from[] = "p2";
 					}
 			}
@@ -184,7 +184,7 @@ class DataObjectParams
 				if(isset($param['as']) && $param['as'] == "array")
 					$p = array($p);
 				if(isset($param->filter))
-					$p = Filter::filter($p,(string)$param->filter);
+					$p = Filter::apply($p,(string)$param->filter);
 
 				$this->params[] = $p;
 			}
@@ -194,7 +194,7 @@ class DataObjectParams
 
 				$p = (string)$param['constant'];
 				if(isset($param->filter))
-					$p = Filter::filter($p,(string)$param->filter);
+					$p = Filter::apply($p,(string)$param->filter);
 				$this->params[] = $p;
 
 			}

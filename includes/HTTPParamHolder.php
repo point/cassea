@@ -198,7 +198,7 @@ class HTTPParamHolder implements IteratorAggregate
 	function bindFilter($var_name,$type)
 	{
 		if(!isset($this->checked_vars[$var_name])) return;
-		$this->checked_vars[$var_name] = Filter::filter($this->checked_vars[$var_name],Filter::getFilter($type));
+		$this->checked_vars[$var_name] = Filter::apply($this->checked_vars[$var_name],Filter::getFilter($type));
 	}
 	//}}}
 

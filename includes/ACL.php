@@ -186,8 +186,8 @@ class ACL
 	 */
     static function addUser($id,$group)
     {
-        $group=trim(Filter::filter($group,'string_quote_encode'));
-        $id = Filter::filter($id,Filter::INT);
+        $group=trim(Filter::apply($group,'string_quote_encode'));
+        $id = Filter::apply($id,Filter::INT);
 
 		if(empty($group))
 			throw new ACLException("Parameter 'group' has incorrect format");
@@ -223,8 +223,8 @@ class ACL
 	 */
 	static function delUser($id,$group)
     {
-		$group=Filter::filter($group,'string_quote_encode');
-        $id = Filter::filter($id,Filter::INT);
+		$group=Filter::apply($group,'string_quote_encode');
+        $id = Filter::apply($id,Filter::INT);
 
 		if(empty($group))
 			throw new ACLException("Parameter 'group' has incorrect format");

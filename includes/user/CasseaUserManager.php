@@ -181,7 +181,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	{
 		
 		if(!is_numeric($uid) || $uid < 1) return;
-		$password = Filter::filter($password,Filter::STRING_QUOTE_ENCODE);
+		$password = Filter::apply($password,Filter::STRING_QUOTE_ENCODE);
 		if (!self::checkPassord($password))
 			throw new UserManagerException('Password not match security standards.');
 
@@ -243,12 +243,12 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
     }
 	function waiting($login)
 	{
-		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		$login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
         return (bool)count(DB::query('select id from '.self::TABLE_REGISTRATION.' where login="'.$login.'" limit 1'));
     }
 	function existsLogin($login)
 	{
-		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		$login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
         $r  = DB::query('select id from '.self::TABLE.' where login="'.$login.'" limit 1');
 		if(count($r) != 1)
 			return (bool)count(DB::query('select login from '.self::TABLE_REGISTRATION.' where login="'.$login.'"'));
@@ -256,7 +256,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
     }
 	function emailExists($email)
 	{
-		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
+		$email = Filter::apply($email,Filter::STRING_QUOTE_ENCODE);
         $r  = DB::query('select id from '.self::TABLE.' where email="'.$email.'"');
 		if(!count($r))
 			return (bool)count(DB::query('select login from '.self::TABLE_REGISTRATION.' where email="'.$email.'"'));
@@ -279,14 +279,14 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	function getIdByLogin($login)
 	{
 		if(!is_string($login)) return;
-		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		$login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE." where login='".$login."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
     }
 	function getWaitingIdByLogin($login)
 	{
 		if(!is_string($login)) return;
-		$login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+		$login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE_REGISTRATION." where login='".$login."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
 	}
@@ -294,14 +294,14 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
     function getIdByEmail($email)
 	{
 		if(!is_string($email)) return;
-		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
+		$email = Filter::apply($email,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE." where email='".$email."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
 	}
 	function getWaitingIdByEmail($email)
 	{
 		if(!is_string($email)) return;
-		$email = Filter::filter($email,Filter::STRING_QUOTE_ENCODE);
+		$email = Filter::apply($email,Filter::STRING_QUOTE_ENCODE);
 		$r = DB::query("select id from ".self::TABLE_REGISTRATION." where email='".$email."' limit 1");
 		return isset($r[0])?$r[0]['id']:"";
 	}
@@ -419,13 +419,13 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 
     public function deleteFromRegistration($login='')
     {
-        $login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+        $login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
 		DB::query("delete from ".self::TABLE_REGISTRATION." where login='".$login."'");
     }
     
     public function existsRegistration($login='')
     {
-        $login = Filter::filter($login,Filter::STRING_QUOTE_ENCODE);
+        $login = Filter::apply($login,Filter::STRING_QUOTE_ENCODE);
         $r  = DB::query('select login from '.self::TABLE.' where login="'.$login.'" limit 1');
 		if(count($r) != 1)
 			return (bool)count(DB::query('select login from '.self::TABLE_REGISTRATION.' where login="'.$login.'"'));
