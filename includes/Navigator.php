@@ -27,30 +27,103 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
+/**
+ * This file contains class for storing navigation
+ * history that made current user.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
-// {{{ Navigator
-
+//{{{ Navigator
+/**
+ * Object of this class automatically created by the {@link Controller}
+ * in one instance per request. If you want to take access over 
+ * this object, use <code>Controller::getInstance()->getNavigator()</code>
+ * method.
+ *
+ * Navigator is useful in pair with the WPageHandler. Specifying 
+ * <code>' goto="-1" ' </code> cause to walk through the saved steps 
+ * (so through the history of visited pages) and extract the URL to
+ * redirect to in automatic mode.
+ *
+ * Steps to the particular objects added automatically by the Controller
+ * during the GET request.
+ *
+ * This class has trying to handle back-forward jumps correctly.
+ */
 class Navigator
 {
-	private $storage = null,
-			$user_path = array(),
-			$controller_name = null
+	private 
+		/**
+		 * Storage that used to store steps for the current user.
+		 * @var Storage instance
+		 */
+		$storage = null,
+		/**
+		 * Array of steps. Last inserted item located at the 0 index
+		 * @var array
+		 */
+		$user_path = array(),
+		/**
+		 * Current controller name
+		 * @var string
+		 */
+		$controller_name = null
 			;
+
+	/**
+	 *  Maximum count of the steps to store.
+	 *  It's should be enough for most sites.
+	 */
     const MAX_PATH = 20;
-	function Navigator($controller_name)
+	
+	//{{{ __construct
+	/**
+	 * Creating instance and initializing class properties.
+	 * Trying to restore steps saved in persistent storage.
+	 * @param null
+	 * @return null
+	 */
+	function __construct()
 	{
 		$this->storage = Storage::createWithSession('AdminNavigator'.Controller::getInstance()->getStoragePostfix());
 
-		if(!isset($controller_name))
-			$this->storage->un_set("user_path");
-		$this->controller_name = $controller_name;
+		$this->controller_name = Controller::getInstance()->getControllerName();
 
 		$this->user_path = $this->storage->get("user_path");
 
 		if(empty($this->user_path) || $this->user_path === false) $this->user_path = array();
 	}
+	//}}}
 
+	//{{{ addStep
+	/**
+	 * Adding step to the list. Usually it happens in 
+	 * {@link Controller::init} method and only during the GET request and
+	 * provided that Controller's register_step variable is setted to non false value.
+	 * There is no need to add step if current request method is POST.
+	 *
+	 * Optionally title and description properties might be specified
+	 * to describe the current page.
+	 *
+	 * If for the current user controller name has been changed, 
+	 * all history will be cleaned up.
+	 *
+	 * If the user has been already visited page, already situated in the list,
+	 * all steps, which were added after it will be deleted.
+	 * (if we jumping to the 3 page back, there is no need to keep 
+	 * later 3 pages. Newer step will be added after it).
+	 *
+	 * If we trying to add new step to the list with the length grater than 
+	 * MAX_PATH, least recently used step will be removed with the next on the list.
+	 *
+	 * @see setTitle
+	 * @see setDescription
+	 */
 	function addStep($page_name,$title = null,$description = null)
 	{
 		if(!isset($page_name)) return;
@@ -95,43 +168,122 @@ class Navigator
 		}
         $this->storage->set("user_path",$this->user_path);
 	}
+	//}}}
+
+	//{{{ getStep
+	/**
+	 * Return step, specified by the passed index.
+	 *
+	 * Result is string-based array with "url", "title",
+	 * "description", "page", "controller" keys.
+	 *
+	 * @param int step index: 0 -- current page, 1 -- previous, etc
+	 * @return array resulting array or null, if such step hasn't been found.
+	 * @see getStepURL
+	 */
 	function getStep($step)
 	{
 		$step = abs($step);
-		if($step >= count($this->user_path)) return isset($this->user_path[0])?$this->user_path[0]:"";
+		if($step >= count($this->user_path)) return /*isset($this->user_path[0])?$this->user_path[0]:*/null;
 		return $this->user_path[$step];
 	}
+	//}}}
+
+	//{{{ getStepURL
+	/**
+	 * Return the URL of the step, specified by the passed index.
+	 *
+	 * @param int step index: 0 -- current page, 1 -- previous, etc
+	 * @return string resulting URL or empty string, if such step hasn't been found.
+	 * @see getStep
+	 */
     function getStepURL($step)
     {
         $s = $this->getStep($step);
-        return isset($s['url'])?$s['url']:"";
-    }
-	function getAdminStep($step)
-	{
-		if($step >= count($this->user_path)) return $this->user_path[0]['url'];
-		return $this->user_path[$step]['url'];
+        return is_array($s) && isset($s['url'])?$s['url']:"";
 	}
+	//}}}
+
+	//{{{ getSteps
+	/**
+	 * Returns list of steps in reverse order, representing steps history
+	 * in natural way: from left to right.
+	 *
+	 * @param null
+	 * @return array of string-based arrays with "url", "title",
+	 * "description", "page", "controller" keys.
+	 */
 	function getSteps()
 	{
 		return array_reverse($this->user_path);
 	}
+	//}}}
+
+	//{{{ injectSteps
+	/** 
+	 * Replaces current steps-list with given, reversing it 
+	 * before assigning.
+	 *
+	 * @param array of string-based arrays with "url", "title",
+	 * "description", "page", "controller" keys.
+	 * @return null
+	 */
 	function injectSteps(array $steps)
 	{
 		if(!count($steps)) return;
 		$this->user_path = array_reverse($steps);
+        $this->storage->set("user_path",$this->user_path);
 	}
+	//}}}
+
+	//{{{ clean
+	/**
+	 * Cleans up steps list
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function clean()
 	{
+		$this->user_path = array();
 		$this->storage->un_set("user_path");
 	}
-	function setTitle($url,$title)
+	//}}}
+
+	//{{{ setTitle
+	/**
+	 * Setting title for the given step.
+	 *
+	 * @param int index of the step. 0 means current page, 1 -- previous etc
+	 * @param string title to set
+	 * @return null
+	 */
+	function setTitle($step, $title)
 	{
-		if(empty($url) || !isset($title)) return;
-		for($i = 0; $i < count($this->user_path);$i++)
-			if($this->user_path[$i]['url'] == $url)
-				$this->user_path[$i]['title'] = Filter::apply($title,Filter::STRING_QUOTE_ENCODE);
+		if(!is_numeric($step) || !is_string($title)) return;
+
+		if($step >= count($this->user_path)	|| !isset($this->user_path[$step])) return;
+		$this->user_path[$step]['title'] = Filter::apply($title,STRING_ENCODE);
 		$this->storage->set("user_path",$this->user_path);
 	}
+	//}}}
+	//{{{ setDescription
+	/**
+	 * Setting description for the given step.
+	 *
+	 * @param int index of the step. 0 means current page, 1 -- previous etc
+	 * @param string title to set
+	 * @return null
+	 */
+	function setDescription($step, $description)
+	{
+		if(!is_numeric($step) || !is_string($title)) return;
+
+		if($step >= count($this->user_path)	|| !isset($this->user_path[$step])) return;
+		$this->user_path[$step]['description'] = Filter::apply($description,STRING_ENCODE);
+		$this->storage->set("user_path",$this->user_path);
+	}
+	//}}}
 }
-// }}}
+//}}}
 ?>

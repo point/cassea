@@ -432,7 +432,7 @@ class Controller extends EventBehaviour
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
-		$this->navigator = new Navigator($this->controller_name);
+		$this->navigator = new Navigator();
 
         $full_path = $this->findPage();
 
@@ -1856,19 +1856,20 @@ class Controller extends EventBehaviour
     {
 		$this->trigger("BeforeHandlePOST",$this);
 
-		if($this->post->isEmpty()) $this->gotoStep0();
+		if($this->post->isEmpty()) 
+			Header::redirect(requestURI(true), Header::SEE_OTHER); 
 
 		WidgetLoader::load("WForm");
 		list($formid) = explode(":",$this->post->{WForm::signature_name});
 		if(empty($formid))
-			$this->gotoStep_0();
+			Header::redirect(requestURI(true), Header::SEE_OTHER); 
 
 
 		if(!in_array($formid,$this->no_check_forms))
 		{
 			$this->trigger("BeforeCheckSignature",$this);
 			if(!$this->checkSignature($this->post->{WForm::signature_name}))
-				$this->gotoStep_0();
+				Header::redirect(requestURI(true), Header::SEE_OTHER); 
 
 			POSTErrors::flushErrors();
 
@@ -1884,7 +1885,7 @@ class Controller extends EventBehaviour
 			if(POSTErrors::hasErrors())
 			{
 				POSTErrors::saveErrorList();
-				$this->gotoStep_0();
+				Header::redirect(requestURI(true), Header::SEE_OTHER); 
 			}
 			//DataUpdaterPool::restorePool();
 		}
@@ -1901,7 +1902,7 @@ class Controller extends EventBehaviour
 		if(POSTErrors::hasErrors())
 		{
 			POSTErrors::saveErrorList();
-			$this->gotoStep_0();
+			Header::redirect(requestURI(true), Header::SEE_OTHER); 
 		}
 		DataUpdaterPool::callHandlers($formid);
 		DataUpdaterPool::callFinalize($formid);
@@ -2451,7 +2452,7 @@ class AjaxController extends Controller
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
-		$this->navigator = new Navigator($this->controller_name);
+		$this->navigator = new Navigator();
 
         $full_path = $this->findPage();
 

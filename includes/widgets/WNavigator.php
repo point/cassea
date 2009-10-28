@@ -29,7 +29,7 @@
 
 
 //
-// $Id$
+// $Id: WNavigator.php 64 2008-12-26 22:54:30Z point $
 //
 WidgetLoader::load("WComponent");
 //{{{ WNavigator
@@ -160,7 +160,7 @@ class WNavigator extends WComponent
 			return;
 		$this->text = $text;
 		$controller = Controller::getInstance();
-		$controller->getNavigator()->setTitle(requestURI(1),Language::encodePair($this->text));
+		$controller->getNavigator()->setTitle(0,Language::encodePair($this->text));
 
     }
     // }}}
