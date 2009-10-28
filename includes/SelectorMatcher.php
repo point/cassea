@@ -215,10 +215,16 @@ class SelectorMatcher
 			elseif($parsed_selector['pseudo'] === "nth-child")
 			{
 				if(($parent = $controller->getAdjacencyList()->getParentForId($widget->getId())) === null 
-				|| !isset($parsed_selector['pseudo_value']) || !is_numeric($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
-				if(($list = $controller->getAdjacencyList()->getChildren($parent)) 
-					&& $controller->getAdjacencyList()->checkIndex($list,$widget->getId()) !== ($parsed_selector['pseudo_value']-1)) return self::FALSE_CACHE;
-
+					|| !isset($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
+				$ind = ($list = $controller->getAdjacencyList()->getChildren($parent))?
+					$controller->getAdjacencyList()->checkIndex($list,$widget->getId()):-2;
+				if(is_numeric($parsed_selector['pseudo_value']))
+				   return $ind != (abs($parsed_selector['pseudo_value'])-1)?self::FALSE_CACHE:self::TRUE_CACHE;
+				elseif($parsed_selector['pseudo_value'] == "odd")
+				   return $ind%2?self::FALSE_CACHE:self::TRUE_CACHE;
+				elseif($parsed_selector['pseudo_value'] == "even")
+				   return !$ind%2?self::FALSE_CACHE:self::TRUE_CACHE;
+				else return self::FALSE_CACHE;
 			}
 			// :index for WRoll
 			elseif($parsed_selector['pseudo'] === "index" && $widget->isInsideRoll())
