@@ -27,28 +27,74 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
+/**
+ * This file contains class for storing pool of 
+ * ResultSet objects, sorted by the WDataSet's priority.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
 //{{{ ResultSetPool
+/**
+ * All ResultSet are sorted by priority.
+ * ResultSet with greater priority will be polled for data later.
+ *
+ * Priorities range is bounded above with SYSTEM_PRIORITY constant.
+ *
+ */
 class ResultSetPool
 {
+	/**
+	 * Pool of objects. It's index-based array of arrays
+	 * with "priority" and "result_set" keys.
+	 * @var array
+	 */
 	static $pool = array();	
+
+	/**
+	 * Priority for the system-created ResultSets.
+	 */
     const SYSTEM_PRIORITY = 1000;
 	
-	static function set(ResultSet $rs,$priority = 0)
+	//{{{ set
+	/**
+	 * Adds given ResultSet to the pool.
+	 * if priority wasn't defined, default (10) will be taken.
+	 *
+	 * @param ResultSet object to store
+	 * @param numeric priority of particular ResultSet
+	 * @return null
+	 */
+	static function set(ResultSet $rs,$priority = 10)
 	{
-		self::$pool[] = array('priority'=>$priority,
+		self::$pool[] = array('priority'=>min($priority,self::SYSTEM_PRIORITY-1),
 			'result_set'=>$rs);
 		usort(self::$pool,create_function('$a,$b',
 			'return ($a["priority"] < $b["priority"])?-1:1;'));
 	}
+	//}}}
+
+	//{{{ findMatched
+	/**
+	 * Finds ResultSet, matched for the given widget, extracts 
+	 * WidgetResultSet and assigns it to the widget data-setter method.
+	 *
+	 * If no matched ResultSet was found or error occurred, false will be returned.
+	 * 
+	 * @param string id of the widget for which system should find matches
+	 * @return bool 
+	 * @see ResultSet::findMatched
+	 */
 	static function findMatched($widget_id)
 	{
-        $wrs = new WidgetResultSet;
         $flag = false;
-		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
+		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return false;
 
-        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
+        if(($data_setter = $widget->getDataSetterMethod()) === null) return false;
 		foreach(self::$pool as $v)
         {
 			$rs = $v['result_set'];
@@ -59,6 +105,7 @@ class ResultSetPool
 		}
 		return $flag;
 	}
+	//}}}
 }
 //}}}
 
