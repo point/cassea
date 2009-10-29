@@ -29,8 +29,6 @@
 
 /**
  *
- *
- *
  * @package Storage
  */
 
@@ -40,12 +38,13 @@
  */
 class FilesystemStorage implements iStorageEngine, ArrayAccess
 {
-	private $storage_name = null,
-			$vars = array(),
-			$ttl = null,
-			$real_storage_path = null
+	private $storage_name		= null,
+			$vars				= array(),
+			$ttl				= null,
+			$real_storage_path  = null,
+			$ext			    = '.cache'
             ;
-    // {{{ __construct
+    //{{{ __construct
 	function __construct($storage_name, $ttl = null)
 	{
 		self::cleanup();
@@ -69,27 +68,23 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
 
 		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
 
-		$l = glob($this->real_storage_path."/*.cache");
-        foreach((is_array($l)?$l:array()) as $f)
-        {
-            $this->vars[basename($f,".cache")] = file_get_contents($f);
-        }
 	}// }}}
 
-	// {{{
+	// {{{is_set
 	function is_set($var)
 	{
-		return isset($this->vars[md5($var)]);
+		if(!isset($var)) return false;
+		$m=md5($var);
+		if(!isset($this->vars[$m]))
+			if(!file_exists($file=$this->real_storage_path."/".$m.$this->ext))return false;
+			else $this->vars[$m]=unserialize(file_get_contents($file));
+		return true;
     }// }}}
 
     // {{{ set
 	function set($var,$val)
 	{
-		$m = md5($var);
-		$val = serialize($val);	
-		$this->vars[$m] = $val;
-		$r = file_put_contents($this->real_storage_path."/".$m.".cache", $val);
-		if($r === false) return false;
+		$this->vars[md5($var)] = $val;
 		return true;
     }// }}}
 
@@ -99,24 +94,35 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
 		$m = md5($var);
 		if(isset($this->vars[$m]))
 			unset($this->vars[$m]);
-        if(file_exists($this->real_storage_path."/".$m.".cache"))
-		    unlink($this->real_storage_path."/".$m.".cache");
+        if(file_exists($this->real_storage_path."/".$m.$this->ext))
+		    unlink($this->real_storage_path."/".$m.$this->ext);
 	}
+	//}}}
+	
+	//{{{get
 	function get($var)
 	{
-        $var = md5($var);
-		if(isset($this->vars[$var]))
-			return unserialize($this->vars[$var]);
+		if($this->is_set($var))
+			return $this->vars[md5($var)];
 		return false;
     }// }}}
 
     // {{{ sync
     function sync()
 	{
-		$l = glob($this->real_storage_path."/*.cache");
-        foreach((is_array($l)?$l:array()) as $f)
-			$this->vars[basename($f,".cache")] = unserialize($f);
-    }// }}}
+		foreach($this->vars as $key=>$value)
+		{
+			$f = fopen($this->real_storage_path."/".$key.$this->ext,'a');
+			if(flock($f,LOCK_EX)) 
+			{ 
+				ftruncate($f, 0) ; 
+				fwrite($f, serialize($value)); 
+				flock($f, LOCK_UN) ; 
+			}
+			fclose($f);unset($f);
+		}
+	}
+	// }}}
 
     // {{{ cleanup 
 	static function cleanup()
@@ -132,7 +138,14 @@ class FilesystemStorage implements iStorageEngine, ArrayAccess
 	function close()
 	{
     }
-    // }}}
+	// }}}
+
+	//{{{__destruct
+	public function __destruct(){
+		$this->sync();
+	}	
+	//}}}
+	
     //  {{{ ArrayAccess interface
     public function offsetExists($key){ return $this->is_set($key);}
     public function offsetGet($key){ return $this->get($key);}

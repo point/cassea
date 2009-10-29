@@ -457,6 +457,9 @@ class IterableCollection extends WidgetCollection
 	// {{{ preReder
 	function preRender()
     {
+		$oddeven = false;
+		if(($holder=Controller::getInstance()->getWidget($this->parent_id)) instanceof iOddEven) 
+			$oddeven=true;
         $controller = Controller::getInstance();
         // not initialized items
         $this->i_elem = array();
@@ -464,8 +467,13 @@ class IterableCollection extends WidgetCollection
         {
             parent::preRender();
             for($j = 0, $c2 = $this->count();$j < $c2; $j++)
+			{
                 $this->i_elem[$i][$j] = clone $this->getItem($j);
-
+				if($oddeven)
+					if($i%2) $this->i_elem[$i][$j]->setStyleClass($holder->getOddClass());
+						else
+							 $this->i_elem[$i][$j]->setStyleClass($holder->getEvenClass());
+			}
 
             $controller->getDisplayModeParams()->incCurrent($this->parent_id);
         }

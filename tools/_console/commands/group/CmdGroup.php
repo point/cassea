@@ -37,7 +37,7 @@ class CmdGroup extends Command{
         if (IO::YES == io::dialog('Remove user ~WHITE~ '.$login.'~~~ from group ~WHITE~'.$group.'~~~', IO::NO|IO::YES, IO::YES))
         {
             io::out('deleting...',false);
-            ACL::delUser($id,$group);
+            ACL::deleteUserFromGroup($id,$group);
             io::done();
         }   
     }

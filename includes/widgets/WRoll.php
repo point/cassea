@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WRoll
-class WRoll extends WContainer
+class WRoll extends WContainer implements iOddEven
 {
     protected
         /**
@@ -55,11 +55,11 @@ class WRoll extends WContainer
 	    /**
         * @var		string
 		*/
-		$odd_class = "roll_odd",
+		$odd_class = null,
 	    /**
         * @var		string
 		*/
-		$even_class = "roll_even",
+		$even_class = null,
 	    /**
         * @var		int
 		*/
@@ -98,6 +98,10 @@ class WRoll extends WContainer
             $this->setCount((string)$elem['count']);
 		if(isset($elem['if_empty']))
 			$this->setIfEmpty((string)$elem['if_empty']);
+		if(isset($elem['even_class']))
+			$this->setEvenClass((string)$elem['even_class']);
+		if(isset($elem['odd_class']))
+			$this->setOddClass((string)$elem['odd_class']);
 
 		$this->items = new IterableCollection($this->getId(),$elem);
 		$this->addToMemento(array("count"));
@@ -252,6 +256,15 @@ class WRoll extends WContainer
     }
     // }}}
 
+	// {{{ handleEvent 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    WidgetEvent
+    * @return   void
+    */
+
     function handleEvent(WidgetEvent $event)
     {
 		if($event->getName() == "roll_setlimits")
@@ -261,6 +274,8 @@ class WRoll extends WContainer
 		}
 		parent::handleEvent($event);
     }
+	//}}}
+	
    // {{{ setData 
     /**
     * Method description
@@ -332,6 +347,64 @@ class WRoll extends WContainer
     function getIfEmpty()
     {
 		return $this->if_empty;
+    }
+    // }}}
+	
+	// {{{ setOddclass 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    oddclass 
+    * @return   void
+    */
+    function setOddClass($class)
+	{
+		if(!isset($class) || !is_string($class)) return;
+		$this->odd_class=$class;
+    }
+    // }}}
+	
+	// {{{ setEvenclass 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    evenclass 
+    * @return   void
+    */
+    function setEvenClass($class)
+    {
+		if(!isset($class) || !is_string($class)) return;
+		$this->even_class=$class;
+    }
+	// }}}
+	
+	// {{{ getEvenClass 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void 
+    * @return   string
+    */
+    function getEvenClass()
+    {
+		return $this->even_class;
+    }
+    // }}}
+	
+	// {{{ getOddClass 
+    /**
+    * Method description
+    *
+    * More detailed method description
+    * @param    void 
+    * @return   string
+    */
+    function getOddClass()
+    {
+		return $this->odd_class;
     }
     // }}}
 }

@@ -120,6 +120,18 @@ class Boot
 	{
         Language::init();
 	}
+	
+	/**
+	 * Setting up plugins, that registered in the system.
+	 * It will lookup /vendors/plugins/*.php and require they.
+	 */
+	static function setupPlugins()
+	{
+		foreach(t(new Dir(Config::get('root_dir'),true))->getDir(Config::get('vendors_dir'))
+			->getDir('plugins')->ls('*.php') as $f)
+			require_once($f);
+	}
+
 	/**
 	 * Setting up session, user and language by one method call
 	 */
@@ -128,5 +140,6 @@ class Boot
 		self::setupSession();
 		self::setupUser();
 		self::setupLanguage();
+		self::setupPlugins();
 	}
 }
