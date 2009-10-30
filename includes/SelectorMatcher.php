@@ -91,6 +91,8 @@
  * <li><code>E%myid</code> - an E element (optional) with ID starting with "myid". Fast method.</li>
  * <li><code>E</code> - an element with classname E. Fast method.</li>
  * <li><code>*</code> - any element</li>
+ * <li><code>E.warning</code> - an E element whose class is "warning" ie in a list of 
+ *		whitespace-separated values, one of which is exactly equal to "warning"</li>
  * <li><code>E[foo]</code> - an E element with a "foo" attribute (checking by calling ->getFoo() method)</li>
  * <li><code>E[foo="bar"]</code> - an E element whose "foo" attribute value is exactly equal to "bar"</li>
  * <li><code>E[foo~="bar"]</code> - an E element whose "foo" attribute value is a list of 
@@ -98,14 +100,14 @@
  * <li><code>E[foo^="bar"]</code> - an E element whose "foo" attribute value begins exactly with the string "bar"</li>
  * <li><code>E[foo$="bar"]</code> - an E element whose "foo" attribute value ends exactly with the string "bar"</li>
  * <li><code>E[foo*="bar"]</code> - an E element whose "foo" attribute value contains the substring "bar"</li>
- * <li><code>E[foo|="en"]</code> - an E element whose "foo" attribute has a hyphen-separated list of values beginning (from the left) with "en"</li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
+ * <li><code>E[foo|="en"]</code> - an E element whose "foo" attribute has a hyphen-separated list of values beginning 
+ *		(from the left) with "en"</li>
+ * <li><code>E:nth-child(n)</code> - an E element, the n-th child of its parent. As opposed to CSS 3 rules, 
+ * current implementation supports only "odd", "even" or numeric values for n. </li>
+ * <li><code>E:first-child</code> - an E element, first child of its parent</li>
+ * <li><code>E:last-child</code> - an E element, last child of its parent</li>
+ * <li><code>E:enabled, E:disabled</code> - a user interface element E which is enabled or disabled</li>
+ * <li><code>E:checked</code> - a user interface element E which is checked (for instance a radio-button or checkbox)</li>
  * </ul>
  *
  * All string comparisons are case-insensitive.
@@ -221,7 +223,7 @@ class SelectorMatcher
 				if($parsed_selector['attr_quant']  === "=")
 				{	 
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
-						$widget->{"get".$parsed_selector['attr']}() != strtolower($parsed_selector['attr_value'])) 
+						trim($widget->{"get".$parsed_selector['attr']}()) != strtolower($parsed_selector['attr_value'])) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr~=val]
@@ -229,28 +231,28 @@ class SelectorMatcher
 				{
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
 						!in_array(strtolower($parsed_selector['attr_value']),
-							array_map('strtolower',preg_split("/\s+/",$widget->{"get".$parsed_selector['attr']}())),true))
+							array_map('strtolower',preg_split("/\s+/",trim($widget->{"get".$parsed_selector['attr']}()))),true))
 								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr!=val]
 				elseif($parsed_selector['attr_quant']  === "!=")
 				{
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
-						$widget->{"get".$parsed_selector['attr']}() == strtolower($parsed_selector['attr_value'])) 
+						trim($widget->{"get".$parsed_selector['attr']}()) == strtolower($parsed_selector['attr_value'])) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr^=val]
 				elseif($parsed_selector['attr_quant']  === "^=" )
 				{
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
-						stripos($widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) !== 0) 
+						stripos(trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) !== 0) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr$=val]
 				elseif($parsed_selector['attr_quant']  === "$=")
 				{	
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
-						stripos($_s = $widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) 
+						stripos($_s = trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) 
 						!== (strlen($_s)-strlen($parsed_selector['attr_value']))) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
@@ -259,7 +261,7 @@ class SelectorMatcher
 				{
 			
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
-						stripos($widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) === false) 
+						stripos(trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) === false) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr|=val]
@@ -267,7 +269,7 @@ class SelectorMatcher
 				{
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
 						!in_array(strtolower($parsed_selector['attr_value']),
-							array_map('strtolower',preg_split("/\s*-\s*/",$widget->{"get".$parsed_selector['attr']}())),true))
+							array_map('strtolower',preg_split("/\s*-\s*/",trim($widget->{"get".$parsed_selector['attr']}()))),true))
 								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				else return self::FALSE_CACHE;
@@ -343,10 +345,15 @@ class SelectorMatcher
 			{
 				if(!$widget instanceof WHidden) return self::FALSE_CACHE;
 			}
-			// :enabled
+			// :disabled
 			elseif($parsed_selector['pseudo'] === "disabled")
 			{
 				if(!$widget instanceof WContol || !$widget->getDisabled()) return self::FALSE_CACHE;
+			}
+			// :enabled
+			elseif($parsed_selector['pseudo'] === "enabled")
+			{
+				if(!$widget instanceof WContol || $widget->getDisabled()) return self::FALSE_CACHE;
 			}
 			// :checked
 			elseif($parsed_selector['pseudo'] === "checked")
