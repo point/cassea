@@ -135,7 +135,6 @@ class SelectorMatcher
 							$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE || $w2->isInsideRoll()) $return_cache = false; continue 2;}
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
-					//continue 2;
 				}
 				elseif($parser->getParsedSplitter($i) == "+")
 				{
@@ -145,13 +144,12 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i+1)))
-							&& !($ret2 = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i))))
-						{if($ret === self::TRUE_NOCACHE || $ret2 === self::FALSE_NOCACHE ) $return_cache = false; continue;}
+						if(($w2 = $controller->getWidget($p_id))&&
+							$controller->getAdjacencyList()->getParentForId($w2->getId()) !== $until) continue;
 
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
-						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
-						else $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
+						if(($ret = self::matchAttributes($w2,$parser->getParsedSelector($i))))
+						{ if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
+						else break;
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 				}
@@ -163,7 +161,10 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
+						if(($w2 = $controller->getWidget($p_id))&&
+							$controller->getAdjacencyList()->getParentForId($w2->getId()) !== $until) continue;
+						
+						if(($ret = self::matchAttributes($w2,$parser->getParsedSelector($i)))) 
 						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
@@ -175,12 +176,7 @@ class SelectorMatcher
 	}
 	static function matchAttributes(WComponent $widget, $parsed_selector)
 	{
-        //static $__c = 0;
 		if(empty($parsed_selector)) return false;
-        /*echo ++$__c." ";
-        print_pre($widget->getId());
-        print_pre($parsed_selector);
-        echo "<hr>";*/
 		$controller = Controller::getInstance();
 
 		//id, quick
