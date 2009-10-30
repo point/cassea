@@ -100,15 +100,9 @@ class SelectorMatcher
 
 	static function matched(WComponent $widget, $selector,$index,$global)
 	{
-		/*echo $id = $widget->getId();
-        static $c = 0;
-        if($id == "select2")
-        {$c++;echo " $c ";}*/
-
 		$controller = Controller::getInstance();
         $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$global);
 		$return_cache = true;
-		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
 			return self::matchAttributes($widget,$parser->getParsedSelector(0));
@@ -350,25 +344,22 @@ class SelectorMatcher
 			elseif($parsed_selector['pseudo'] === "index" && $widget->isInsideRoll())
 			{
 				if(!isset($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
-				//return false;
 				$w2 = $widget;
 				$parent = null;
                 
                 // inconvinient in case of nested rolls
                 // to select odd rows, for example, "wroll > wtablerow:odd" syntax should be used
 
-                /*if($w2 instanceof WRoll) $parent = $w2->getId();
-                else*/
-					if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
-					{
-						while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
-							if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
-							else $w2 = $controller->getWidget($p);
-						if($parent == null) return self::FALSE_CACHE;
-						$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
-					}
+				if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
+				{
+					while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
+						if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
+						else $w2 = $controller->getWidget($p);
+					if($parent == null) return self::FALSE_CACHE;
+					$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
+				}
 
-                if(!is_array($parsed_selector['pseudo_value']))
+				if(!is_array($parsed_selector['pseudo_value']))
                 {
                     if(strpos($parsed_selector['pseudo_value'],":") !== false)
                         list($parsed_selector['pseudo_value'],$parsed_selector['scope']) = explode(":",$parsed_selector['pseudo_value']); 
@@ -483,6 +474,9 @@ class SelectorParser
 
 	const pattern_combined =
 '/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)["\']?(.*?)["\']?)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
+	const pattern_combined2 = 
+'/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)(["\']?)([^\4]*?)\4)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
+
 	const pattern_id = "/#([\w-]+)/";
 	const pattern_quick_id = "/^#([\w-]+)$/";
 
@@ -496,13 +490,6 @@ class SelectorParser
 	const pattern_starts_with = "/^%([\w-]+)/";
 	const pattern_quick_starts_with = "/^%([\w-]+)$/";
 	
-/*		$patterns = array(
-		"id"=> "/#([\w-]+)/",
-		"tag"=> "/^(\w+|\*)/",
-		"quick"=> "/^(\w+|\*)$/", //by tag name
-		"splitter"=> "/\s*([+>~\s])\s*([a-zA-Z#.*:\[]*)/",
-		"combined"=> $combined
-	);*/
 	private $splitters = array();
     private $splitters_count = 0;
     private $selectors = array();
@@ -628,9 +615,11 @@ class SelectorParser
 			/*if(empty($this->selectors[$i]['id']) && empty($this->selectors[$i]['tag']))
 				$this->selectors[$i]['tag'] = "*";*/
 
-			while(preg_match(self::pattern_combined,$selector,$m))
+			while(preg_match(self::pattern_combined2,$selector,$m))
 			{
 				$selector = str_replace($m[0],'',$selector);
+				//unsetting captured \4 ie ' or " 
+				unset($m[4]);
 				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
 				unset($m);
 			}
