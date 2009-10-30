@@ -50,9 +50,14 @@
  * <WTable>
  *	<WTableRow>
  *		<WTableColumn colspan="2">
- *			<WText />
+ *			<WText/>
+ *			<WBlock>
+ *				<WBlock>
+ *					<WBlock/>
+ *				</WBlock>
+ *			</WBlock>
  *			<WBlock id="qqq">
- *				<WCheckbox checked="1"/>
+ *				<WCheckbox checked="1" title="qwe]2" class="s_class" id="cb"/>
  *			</WBlock>
  *		</WTableColumn>
  *		<WTableColumn colspan="2"></WTableColumn>
@@ -60,12 +65,13 @@
  *		<WTableColumn></WTableColumn>
  *	</WTableRow>
  * </WTable>
+ *
  * </code></pre>
  *
  * To access <code>WCheckbox</code> you may use, for example, such 
  * selector:
  * <pre><code>
- * ->f("wtable wtablecolumn[colspan=2]:nth-child(odd) > WText ~ #qqq > :checked")->text('text to checkbox');
+ * ->f("wtable wtablecolumn[colspan=2]:nth-child(odd) > WText ~ #qqq > .s_class[title='qwe]2']:checked")->text('text to checkbox');
  * </code></pre>
  *
  * It's not fastest and slightly unreadable way but it shows how 
@@ -86,7 +92,20 @@
  * <li><code>E</code> - an element with classname E. Fast method.</li>
  * <li><code>*</code> - any element</li>
  * <li><code>E[foo]</code> - an E element with a "foo" attribute (checking by calling ->getFoo() method)</li>
- * <li><code>E[foo=bar]</code> - </li>
+ * <li><code>E[foo="bar"]</code> - an E element whose "foo" attribute value is exactly equal to "bar"</li>
+ * <li><code>E[foo~="bar"]</code> - an E element whose "foo" attribute value is a list of 
+ *		whitespace-separated values, one of which is exactly equal to "bar"</li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
+ * <li><code></code></li>
  * </ul>
  *
  * All string comparisons are case-insensitive.
@@ -182,6 +201,13 @@ class SelectorMatcher
 			&& substr($widget->getIdLower(),0,strlen($parsed_selector['starts_with'])) != $parsed_selector['starts_with']) return self::FALSE_CACHE;
 		// tag
 		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] !== "*" && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
+
+		// .class
+		if(isset($parsed_selector['class']) &&
+			!in_array(strtolower($parsed_selector['class']),
+				array_map('strtolower',preg_split("/\s+/",$widget->getStyleClass())),true))
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+
 		// [attribute]
 		if(isset($parsed_selector['attr']))
 			if( !isset($parsed_selector['attr_value']))
@@ -197,6 +223,14 @@ class SelectorMatcher
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
 						$widget->{"get".$parsed_selector['attr']}() != strtolower($parsed_selector['attr_value'])) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr~=val]
+				elseif($parsed_selector['attr_quant']  === "~=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						!in_array(strtolower($parsed_selector['attr_value']),
+							array_map('strtolower',preg_split("/\s+/",$widget->{"get".$parsed_selector['attr']}())),true))
+								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				// [attr!=val]
 				elseif($parsed_selector['attr_quant']  === "!=")
@@ -568,7 +602,7 @@ class SelectorParser
 				$selector = str_replace($m[0],'',$selector);
 				//unsetting captured \4 ie ' or " 
 				unset($m[4]);
-				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
+				$this->mylist($this->selectors[$i],array_values(array_slice($m,1)));
 				unset($m);
 			}
 			unset($m);
@@ -580,7 +614,7 @@ class SelectorParser
 	}
 	private function mylist(&$array1,$array2)
 	{
-		$attrs = array('attr','attr_quant','attr_value','pseudo','pseudo_value');
+		$attrs = array('class', 'attr','attr_quant','attr_value','pseudo','pseudo_value');
 		foreach(array_filter($array2,create_function('$var','return is_numeric($var) || !empty($var);')) as $k => $v)
 			$array1[$attrs[$k]] = strtolower($v);
 	}
