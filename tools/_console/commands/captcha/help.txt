@@ -1,0 +1,11 @@
+Short: CAPTCHA
+
+Command: generate
+Short: Generate N dirs with M CAPTCHA-image files 
+Usage: COMMAND_PATH generate
+Option: --font
+Set font color for CAPTCHA image
+Option: --bg
+Set background color for CAPTCHA image
+
+

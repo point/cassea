@@ -157,34 +157,6 @@ function randStr($length)
     return $res;
 }
 
-function generateCAPTCHA(&$str)
-{
-    $image=new IMagick();
-    $draw=new ImagickDraw();
-    $image->newImage(155,50,new ImagickPixel(Config::getInstance()->captcha->background));
-    $draw->setFontSize(42);
-    $draw->setFont(Config::get('root_dir').'/tools/c.ttf');
-    $pixel=new ImagickPixel(Config::getInstance()->captcha->font_color);
-    $draw->setFillColor($pixel);
-        for($j=1;$j<4;$j++)
-        {
-            for($i=0;$i<100;$i++)
-            {
-                $a[$i]['x']=$i*357;
-                $a[$i]['y']=round(2*sin($i+mt_rand(1,7))+$j*12);
-            }
-            $draw->polyline($a);
-            $image->drawImage($draw);
-         }   
-     $str=randStr(Config::getInstance()->captcha->word_length); 
-
-     $image->annotateImage($draw,5,40,0,$str);
-     $image->waveImage(mt_rand(3,5),mt_rand(30,60));
-     $image->vignetteImage(5,150,0,0);
-     $image->swirlImage(mt_rand(10,39));
-     $image->setImageFormat('png');
-     return $image;
-}
 function CAPTCHACheckAnswer($str)
 {
     $s=Storage::createWithSession("_CAPTCHA_",60);    
