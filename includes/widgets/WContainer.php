@@ -166,8 +166,9 @@ class WidgetCollection
 		$controller = Controller::getInstance();
 		foreach($elem as $v)
 		{
+			$mark = $controller->getAdjacencyList()->mark();
 			$this->addItem(($id = $controller->buildWidget($v,1)));
-			$controller->getAdjacencyList()->add($id,$this->parent_id);
+			$controller->getAdjacencyList()->addAtMark($id,$this->parent_id,$mark);
 			unset($id);
 		}
 	}
