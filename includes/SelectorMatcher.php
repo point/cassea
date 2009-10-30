@@ -27,10 +27,70 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//
-// $Id: SelectorMatcher.php 138 2009-08-13 08:34:58Z point $
-//
+/**
+ * This file contains class gor checking whenever widget is
+ * match with selector and some helper classes that helps to
+ * parse selectors and speed-ups such lookups.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
+//{{{ SelectorMatcher
+/**
+ * To address the widget in the document we propose mechanism, 
+ * based on the principles of CSS selectors.
+ *
+ * For example you have XML file with such structure:
+ *
+ * <pre><code>
+ * <WTable>
+ *	<WTableRow>
+ *		<WTableColumn colspan="2">
+ *			<WText />
+ *			<WBlock id="qqq">
+ *				<WCheckbox checked="1"/>
+ *			</WBlock>
+ *		</WTableColumn>
+ *		<WTableColumn colspan="2"></WTableColumn>
+ *		<WTableColumn></WTableColumn>
+ *		<WTableColumn></WTableColumn>
+ *	</WTableRow>
+ * </WTable>
+ * </code></pre>
+ *
+ * To access <code>WCheckbox</code> you may use, for example, such 
+ * selector:
+ * <pre><code>
+ * ->f("wtable wtablecolumn[colspan=2]:nth-child(odd) > WText ~ #qqq > :checked")->text('text to checkbox');
+ * </code></pre>
+ *
+ * It's not fastest and slightly unreadable way but it shows how 
+ * selector mechanism works.
+ *
+ * Currently, system supports such combinators:
+ * <ul>
+ * <li><code>E F</code> - an F widget descendant of an E widget (as of CSS 1)</li>
+ * <li><code>E > F</code> - an F widget child of an E widget (as of CSS 2)</li>
+ * <li><code>E + F</code> - an F widget immediately preceded by an E widget (as of CSS 2)</li>
+ * <li><code>E ~ F</code> - an F widget preceded by an E widget (as of CSS 3)</li>
+ * </ul>
+ *
+ * List of supported selectors:
+ * <ul>
+ * <li><code>E#myid</code> - an E element (optional) with ID equal to "myid". The fastest method.</li>
+ * <li><code>E%myid</code> - an E element (optional) with ID starting with "myid". Fast method.</li>
+ * <li><code>E</code> - an element with classname E. Fast method.</li>
+ * <li><code>*</code> - any element</li>
+ * <li><code>E[foo]</code> - an E element with a "foo" attribute (checking by calling ->getFoo() method)</li>
+ * <li><code>E[foo=bar]</code> - </li>
+ * </ul>
+ *
+ * All string comparisons are case-insensitive.
+ */
 class SelectorMatcher
 {
 	const TRUE_CACHE = 1;
@@ -55,7 +115,6 @@ class SelectorMatcher
 		}
 		elseif(($sel_c = $parser->getSelectorsCount()) - ($sp_c = $parser->getSplittersCount()) == 1)
 		{
-			//if(!self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1))) continue;
 			if(!($ret = self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1)))) return $ret;
 			$w2 = $widget;
 			for($i = $sp_c - 1; $i >= 0; $i--)
@@ -127,38 +186,59 @@ class SelectorMatcher
 		//id, quick
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
 		// *
-		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
+		//if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
 		//id starts with
 		if(isset($parsed_selector['starts_with']) 
 			&& substr($widget->getIdLower(),0,strlen($parsed_selector['starts_with'])) != $parsed_selector['starts_with']) return self::FALSE_CACHE;
 		// tag
-		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
+		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] !== "*" && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
 		// [attribute]
 		if(isset($parsed_selector['attr']))
-		   if( !isset($parsed_selector['attr_value'])
-			&& (!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr=val]
+			if( !isset($parsed_selector['attr_value']))
+			{
+				if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+					$widget->{"get".$parsed_selector['attr']}() === null) 
+						return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			elseif(isset($parsed_selector['attr_value']) && isset($parsed_selector['attr_quant']))
-				if($parsed_selector['attr_quant']  === "=" && 
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr!=val]
-				elseif($parsed_selector['attr_quant']  === "!=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr^=val]
-				elseif($parsed_selector['attr_quant']  === "^=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr$=val]
-				elseif($parsed_selector['attr_quant']  === "$=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr*=val]
-				elseif($parsed_selector['attr_quant']  === "*=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				// [attr=val]
+				if($parsed_selector['attr_quant']  === "=")
+				{	 
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						$widget->{"get".$parsed_selector['attr']}() != strtolower($parsed_selector['attr_value'])) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr!=val]
+				elseif($parsed_selector['attr_quant']  === "!=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						$widget->{"get".$parsed_selector['attr']}() == strtolower($parsed_selector['attr_value'])) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr^=val]
+				elseif($parsed_selector['attr_quant']  === "^=" )
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos($widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) !== 0) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr$=val]
+				elseif($parsed_selector['attr_quant']  === "$=")
+				{	
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos($_s = $widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) 
+						!== (strlen($_s)-strlen($parsed_selector['attr_value']))) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr*=val]
+				elseif($parsed_selector['attr_quant']  === "*=")
+				{
+			
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos($widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) === false) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				else return self::FALSE_CACHE;
 
 
 		//pseudo
@@ -170,33 +250,77 @@ class SelectorMatcher
 				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return $widget->isInsideRoll()?self::FALSE_NOCACHE:FALSE_CACHE;
 			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "hidden")
+			{
+				if($widget->getVisible()) 
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			// :visible
-			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "visible")
+			{
+				if(!$widget->getVisible()) 
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			// :disable -> widget disable='1'
-			elseif($parsed_selector['pseudo'] === "disable" && $widget->getState()) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "disable")
+			{
+				if($widget->getState()) return self::FALSE_CACHE;
+			}
 			// :input
-			elseif($parsed_selector['pseudo'] === "input" && !$widget instanceof WControl) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "input")
+			{	
+				if(!$widget instanceof WControl) return self::FALSE_CACHE;
+			}
 			// :text
-			elseif($parsed_selector['pseudo'] === "text" && (!$widget instanceof WEdit || !$widget->getType() != "text")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "text")
+			{
+				if(!$widget instanceof WEdit || !$widget->getType() != "text") return self::FALSE_CACHE;
+			}
 			// :password
-			elseif($parsed_selector['pseudo'] === "password" && (!$widget instanceof WEdit || !$widget->getType() != "password")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "password")
+			{	
+				if(!$widget instanceof WEdit || !$widget->getType() != "password") return self::FALSE_CACHE;
+			}
 			// :radio
-			elseif($parsed_selector['pseudo'] === "radio" && !$widget instanceof WRadio) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "radio")
+			{
+				if(!$widget instanceof WRadio) return self::FALSE_CACHE;
+			}
 			// :checkbox
-			elseif($parsed_selector['pseudo'] === "checkbox" && !$widget instanceof WCheckbox) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "checkbox")
+			{
+				if(!$widget instanceof WCheckbox) return self::FALSE_CACHE;
+			}
 			// :submit
-			elseif($parsed_selector['pseudo'] === "image" && !$widget instanceof WImage) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "image")
+			{
+				if(!$widget instanceof WImage) return self::FALSE_CACHE;
+			}
 			// :reset
-			elseif($parsed_selector['pseudo'] === "reset" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "reset")
+			{
+				if(!$widget instanceof WButton || !$widget->getType() != "reset") return self::FALSE_CACHE;
+			}
 			// :button
-			elseif($parsed_selector['pseudo'] === "button" && (!$widget instanceof WButton || !$widget->getType() != "button")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "button")
+			{	
+				if (!$widget instanceof WButton || !$widget->getType() != "button") return self::FALSE_CACHE;
+			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && !$widget instanceof WHidden) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "hidden")
+			{
+				if(!$widget instanceof WHidden) return self::FALSE_CACHE;
+			}
 			// :enabled
-			elseif($parsed_selector['pseudo'] === "disabled" && (!$widget instanceof WContol || !$widget->getDisabled())) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "disabled")
+			{
+				if(!$widget instanceof WContol || !$widget->getDisabled()) return self::FALSE_CACHE;
+			}
 			// :checked
-			elseif($parsed_selector['pseudo'] === "checked" && (!$widget instanceof WCheckbox || !$widget->getChecked())) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "checked")
+			{
+				if(!$widget instanceof WCheckbox || !$widget->getChecked()) return self::FALSE_CACHE;
+			}
 			// :first-child
 			elseif($parsed_selector['pseudo'] === "first-child")
 			{
@@ -302,9 +426,13 @@ class SelectorMatcher
                     return self::FALSE_NOCACHE;
                 }
 			}//finish pseudo
+			else return self::FALSE_CACHE;
 		return self::TRUE_NOCACHE;
 	}
 }
+//}}}
+
+//{{{ SelectorParserFactory
 class SelectorParserFactory
 {
     private static $cache = array();
@@ -348,6 +476,9 @@ class SelectorParserFactory
         }
     }
 }
+//}}}
+
+//{{{ SelectorParser
 class SelectorParser
 {
 	/*private static $pattern_combined = <<<EOF
@@ -359,12 +490,12 @@ class SelectorParser
 	const pattern_id = "/#([\w-]+)/";
 	const pattern_quick_id = "/^#([\w-]+)$/";
 
-	//const pattern_tag = "/^(\w+|\*)/";
 	const pattern_tag = "/^(\w+|\*)/";//tag
 	const pattern_quick_tag = "/^(\w+|\*)$/";//tag
-	//const pattern_splitter = "/\s*([+>~\s])\s*([a-zA-Z#.*:\[]*)/"	;
-	//const pattern_splitter = '/\s*([a-zA-Z#.*:\[]*)\s*([+>~\s])/'	;
+	
 	const pattern_splitter = '/([^+>~\s]+)(\s*[+>~\s])?/'	;
+	const pattern_splitter2 = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
+
 
 	const pattern_starts_with = "/^%([\w-]+)/";
 	const pattern_quick_starts_with = "/^%([\w-]+)$/";
@@ -425,7 +556,7 @@ class SelectorParser
 		if(preg_match(self::pattern_quick_tag,$selector,$m))
 		{$this->selectors['0']['tag'] = strtolower($m[1]) ; $this->selectors_count = 1; return;}
 
-		$i = 0;
+		/*$i = 0;
 		$ret = preg_match_all(SelectorParser::pattern_splitter,$selector,$matches,PREG_SET_ORDER);
 		foreach($matches as $v)
 		{
@@ -453,9 +584,57 @@ class SelectorParser
 			if(preg_match(self::pattern_tag,$v[1],$m) && !empty($m[1]))
 				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
 
+			if(empty($this->selectors[$i]['id']) && empty($this->selectors[$i]['tag']))
+				$this->selectors[$i]['tag'] = "*";
+
 			while(preg_match(self::pattern_combined,$v[1],$m) && !empty($m[0]))
 			{
+				//print_pre($v[1]);
+				//print_pre($m);
 				$v[1] = str_replace($m[0],'',$v[1]);
+				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
+				unset($m);
+			}
+			unset($m);
+			$i++;
+		}*/
+		$matches2 = preg_split(SelectorParser::pattern_splitter2,$selector,0,PREG_SPLIT_DELIM_CAPTURE);
+		for($j = 0, $i = 0, $c = count($matches2);$j < $c; $j+=2)
+		{
+			if(empty($matches2[$j])) continue;
+
+			$selector = $matches2[$j];
+			$splitter = isset($matches2[$j+1])?$matches2[$j+1]:null;
+
+			$flag = 0;
+
+			if(!is_null($splitter))
+				$this->splitters[] = (trim($splitter) === "")?" ":trim($splitter);
+
+			if(preg_match(self::pattern_quick_id,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['id'] = strtolower($m[1]) and $flag = 1;
+			if(preg_match(self::pattern_quick_starts_with,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['starts_with'] = strtolower($m[1]) and $flag = 1;
+			if(preg_match(self::pattern_quick_tag,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['tag'] = strtolower($m[1]) and $flag = 1;
+
+			if($flag) {$i++; continue;}
+
+			if(preg_match(self::pattern_id,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['id'] = strtolower($m[1]) ;
+
+			if(preg_match(self::pattern_starts_with,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['starts_with'] = strtolower($m[1]) ;
+
+			if(preg_match(self::pattern_tag,$selector,$m) && !empty($m[1]))
+				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
+
+			/*if(empty($this->selectors[$i]['id']) && empty($this->selectors[$i]['tag']))
+				$this->selectors[$i]['tag'] = "*";*/
+
+			while(preg_match(self::pattern_combined,$selector,$m))
+			{
+				$selector = str_replace($m[0],'',$selector);
 				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
 				unset($m);
 			}
@@ -499,11 +678,4 @@ class SelectorParser
 		return $this->splitters[$ind];
 	}
 }
-/*echo "=============================+";
-$s1 = new SelectorParser();
-$selector = "a#aaaa[href$=q]:nth-child(odd)> div:last-child ~ p#qqq:last-child > .input";
-$s1->parse($selector);
-var_dump($s1->getSelectors());
-var_dump($s1->getSplitters());*/
-
-?>
+//}}}
