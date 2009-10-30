@@ -95,10 +95,10 @@
  * <li><code>E[foo="bar"]</code> - an E element whose "foo" attribute value is exactly equal to "bar"</li>
  * <li><code>E[foo~="bar"]</code> - an E element whose "foo" attribute value is a list of 
  *		whitespace-separated values, one of which is exactly equal to "bar"</li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
- * <li><code></code></li>
+ * <li><code>E[foo^="bar"]</code> - an E element whose "foo" attribute value begins exactly with the string "bar"</li>
+ * <li><code>E[foo$="bar"]</code> - an E element whose "foo" attribute value ends exactly with the string "bar"</li>
+ * <li><code>E[foo*="bar"]</code> - an E element whose "foo" attribute value contains the substring "bar"</li>
+ * <li><code>E[foo|="en"]</code> - an E element whose "foo" attribute has a hyphen-separated list of values beginning (from the left) with "en"</li>
  * <li><code></code></li>
  * <li><code></code></li>
  * <li><code></code></li>
@@ -261,6 +261,14 @@ class SelectorMatcher
 					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
 						stripos($widget->{"get".$parsed_selector['attr']}(),$parsed_selector['attr_value']) === false) 
 							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr|=val]
+				elseif($parsed_selector['attr_quant']  === "|=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						!in_array(strtolower($parsed_selector['attr_value']),
+							array_map('strtolower',preg_split("/\s*-\s*/",$widget->{"get".$parsed_selector['attr']}())),true))
+								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
 				}
 				else return self::FALSE_CACHE;
 
