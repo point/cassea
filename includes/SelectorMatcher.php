@@ -468,13 +468,7 @@ class SelectorParserFactory
 //{{{ SelectorParser
 class SelectorParser
 {
-	/*private static $pattern_combined = <<<EOF
-/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)["']?(.*?)["']?)?\]|:([\w-]+)(?:\(["']?(.*?)?["']?\)|$)/
-	EOF;*/
-
-	const pattern_combined =
-'/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)["\']?(.*?)["\']?)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
-	const pattern_combined2 = 
+	const pattern_combined = 
 '/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)(["\']?)([^\4]*?)\4)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
 
 	const pattern_id = "/#([\w-]+)/";
@@ -483,8 +477,7 @@ class SelectorParser
 	const pattern_tag = "/^(\w+|\*)/";//tag
 	const pattern_quick_tag = "/^(\w+|\*)$/";//tag
 	
-	const pattern_splitter = '/([^+>~\s]+)(\s*[+>~\s])?/'	;
-	const pattern_splitter2 = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
+	const pattern_splitter = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
 
 
 	const pattern_starts_with = "/^%([\w-]+)/";
@@ -539,49 +532,7 @@ class SelectorParser
 		if(preg_match(self::pattern_quick_tag,$selector,$m))
 		{$this->selectors['0']['tag'] = strtolower($m[1]) ; $this->selectors_count = 1; return;}
 
-		/*$i = 0;
-		$ret = preg_match_all(SelectorParser::pattern_splitter,$selector,$matches,PREG_SET_ORDER);
-		foreach($matches as $v)
-		{
-			$flag = 0;
-			if(empty($v[1]) && empty($v[2])) continue;
-
-			if(isset($v[2]))
-				$this->splitters[] = (trim($v[2]) === "")?" ":trim($v[2]);
-
-			if(preg_match(self::pattern_quick_id,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['id'] = strtolower($m[1]) and $flag = 1;
-			if(preg_match(self::pattern_quick_starts_with,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['starts_with'] = strtolower($m[1]) and $flag = 1;
-			if(preg_match(self::pattern_quick_tag,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['tag'] = strtolower($m[1]) and $flag = 1;
-
-			if($flag) {$i++;continue;}
-
-			if(preg_match(self::pattern_id,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['id'] = strtolower($m[1]) ;
-
-			if(preg_match(self::pattern_starts_with,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['starts_with'] = strtolower($m[1]) ;
-
-			if(preg_match(self::pattern_tag,$v[1],$m) && !empty($m[1]))
-				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
-
-			if(empty($this->selectors[$i]['id']) && empty($this->selectors[$i]['tag']))
-				$this->selectors[$i]['tag'] = "*";
-
-			while(preg_match(self::pattern_combined,$v[1],$m) && !empty($m[0]))
-			{
-				//print_pre($v[1]);
-				//print_pre($m);
-				$v[1] = str_replace($m[0],'',$v[1]);
-				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
-				unset($m);
-			}
-			unset($m);
-			$i++;
-		}*/
-		$matches2 = preg_split(SelectorParser::pattern_splitter2,$selector,0,PREG_SPLIT_DELIM_CAPTURE);
+		$matches2 = preg_split(SelectorParser::pattern_splitter,$selector,0,PREG_SPLIT_DELIM_CAPTURE);
 		for($j = 0, $i = 0, $c = count($matches2);$j < $c; $j+=2)
 		{
 			if(empty($matches2[$j])) continue;
@@ -612,10 +563,7 @@ class SelectorParser
 			if(preg_match(self::pattern_tag,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
 
-			/*if(empty($this->selectors[$i]['id']) && empty($this->selectors[$i]['tag']))
-				$this->selectors[$i]['tag'] = "*";*/
-
-			while(preg_match(self::pattern_combined2,$selector,$m))
+			while(preg_match(self::pattern_combined,$selector,$m))
 			{
 				$selector = str_replace($m[0],'',$selector);
 				//unsetting captured \4 ie ' or " 
