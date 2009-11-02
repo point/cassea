@@ -87,30 +87,44 @@
  *
  * List of supported selectors:
  * <ul>
- * <li><code>E#myid</code> - an E element (optional) with ID equal to "myid". The fastest method.</li>
- * <li><code>E%myid</code> - an E element (optional) with ID starting with "myid". Fast method.</li>
- * <li><code>E</code> - an element with classname E. Fast method.</li>
- * <li><code>*</code> - any element</li>
- * <li><code>E.warning</code> - an E element whose class is "warning" ie in a list of 
+ * <li><code>E#myid</code> - an E widget (optional) with ID equal to "myid". The fastest method.</li>
+ * <li><code>E%myid</code> - an E widget (optional) with ID starting with "myid". Fast method.</li>
+ * <li><code>E</code> - an widget with classname E. Fast method.</li>
+ * <li><code>*</code> - any widget</li>
+ * <li><code>E.warning</code> - an E widget whose class is "warning" ie in a list of 
  *		whitespace-separated values, one of which is exactly equal to "warning"</li>
- * <li><code>E[foo]</code> - an E element with a "foo" attribute (checking by calling ->getFoo() method)</li>
- * <li><code>E[foo="bar"]</code> - an E element whose "foo" attribute value is exactly equal to "bar"</li>
- * <li><code>E[foo~="bar"]</code> - an E element whose "foo" attribute value is a list of 
+ * <li><code>E[foo]</code> - an E widget with a "foo" attribute (checking by calling ->getFoo() method)</li>
+ * <li><code>E[foo="bar"]</code> - an E widget whose "foo" attribute value is exactly equal to "bar"</li>
+ * <li><code>E[foo!="bar"]</code> - an E widget whose "foo" attribute value not equal to "bar"</li>
+ * <li><code>E[foo~="bar"]</code> - an E widget whose "foo" attribute value is a list of 
  *		whitespace-separated values, one of which is exactly equal to "bar"</li>
- * <li><code>E[foo^="bar"]</code> - an E element whose "foo" attribute value begins exactly with the string "bar"</li>
- * <li><code>E[foo$="bar"]</code> - an E element whose "foo" attribute value ends exactly with the string "bar"</li>
- * <li><code>E[foo*="bar"]</code> - an E element whose "foo" attribute value contains the substring "bar"</li>
- * <li><code>E[foo|="en"]</code> - an E element whose "foo" attribute has a hyphen-separated list of values beginning 
+ * <li><code>E[foo^="bar"]</code> - an E widget whose "foo" attribute value begins exactly with the string "bar"</li>
+ * <li><code>E[foo$="bar"]</code> - an E widget whose "foo" attribute value ends exactly with the string "bar"</li>
+ * <li><code>E[foo*="bar"]</code> - an E widget whose "foo" attribute value contains the substring "bar"</li>
+ * <li><code>E[foo|="en"]</code> - an E widget whose "foo" attribute has a hyphen-separated list of values beginning 
  *		(from the left) with "en"</li>
- * <li><code>E:nth-child(n)</code> - an E element, the n-th child of its parent. As opposed to CSS 3 rules, 
+ * <li><code>E:nth-child(n)</code> - an E widget, the n-th child of its parent. As opposed to CSS 3 rules, 
  * current implementation supports only "odd", "even" or numeric values for n. </li>
- * <li><code>E:first-child</code> - an E element, first child of its parent</li>
- * <li><code>E:last-child</code> - an E element, last child of its parent</li>
- * <li><code>E:enabled, E:disabled</code> - a user interface element E which is enabled or disabled</li>
- * <li><code>E:checked</code> - a user interface element E which is checked (for instance a radio-button or checkbox)</li>
- * </ul>
+ * <li><code>E:first-child</code> - an E widget, first child of its parent</li>
+ * <li><code>E:last-child</code> - an E widget, last child of its parent</li>
+ * <li><code>E:index([first|last|odd|even|numeric]:[global|local])</code> - an E widget, which is in the WRoll
+ * and on the given position considering passed scope</li>
+ * <li><code>E:enabled, E:disabled</code> - a user interface widget E which is enabled or disabled</li>
+ * <li><code>E:checked</code> - a user interface widget E which is checked (for instance a radio-button or checkbox)</li>
+ * <li><code>E:contains(bar)</code> - an E widget which has text or value property which is exactly equal to "bar"</li>
+ * <li><code>E:hidden</code> - an widget E which is not visible (ie has visible='0')</li>
+ * <li><code>E:disable</code> - an widget E which is not enabled (ie has enabled='0')</li>
+ * <li><code>E:input</code> - an widget E which has WControl as a parent.</li>
+ * <li><code>E:text</code> - an input widget of type text.</li>
+ * <li><code>E:password</code> - an input widget of type password.</li>
+ * <li><code>E:radio</code> - an input widget of type radio.</li>
+ * <li><code>E:checkbox</code> - an input widget of type checkbox.</li>
+ * <li><code>E:submit</code> - an input widget of type submit.</li>
+ * <li><code>E:image</code> - an input widget of type image.</li>
+ * <li><code>E:reset</code> - an input widget of type reset.</li>
+ * <li><code>E:button</code> - an input widget of type button.</li>
  *
- * All string comparisons are case-insensitive.
+ * All string comparisons are case-insensitive and values are trimmed.
  */
 class SelectorMatcher
 {
@@ -326,9 +340,14 @@ class SelectorMatcher
 				if(!$widget instanceof WCheckbox) return self::FALSE_CACHE;
 			}
 			// :submit
+			elseif($parsed_selector['pseudo'] === "submit")
+			{
+				if(!$widget instanceof WButton || $widget->getType() != "submit") return self::FALSE_CACHE;
+			}
+			// :image
 			elseif($parsed_selector['pseudo'] === "image")
 			{
-				if(!$widget instanceof WImage) return self::FALSE_CACHE;
+				if(!$widget instanceof WButton || $widget->getType() != "image") return self::FALSE_CACHE;
 			}
 			// :reset
 			elseif($parsed_selector['pseudo'] === "reset")
