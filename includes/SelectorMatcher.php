@@ -28,7 +28,7 @@
 }}} -*/
 
 /**
- * This file contains class gor checking whenever widget is
+ * This file contains class for checking whenever widget is
  * match with selector and some helper classes that helps to
  * parse selectors and speed-ups such lookups.
  *
@@ -107,7 +107,7 @@
  * current implementation supports only "odd", "even" or numeric values for n. </li>
  * <li><code>E:first-child</code> - an E widget, first child of its parent</li>
  * <li><code>E:last-child</code> - an E widget, last child of its parent</li>
- * <li><code>E:index([first|last|odd|even|numeric]:[global|local])</code> - an E widget, which is in the WRoll
+ * <li><code>E:index([first|last|odd|even|numeric]:[global|local])</code> - an E widget, which is in the iterable collection
  * and on the given position considering passed scope</li>
  * <li><code>E:enabled, E:disabled</code> - a user interface widget E which is enabled or disabled</li>
  * <li><code>E:checked</code> - a user interface widget E which is checked (for instance a radio-button or checkbox)</li>
@@ -125,6 +125,15 @@
  * <li><code>E:button</code> - an input widget of type button.</li>
  *
  * All string comparisons are case-insensitive and values are trimmed.
+ *
+ * Selectors with multiple parameters, such as 
+ * <code> [attr1][atttr2] </code> or
+ * <code> tag:input:checked </code> 
+ * are not currently supported. But user may use complex single-parameter
+ * selectors: <code> tag#id[attr1=attr_value]:nth-child(odd) </code>
+ *
+ * Attributes are checking by calling <code>$widget->get{$attr_name}()</code>
+ * method if it exists.
  */
 class SelectorMatcher
 {
@@ -133,15 +142,37 @@ class SelectorMatcher
 	const FALSE_CACHE = 0;
 	const FALSE_NOCACHE = false;
 
-	static function matched(WComponent $widget, $selector,$index,$global)
+	//{{{ matched
+	/**
+	 * Checks if given widget is matching with the specified parameters.
+	 *
+	 * This function use some trick with return values. To mark that results
+	 * might be cached, method will return numeric values, that could be 
+	 * casted to boolean true/false transparently. So it's still possible
+	 * to use <code>if(SelectorMatcher::matched(...) )</code> code, but if
+	 * calee side need some cache-specific tests, use strong types comparison:
+	 * <code>if(SelectorMatcher::matched(...) === SelectorMatcher::TRUE_CACHE)</code>
+	 * <code>SelectorMatcher::TRUE_CACHE</code> or <code>SelectorMatcher::FALSE_CACHE</code>
+	 * return value means that this response might be cached and there is no need to
+	 * make this request once again with the same parameters.
+	 *
+	 * @param WComponent widget to be checked 
+	 * @param string selector string 
+	 * @param mixed index of the iterable collection iterator (ie second argument, passed to the 
+	 * method <code>f()</code>
+	 * @param string scope of indexes of the current selector
+	 * @return mixed values, casting to bool. 
+	 */
+	static function matched(WComponent $widget, $selector,$index,$scope)
 	{
 		$controller = Controller::getInstance();
-        $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$global);
+        $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$scope);
 		$return_cache = true;
 		if($parser->getSelectorsCount() == 1)
 		{
 			return self::matchAttributes($widget,$parser->getParsedSelector(0));
 		}
+		//starting from the last combinator and selector
 		elseif(($sel_c = $parser->getSelectorsCount()) - ($sp_c = $parser->getSplittersCount()) == 1)
 		{
 			if(!($ret = self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1)))) return $ret;
@@ -203,15 +234,35 @@ class SelectorMatcher
 			}
 		return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 	}
-	static function matchAttributes(WComponent $widget, $parsed_selector)
+	//}}}
+
+
+	//{{{ matchAttributes
+	/**
+	 * Helper function which detects if given widget is matching with 
+	 * the attributes, described in the splitted part of the selector.
+	 *
+	 * For example for selector 
+	 * <pre><code>
+	 * ->f("#text")->....
+	 * </code></pre>
+	 *
+	 * each widget will be checked if it's ID is exactly equals to "text".
+	 *
+	 * Such as {@link matched} method it returns _CACHE , _NOCACHE
+	 * values, which are easily converting to bool.
+	 *
+	 * @param WComponent widget to be checked by the attributes list
+	 * @param array of parsed selector's parameters
+	 * @return mixed values, casting to bool
+	 */
+	static protected function matchAttributes(WComponent $widget, $parsed_selector)
 	{
 		if(empty($parsed_selector)) return false;
 		$controller = Controller::getInstance();
 
 		//id, quick
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
-		// *
-		//if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
 		//id starts with
 		if(isset($parsed_selector['starts_with']) 
 			&& substr($widget->getIdLower(),0,strlen($parsed_selector['starts_with'])) != $parsed_selector['starts_with']) return self::FALSE_CACHE;
@@ -484,34 +535,35 @@ class SelectorMatcher
 			else return self::FALSE_CACHE;
 		return self::TRUE_NOCACHE;
 	}
+	//}}}
 }
 //}}}
 
 //{{{ SelectorParserFactory
+/**
+ * Factory class which holds parsed selectors in order to reduce
+ * number of <code> new SelectorParser() </code> calls and so
+ * to reduce number of preg_* functions calls.
+ */
 class SelectorParserFactory
 {
+	/**
+	 * Cache of parsed selectors
+	 * @var array
+	 */
     private static $cache = array();
-    static function getSelectorParser($selector,$index,$scope)
-    {
-        if(!isset(self::$cache[$selector]))
-		{
-            $o = new SelectorParser($selector,$index,$scope);
-            self::$cache[$selector] = $o;
-            return $o;
-        }
-        else
-        {
-            $o = self::$cache[$selector];
-			if($index)
-			{
-				$o->setIndex($index);
-				$o->setScope($scope);
-				$o->processIndexScope();
-			}
-            return $o;
-        }
-    }
 
+	//{{{ getSelectorParser2
+	/**
+	 * Returns cached SelectorParser instance, with update index and scope values.
+	 * If it not exists in the cache, it will be created and 
+	 * placed to the cache, located at global scope ($GLOBALS)
+	 *
+	 * @param string selector to be parsed
+	 * @param mixed index, passed as a second argument to the function f()
+	 * @param string scope of the indexes in current selector
+	 * @return SelectorParser instance
+	 */
     static function &getSelectorParser2($selector,$index,$scope)
     {
 		$m = md5($selector);
@@ -529,37 +581,113 @@ class SelectorParserFactory
             $o->processIndexScope();
             return $o;
         }
-    }
+	}
+	//}}}
 }
 //}}}
 
 //{{{ SelectorParser
+/**
+ * Based on MooTools framework
+ * http://mootools.net/
+ *
+ * It splits given selector rule, extracting splitters (such as "+",">","~" etc)
+ * and and selectors.
+ * Each selector may consists of zero or one elements:
+ * <ol>
+ * <li>Class name (ie wtable, wblock etc)</li>
+ * <li>Widget id</li>
+ * <li>Widget "starts_with id" rule</li>
+ * <li>Attribute (ie title, visible etc)</li>
+ * <li>Attribute quntificator (ie "=", "^=" etc)</li>
+ * <li>Attribute value</li>
+ * <li>Pseudo attribute (ie ":checkbox", ":hidden" etc)</li>
+ * <li>Pseudo value</li>
+ * </ol>
+ *
+ * If selector rule consist of one selector, fast checks of the tag, id or "starts_with id"
+ * will be performed. If nothing else was specified, no other heavy regexps will be 
+ * executed.
+ */
 class SelectorParser
 {
+	/**
+	 * Regexp to match and capture described parts of the single selector
+	 */
 	const pattern_combined = 
 '/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)(["\']?)([^\4]*?)\4)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
 
+	/**
+	 * Pattern used to capture id from the single selector
+	 */
 	const pattern_id = "/#([\w-]+)/";
+	/**
+	 * Pattern to quick match and capture of id.
+	 * If selector is matched this regexp, no other
+	 * checks will be used.
+	 */
 	const pattern_quick_id = "/^#([\w-]+)$/";
 
+	/**
+	 * Pattern used to check and capture tag name of a selector.
+	 */
 	const pattern_tag = "/^(\w+|\*)/";//tag
+	/**
+	 * Pattern to quick match and capture tag name.
+	 * If selector is matched this regexp, no other 
+	 * checks will be used.
+	 */
 	const pattern_quick_tag = "/^(\w+|\*)$/";//tag
 	
+	/**
+	 * Pattern, used to split selector rule on the single selectors and
+	 * capture combinator, used between two selectors.
+	 */
 	const pattern_splitter = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
 
 
+	/**
+	 * Pattern used to check and capture starts_with id value
+	 */
 	const pattern_starts_with = "/^%([\w-]+)/";
+	/**
+	 * Pattern used to quick match and capture starts_with id.
+	 * If selector is matched this regexp, no other checks will be 
+	 * performed.
+	 */
 	const pattern_quick_starts_with = "/^%([\w-]+)$/";
 	
+	/**
+	 * Array of parsed splitters (combinators)
+	 * @var array
+	 */
 	private $splitters = array();
+	/**
+	 * Cached value of splitters count
+	 * @var int
+	 */
     private $splitters_count = 0;
+	/**
+	 * Array of parsed selectors
+	 * @var array
+	 */
     private $selectors = array();
+	/**
+	 * Cached value of selectors count
+	 */
     private $selectors_count = 0;
-	private $iter = 0;
+	/**
+	 * Currently used index for iterable collections.
+	 * @var mixed
+	 */
 	private $index = null,
-			$scope = null
+	/**
+	 * Currently used scope for iterable collections.
+	 */
+	$scope = null
 			;
 
+	//{{{ __construct
 	function __construct($selectors = null,$index,$scope)
 	{
 		$this->index = $index;
@@ -567,12 +695,32 @@ class SelectorParser
 		if(isset($selectors))
 			$this->parse($selectors);
 	}
+	//}}}
+
+	//{{{ parse
+	/**
+	 * Parsing given selector rule: splitting into combinators and selectors, 
+	 * and parsing specified index and scope.
+	 *
+	 * @param string selector rule
+	 * @return null
+	 */
 	function parse($selector)
 	{
 		$this->splitSelectors(trim($selector));
         $this->processIndexScope();
 
 	}
+	//}}}
+
+	//{{{ processIndexScope
+	/**
+	 * Updates index and scope parameters for current
+	 * already parsed selector rule. 
+	 * 
+	 * @param null
+	 * @return null
+	 */
     function processIndexScope()
     {
 		if(($c = $this->selectors_count) > 0 &&
@@ -582,15 +730,48 @@ class SelectorParser
 			$this->selectors[$c-1]['pseudo_value'] = $this->index;
 			$this->selectors[$c-1]['scope'] = $this->scope;
 		}
-    }
+	}
+	//}}}
+
+	//{{{ setIndex
+	/**
+	 * Sets index parameter for current parsed selector rule.
+	 * 
+	 * @param mixed index
+	 * @return null
+	 */
     function setIndex($index)
     {
         $this->index = $index;
-    }
+	}
+	//}}}
+
+	//{{{ setScope
+	/**
+	 * Sets scope parameter for current parsed selector rule.
+	 *
+	 * @param string scope
+	 * @return null
+	 */
     function setScope($scope)
     {
         $this->scope = $scope;
-    }
+	}
+	//}}}
+
+	//{{{ splitSelectors
+	/**
+	 * Splits given selector rule into separate selectors and combinators.
+	 *
+	 * First of all it tries to quick match on pattern_quick_id, pattern_quick_starts_with,
+	 * and pattern_quick_tag regexps. If they've been completed successfully no other checks 
+	 * will be performed.
+	 *
+	 * Otherwise rule will be split on pattern_splitter and each part will be fully checked.
+	 *
+	 * @param string selector rule
+	 * @return null
+	 */
 	private function splitSelectors($selector)
 	{
 		if(preg_match(self::pattern_quick_id,$selector,$m))
@@ -646,37 +827,92 @@ class SelectorParser
         $this->selectors_count = count($this->selectors);
         $this->splitters_count = count($this->splitters);
 	}
+	//}}}
+
+	//{{{ mylist
 	private function mylist(&$array1,$array2)
 	{
 		$attrs = array('class', 'attr','attr_quant','attr_value','pseudo','pseudo_value');
 		foreach(array_filter($array2,create_function('$var','return is_numeric($var) || !empty($var);')) as $k => $v)
 			$array1[$attrs[$k]] = strtolower($v);
 	}
-	public function getSelectors()
+	//}}}
+
+	//{{{ getSelectors
+	/**
+	 * Returns currently parsed selectors
+	 *
+	 * @param null
+	 * @return array of arrays of selector parameters
+	 */
+	function getSelectors()
 	{
 		return $this->selectors;
 	}
-	public function getSplitters()
+	//}}}
+
+	//{{{ getSplitters
+	/**
+	 * Returns currently parsed splitters
+	 *
+	 * @param null
+	 * @return array
+	 */
+	function getSplitters()
 	{
 		return $this->splitters;
 	}
+	//}}}
+
+	//{{{ getSelectorsCount
+	/**
+	 * Returns cached selectors count
+	 *
+	 * @param null
+	 * @return int
+	 */
 	function getSelectorsCount()
 	{
 		return $this->selectors_count;
 	}
+	//}}}
+
+	//{{{ getSplittersCount
+	/**
+	 * Returns cached splitters count
+	 */
 	function getSplittersCount()
 	{
 		return $this->splitters_count;
 	}
+	//}}}
+
+	//{{{ getParsedSelector
+	/**
+	 * Returns parsed selector by given index
+	 *
+	 * @param int index
+	 * @param array of parameters of the selector if it was found
+	 */
 	function getParsedSelector($ind = 0)
 	{
 		if($ind >=$this->selectors_count || $ind < 0) return array();
 		return $this->selectors[$ind];
 	}
+	//}}}
+
+	//{{{ getParsedSplitter
+	/**
+	 * Returns parsed splitter by given index
+	 *
+	 * @param int index
+	 * @return string splitter if it was found
+	 */
 	function getParsedSplitter($ind = 0)
 	{
 		if($ind > $this->splitters_count || $ind < 0) return array();
 		return $this->splitters[$ind];
 	}
+	//}}}
 }
 //}}}
