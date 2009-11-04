@@ -29,7 +29,7 @@
 
 /**
  * This file contains class for checking whenever widget is
- * match with selector and some helper classes that helps to
+ * match with selector rule and some helper classes that helps to
  * parse selectors and speed-ups such lookups.
  *
  * @author point <alex.softx@gmail.com>
@@ -69,13 +69,13 @@
  * </code></pre>
  *
  * To access <code>WCheckbox</code> you may use, for example, such 
- * selector:
+ * selector rule:
  * <pre><code>
  * ->f("wtable wtablecolumn[colspan=2]:nth-child(odd) > WText ~ #qqq > .s_class[title='qwe]2']:checked")->text('text to checkbox');
  * </code></pre>
  *
- * It's not fastest and slightly unreadable way but it shows how 
- * selector mechanism works.
+ * It's not the fastest and slightly unreadable way but it shows how 
+ * selectors mechanism works.
  *
  * Currently, system supports such combinators:
  * <ul>
@@ -93,6 +93,7 @@
  * <li><code>*</code> - any widget</li>
  * <li><code>E.warning</code> - an E widget whose class is "warning" ie in a list of 
  *		whitespace-separated values, one of which is exactly equal to "warning"</li>
+ * <li><code>E1, E2, EN</code> - matches the combined results of all the specified selectors.</li>
  * <li><code>E[foo]</code> - an E widget with a "foo" attribute (checking by calling ->getFoo() method)</li>
  * <li><code>E[foo="bar"]</code> - an E widget whose "foo" attribute value is exactly equal to "bar"</li>
  * <li><code>E[foo!="bar"]</code> - an E widget whose "foo" attribute value not equal to "bar"</li>
@@ -123,6 +124,8 @@
  * <li><code>E:image</code> - an input widget of type image.</li>
  * <li><code>E:reset</code> - an input widget of type reset.</li>
  * <li><code>E:button</code> - an input widget of type button.</li>
+ *
+ * Some notes:
  *
  * All string comparisons are case-insensitive and values are trimmed.
  *
