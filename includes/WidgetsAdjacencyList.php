@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
+// $Id: WidgetsAdjacencyList.php 104 2009-05-29 15:39:01Z point $
 //
 class AdjacencyListCell
 {
@@ -40,12 +40,32 @@ class AdjacencyListCell
 		$this->parent = $parent;
 	}
 }
+class AdjacencyListMark extends AdjacencyListCell 
+{
+	function __construct()
+	{ parent::__construct(null,null);}
+}
 class WidgetsAdjacencyList
 {
 	public $list = array();
 	private $parent_cache = array();
 	private $parent_cache2 = array();
 
+	function mark()
+	{
+		$mark = count($this->list);
+		$this->list[] = new AdjacencyListMark();
+		return $mark;
+	}
+	function addAtMark($widget_id,$parent,$mark_pos)
+	{
+		$flag = 0;
+		foreach($this->list as &$v)
+			if($v->widgetId == $widget_id)
+				$v->parent = $parent and $flag = 1;
+		if(!$flag && isset($this->list[$mark_pos]) && $this->list[$mark_pos] instanceof AdjacencyListMark) 
+			$this->list[$mark_pos] = new AdjacencyListCell($widget_id,$parent);
+	}
 	function add($widget_id, $parent )
 	{
 		$flag = 0;

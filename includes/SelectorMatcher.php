@@ -27,10 +27,117 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//
-// $Id: SelectorMatcher.php 138 2009-08-13 08:34:58Z point $
-//
+/**
+ * This file contains class for checking whenever widget is
+ * match with selector rule and some helper classes that helps to
+ * parse selectors and speed-ups such lookups.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
+//{{{ SelectorMatcher
+/**
+ * To address the widget in the document we propose mechanism, 
+ * based on the principles of CSS selectors.
+ *
+ * For example you have XML file with such structure:
+ *
+ * <pre><code>
+ * <WTable>
+ *	<WTableRow>
+ *		<WTableColumn colspan="2">
+ *			<WText/>
+ *			<WBlock>
+ *				<WBlock>
+ *					<WBlock/>
+ *				</WBlock>
+ *			</WBlock>
+ *			<WBlock id="qqq">
+ *				<WCheckbox checked="1" title="qwe]2" class="s_class" id="cb"/>
+ *			</WBlock>
+ *		</WTableColumn>
+ *		<WTableColumn colspan="2"></WTableColumn>
+ *		<WTableColumn></WTableColumn>
+ *		<WTableColumn></WTableColumn>
+ *	</WTableRow>
+ * </WTable>
+ *
+ * </code></pre>
+ *
+ * To access <code>WCheckbox</code> you may use, for example, such 
+ * selector rule:
+ * <pre><code>
+ * ->f("wtable wtablecolumn[colspan=2]:nth-child(odd) > WText ~ #qqq > .s_class[title='qwe]2']:checked")->text('text to checkbox');
+ * </code></pre>
+ *
+ * It's not the fastest and slightly unreadable way but it shows how 
+ * selectors mechanism works.
+ *
+ * Currently, system supports such combinators:
+ * <ul>
+ * <li><code>E F</code> - an F widget descendant of an E widget (as of CSS 1)</li>
+ * <li><code>E > F</code> - an F widget child of an E widget (as of CSS 2)</li>
+ * <li><code>E + F</code> - an F widget immediately preceded by an E widget (as of CSS 2)</li>
+ * <li><code>E ~ F</code> - an F widget preceded by an E widget (as of CSS 3)</li>
+ * </ul>
+ *
+ * List of supported selectors:
+ * <ul>
+ * <li><code>E#myid</code> - an E widget (optional) with ID equal to "myid". The fastest method.</li>
+ * <li><code>E%myid</code> - an E widget (optional) with ID starting with "myid". Fast method.</li>
+ * <li><code>E</code> - an widget with classname E. Fast method.</li>
+ * <li><code>*</code> - any widget</li>
+ * <li><code>E.warning</code> - an E widget whose class is "warning" ie in a list of 
+ *		whitespace-separated values, one of which is exactly equal to "warning"</li>
+ * <li><code>E1, E2, EN</code> - matches the combined results of all the specified selectors.</li>
+ * <li><code>E[foo]</code> - an E widget with a "foo" attribute (checking by calling ->getFoo() method)</li>
+ * <li><code>E[foo="bar"]</code> - an E widget whose "foo" attribute value is exactly equal to "bar"</li>
+ * <li><code>E[foo!="bar"]</code> - an E widget whose "foo" attribute value not equal to "bar"</li>
+ * <li><code>E[foo~="bar"]</code> - an E widget whose "foo" attribute value is a list of 
+ *		whitespace-separated values, one of which is exactly equal to "bar"</li>
+ * <li><code>E[foo^="bar"]</code> - an E widget whose "foo" attribute value begins exactly with the string "bar"</li>
+ * <li><code>E[foo$="bar"]</code> - an E widget whose "foo" attribute value ends exactly with the string "bar"</li>
+ * <li><code>E[foo*="bar"]</code> - an E widget whose "foo" attribute value contains the substring "bar"</li>
+ * <li><code>E[foo|="en"]</code> - an E widget whose "foo" attribute has a hyphen-separated list of values beginning 
+ *		(from the left) with "en"</li>
+ * <li><code>E:nth-child(n)</code> - an E widget, the n-th child of its parent. As opposed to CSS 3 rules, 
+ * current implementation supports only "odd", "even" or numeric values for n. </li>
+ * <li><code>E:first-child</code> - an E widget, first child of its parent</li>
+ * <li><code>E:last-child</code> - an E widget, last child of its parent</li>
+ * <li><code>E:index([first|last|odd|even|numeric]:[global|local])</code> - an E widget, which is in the iterable collection
+ * and on the given position considering passed scope</li>
+ * <li><code>E:enabled, E:disabled</code> - a user interface widget E which is enabled or disabled</li>
+ * <li><code>E:checked</code> - a user interface widget E which is checked (for instance a radio-button or checkbox)</li>
+ * <li><code>E:contains(bar)</code> - an E widget which has text or value property which is exactly equal to "bar"</li>
+ * <li><code>E:hidden</code> - an widget E which is not visible (ie has visible='0')</li>
+ * <li><code>E:disable</code> - an widget E which is not enabled (ie has enabled='0')</li>
+ * <li><code>E:input</code> - an widget E which has WControl as a parent.</li>
+ * <li><code>E:text</code> - an input widget of type text.</li>
+ * <li><code>E:password</code> - an input widget of type password.</li>
+ * <li><code>E:radio</code> - an input widget of type radio.</li>
+ * <li><code>E:checkbox</code> - an input widget of type checkbox.</li>
+ * <li><code>E:submit</code> - an input widget of type submit.</li>
+ * <li><code>E:image</code> - an input widget of type image.</li>
+ * <li><code>E:reset</code> - an input widget of type reset.</li>
+ * <li><code>E:button</code> - an input widget of type button.</li>
+ *
+ * Some notes:
+ *
+ * All string comparisons are case-insensitive and values are trimmed.
+ *
+ * Selectors with multiple parameters, such as 
+ * <code> [attr1][atttr2] </code> or
+ * <code> tag:input:checked </code> 
+ * are not currently supported. But user may use complex single-parameter
+ * selectors: <code> tag#id[attr1=attr_value]:nth-child(odd) </code>
+ *
+ * Attributes are checking by calling <code>$widget->get{$attr_name}()</code>
+ * method if it exists.
+ */
 class SelectorMatcher
 {
 	const TRUE_CACHE = 1;
@@ -38,24 +145,39 @@ class SelectorMatcher
 	const FALSE_CACHE = 0;
 	const FALSE_NOCACHE = false;
 
-	static function matched(WComponent $widget, $selector,$index,$global)
+	//{{{ matched
+	/**
+	 * Checks if given widget is matching with the specified parameters.
+	 *
+	 * This function use some trick with return values. To mark that results
+	 * might be cached, method will return numeric values, that could be 
+	 * casted to boolean true/false transparently. So it's still possible
+	 * to use <code>if(SelectorMatcher::matched(...) )</code> code, but if
+	 * calee side need some cache-specific tests, use strong types comparison:
+	 * <code>if(SelectorMatcher::matched(...) === SelectorMatcher::TRUE_CACHE)</code>
+	 * <code>SelectorMatcher::TRUE_CACHE</code> or <code>SelectorMatcher::FALSE_CACHE</code>
+	 * return value means that this response might be cached and there is no need to
+	 * make this request once again with the same parameters.
+	 *
+	 * @param WComponent widget to be checked 
+	 * @param string selector string 
+	 * @param mixed index of the iterable collection iterator (ie second argument, passed to the 
+	 * method <code>f()</code>
+	 * @param string scope of indexes of the current selector
+	 * @return mixed values, casting to bool. 
+	 */
+	static function matched(WComponent $widget, $selector,$index,$scope)
 	{
-		/*echo $id = $widget->getId();
-        static $c = 0;
-        if($id == "select2")
-        {$c++;echo " $c ";}*/
-
 		$controller = Controller::getInstance();
-        $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$global);
+        $parser = SelectorParserFactory::getSelectorParser2($selector,$index,$scope);
 		$return_cache = true;
-		//$parser = new SelectorParser($selector,$index,$global);
 		if($parser->getSelectorsCount() == 1)
 		{
 			return self::matchAttributes($widget,$parser->getParsedSelector(0));
 		}
+		//starting from the last combinator and selector
 		elseif(($sel_c = $parser->getSelectorsCount()) - ($sp_c = $parser->getSplittersCount()) == 1)
 		{
-			//if(!self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1))) continue;
 			if(!($ret = self::matchAttributes($widget,$parser->getParsedSelector($sel_c-1)))) return $ret;
 			$w2 = $widget;
 			for($i = $sp_c - 1; $i >= 0; $i--)
@@ -76,7 +198,6 @@ class SelectorMatcher
 							$parser->getParsedSelector($i)))) { if($ret === self::TRUE_NOCACHE || $w2->isInsideRoll()) $return_cache = false; continue 2;}
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
-					//continue 2;
 				}
 				elseif($parser->getParsedSplitter($i) == "+")
 				{
@@ -86,13 +207,12 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i+1)))
-							&& !($ret2 = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i))))
-						{if($ret === self::TRUE_NOCACHE || $ret2 === self::FALSE_NOCACHE ) $return_cache = false; continue;}
+						if(($w2 = $controller->getWidget($p_id))&&
+							$controller->getAdjacencyList()->getParentForId($w2->getId()) !== $until) continue;
 
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
-						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
-						else $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
+						if(($ret = self::matchAttributes($w2,$parser->getParsedSelector($i))))
+						{ if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
+						else break;
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 				}
@@ -104,7 +224,10 @@ class SelectorMatcher
 
 					while(($p_id = $controller->getAdjacencyList()->getPrevUntil($w2->getId(),$until)) !== null)
 					{
-						if(($ret = self::matchAttributes(($w2 = $controller->getWidget($p_id)),$parser->getParsedSelector($i)))) 
+						if(($w2 = $controller->getWidget($p_id))&&
+							$controller->getAdjacencyList()->getParentForId($w2->getId()) !== $until) continue;
+						
+						if(($ret = self::matchAttributes($w2,$parser->getParsedSelector($i)))) 
 						{if($ret === self::TRUE_NOCACHE) $return_cache = false; continue 2;}
 					}
 					return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
@@ -114,51 +237,110 @@ class SelectorMatcher
 			}
 		return $return_cache?self::FALSE_CACHE:self::FALSE_NOCACHE;
 	}
-	static function matchAttributes(WComponent $widget, $parsed_selector)
+	//}}}
+
+
+	//{{{ matchAttributes
+	/**
+	 * Helper function which detects if given widget is matching with 
+	 * the attributes, described in the splitted part of the selector.
+	 *
+	 * For example for selector 
+	 * <pre><code>
+	 * ->f("#text")->....
+	 * </code></pre>
+	 *
+	 * each widget will be checked if it's ID is exactly equals to "text".
+	 *
+	 * Such as {@link matched} method it returns _CACHE , _NOCACHE
+	 * values, which are easily converting to bool.
+	 *
+	 * @param WComponent widget to be checked by the attributes list
+	 * @param array of parsed selector's parameters
+	 * @return mixed values, casting to bool
+	 */
+	static protected function matchAttributes(WComponent $widget, $parsed_selector)
 	{
-        //static $__c = 0;
 		if(empty($parsed_selector)) return false;
-        /*echo ++$__c." ";
-        print_pre($widget->getId());
-        print_pre($parsed_selector);
-        echo "<hr>";*/
 		$controller = Controller::getInstance();
 
 		//id, quick
 		if(isset($parsed_selector['id']) && $widget->getIdLower() != $parsed_selector['id']) return self::FALSE_CACHE;
-		// *
-		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] === '*') return self::TRUE_CACHE;
 		//id starts with
 		if(isset($parsed_selector['starts_with']) 
 			&& substr($widget->getIdLower(),0,strlen($parsed_selector['starts_with'])) != $parsed_selector['starts_with']) return self::FALSE_CACHE;
 		// tag
-		if(isset($parsed_selector['tag']) && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
+		if(isset($parsed_selector['tag']) && $parsed_selector['tag'] !== "*" && $widget->getClassLower() !== $parsed_selector['tag']) return self::FALSE_CACHE;
+
+		// .class
+		if(isset($parsed_selector['class']) &&
+			!in_array(strtolower($parsed_selector['class']),
+				array_map('strtolower',preg_split("/\s+/",$widget->getStyleClass())),true))
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+
 		// [attribute]
 		if(isset($parsed_selector['attr']))
-		   if( !isset($parsed_selector['attr_value'])
-			&& (!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-				$widget->{"get".ucfirst($parsed_selector['attr'])}() === null)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr=val]
+			if( !isset($parsed_selector['attr_value']))
+			{
+				if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+					$widget->{"get".$parsed_selector['attr']}() === null) 
+						return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			elseif(isset($parsed_selector['attr_value']) && isset($parsed_selector['attr_quant']))
-				if($parsed_selector['attr_quant']  === "=" && 
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-                    $widget->{"get".ucfirst($parsed_selector['attr'])}() != strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr!=val]
-				elseif($parsed_selector['attr_quant']  === "!=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					$widget->{"get".ucfirst($parsed_selector['attr'])}() == strtolower($parsed_selector['attr_value']))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr^=val]
-				elseif($parsed_selector['attr_quant']  === "^=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== 0)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr$=val]
-				elseif($parsed_selector['attr_quant']  === "$=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($_s = $widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) !== (strlen($_s)-strlen($parsed_selector['attr_value'])))) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
-			// [attr*=val]
-				elseif($parsed_selector['attr_quant']  === "*=" &&
-					(!method_exists($widget,"get".ucfirst($parsed_selector['attr'])) ||
-					stripos($widget->{"get".ucfirst($parsed_selector['attr'])}(),$parsed_selector['attr_value']) === false)) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				// [attr=val]
+				if($parsed_selector['attr_quant']  === "=")
+				{	 
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						trim($widget->{"get".$parsed_selector['attr']}()) != strtolower($parsed_selector['attr_value'])) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr~=val]
+				elseif($parsed_selector['attr_quant']  === "~=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						!in_array(strtolower($parsed_selector['attr_value']),
+							array_map('strtolower',preg_split("/\s+/",trim($widget->{"get".$parsed_selector['attr']}()))),true))
+								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr!=val]
+				elseif($parsed_selector['attr_quant']  === "!=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						trim($widget->{"get".$parsed_selector['attr']}()) == strtolower($parsed_selector['attr_value'])) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr^=val]
+				elseif($parsed_selector['attr_quant']  === "^=" )
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos(trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) !== 0) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr$=val]
+				elseif($parsed_selector['attr_quant']  === "$=")
+				{	
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos($_s = trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) 
+						!== (strlen($_s)-strlen($parsed_selector['attr_value']))) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr*=val]
+				elseif($parsed_selector['attr_quant']  === "*=")
+				{
+			
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						stripos(trim($widget->{"get".$parsed_selector['attr']}()),$parsed_selector['attr_value']) === false) 
+							return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				// [attr|=val]
+				elseif($parsed_selector['attr_quant']  === "|=")
+				{
+					if(!method_exists($widget,"get".$parsed_selector['attr']) ||
+						!in_array(strtolower($parsed_selector['attr_value']),
+							array_map('strtolower',preg_split("/\s*-\s*/",trim($widget->{"get".$parsed_selector['attr']}()))),true))
+								return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+				}
+				else return self::FALSE_CACHE;
 
 
 		//pseudo
@@ -170,33 +352,87 @@ class SelectorMatcher
 				if($widget instanceof WControl && $widget->getValue() != $parsed_selector['pseudo_value']) return $widget->isInsideRoll()?self::FALSE_NOCACHE:FALSE_CACHE;
 			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && $widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "hidden")
+			{
+				if($widget->getVisible()) 
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			// :visible
-			elseif($parsed_selector['pseudo'] === "visible" && !$widget->getVisible()) return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "visible")
+			{
+				if(!$widget->getVisible()) 
+					return $widget->isInsideRoll()?self::FALSE_NOCACHE:self::FALSE_CACHE;
+			}
 			// :disable -> widget disable='1'
-			elseif($parsed_selector['pseudo'] === "disable" && $widget->getState()) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "disable")
+			{
+				if($widget->getState()) return self::FALSE_CACHE;
+			}
 			// :input
-			elseif($parsed_selector['pseudo'] === "input" && !$widget instanceof WControl) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "input")
+			{	
+				if(!$widget instanceof WControl) return self::FALSE_CACHE;
+			}
 			// :text
-			elseif($parsed_selector['pseudo'] === "text" && (!$widget instanceof WEdit || !$widget->getType() != "text")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "text")
+			{
+				if(!$widget instanceof WEdit || !$widget->getType() != "text") return self::FALSE_CACHE;
+			}
 			// :password
-			elseif($parsed_selector['pseudo'] === "password" && (!$widget instanceof WEdit || !$widget->getType() != "password")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "password")
+			{	
+				if(!$widget instanceof WEdit || !$widget->getType() != "password") return self::FALSE_CACHE;
+			}
 			// :radio
-			elseif($parsed_selector['pseudo'] === "radio" && !$widget instanceof WRadio) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "radio")
+			{
+				if(!$widget instanceof WRadio) return self::FALSE_CACHE;
+			}
 			// :checkbox
-			elseif($parsed_selector['pseudo'] === "checkbox" && !$widget instanceof WCheckbox) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "checkbox")
+			{
+				if(!$widget instanceof WCheckbox) return self::FALSE_CACHE;
+			}
 			// :submit
-			elseif($parsed_selector['pseudo'] === "image" && !$widget instanceof WImage) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "submit")
+			{
+				if(!$widget instanceof WButton || $widget->getType() != "submit") return self::FALSE_CACHE;
+			}
+			// :image
+			elseif($parsed_selector['pseudo'] === "image")
+			{
+				if(!$widget instanceof WButton || $widget->getType() != "image") return self::FALSE_CACHE;
+			}
 			// :reset
-			elseif($parsed_selector['pseudo'] === "reset" && (!$widget instanceof WButton || !$widget->getType() != "reset")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "reset")
+			{
+				if(!$widget instanceof WButton || !$widget->getType() != "reset") return self::FALSE_CACHE;
+			}
 			// :button
-			elseif($parsed_selector['pseudo'] === "button" && (!$widget instanceof WButton || !$widget->getType() != "button")) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "button")
+			{	
+				if (!$widget instanceof WButton || !$widget->getType() != "button") return self::FALSE_CACHE;
+			}
 			// :hidden
-			elseif($parsed_selector['pseudo'] === "hidden" && !$widget instanceof WHidden) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "hidden")
+			{
+				if(!$widget instanceof WHidden) return self::FALSE_CACHE;
+			}
+			// :disabled
+			elseif($parsed_selector['pseudo'] === "disabled")
+			{
+				if(!$widget instanceof WContol || !$widget->getDisabled()) return self::FALSE_CACHE;
+			}
 			// :enabled
-			elseif($parsed_selector['pseudo'] === "disabled" && (!$widget instanceof WContol || !$widget->getDisabled())) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "enabled")
+			{
+				if(!$widget instanceof WContol || $widget->getDisabled()) return self::FALSE_CACHE;
+			}
 			// :checked
-			elseif($parsed_selector['pseudo'] === "checked" && (!$widget instanceof WCheckbox || !$widget->getChecked())) return self::FALSE_CACHE;
+			elseif($parsed_selector['pseudo'] === "checked")
+			{
+				if(!$widget instanceof WCheckbox || !$widget->getChecked()) return self::FALSE_CACHE;
+			}
 			// :first-child
 			elseif($parsed_selector['pseudo'] === "first-child")
 			{
@@ -230,25 +466,22 @@ class SelectorMatcher
 			elseif($parsed_selector['pseudo'] === "index" && $widget->isInsideRoll())
 			{
 				if(!isset($parsed_selector['pseudo_value'])) return self::FALSE_CACHE;
-				//return false;
 				$w2 = $widget;
 				$parent = null;
                 
                 // inconvinient in case of nested rolls
                 // to select odd rows, for example, "wroll > wtablerow:odd" syntax should be used
 
-                /*if($w2 instanceof WRoll) $parent = $w2->getId();
-                else*/
-					if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
-					{
-						while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
-							if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
-							else $w2 = $controller->getWidget($p);
-						if($parent == null) return self::FALSE_CACHE;
-						$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
-					}
+				if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
+				{
+					while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
+						if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
+						else $w2 = $controller->getWidget($p);
+					if($parent == null) return self::FALSE_CACHE;
+					$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
+				}
 
-                if(!is_array($parsed_selector['pseudo_value']))
+				if(!is_array($parsed_selector['pseudo_value']))
                 {
                     if(strpos($parsed_selector['pseudo_value'],":") !== false)
                         list($parsed_selector['pseudo_value'],$parsed_selector['scope']) = explode(":",$parsed_selector['pseudo_value']); 
@@ -302,33 +535,38 @@ class SelectorMatcher
                     return self::FALSE_NOCACHE;
                 }
 			}//finish pseudo
+			else return self::FALSE_CACHE;
 		return self::TRUE_NOCACHE;
 	}
+	//}}}
 }
+//}}}
+
+//{{{ SelectorParserFactory
+/**
+ * Factory class which holds parsed selectors in order to reduce
+ * number of <code> new SelectorParser() </code> calls and so
+ * to reduce number of preg_* functions calls.
+ */
 class SelectorParserFactory
 {
+	/**
+	 * Cache of parsed selectors
+	 * @var array
+	 */
     private static $cache = array();
-    static function getSelectorParser($selector,$index,$scope)
-    {
-        if(!isset(self::$cache[$selector]))
-		{
-            $o = new SelectorParser($selector,$index,$scope);
-            self::$cache[$selector] = $o;
-            return $o;
-        }
-        else
-        {
-            $o = self::$cache[$selector];
-			if($index)
-			{
-				$o->setIndex($index);
-				$o->setScope($scope);
-				$o->processIndexScope();
-			}
-            return $o;
-        }
-    }
 
+	//{{{ getSelectorParser2
+	/**
+	 * Returns cached SelectorParser instance, with update index and scope values.
+	 * If it not exists in the cache, it will be created and 
+	 * placed to the cache, located at global scope ($GLOBALS)
+	 *
+	 * @param string selector to be parsed
+	 * @param mixed index, passed as a second argument to the function f()
+	 * @param string scope of the indexes in current selector
+	 * @return SelectorParser instance
+	 */
     static function &getSelectorParser2($selector,$index,$scope)
     {
 		$m = md5($selector);
@@ -346,45 +584,113 @@ class SelectorParserFactory
             $o->processIndexScope();
             return $o;
         }
-    }
+	}
+	//}}}
 }
+//}}}
+
+//{{{ SelectorParser
+/**
+ * Based on MooTools framework
+ * http://mootools.net/
+ *
+ * It splits given selector rule, extracting splitters (such as "+",">","~" etc)
+ * and and selectors.
+ * Each selector may consists of zero or one elements:
+ * <ol>
+ * <li>Class name (ie wtable, wblock etc)</li>
+ * <li>Widget id</li>
+ * <li>Widget "starts_with id" rule</li>
+ * <li>Attribute (ie title, visible etc)</li>
+ * <li>Attribute quntificator (ie "=", "^=" etc)</li>
+ * <li>Attribute value</li>
+ * <li>Pseudo attribute (ie ":checkbox", ":hidden" etc)</li>
+ * <li>Pseudo value</li>
+ * </ol>
+ *
+ * If selector rule consist of one selector, fast checks of the tag, id or "starts_with id"
+ * will be performed. If nothing else was specified, no other heavy regexps will be 
+ * executed.
+ */
 class SelectorParser
 {
-	/*private static $pattern_combined = <<<EOF
-/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)["']?(.*?)["']?)?\]|:([\w-]+)(?:\(["']?(.*?)?["']?\)|$)/
-	EOF;*/
+	/**
+	 * Regexp to match and capture described parts of the single selector
+	 */
+	const pattern_combined = 
+'/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)(["\']?)([^\4]*?)\4)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
 
-	const pattern_combined =
-'/\.([\w-]+)|\[(\w+)(?:([!*^$~|]?=)["\']?(.*?)["\']?)?\]|:([\w-]+)(?:\(["\']?(.*?)?["\']?\)|$)/';
+	/**
+	 * Pattern used to capture id from the single selector
+	 */
 	const pattern_id = "/#([\w-]+)/";
+	/**
+	 * Pattern to quick match and capture of id.
+	 * If selector is matched this regexp, no other
+	 * checks will be used.
+	 */
 	const pattern_quick_id = "/^#([\w-]+)$/";
 
-	//const pattern_tag = "/^(\w+|\*)/";
+	/**
+	 * Pattern used to check and capture tag name of a selector.
+	 */
 	const pattern_tag = "/^(\w+|\*)/";//tag
+	/**
+	 * Pattern to quick match and capture tag name.
+	 * If selector is matched this regexp, no other 
+	 * checks will be used.
+	 */
 	const pattern_quick_tag = "/^(\w+|\*)$/";//tag
-	//const pattern_splitter = "/\s*([+>~\s])\s*([a-zA-Z#.*:\[]*)/"	;
-	//const pattern_splitter = '/\s*([a-zA-Z#.*:\[]*)\s*([+>~\s])/'	;
-	const pattern_splitter = '/([^+>~\s]+)(\s*[+>~\s])?/'	;
+	
+	/**
+	 * Pattern, used to split selector rule on the single selectors and
+	 * capture combinator, used between two selectors.
+	 */
+	const pattern_splitter = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
 
+
+	/**
+	 * Pattern used to check and capture starts_with id value
+	 */
 	const pattern_starts_with = "/^%([\w-]+)/";
+	/**
+	 * Pattern used to quick match and capture starts_with id.
+	 * If selector is matched this regexp, no other checks will be 
+	 * performed.
+	 */
 	const pattern_quick_starts_with = "/^%([\w-]+)$/";
 	
-/*		$patterns = array(
-		"id"=> "/#([\w-]+)/",
-		"tag"=> "/^(\w+|\*)/",
-		"quick"=> "/^(\w+|\*)$/", //by tag name
-		"splitter"=> "/\s*([+>~\s])\s*([a-zA-Z#.*:\[]*)/",
-		"combined"=> $combined
-	);*/
+	/**
+	 * Array of parsed splitters (combinators)
+	 * @var array
+	 */
 	private $splitters = array();
+	/**
+	 * Cached value of splitters count
+	 * @var int
+	 */
     private $splitters_count = 0;
+	/**
+	 * Array of parsed selectors
+	 * @var array
+	 */
     private $selectors = array();
+	/**
+	 * Cached value of selectors count
+	 */
     private $selectors_count = 0;
-	private $iter = 0;
+	/**
+	 * Currently used index for iterable collections.
+	 * @var mixed
+	 */
 	private $index = null,
-			$scope = null
+	/**
+	 * Currently used scope for iterable collections.
+	 */
+	$scope = null
 			;
 
+	//{{{ __construct
 	function __construct($selectors = null,$index,$scope)
 	{
 		$this->index = $index;
@@ -392,12 +698,32 @@ class SelectorParser
 		if(isset($selectors))
 			$this->parse($selectors);
 	}
+	//}}}
+
+	//{{{ parse
+	/**
+	 * Parsing given selector rule: splitting into combinators and selectors, 
+	 * and parsing specified index and scope.
+	 *
+	 * @param string selector rule
+	 * @return null
+	 */
 	function parse($selector)
 	{
 		$this->splitSelectors(trim($selector));
         $this->processIndexScope();
 
 	}
+	//}}}
+
+	//{{{ processIndexScope
+	/**
+	 * Updates index and scope parameters for current
+	 * already parsed selector rule. 
+	 * 
+	 * @param null
+	 * @return null
+	 */
     function processIndexScope()
     {
 		if(($c = $this->selectors_count) > 0 &&
@@ -407,15 +733,48 @@ class SelectorParser
 			$this->selectors[$c-1]['pseudo_value'] = $this->index;
 			$this->selectors[$c-1]['scope'] = $this->scope;
 		}
-    }
+	}
+	//}}}
+
+	//{{{ setIndex
+	/**
+	 * Sets index parameter for current parsed selector rule.
+	 * 
+	 * @param mixed index
+	 * @return null
+	 */
     function setIndex($index)
     {
         $this->index = $index;
-    }
+	}
+	//}}}
+
+	//{{{ setScope
+	/**
+	 * Sets scope parameter for current parsed selector rule.
+	 *
+	 * @param string scope
+	 * @return null
+	 */
     function setScope($scope)
     {
         $this->scope = $scope;
-    }
+	}
+	//}}}
+
+	//{{{ splitSelectors
+	/**
+	 * Splits given selector rule into separate selectors and combinators.
+	 *
+	 * First of all it tries to quick match on pattern_quick_id, pattern_quick_starts_with,
+	 * and pattern_quick_tag regexps. If they've been completed successfully no other checks 
+	 * will be performed.
+	 *
+	 * Otherwise rule will be split on pattern_splitter and each part will be fully checked.
+	 *
+	 * @param string selector rule
+	 * @return null
+	 */
 	private function splitSelectors($selector)
 	{
 		if(preg_match(self::pattern_quick_id,$selector,$m))
@@ -425,38 +784,43 @@ class SelectorParser
 		if(preg_match(self::pattern_quick_tag,$selector,$m))
 		{$this->selectors['0']['tag'] = strtolower($m[1]) ; $this->selectors_count = 1; return;}
 
-		$i = 0;
-		$ret = preg_match_all(SelectorParser::pattern_splitter,$selector,$matches,PREG_SET_ORDER);
-		foreach($matches as $v)
+		$matches2 = preg_split(SelectorParser::pattern_splitter,$selector,0,PREG_SPLIT_DELIM_CAPTURE);
+		for($j = 0, $i = 0, $c = count($matches2);$j < $c; $j+=2)
 		{
+			if(empty($matches2[$j])) continue;
+
+			$selector = $matches2[$j];
+			$splitter = isset($matches2[$j+1])?$matches2[$j+1]:null;
+
 			$flag = 0;
-			if(empty($v[1]) && empty($v[2])) continue;
 
-			if(isset($v[2]))
-				$this->splitters[] = (trim($v[2]) === "")?" ":trim($v[2]);
+			if(!is_null($splitter))
+				$this->splitters[] = (trim($splitter) === "")?" ":trim($splitter);
 
-			if(preg_match(self::pattern_quick_id,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_quick_id,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['id'] = strtolower($m[1]) and $flag = 1;
-			if(preg_match(self::pattern_quick_starts_with,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_quick_starts_with,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['starts_with'] = strtolower($m[1]) and $flag = 1;
-			if(preg_match(self::pattern_quick_tag,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_quick_tag,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['tag'] = strtolower($m[1]) and $flag = 1;
 
-			if($flag) {$i++;continue;}
+			if($flag) {$i++; continue;}
 
-			if(preg_match(self::pattern_id,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_id,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['id'] = strtolower($m[1]) ;
 
-			if(preg_match(self::pattern_starts_with,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_starts_with,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['starts_with'] = strtolower($m[1]) ;
 
-			if(preg_match(self::pattern_tag,$v[1],$m) && !empty($m[1]))
+			if(preg_match(self::pattern_tag,$selector,$m) && !empty($m[1]))
 				$this->selectors[$i]['tag'] = strtolower($m[1]) ;
 
-			while(preg_match(self::pattern_combined,$v[1],$m) && !empty($m[0]))
+			while(preg_match(self::pattern_combined,$selector,$m))
 			{
-				$v[1] = str_replace($m[0],'',$v[1]);
-				$this->mylist($this->selectors[$i],array_values(array_slice($m,2)));
+				$selector = str_replace($m[0],'',$selector);
+				//unsetting captured \4 ie ' or " 
+				unset($m[4]);
+				$this->mylist($this->selectors[$i],array_values(array_slice($m,1)));
 				unset($m);
 			}
 			unset($m);
@@ -466,44 +830,92 @@ class SelectorParser
         $this->selectors_count = count($this->selectors);
         $this->splitters_count = count($this->splitters);
 	}
+	//}}}
+
+	//{{{ mylist
 	private function mylist(&$array1,$array2)
 	{
-		$attrs = array('attr','attr_quant','attr_value','pseudo','pseudo_value');
+		$attrs = array('class', 'attr','attr_quant','attr_value','pseudo','pseudo_value');
 		foreach(array_filter($array2,create_function('$var','return is_numeric($var) || !empty($var);')) as $k => $v)
 			$array1[$attrs[$k]] = strtolower($v);
 	}
-	public function getSelectors()
+	//}}}
+
+	//{{{ getSelectors
+	/**
+	 * Returns currently parsed selectors
+	 *
+	 * @param null
+	 * @return array of arrays of selector parameters
+	 */
+	function getSelectors()
 	{
 		return $this->selectors;
 	}
-	public function getSplitters()
+	//}}}
+
+	//{{{ getSplitters
+	/**
+	 * Returns currently parsed splitters
+	 *
+	 * @param null
+	 * @return array
+	 */
+	function getSplitters()
 	{
 		return $this->splitters;
 	}
+	//}}}
+
+	//{{{ getSelectorsCount
+	/**
+	 * Returns cached selectors count
+	 *
+	 * @param null
+	 * @return int
+	 */
 	function getSelectorsCount()
 	{
 		return $this->selectors_count;
 	}
+	//}}}
+
+	//{{{ getSplittersCount
+	/**
+	 * Returns cached splitters count
+	 */
 	function getSplittersCount()
 	{
 		return $this->splitters_count;
 	}
+	//}}}
+
+	//{{{ getParsedSelector
+	/**
+	 * Returns parsed selector by given index
+	 *
+	 * @param int index
+	 * @param array of parameters of the selector if it was found
+	 */
 	function getParsedSelector($ind = 0)
 	{
 		if($ind >=$this->selectors_count || $ind < 0) return array();
 		return $this->selectors[$ind];
 	}
+	//}}}
+
+	//{{{ getParsedSplitter
+	/**
+	 * Returns parsed splitter by given index
+	 *
+	 * @param int index
+	 * @return string splitter if it was found
+	 */
 	function getParsedSplitter($ind = 0)
 	{
 		if($ind > $this->splitters_count || $ind < 0) return array();
 		return $this->splitters[$ind];
 	}
+	//}}}
 }
-/*echo "=============================+";
-$s1 = new SelectorParser();
-$selector = "a#aaaa[href$=q]:nth-child(odd)> div:last-child ~ p#qqq:last-child > .input";
-$s1->parse($selector);
-var_dump($s1->getSelectors());
-var_dump($s1->getSplitters());*/
-
-?>
+//}}}
