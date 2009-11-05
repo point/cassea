@@ -26,54 +26,48 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+require("../includes/Boot.php");
 
-require("../includes/Controller.php");
+Boot::setupSession();
+Autoload::addVendor("captcha");
 $controller = Controller::getInstance();
-$c->registerStep(0);
+$controller->registerStep(0);
 $page = $controller->p2[0];
-		
-
 if(Config::getInstance()->captcha->type == 'static')
 {
     $s=Storage::create("__CAPTCHALIST__",2592000);
     $filenames = array();
     if (!$s->is_set("files")) 
-    //if (1) 
     {
-        for($i=1;$i<11;$i++)
+        for($i=1;$i<=Config::getInstance()->captcha->dirs_count;$i++)
         {
             $filenames[$i] = array_map(create_function('$e','$pi = pathinfo($e);return $pi["filename"];'),
                 glob(Config::get('root_dir').Config::getInstance()->captcha->dir."/{$i}/*.png"));
-        }
+		}
         $s->set("files",$filenames);
     }
     $filenames=$s->get("files");
     $s->close();
     unset($s);
     $st=Storage::createWithSession("_CAPTCHA_",60);    
-    $i=mt_rand(1,10);
-    $j=mt_rand(1,100);
+    $i=mt_rand(1,Config::getInstance()->captcha->dirs_count);
+	$j=mt_rand(0,Config::getInstance()->captcha->files_count-1);
     $path="/captcha/{$i}/{$filenames[$i][$j]}.png";
-
     $st->set("answer",$filenames[$i][$j]);
     $st->set("page",$page);
-
     header("Content-Type:image/png");
     header("X-Accel-Redirect:".$path);
     exit();
 }
 else
 {
-    //echo 1;
     $str = null;
-    $image = generateCAPTCHA($str);
+    $image=imagickCaptcha::generateCaptchaImg($str,Config::getInstance()->captcha->font_color,Config::getInstance()->captcha->background);
     $st=Storage::createWithSession("_CAPTCHA_",60);    
     $st->set("answer",$str);
     $st->set("page",$page);
-
-    header('Content-type:image/png');
+    header('Content-Type:image/png');
     echo $image;
     exit();
 }
-
 ?>

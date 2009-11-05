@@ -1873,12 +1873,6 @@ class Controller extends EventBehaviour
 
 			POSTErrors::flushErrors();
 
-			//TODO: move to vendor and use events
-			//
-			$this->restoreCAPTCHA();
-			if($this->captcha_name && !CAPTCHACheckAnswer($this->post->{$this->captcha_name}))
-				POSTErrors::addError($this->captcha_name,null,Language::message('widgets',"captcha_error"));
-
 			$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
 
 			POSTChecker::checkByRules($this->post,$this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
@@ -2080,19 +2074,6 @@ class Controller extends EventBehaviour
 	}
 	//}}}
 
-	// TODO: remove to vendors
-    function setCAPTCHA($captcha_input_name = null)
-    {
-        if(empty($captcha_input_name)) return;
-        $this->captcha_name = (string)$captcha_input_name;
-    }
-    protected function restoreCAPTCHA()
-    {
-		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
-        $this->captcha_name = $storage->get('captcha_name');
-		$storage->un_set('captcha_name');
-    }
-
 	// TODO: move to vendors and plugins
     public function addNotify($text){
         if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
@@ -2153,7 +2134,6 @@ class Controller extends EventBehaviour
 			$storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
-		    $storage->set('captcha_name',$this->captcha_name);
             POSTErrors::flushErrors();
         }
 

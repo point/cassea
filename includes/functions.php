@@ -157,13 +157,6 @@ function randStr($length)
     return $res;
 }
 
-function CAPTCHACheckAnswer($str)
-{
-    $s=Storage::createWithSession("_CAPTCHA_",60);    
-    if((strtoupper($str) === $s->get("answer"))&&(Controller::getInstance()->getPage() === $s->get("page"))) 
-        return true;
-    return false;
-}
 function getMime($file)
 {
     if(!file_exists($file)) return null;
@@ -182,6 +175,7 @@ function getMime($file)
 	}
 	return $mime;
 }
+
 function sizeFromString($size)
 {
 	if (is_null($size)) return 0;

@@ -215,7 +215,10 @@ class WForm extends WContainer
 		if(!isset($this->tpl))
 			$this->tpl = $this->createTemplate();
 
-		$controller = Controller::getInstance()->getDispatcher()->addEvent("have_valuechecker");	
+		Controller::getInstance()->getDispatcher()->addEvent("have_valuechecker");	
+		Controller::getInstance()->getDispatcher()->addEvent("echo_formid");	
+		Controller::getInstance()->getDispatcher()->addEvent("echo_form_signature");	
+
 
 		parent::buildComplete();
 	}    
@@ -233,6 +236,14 @@ class WForm extends WContainer
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->
 			addSubscriber("have_valuechecker",$this->getId());
+
+		$event = new WidgetEvent("echo_formid",$this->getId());
+        $event->setParams(array("formid"=>$this->getId()));
+        $controller->getDispatcher()->notify($event);
+
+		$event = new WidgetEvent("echo_form_signature",$this->getId());
+        $event->setParams(array("signature"=>$this->getSignature()));
+        $controller->getDispatcher()->notify($event);
 
         $this->checkAndSetData();
 
@@ -254,6 +265,10 @@ class WForm extends WContainer
 
 		if(strpos($this->getAction(),"http://") === false)
 			Controller::getInstance()->addSignature($this->getSignature());
+	    Controller::getInstance()->getDispatcher()->deleteSubscriber("echo_formid");
+	    Controller::getInstance()->getDispatcher()->deleteSubscriber("echo_form_signature");
+	    Controller::getInstance()->getDispatcher()->deleteEvent("echo_formid");
+	    Controller::getInstance()->getDispatcher()->deleteEvent("echo_form_signature");
 /*		$controller->dispatcher->deleteSubscriber("valuechecker_puttosubmit",$this->id);
 
 
@@ -319,9 +334,8 @@ class WForm extends WContainer
 	// {{{ 
 	function postRender()
 	{
-		$controller = Controller::getInstance();
-	    Controller::getInstance()->getDispatcher()->deleteEvent("have_valuechecker");
 	    Controller::getInstance()->getDispatcher()->deleteSubscriber("have_valuechecker",$this->getId());
+	    Controller::getInstance()->getDispatcher()->deleteEvent("have_valuechecker");
 		//$controller->dispatcher->deleteSubscriber("valuechecker_puttosubmit",$this->id);
 		
 		//$controller->getDispatcher->deleteEvent("valuechecker_getfunc");

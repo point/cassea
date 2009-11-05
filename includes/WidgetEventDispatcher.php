@@ -41,8 +41,8 @@ class WidgetEventDispatcher
 	{
 		if(!isset($event_name) || !is_scalar($event_name))
 			return;
-		$this->deleteEvent($event_name);
-		$this->deleteSubscriber($event_name);
+		/*$this->deleteEvent($event_name);
+        $this->deleteSubscriber($event_name);*/
 		$this->events[$event_name] = $event_name;
 	}
 	function addSubscriber($event, $widget_id)
@@ -60,12 +60,12 @@ class WidgetEventDispatcher
 	}
 	function deleteSubscriber($event,$widget_id = null)
 	{
-		if(!isset($event, $widget_id, $this->subscribers[$event]))
+		if(!isset($event, $this->subscribers[$event]))
 			return;
 		$flag = 0;
 		$count = count($this->subscribers[$event]);
 		if(!empty($this->subscribers[$event]))
-			if(!empty($widget_id))
+			if(isset($widget_id))
 			{
 				for($i = 0; $i < $count; $i++)
 					if($this->subscribers[$event][$i] == $widget_id)

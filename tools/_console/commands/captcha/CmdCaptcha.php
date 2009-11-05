@@ -28,7 +28,7 @@ class CmdCaptcha extends Command{
                 for($d = 1;$d < Config::getInstance()->captcha->dirs_count + 1;$d++)
                 {
                     mkdir($c_dir."/".$d);
-                    for($f = 1;$f < Config::getInstance()->captcha->files_count + 1;$f++)
+                    for($f = 0;$f < Config::getInstance()->captcha->files_count;$f++)
                     {
                         imagickCaptcha::generateCaptchaImg($str,$this->fontColor,$this->bgColor)->writeImage ($c_dir."/".$d.'/'.$str.'.png');
                         $filenames[$d][$f] = $str;

@@ -88,6 +88,7 @@ class WidgetEvent
 		return isset($this->event_params[$param_name])?
 			$this->event_params[$param_name]:null;
 	}
+    //TODO: __get and fluent interfaces
 }
 //}}}
 
