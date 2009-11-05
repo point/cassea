@@ -1,4 +1,4 @@
 <?php
 
-Autoload::addDir("inlinehtml");
-Controller::getInstance()->onAfterPageProcess(array("InlineHTML","processDOM"));
+Autoload::addVendor("inlinehtml");
+Controller::getInstance()->onBeforeBuildWidget = array("InlineHTML","processDOM");

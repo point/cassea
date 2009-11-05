@@ -92,7 +92,8 @@ class ResultSetPool
 	static function findMatched($widget_id)
 	{
         $flag = false;
-		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return false;
+		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null
+		|| $widget instanceof iNotSelectable) return false;
 
         if(($data_setter = $widget->getDataSetterMethod()) === null) return false;
 		foreach(self::$pool as $v)

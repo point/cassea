@@ -651,8 +651,9 @@ class Controller extends EventBehaviour
 	 * It includes block "b1" (may be optional) from the file "base.xml" and allows it only for group
 	 * "admin" (optional too).
 	 *
-	 * Triggers "BeforeExtendsLookup", "BeforeParentLookup", "BeforeExtending", "BeforeIncluding",
-	 * AfterProcess events. $this passed as 1st argument, $dom passed as 2nd parameter.
+	 * Triggers "BeforePageProcess", "BeforePageExtendsLookup", "BeforePageParentLookup", 
+	 * "BeforePageExtending", "BeforePageIncluding","AfterPageProcess" events. 
+	 * $this passed as 1st argument, $dom passed as 2nd parameter.
 	 *
 	 * @param DomDocument object to make transformation
 	 * @return DomDocument object that have been transofrmed
@@ -661,7 +662,7 @@ class Controller extends EventBehaviour
 	 */
     protected function processPage(DomDocument $dom)
     {
-		$this->trigger("BeforeProcessPage",array($this,$dom));
+		$this->trigger("BeforePageProcess",array($this,$dom));
 
         if(! $dom instanceof DOMNode || !isset($dom->firstChild))
             throw new ControllerException("XML document not valid");
@@ -671,7 +672,7 @@ class Controller extends EventBehaviour
         if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
         
 
-		$this->trigger("BeforeExtendsLookup",array($this,$dom));
+		$this->trigger("BeforPageExtendsLookup",array($this,$dom));
 
         // extends
         $adj_list = array($dom);
@@ -692,7 +693,7 @@ class Controller extends EventBehaviour
             $this->ie_files[] = $pp;
         }
 
-		$this->trigger("BeforeParentLookup",array($this,$dom));
+		$this->trigger("BeforePageParentLookup",array($this,$dom));
 
         // searching for <parent> blocks
         for($i = 1, $c = count($adj_list);$i < $c;$i++)
@@ -713,7 +714,7 @@ class Controller extends EventBehaviour
         }
         // extending
 
-		$this->trigger("BeforeExtending",array($this,$dom));
+		$this->trigger("BeforePageExtending",array($this,$dom));
 
         if(count($adj_list) > 1)
             for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
@@ -749,7 +750,7 @@ class Controller extends EventBehaviour
             $el->parentNode->removeChild($el);
         }
 
-		$this->trigger("BeforeIncluding",array($this,$dom));
+		$this->trigger("BeforePageIncluding",array($this,$dom));
 
         // include
         $node = $dom->getElementsByTagName("include");
@@ -801,7 +802,7 @@ class Controller extends EventBehaviour
             
         }
 
-		$this->trigger("AfterProcess",array($this,$dom));
+		$this->trigger("AfterPageProcess",array($this,$dom));
 
         return $dom;
     }
@@ -832,6 +833,7 @@ class Controller extends EventBehaviour
 		{
 			$el = $node->item(0);
 			$this->addPageHandler(simplexml_import_dom($el),true);
+			$el->parentNode->removeChild($el);
 		}
 
 		$node = $dom->getElementsByTagName("WDataSet");
@@ -948,7 +950,7 @@ class Controller extends EventBehaviour
 	 */
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
-		$this->trigger("BeforeBuildWidget",array($this,$elem,$system));
+		$this->trigger("BeforeBuildWidget",array($this,&$elem,$system));
 
 		if(($widget_name = WidgetLoader::load($elem->getName())) === false) return;
 

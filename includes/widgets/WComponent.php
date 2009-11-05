@@ -548,7 +548,7 @@ abstract class WComponent extends WObject
     */
     function checkAndSetData()
     {
-        if(!$this->getDataSetted())
+        if(!$this->getDataSetted() && !$this instanceof iNotSelectable)
         {
 		    $this->restoreMemento();
 		    DataRetriever::manageData($this->getId());
@@ -917,7 +917,8 @@ EOD;
 			/*foreach($this->getProperties() as $k)
 				$this->class_vars[] = $k;*/
 			$this->class_vars = $this->getProperties();
-		$this->createMemento();
+		if(!$this instanceof iNotSelectable)
+			$this->createMemento();
 	}
 	//}}}	
 
