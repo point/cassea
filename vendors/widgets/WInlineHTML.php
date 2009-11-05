@@ -3,7 +3,7 @@ WidgetLoader::load("WContainer");
 class WInlineHTML extends WContainer implements iNotSelectable
 {
 	protected 
-		$real_tagname = null,
+		$real_tagname = "div",
 		$use_cdata = false,
 		$attributes = array(),
 		$items = null,
@@ -70,7 +70,7 @@ class WInlineHTML extends WContainer implements iNotSelectable
 		$this->tpl->setParamsArray(array(
 				"attributes"=>implode(" ",$attr),
 				"real_tagname" => $this->real_tagname,
-				"content"=>(!empty($this->text))?$this->text:$this->items->generateAllHTML()
+				"content"=>(!empty($this->text))?$this->text:(isset($this->items)?$this->items->generateAllHTML():"")
 			));
 		parent::assignVars();
     }
