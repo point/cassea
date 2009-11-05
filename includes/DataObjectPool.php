@@ -86,7 +86,7 @@ class DataObjectPool
 		$wrs = new WidgetResultSet;
 		if(($widget = Controller::getInstance()->getWidget($widget_id)) === null) return $wrs;
 
-        if(($data_setter = $widget->getDataSetterMethod()) === null) return $wrs;
+        if(($data_setter = $widget->getDataSetterMethod()) === null || $widget instanceof iNotSelectable) return $wrs;
 		foreach(self::$pool as $v)
 		{
 			$d_o = $v['data_object'];
