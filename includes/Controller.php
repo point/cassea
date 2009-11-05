@@ -280,7 +280,6 @@ class Controller extends EventBehaviour
 		 * @var array
 		 */
 		$ie_files = array(), //included and extending files
-		$captcha_name = null,
 
 		/**
 		 * Storage object that holds notify messages
