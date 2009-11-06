@@ -48,7 +48,7 @@
  * @author point <alex.softx@gmail.com>
  * @author billy <alexey.mirniy@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id: $
+ * @version $Id: Controller.php 184 2009-11-05 15:14:47Z point $
  * @package system
  * @since 
  */
@@ -1540,7 +1540,7 @@ class Controller extends EventBehaviour
 	 * link to css  will be wrapped into conditional comment. For example
 	 * 
 	 * <pre><code>
-	 * $controller->addCSS("ie.css","IE", "screen, projection", 20);
+	 * $controller->addCSS("ie.css","IE", 20, "screen, projection");
 	 * </code></pre>
 	 *
 	 * will produce
@@ -1566,9 +1566,9 @@ class Controller extends EventBehaviour
 	 * @param numeric position priority. Default is 10.
 	 * @see addScript
 	 */
-	function addCSS($src = null,$cond = null,$media = null,$priority = 10)
+	function addCSS($src = null,$cond = null,$priority = 10,$media = null)
 	{
-		$this->trigger("BeforeAddCSS",array($this,$src,$cond,$media, $priority));
+		$this->trigger("BeforeAddCSS",array($this,$src,$cond, $priority,$media));
 
 		if(empty($src)) return;
 

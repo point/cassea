@@ -29,7 +29,7 @@
 
 
 //
-// $Id$
+// $Id: WCSS.php 128 2009-07-08 13:54:15Z point $
 //
 WidgetLoader::load("WComponent");
 //{{{ WCSS
@@ -106,7 +106,7 @@ class WCSS extends WComponent
 	function buildComplete()
 	{
         if(isset($this->src))
-            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getMedia(),$this->getPriority());
+            Controller::getInstance()->addCSS($this->getSrc(),$this->getCond(),$this->getPriority(),$this->getMedia());
 
         parent::buildComplete();
     }
