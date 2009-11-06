@@ -38,15 +38,49 @@
  */
 
 //{{{ Storage
+/**
+ * This class introduce factory method for creating persistent storage.
+ * It hides implementation and initialization behind create and
+ * createWithSession methods.
+ */
 class Storage 
 {
+	/**
+	 * Cached name of the class to instantiate.
+	 */
 	private static $classname = null;
 
+	//{{{ init
+	/**
+	 * Initialize storage-subsystem. Class to be used as
+	 * a storage engine is choosed on the base of config file.
+	 *
+	 * So, if in config string <code>storage_engine='foo'</code> 
+	 * exists, file/class FooStorage will be looked up 
+	 * int the vendors/storage directory.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	static function init(){
 		$storageEngine = Config::get('STORAGE_ENGINE');
 		self::$classname = nameToClass($storageEngine).'Storage';
 		Autoload::addVendor('storage', $storageEngine);
 	}
+	//}}}
+
+	//{{{ create
+	/**
+	 * Creates new instance of specified storage. 
+	 *
+	 * If storage-subsystem wasn't inited, it will be lazy loaded.
+	 *
+	 * @param string unique storage name. Used to prevent mixning of 
+	 * keys, that stored in the storage.
+	 * @param int time-to-live for the keys and values.
+	 * @return iStorageEngine 
+	 * @see createWithSession
+	 */
 	static function create($storage_name,$ttl = null)
 	{
 		if(!isset(self::$classname))
@@ -56,9 +90,24 @@ class Storage
 			throw new CasseaException("Select proper storage engine using storage_engine variable at config.ini");
 		return $o;
 	}
+	//}}}
+
+	//{{{ createWithSession
+	/**
+	 * Same as {@link create} but storage with given name will be unique 
+	 * for each user. It's achieving by mixnig session id to the storage name.
+	 * @param string unique storage name. Used to prevent mixning of 
+	 *
+	 * keys, that stored in the storage.
+	 * @param int time-to-live for the keys and values.
+	 * @return iStorageEngine 
+	 * @see create
+	 */
 	static function createWithSession($storage_name,$ttl = null)
 	{
 		return self::create($storage_name.Session::getId(),$ttl);
 	}
-}// }}}
+	//}}}
+}
+//}}}
 ?>
