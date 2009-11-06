@@ -31,9 +31,17 @@
 
 class StringProcessorFactory
 {
+	static protected $instance = null;
+
+	static function getInstance()
+	{
+		if(!isset(self::$instance))
+			self::$instance = new StringProcessor();
+		return self::$instance;
+	}
     static function create($str)
     {
-        $o = new StringProcessor;
+        $o = clone self::getInstance();
         if(empty($str)) return $o;
 
         $processors = explode("|",$str);
