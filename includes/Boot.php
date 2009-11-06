@@ -63,11 +63,6 @@ else Config::init(new IniDBConfig("config.ini","config"));
  */
 Autoload::init();
 
-/** 
- * Init server-side persistent storage. Type of storage defined in configuration file
- */
-Storage::init();
-
 /**
  * Connect to database. All parameters defined in configuration file
  */

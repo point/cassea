@@ -26,11 +26,21 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+/**
+ * This file contains class for managing and check user's rights.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @author billy <a.mirniy@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
-// {{{ Storage
+//{{{ Storage
 class Storage 
 {
-	private static $classname;
+	private static $classname = null;
 
 	static function init(){
 		$storageEngine = Config::get('STORAGE_ENGINE');
@@ -39,7 +49,12 @@ class Storage
 	}
 	static function create($storage_name,$ttl = null)
 	{
-		return new self::$classname($storage_name, $ttl);
+		if(!isset(self::$classname))
+			self::init();
+		$o = new self::$classname($storage_name, $ttl);
+		if(!$o instanceof iStorageEngine)
+			throw new CasseaException("Select proper storage engine using storage_engine variable at config.ini");
+		return $o;
 	}
 	static function createWithSession($storage_name,$ttl = null)
 	{
