@@ -153,8 +153,11 @@ class DataObjectParams
 			{
 
 				$total_count = count($controller->p2);
-				if(isset($param['offset']) && (int)$param['offset'] > 0)
-					$p2_cursor = (int)$param['offset'];
+				if(isset($param['offset']))
+					if((int)$param['offset'] > 0)
+						$p2_cursor = (int)$param['offset'];
+					elseif((int)$param['offset'] < 0)
+						$p2_cursor = max(0,$total_count - abs((int)$param['offset']));
 
 				$c = 1;
 				if(isset($param['count']))
@@ -166,13 +169,13 @@ class DataObjectParams
 
 				if(isset($param['as']) && $param['as'] == "array")
 				{
-					$this->params[] = Filter::apply($p,(string)$param->filter);
+					$this->params[] = isset($param->filter)?Filter::apply($p,(string)$param->filter):$p;
 					$this->params_from[] = "p2";
 				}
 				else
 					foreach($p as $_p)
 					{
-						$this->params[] = Filter::apply($_p,(string)$param->filter);
+						$this->params[] = isset($param->filter)?Filter::apply($_p,(string)$param->filter):$_p;
 						$this->params_from[] = "p2";
 					}
 			}
