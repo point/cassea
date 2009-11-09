@@ -44,7 +44,8 @@ class SingleLanguageProcessor implements iLanguageProcessor
 	function encodePair($value){ return $value;}
 	function getConst($key){ return $key;}
 	function getLangList($raw = false){
-		return array($this->currentName);
+		$a=array($this->currentName => 0);
+		return $raw?$a:array_values($a);
 	}
 
 
