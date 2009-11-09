@@ -485,7 +485,7 @@ class IniConfig extends ConfigBase
 	function checkCache()
 	{
 		$synced = false;
-		$fp = fopen($this->filename, 'r');
+		if(($fp = fopen($this->filename, 'r')) === false) return false;
 		if(flock($fp, LOCK_SH))
 		{
 			$config_stat = stat($this->filename);
@@ -512,7 +512,7 @@ class IniConfig extends ConfigBase
 	{
 		if(!$this->checkCache())
 		{
-			$fp = fopen($this->rd.self::CONFIG_CACHE_FILE,"a");
+			if(($fp = fopen($this->rd.self::CONFIG_CACHE_FILE,"a")) === false) return;
 			if(flock($fp,LOCK_EX))
 			{
 				ftruncate($fp,0);
