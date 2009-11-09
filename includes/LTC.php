@@ -49,14 +49,17 @@ class LTC
 
 	static function insert($key, $value, $language = null) 
 	{
+		$local_populate = true;
 		if($language === null)
 			$language = Language::current();
+		else $local_populate = false;
+
 		$key = Filter::apply($key,Filter::STRING_QUOTE_ENCODE);
 		$value = Filter::apply($value, Filter::STRING_QUOTE_ENCODE);
 
 		$insert_id = DB::query("insert into ".self::TABLE." set language='{$language}', `key`='{$key}', value='{$value}'");
 		
-		if(self::$populate_on_insert === true)
+		if(self::$populate_on_insert === true && $local_populate)
 		{
 			$stmt = DB::getStmt("insert into ".self::TABLE." set id=?, language=?, `key`=?, value=?",'isss');
 			foreach(Language::getLangList() as $c_lang)
@@ -72,7 +75,7 @@ class LTC
 			$language = Language::current();
 		$id = Filter::apply($id,Filter::INT);
 		$key = Filter::apply($key,Filter::STRING_QUOTE_ENCODE);
-		$value = Filter::apply($valuem, Filter::STRING_QUOTE_ENCODE);
+		$value = Filter::apply($value, Filter::STRING_QUOTE_ENCODE);
 
 		DB::query("update ".self::TABLE." set value='{$value}' where id='{$id}' and language='{$language}' and `key`='{$key}' ");
 	}
@@ -101,16 +104,32 @@ class LTC
 
 	static function remove($id,$key,$language = null)
 	{
+		$local_populate = true;
 		if($language === null)
 			$language = Language::current();
+		else
+			$local_populate = false;
+
 		$id = Filter::apply($id,Filter::INT);
 		$key = Filter::apply($key,Filter::STRING_QUOTE_ENCODE);
 
 		DB::query("delete from ".self::TABLE." where id='{$id}' and `key`='{$key}' ".
-			self::$populate_on_delete!==true?" and language='{$language}' limit 1":"");
+			((self::$populate_on_delete!==true || !$local_populate)?" and language='{$language}' limit 1":""));
 	}
 }
 // }}}
-//require("Boot.php");
-//Boot::setupLanguage();
+
+/* TESTING
+require("Boot.php");
+Boot::setupLanguage();
+
+LTC::$populate_on_delete = false;
+
+$id = LTC::insert("key","value'\"`qa");
+print_pre(LTC::get($id,'key'));
+LTC::set($id,'key','value2');
+print_pre(LTC::get($id,'key'));
+print_pre(LTC::getForAllLaguages($id,'key'));
+LTC::remove($id,'key');
+*/
 ?>
