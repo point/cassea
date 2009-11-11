@@ -53,7 +53,7 @@ class Storage
 	//{{{ init
 	/**
 	 * Initialize storage-subsystem. Class to be used as
-	 * a storage engine is choosed on the base of config file.
+	 * a storage engine is chosen on the base of config file.
 	 *
 	 * So, if in config string <code>storage_engine='foo'</code> 
 	 * exists, file/class FooStorage will be looked up 
@@ -75,7 +75,7 @@ class Storage
 	 *
 	 * If storage-subsystem wasn't inited, it will be lazy loaded.
 	 *
-	 * @param string unique storage name. Used to prevent mixning of 
+	 * @param string unique storage name. Used to prevent mixing of 
 	 * keys, that stored in the storage.
 	 * @param int time-to-live for the keys and values.
 	 * @return iStorageEngine 
@@ -95,8 +95,8 @@ class Storage
 	//{{{ createWithSession
 	/**
 	 * Same as {@link create} but storage with given name will be unique 
-	 * for each user. It's achieving by mixnig session id to the storage name.
-	 * @param string unique storage name. Used to prevent mixning of 
+	 * for each user. It's achieving by mixing session id to the storage name.
+	 * @param string unique storage name. Used to prevent mixing of 
 	 *
 	 * keys, that stored in the storage.
 	 * @param int time-to-live for the keys and values.

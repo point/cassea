@@ -27,21 +27,82 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id:$
+/**
+ * This file contains class for managing and check user's rights.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
+//{{{ StringProcessorFactory
+/**
+ * This class used to retrieve StringProcessor to process 
+ * text.
+ * 
+ * It might be used from XML file, processing text at the last 
+ * phase of rendering. 
+ * It also supports pipe-processing. Arguments which should be
+ * passed to StringProcessor are specified, delimiting by 
+ * whitespaces.
+ *
+ * For example:
+ * <pre><code>
+ * <WText process="trim | append 'qwe qwe' true"> Text </WText>
+ * </code></pre>
+ *
+ * Will return string " Text ", trimmed and with append string
+ * "qwe qwe" with preceding string "qwe qwe" and a whitespace. 
+ * So, the result will be: "qwe qwe Text".
+ *
+ * Holden StringProcessor might be extended by plugins. 
+ * Typical use-case is:
+ * <pre><code>
+ * StringProcessorFactory::getInstance()->foo = create_function(......);
+ * </code></pre>
+ * So, you can use it in XML.
+ * <pre><code>
+ * <WText process="trim | foo"> Text </WText>
+ * </code></pre>
+ *
+ */
 class StringProcessorFactory
 {
+	/**
+	 * Cached singleton instance of StringProcessor
+	 */
 	static protected $instance = null;
 
-	static function getInstance()
+	//{{{ getProcessorInstance
+	/**
+	 * Sigleton method, returning StringProcessor instance.
+	 * @param null
+	 * @return StringProcessor instance
+	 */
+	static function getProcessorInstance()
 	{
 		if(!isset(self::$instance))
 			self::$instance = new StringProcessor();
 		return self::$instance;
 	}
+	//}}}
+
+	//{{{ create
+	/**
+	 * Creates and configure StringProcessor instance 
+	 * with the processors, represented by the $str.
+	 *
+	 * Passing string "true" or "null" as a parameter will be converted 
+	 * to PHP true and PHP null values respectively.
+	 *
+	 * @param string piped processor. I.e "trim | append 'qwe qwe' true"
+	 * @return StringProcessor instance for futher processing
+	 */
     static function create($str)
     {
-        $o = clone self::getInstance();
+        $o = clone self::getProcessorInstance();
         if(empty($str)) return $o;
 
         $processors = explode("|",$str);
@@ -56,9 +117,11 @@ class StringProcessorFactory
                     $p2[] = trim($p1[$i]);
                 else
                     $p2 = array_merge($p2,explode(" ",trim($p1[$i])));
-            foreach($p2 as &$v) if($v === "null") $v = null;
+            foreach($p2 as &$v) if($v === "null") $v = null; elseif($v === "true") $v = true;
             $o->addProcessor($p2[0],array_slice($p2,1));
         }
         return $o;
     }
+	//}}}
 }
+//}}}
