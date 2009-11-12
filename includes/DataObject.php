@@ -112,7 +112,13 @@ abstract class DataObject
 		 * Created object to manipulate with.
 		 * @var  stdClass&
 		 */
-		$object = null
+		$object = null,
+
+		/**
+		 * Registry name to store created object with.
+		 */
+		$registry_name = null
+
 		;
 	/**
 	 * Need to indicated whenever classes have already been required.
@@ -200,6 +206,9 @@ abstract class DataObject
 
 			$this->finalize_params = new DataObjectParams($elem->finalize);		
         }
+		
+		if(isset($elem['registry']))
+			$this->registry_name = (string)$elem['registry'];
 	}
 	//}}}
 
@@ -251,6 +260,11 @@ abstract class DataObject
 	 */
 	function createObject()
 	{
+		if(isset($this->registry_name) && DataObjectRegistry::exists($this->registry_name))
+		{
+			$this->object = DataObjectRegistry::get($this->registry_name);
+			if($this->object !== null) return true;
+		}
         $this->requireClasses();
 
 		try{
@@ -284,6 +298,9 @@ abstract class DataObject
 				else 
                     $this->object = $r->newInstance();
         }catch(ReflectionException $e){ return false;}
+
+		if(isset($this->registry_name))	
+			DataObjectRegistry::set($this->registry_name,$this->object);
         return $this->object !== null;
 	}
 	//}}}
