@@ -740,6 +740,8 @@ class Controller extends EventBehaviour
 
             }
 
+		$this->trigger("BeforePageClearingBlocks",array($this,$dom));
+
         // clean up from <block>
         $node_list = $dom->getElementsByTagName('block');
         for($i = 0, $c = $node_list->length; $i < $c; $i++)
