@@ -562,7 +562,7 @@ class IniDBConfig extends IniConfig
         try
         {
         foreach(DB::query("select * from ".self::TABLE_NAME) as $v)
-            $this->table_data[$v['key']] = $v['value'];
+            $this->table_data[strtolower($v['key'])] = $v['value'];
         }catch(DBConnectException $e) {}
 	}
 	//}}}
