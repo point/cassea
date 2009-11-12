@@ -81,6 +81,7 @@ class Language{
 		return vsprintf($val, $data);
 	}
 
+	static function isDefault() { return self::$processor->isDefault();}
 	static function current(){ return self::$processor->current();}
 	static function currentName(){return self::$processor->currentName();}
 	static function encodePair($value){ return self::$processor->encodePair($value);}
