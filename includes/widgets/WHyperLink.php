@@ -29,7 +29,7 @@
 
 
 //
-// $Id$
+// $Id: WHyperLink.php 119 2009-06-18 13:43:44Z point $
 //
 WidgetLoader::load("WContainer");
 //{{{ WHyperLink
@@ -231,7 +231,7 @@ class WHyperLink extends WContainer implements iStringProcessable
     {
         $this->checkAndSetData();
 
-        if(isset($this->subst_href) && isset($this->href))
+		if(isset($this->subst_href)/* && isset($this->href)*/)
             $this->setHREF(sprintf($this->getSubstHREF(),$this->getHREF()));
 
         if(($this->getHREF() ==' ' || empty($this->href) || $this->getHREF()=='#') && $this->getClearLink())
@@ -365,7 +365,8 @@ class WHyperLink extends WContainer implements iStringProcessable
     {
 		if(!isset($subst_href) || !is_scalar($subst_href)) 
 			return ;
-		$this->subst_href = (string)$subst_href;
+		$this->subst_href = preg_replace("/(\/?)(?<!%)%l/",Language::isDefault()?"":"\\1".Language::currentName(),(string)$subst_href);;
+		$this->subst_href = preg_replace("/(?<!%)%L/",Language::currentName(),$this->subst_href);;
     }
     // }}}
     

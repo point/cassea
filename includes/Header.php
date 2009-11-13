@@ -536,7 +536,7 @@ GO;
 		$r = '';
         // DOCTYPE
 		$r .= $this->predefine_doctypes[$this->doctype]."\n";
-        $r.= "<html><head>\n";        
+        $r.= "<html".(substr($this->doctype,0,5) == "xhtml"?' xmlns="http://www.w3.org/1999/xhtml"':'').">\n<head>\n";        
 
         // title
         $t = $this->getTitle();

@@ -217,7 +217,7 @@ class DelayedJob{
      * @return int unix timestamp
      */
     public function getAt(){return $this->at;}
-    //}}}
+     //}}}
     
     //{{{getAtSys   
     /**
@@ -228,7 +228,7 @@ class DelayedJob{
 	{
 		return date("H:i m/d/y ",$this->getAt());  
 	}
-    //}}}
+     //}}}
 
     //{{{getHandler
     /**
@@ -297,19 +297,17 @@ class DelayedJob{
 
         if(empty($this->at))
         {
-			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values('".$this->getPriority().
-				"' , '".serialize($this->getHandler())."' , now() ,'".$this->getQueue()."' , '".
-				$this->getAttempts()."')";
-            DB::query($sql);
+			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values( ? , ? , now() , ? , ?)";
+			$stmt=DB::getStmt($sql,'issi');
+			$stmt->execute(array($this->getPriority(),serialize($this->getHandler()),$this->getQueue(),$this->getAttempts()));
             $this->log("### ".date("c")." Call the JobHandler.php".PHP_EOL);
             exec($php_path.' '.trim(escapeshellarg(dirname(__FILE__)."/JobHandler.php"),"'").' >> '.$this->logFile.' 2>&1 &');
         }
         else
         {
-			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values('".
-				$this->getPriority()."' , '".serialize($this->getHandler())."' , 'FROM_UNIXTIME(".$this->getAt().")' , '".
-				$this->getQueue()."' , '".$this->getAttempts()."')";
-            DB::query($sql);
+			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values(? , ? , FROM_UNIXTIME(?) , ? , ? )";
+			$stmt=DB::getStmt($sql,'isisi');
+			$stmt->execute(array($this->getPriority(),serialize($this->getHandler()),$this->getAt(),$this->getQueue(),$this->getAttempts()));
             $this->log("### ".date("c")." Call command at for the JobHandler.php".PHP_EOL);
             exec('echo "'.$php_path.' '.trim(escapeshellarg(dirname(__FILE__).'/JobHandler.php'),"'").' 2>&1 >> '.$this->logFile.' " | at '.$this->getAtSys());
         }
