@@ -292,7 +292,7 @@ class HTTPParamHolder implements IteratorAggregate
 	 */
 	private function checkUTF8InArray(&$v)
 	{
-		foreach($v as $k2=>$v2)
+		foreach($v as $k2=>&$v2)
 		{
 			if(!mb_check_encoding($k2,"UTF8"))
 				unset($v[$k2]);
@@ -301,6 +301,7 @@ class HTTPParamHolder implements IteratorAggregate
 			elseif(!mb_check_encoding($v2,"UTF8"))
 				unset($v[$k2]);
 		}
+		return true;
     }
 	//}}}
 }
