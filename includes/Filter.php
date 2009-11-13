@@ -181,7 +181,7 @@ class Filter
 				{
 					$ret = $var;
 					foreach($ret as $k => &$v)
-						$v = self::filter($v,self::INT);
+						$v = self::apply($v,self::INT);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
 				if(empty($ret)) $ret = null;
@@ -196,7 +196,7 @@ class Filter
 				{
 					$ret = $var;
 					foreach($ret as $k => &$v)
-						$v = self::filter($v,self::FLOAT);
+						$v = self::apply($v,self::FLOAT);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
 				if(empty($ret)) $ret = null;
@@ -211,7 +211,7 @@ class Filter
 				{
 					$ret = $var;
 					foreach($ret as $k => &$v)
-						$v = self::filter($v,self::DOUBLE);
+						$v = self::apply($v,self::DOUBLE);
                     $ret = array_filter($ret,create_function('$v','return $v !== null;'));
 				}
 				if(empty($ret)) $ret = null;
@@ -283,7 +283,7 @@ class Filter
 			case self::ARRAY_INT_KEYS:
 				if(!is_array($var)) return;
 				$ret0 = array();
-				foreach(self::filter(array_keys($var), self::ARRAY_INT) as $k)
+				foreach(self::apply(array_keys($var), self::ARRAY_INT) as $k)
 					$ret0[$k] = $var[$k];
 				if(!empty($ret0)) $ret = $ret0;
 				unset($ret0);
