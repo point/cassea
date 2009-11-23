@@ -1741,8 +1741,25 @@ class Controller extends EventBehaviour
 			$n_get2[] = rawurlencode($k)."=".rawurlencode($v);
 		unset($n_get);
 
-		//if(Language::isDefault($lang) || strlen($lang) != 2 )
-		//	$lang = null;
+		if(is_null($lang))
+		{
+			if(!Language::isDefault())
+				$lang = Language::currentName();
+		}
+		elseif(is_string($lang))
+		{
+			$t = Language::getLangList(true);
+			$lang_id = isset($t[$lang])?$t[$lang]:null;
+			if(Language::isDefault($lang_id))
+				$lang = null;
+		}
+		elseif(is_numeric($lang))
+		{
+			if(Language::isDefault($lang))
+				$lang = null;
+			else $lang = Language::getLangName($lang);
+		}
+
 		
 		return Header::makeHTTPHost(). 
 			((!empty($lang))?"/".$lang:"").

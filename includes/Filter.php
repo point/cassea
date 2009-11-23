@@ -63,7 +63,7 @@ class Filter
 	const STRING_QUOTE = 9;
 	const STRING_ENCODE = 10;
 	const STRING_QUOTE_ENCODE = 11;
-	const STRING_QUOTE_ENCODE_PARTIALY = 12;
+	//const STRING_QUOTE_ENCODE_PARTIALY = 12; remove from code
 	const DOUBLE = 13;
 	const ARRAY_DOUBLE = 14;
 	const ARRAY_FLOAT = 15;
@@ -105,7 +105,7 @@ class Filter
 	}
 	//}}}
 
-	//{{{ filter
+	//{{{ apply 
 	/**
 	 * Makes filtering of given value, applying specified rule.
 	 *

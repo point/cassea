@@ -135,7 +135,7 @@ abstract class SessionBase
         return Filter::apply($strIP,Filter::STRING_QUOTE_ENCODE);
     }// }}}
 
-   // {{{ getUserIP
+   // {{{ getIP
     /**
     * get client ip.
     * Return string like "151.2.41.55". ip2long of it !== false anytime

@@ -286,7 +286,7 @@ class ConfigBase implements IteratorAggregate
  * <pre><code>
  * define("CONFIG","new_config.ini");
  * </code></pre>
- * In this case, file <root_dir>/new_config.ini will be used.
+ * In this case, file <code><root_dir>/<Config::CONFIG_DIR>/new_config.ini</code> will be used.
  * </li>
  * <li>Base section has name "base" and all default values are placed here.</li>
  * <li>Top hierarchy section has name "config". Values in this section overrides all other values.
@@ -342,7 +342,7 @@ class IniConfig extends ConfigBase
 	function __construct($filename, $section = null,  $inherit_separator = ":")
     {
         $_r = (!empty($_SERVER['DOCUMENT_ROOT']) && is_readable($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
-		if(empty($filename) || !file_exists($_r) || !file_exists($this->filename = $_r.self::CONFIG_DIR."/".$filename))
+		if(!is_file($this->filename = $_r.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
 		if(!isset($inherit_separator))
@@ -473,7 +473,7 @@ class IniConfig extends ConfigBase
     }
 	//}}}
 	
-	//{{{
+	//{{{ checkCache
 	/**
 	 * It cheks if config.cache file is valid to be used.
 	 * This checks are based on the modtification times and
@@ -491,7 +491,7 @@ class IniConfig extends ConfigBase
 			$config_stat = stat($this->filename);
 			$config_cache_stat = @stat($this->rd.self::CONFIG_CACHE_FILE);
 			if(!empty($config_stat) && !empty($config_cache_stat) 
-				&& $config_stat['mtime'] == $config_cache_stat['mtime'] 
+				&& $config_stat['mtime'] <= $config_cache_stat['mtime'] 
 				&& $config_cache_stat['size'] > 30)
 				$synced = true;
 			flock($fp,LOCK_UN);
@@ -527,6 +527,17 @@ class IniConfig extends ConfigBase
 		}
 	}
 	//}}}
+	// {{{ getParsedFilename
+	/**
+	 * Getter for <code>$this->filename</code> property.
+	 *
+	 * At now method should be use to modify configuration file.
+	 *
+	 * @return string 
+	 */
+	function getParsedFilename(){
+		return $this->filename;
+	}// }}}
 }
 //}}}
 

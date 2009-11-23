@@ -182,7 +182,7 @@ class File extends FileSystemObject implements iFile{
         }
         elseif($target instanceof File){
             if (is_dir($target)) throw new FileSystemException('Expecting file as target, given directory:'.$target);
-            $td = new Dir($target->getPath());
+            $td = $target->getParent();
             $tFile = $target;
         }
         else throw new FileSystemException('Undefined object type');

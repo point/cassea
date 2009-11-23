@@ -246,5 +246,22 @@ function moveDown($table,$priority_field,$id_field,$id,$priority=null)
 function nameToClass($name){
 	return strtoupper(substr($name,0,1)).substr($name,1);
 }
-
+//http://php.net/manual/en/function.str-word-count.php
+define("WORD_COUNT_MASK", "/\p{L}[\p{L}\p{Mn}\p{Pd}'\x{2019}]*/u");
+function str_word_count_utf8($string, $format = 0)
+{
+	switch ($format) {
+	case 1:
+		preg_match_all(WORD_COUNT_MASK, $string, $matches);
+		return $matches[0];
+	case 2:
+		preg_match_all(WORD_COUNT_MASK, $string, $matches, PREG_OFFSET_CAPTURE);
+		$result = array();
+		foreach ($matches[0] as $match) {
+			$result[$match[1]] = $match[0];
+		}
+		return $result;
+	}
+	return preg_match_all(WORD_COUNT_MASK, $string, $matches);
+}
 ?>

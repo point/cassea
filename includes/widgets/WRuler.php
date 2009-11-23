@@ -29,7 +29,7 @@
 
 
 //
-// $Id$
+// $Id: WRuler.php 172 2009-10-27 11:57:52Z point $
 //
 //{{{ WRuler 
 class WRuler extends WContainer
@@ -107,7 +107,7 @@ class WRuler extends WContainer
 			$this->setMaxResPerPage((string)$elem['max_res_per_page']);
 
 		if(($c_rpp = Controller::getInstance()->get->{$this->getId()."_rpp"}) !== null)
-			$this->setResPerPage($c_rpp);
+			$this->setResPerPage($c_rpp,true);
 		elseif(isset($elem['res_per_page']))
 	       	$this->setResPerPage((string)$elem['res_per_page']);
 		if(isset($elem['links_per_page']))
@@ -192,11 +192,14 @@ class WRuler extends WContainer
     * @param    int $res_per_page    
     * @return   void
     */
-    function setResPerPage($res_per_page)
+    function setResPerPage($res_per_page,$limit_to_max_res_per_page = false)
     {
 		if(!isset($res_per_page) || $res_per_page < 1)
 			return;
-		$this->res_per_page = min($this->getMaxResPerPage(), abs(0 + $res_per_page));
+		if($limit_to_max_res_per_page)
+			$this->res_per_page = min($this->getMaxResPerPage(), abs(0 + $res_per_page));
+		else
+			$this->res_per_page = abs(0 + $res_per_page);
     }
     // }}}
     // {{{ getResPerPage 

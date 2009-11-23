@@ -2,7 +2,7 @@
 require_once("FeedData.php");
 require_once("RSSFeed.php");
 require_once("AtomFeed.php");
-Autoload::addVendorDir("gCurl");
+Autoload::addVendor("gCurl");
 class Grabber
 {
     

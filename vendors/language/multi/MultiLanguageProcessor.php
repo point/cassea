@@ -41,9 +41,9 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
     // {{{ init
     public function init(){
         if (Config::getInstance()->language->cache_langs)
-            self::$langs_cache = Storage::create('__Language::list__');
+            self::$langs_cache = Storage::create('__Language::list1__');
         if (Config::getInstance()->language->cache_consts)
-            self::$const_cache = Storage::create('__Language::consts__');
+            self::$const_cache = Storage::create('__Language::consts1__');
 
 		if (!isset(self::$langs_cache['__default__']) || !isset(self::$langs_cache['__list__']) ){
 			try{
@@ -67,37 +67,65 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
     }// }}}
 
     // {{{ determine
-    private static function determine(){
-        $GETLang = isset($_GET['__lang'])? $_GET['__lang']: false;
-        if (isset(self::$langs_cache[$GETLang])) self::$current = self::$langs_cache[$GETLang];
-        elseif(isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && is_string($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-        {
-            $languages = strtolower(Filter::apply($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
-            //$languages = 'ru;q=0.5, fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
-            $languages = str_replace( ' ', '', $languages );
-            $languages = explode( ",", $languages );
-            foreach($languages as $l ){
-                if (strpos($l,';')) list($ln, $q) = explode(';', $l);
-                else list($ln, $q) = array($l, 'q=1');
-                $ll[substr($ln,0, 2)] = 0.0 + substr($q, 2);
-            }
-            asort($ll, SORT_NUMERIC);
-            foreach($ll as $l => $q) if (isset(self::$langs_cache[$l])) self::$current = self::$langs_cache[$l];
-        }
-        if (is_null(self::$current)) self::$current = self::$langs_cache['__default__'];
-    }//}}}
+	private static function determine(){
+		$acLang = self::parseAcceptLanguage();
+		if (is_array($acLang)) self::$langs_cache['__default__'] =  self::$langs_cache[$acLang[0]];
+		$GETLang = isset($_GET['__lang'])? $_GET['__lang']: false;
+		if (isset(self::$langs_cache[$GETLang])) self::$current = self::$langs_cache[$GETLang];
+		if (is_null(self::$current)) self::$current = self::$langs_cache['__default__'];
+	}//}}}
+
+	// {{{ parseAcceptLanguage
+	/**
+	 *
+	 */ 
+	static function parseAcceptLanguage(){
+		if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) || !is_string($_SERVER['HTTP_ACCEPT_LANGUAGE'])) return false;
+
+		$languages = strtolower(Filter::apply($_SERVER['HTTP_ACCEPT_LANGUAGE'],Filter::STRING_QUOTE_ENCODE));
+		//$languages = 'ru;q=0.5, fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
+		$languages = str_replace( ' ', '', $languages );
+		$languages = explode( ",", $languages );
+		$ll = array();
+		foreach($languages as $l ){
+			if (strpos($l,';')) list($ln, $q) = explode(';', $l);
+			else list($ln, $q) = array($l, 'q=1');
+			$ll[substr($ln,0, 2)] = 0.0 + substr($q, 2);
+		}
+		arsort($ll, SORT_NUMERIC);
+		foreach($ll as $l => $q) if (isset(self::$langs_cache[$l])) $res[]=$l;
+		return $res;
+	}// }}}
     
-    // {{{ current
-    public function current(){
+	// {{{ current
+	/**
+	 * return current language id
+	 *
+	 * @return int
+	 */ 
+	public function current(){
         return self::$current;
     }// }}}
 
-    // {{{ currentName
+	// {{{ currentName
+	/**
+	 * Return current language name
+	 *
+	 * @return string
+	 */
     public function currentName(){
         return $this->getLangName(self::$current);
 	}// }}}
 
 	// {{{ isDefault
+	/**
+	 * Retrun if given language id $lang is default language id.
+	 *
+	 * If $lang not given return true if current language is default
+	 *
+	 * $param int $lang
+	 * @return bool
+	 */
 	public function isDefault($lang = null){
 		return (is_null($lang)?self::$current:$lang)  == self::$langs_cache['__default__']; 
 	}// }}}
@@ -172,10 +200,8 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
      * учитывать при локализации.
      */
 	function getPluralConst($n, $key, $model = null){
-		//if (is_array($key)) $key = array_shift($key);
 		if (is_null($model)) $model = 'common';
-        $f= Language::getPluralForm($n,$this->currentName());
-        $args = array_slice(func_get_args(),1); $args[0] = $key.'-'.$f;
+        $args = array_slice(func_get_args(),1); $args[0] = Language::getPluralKey($n, $key);
         return  call_user_func_array(array($this,'getConst'), $args);
     }// }}}
 

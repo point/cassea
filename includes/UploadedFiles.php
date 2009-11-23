@@ -28,7 +28,7 @@
 }}} -*/
 
  
-// $Id$
+// $Id: UploadedFiles.php 154 2009-10-12 15:40:57Z billy $
 //
 class UploadedFiles
 {
@@ -102,8 +102,8 @@ class UploadedFiles
         $name = isset($additional_id)?$w_name."\\".$additional_id:$w_name;
         if (isset($this->http_files[$name])) $this->http_files[$name]['name'] = $newFileName;
 
-        return (isset($this->http_error_files[$name]))?$this->http_error_files[$name]:null;
-
+        //return (isset($this->http_error_files[$name]))?$this->http_error_files[$name]:null;
+		return $this;
     }
 
     function getUploaded(){
@@ -111,7 +111,7 @@ class UploadedFiles
         foreach($this->http_files as $name => $info)
             if (!isset($this->http_error_files[$name])) $uploaded[] = $info;
         return $uploaded;
-    }
+	}
 
 	// {{{ isUploaded
 	/**

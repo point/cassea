@@ -67,10 +67,12 @@ class WInlineHTML extends WContainer implements iNotSelectable
 		$attr = array();
 		foreach($this->attributes as $a_name => $a_val)
 			$attr[] = $a_name.'="'.str_replace("\"","\\\"",$a_val).'"';
+		$content = (!empty($this->text))?$this->text:(isset($this->items)?$this->items->generateAllHTML():"");
 		$this->tpl->setParamsArray(array(
 				"attributes"=>implode(" ",$attr),
 				"real_tagname" => $this->real_tagname,
-				"content"=>(!empty($this->text))?$this->text:(isset($this->items)?$this->items->generateAllHTML():"")
+				"content"=>$content,
+				"use_short_tag"=>(empty($content) && in_array($this->real_tagname,array("hr","br","img")))?1:0
 			));
 		parent::assignVars();
     }

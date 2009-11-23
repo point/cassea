@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WBlock
-class WBlock extends WContainer
+class WBlock extends WContainer implements iStringProcessable
 {
 	protected
 		/**

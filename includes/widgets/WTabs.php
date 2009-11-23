@@ -101,7 +101,7 @@ class WTabs extends WContainer
     {
 		$hrefs = array();
 		$titles = array();
-		$selected = 0;
+		$selected = -1;
 		for($i = 0, $c = $this->tabs->count(); $i < $c; $i++)
 		{
 			if($this->tabs->getItem($i)->getHref())

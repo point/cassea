@@ -111,7 +111,7 @@ class StringProcessor extends EventBehaviour
 
 	//{{{ Built-in processors
 
-	//{{{ limitwords
+	//{{{ truncate_words
 	/**
 	 * If the given string length exceeds value, passed via $limit parameter,
 	 * it will be wrapped to the length, not grater than $limit,
@@ -122,19 +122,18 @@ class StringProcessor extends EventBehaviour
 	 * @param string string to be added at the end (Default is "...")
 	 * @return string processed string
 	 */
-    protected function limitwords($string, $limit = 50, $ends = '...') 
+    protected function truncate_words($string, $limit = 50, $ends = '...') 
     {
-        if (strlen($string) <=  $limit) return $string;
+		$string = trim($string);
+        if (($to = strlen($string)) <=  $limit) return $string;
 
-        $pos = array_keys(str_word_count($string, 2));
+        $pos = str_word_count_utf8($string, 2);
 
-        $min_d = $limit - $pos[0];
-        $min_p = 0;
-        for($i = 1, $c = count($pos);$i < $c,$pos[$i] <= $limit;$i++)
-            if($limit - $pos[$i] < $min_d)
-                $min_d = $limit - $pos[$i] and $min_p = $i;
+		foreach($pos as $k=>$v)
+			if($k >= $limit)
+			{$to = $k;break;}
 
-        return (substr($text, 0, $pos[$min_p]).$ends);
+        return (substr($string, 0, $to-1).$ends);
     }
 	//}}}
 
@@ -195,14 +194,14 @@ class StringProcessor extends EventBehaviour
 	 * @return string processed string
 	 */
     protected function date($time, $format = 'jS F Y H:i') 
-    {
+	{
         return date($format, is_numeric($time)?$time:strtotime($time));
 	}
 	//}}}
 
 	//{{{ date_locale
 	/**
-	 * Outputs date considering given locale. By default system-wide locale is given.
+	 * Outputs date considering given locale. By default system-wide locale will be taken.
 	 * Internally, this processor calls strftime PHP function.
 	 * Default format of output is "%e %B %Y, %R:%M".
 	 * If $time is not numeric, trying to convert to unixtimestamp with
@@ -245,8 +244,8 @@ class StringProcessor extends EventBehaviour
 	 * @return string
 	 */
     protected final function _plural($number, $lang_const_base)
-    {
-        return Language::message('widgets',Language::getPluralConst($number,$lang_const_base));
+	{
+        return Language::message('widgets',Language::getPluralKey($number,$lang_const_base));
     }
 	//}}}
 
@@ -473,7 +472,7 @@ class StringProcessor extends EventBehaviour
 	{return preg_replace("/\s{2,}/", ' ',$string);}
 	//}}}
 
-	//{{{
+	//{{{ escape
 	/**
 	 * Escapes given string. If flag $quotes is true, additionally quotes will be 
 	 * escaped.

@@ -263,6 +263,8 @@ abstract class DataObject
 		if(isset($this->registry_name) && DataObjectRegistry::exists($this->registry_name))
 		{
 			$this->object = DataObjectRegistry::get($this->registry_name);
+			if(!class_exists($this->classname,false) || !$this->object instanceof $this->classname)
+				throw new DataObjectException("Object from registry {$this->registry_name} is instance of other class");
 			if($this->object !== null) return true;
 		}
         $this->requireClasses();

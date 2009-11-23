@@ -34,7 +34,7 @@
  *
  *
  * TODO DB::init() через mysqli->real_connect(..);
- * @version $Id$
+ * @version $Id: DB.php 154 2009-10-12 15:40:57Z billy $
  * @package Database
  */
 
@@ -582,9 +582,13 @@ class DBMysqliLazyLoad{
     }
 
 	public function __call($name, $arguments) {
-        DB::init($this->dsn, false);
+        $this->initDB();
 		return call_user_func_array(array(DB::getMysqli(), $name), $arguments);
     }
+
+	public function initDB(){
+		DB::init($this->dsn,false);
+	}
 }// }}}
 
 // {{{ DB
@@ -749,6 +753,7 @@ class DB{
      * @return mysqli
      */
     static public function &getMysqli(){
+		if(self::$mysqli instanceof DBMysqliLazyLoad) self::$mysqli->initDB();
         return self::$mysqli;
     }// }}}
 
@@ -957,8 +962,8 @@ class DB{
      * @param string $types перечесление типов параметров
      * @return object DBStmt
      */
-    static public function getStmt($query, $types = null){
-        $stmt = new DBStmt(self::$mysqli, $query, $types);
+	static public function getStmt($query, $types = null){
+        $stmt = new DBStmt(self::getMysqli(), $query, $types);
         if ( self::$mysqli->errno)
             throw (new DBException(self::$mysqli->error,self::$mysqli->errno,$query));
         return $stmt;
@@ -977,7 +982,7 @@ class DB{
         if ((self::$mysqli instanceof DBMysqliFake) )
             throw new DBException('Only one Transaction my be executed at time');
 
-        $t = new DBTransaction(self::$mysqli, $useException);
+        $t = new DBTransaction(self::getMysqli(), $useException);
         if ($lockDB ) self::$mysqli = new DBMysqliFake();
 
         return $t;

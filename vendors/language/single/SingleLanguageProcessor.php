@@ -40,7 +40,7 @@ class SingleLanguageProcessor implements iLanguageProcessor
 
 	function current(){return $this->current;}
 	function currentName(){return $this->currentName;}
-	function isDefault($lang = null){return true;}
+	function isDefault($lang = null){return $lang === null?true:$lang==$this->currentName;}
 	function encodePair($value){ return $value;}
 	function getConst($key){ return $key;}
 	function getLangList($raw = false){
@@ -49,7 +49,7 @@ class SingleLanguageProcessor implements iLanguageProcessor
 	}
 
 
- 	// {{{ getPluralConst
+ 	// {{{ getPluralConst0
     /**
      * По заданному числу $n возвращает соотвествующую форму из масива $forms
      *
@@ -73,7 +73,6 @@ class SingleLanguageProcessor implements iLanguageProcessor
 
 	// {{{ getPluralConst 
 	function getPluralConst($n, $key, $model = null){
-        $f= Language::getPluralForm($n,$this->currentName());
-		return $key.'-'.$f;
+        return Language::getPluralKey($n,$key);
     }// }}}
 }

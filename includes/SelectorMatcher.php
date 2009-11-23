@@ -646,7 +646,7 @@ class SelectorParser
 	 * Pattern, used to split selector rule on the single selectors and
 	 * capture combinator, used between two selectors.
 	 */
-	const pattern_splitter = '/\s*([+>~\s])\s*(?=[a-zA-Z#.*:\[])/';
+	const pattern_splitter = '/\s*([+>~\s])\s*(?=[a-zA-Z#%.*:\[])/';
 
 
 	/**

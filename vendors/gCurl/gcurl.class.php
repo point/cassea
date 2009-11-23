@@ -9,18 +9,18 @@
  */
 
 //Load package classes
-if (!class_exists('gCurlRequest')){
+if (!class_exists('gCurlRequest',false)){
     require_once('gCurlRequest.class.php');
 }
-if (!class_exists('gCurlResponse')){
+if (!class_exists('gCurlResponse',false)){
     require_once('gCurlResponse.class.php');
 }
-if (!class_exists('gURI')){
+if (!class_exists('gURI',false)){
     require_once('URI.class.php');
 }
 
 //load the exception base class
-if (!class_exists('gksException')){
+if (!class_exists('gksException',false)){
     require_once('gksException.class.php');
 }
 

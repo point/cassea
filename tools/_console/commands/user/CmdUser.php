@@ -139,7 +139,7 @@ class CmdUser extends Command{
 
             if ($login === false ) return io::out('Incorrect param count', IO::MESSAGE_FAIL) | 1;
 
-            if (usermanager::get()->existslogin($login))
+            if (UserManager::get()->existslogin($login))
             {
                 if (!$password){
                     IO::out('New password: ', false);
@@ -149,7 +149,7 @@ class CmdUser extends Command{
 
                     if($password != $p2) return io::out('Passwords not match.',IO::MESSAGE_FAIL ) | 2;
                 }                
-                usermanager::get()->setpassword(usermanager::get()->getidbylogin($login),$password);
+                UserManager::get()->setpassword(UserManager::get()->getidbylogin($login),$password);
             }
             else 
                 return io::out( PHP_EOL.'User ~WHITE~'.$login.'~~~ not found',IO::MESSAGE_FAIL)| 3;

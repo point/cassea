@@ -141,7 +141,8 @@ class JobHandler{
                 $this->log("--- ".date('c')." There are ".$counter." attempts.");
                 DB::query('update '.DelayedJob::TABLE.' set attempts=attempts-1 where id="'.$this->id.'"');
                 $counter--;
-                $ret=call_user_func_array(array($this->handler['class'],$this->handler['method']),$this->handler['param']);
+				if(isset($this->handler['param']))
+                	$ret=call_user_func_array(array($this->handler['class'],$this->handler['method']),$this->handler['param']);
                 if(!$ret)
                 {
                     DB::query('update '.DelayedJob::TABLE.' set failed_at="'.date("Y-m-d H:i:s").'" where id="'.$this->id.'"');
@@ -152,8 +153,8 @@ class JobHandler{
 					DB::query('update '.DelayedJob::TABLE.' set finished_at="'.date("Y-m-d H:i:s").
 						'", failed_at = null where id="'.$this->id.'"');
                     $this->log("--- ".date('c')." Command was completed successfully![ OK ]");
+				}
                     break 1;
-                }
             }catch(Exception $e)
                 {
                     $this->log(date('c').' Work is Fail!');

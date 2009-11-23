@@ -33,7 +33,7 @@
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id:$
+ * @version $Id: Navigator.php 179 2009-10-29 13:10:19Z point $
  * @package system
  * @since 
  */
@@ -93,6 +93,8 @@ class Navigator
 		$this->storage = Storage::createWithSession('AdminNavigator'.Controller::getInstance()->getStoragePostfix());
 
 		$this->controller_name = Controller::getInstance()->getControllerName();
+		if(empty($this->controller_name))
+			$this->controller_name = "index";
 
 		$this->user_path = $this->storage->get("user_path");
 
@@ -130,7 +132,7 @@ class Navigator
 
 		if(!isset($title))
 			$title = requestURI();
-		if( ($this->controller_name == "index" && $page_name="index")	|| 
+		if( ($this->controller_name == "index" && $page_name=="index")	|| 
 			!isset($this->user_path[0]) ||  empty($this->user_path) )
 		{
 			$this->user_path = array();
@@ -141,7 +143,7 @@ class Navigator
 			$this->user_path[0]['controller'] = $this->controller_name;
 		}
 		else
-        {
+		{
             $to_add = 1;
             for($i = 0, $c = count($this->user_path); $i < $c; $i++)
 				if(isset($this->user_path[$i]) && isset($this->user_path[$i]['page']) &&  $this->user_path[$i]['page'] == $page_name

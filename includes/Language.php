@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-// $Id$
+// $Id: Language.php 154 2009-10-12 15:40:57Z billy $
 //
 
 class LanguageException extends CasseaException {}
@@ -81,7 +81,7 @@ class Language{
 		return vsprintf($val, $data);
 	}
 
-	static function isDefault() { return self::$processor->isDefault();}
+	static function isDefault($lang = null) { return self::$processor->isDefault($lang);}
 	static function current(){ return self::$processor->current();}
 	static function currentName(){return self::$processor->currentName();}
 	static function encodePair($value){ return self::$processor->encodePair($value);}
@@ -90,6 +90,10 @@ class Language{
         return call_user_func_array(array(self::$processor,'getConst'), $args);
 	}
 	static function getLangList($raw = false){return self::$processor->getLangList($raw);}
+
+	static function getPluralKey($n, $key){
+        return $key.'-'.self::getPluralForm( $n,self::currentName() );
+	}
 
 	static function getPluralConst($n, $keys, $model = null ){
 		$args = func_get_args();

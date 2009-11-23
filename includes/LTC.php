@@ -47,7 +47,7 @@ class LTC
 	public static $populate_on_insert = true;
 	public static $populate_on_delete = true;
 
-	static function insert($key, $value, $language = null) 
+	static function insert($key, $value, $language = null,$force_id = null) 
 	{
 		$local_populate = true;
 		if($language === null)
@@ -55,9 +55,10 @@ class LTC
 		else $local_populate = false;
 
 		$key = Filter::apply($key,Filter::STRING_QUOTE_ENCODE);
-		$value = Filter::apply($value, Filter::STRING_QUOTE_ENCODE);
+		$value = Filter::apply(htmlspecialchars_decode($value,ENT_QUOTES), Filter::STRING_QUOTE_ENCODE);
 
-		$insert_id = DB::query("insert into ".self::TABLE." set language='{$language}', `key`='{$key}', value='{$value}'");
+		$insert_id = DB::query("insert into ".self::TABLE." set language='{$language}', `key`='{$key}', value='{$value}'".
+		($force_id !== null?", id='{$force_id}'":""));
 		
 		if(self::$populate_on_insert === true && $local_populate)
 		{
@@ -75,8 +76,8 @@ class LTC
 			$language = Language::current();
 		$id = Filter::apply($id,Filter::INT);
 		$key = Filter::apply($key,Filter::STRING_QUOTE_ENCODE);
-		$value = Filter::apply($value, Filter::STRING_QUOTE_ENCODE);
-
+		$value = Filter::apply(htmlspecialchars_decode($value,ENT_QUOTES), Filter::STRING_QUOTE_ENCODE);
+		
 		DB::query("update ".self::TABLE." set value='{$value}' where id='{$id}' and language='{$language}' and `key`='{$key}' ");
 	}
 	static function get($id, $key, $language = null)

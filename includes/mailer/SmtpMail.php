@@ -206,7 +206,7 @@ class SmtpMail extends MailTransport{
             'tls'           =>'Error of STARTTLS'
         );
         // UNCOMMENT FOR DEBUG
-    	echo"<strong>".$error[$err]."</strong> ".$add."<br />";
+    	//echo $error[$err]." ".$add;
     }
     /*}}}*/
 

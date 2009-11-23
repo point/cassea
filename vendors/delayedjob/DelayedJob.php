@@ -226,7 +226,7 @@ class DelayedJob{
      */
     public function getAtSys()
 	{
-		return date("H:i m/d/y ",$this->getAt());  
+		return date("H:i m/d/y ",$this->getAt()+60);  
 	}
      //}}}
 

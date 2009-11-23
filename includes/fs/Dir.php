@@ -51,7 +51,7 @@ class Dir extends FileSystemObject implements iDir{
      */
     public static function get($path, $absPath = false){
         return new Dir($path, $absPath);
-    }// }}}
+    } // }}}
 
     // {{{ getFile
     /**
@@ -97,10 +97,10 @@ class Dir extends FileSystemObject implements iDir{
      *
      */
     public function getDir($name){
-        return Dir::get($this->concat( $this->path,$name), true);
+		return Dir::get($this->concat( $this->path,$name), true);
     }// }}}
 
-     // {{{ ls
+	// {{{ ls
     /**
      * Список файлов и директорий.
      *
@@ -112,6 +112,8 @@ class Dir extends FileSystemObject implements iDir{
      * DIR::LS_BOTH - для получению файлов и директорий.
      * Параметр по умолчанию - Dir::LS_FILE.
      *
+	 * $pattern = '*' не находит скрытые файлы и директории.
+	 * Для их поиска $pattern = '{,.}*', $gflag = GLOB_BRACE.
      *
      * Параметр $gflag служит для передачи опций напряму функции glob.
      * Например GLOB_NOSORT или GLOB_ERR.
@@ -122,9 +124,10 @@ class Dir extends FileSystemObject implements iDir{
         if (is_null($pattern)) $pattern = '*';
         $gflag |= GLOB_MARK;
         if ($flag == Dir::LS_DIR) $gflag |= GLOB_ONLYDIR;
-        $list = glob( $this->concat($this->path,$pattern), $gflag);
+		$list = glob( $this->concat($this->path,$pattern), $gflag);
         $res = array();
-        foreach ( (is_array($list)?$list:array()) as $fname ){
+		foreach ( (is_array($list)?$list:array()) as $fname ){
+			if ($fname == $this->path.'/./' || $fname == $this->path.'/../') continue;
             $fname = substr($fname,strlen($this->path));
             $isDir = substr($fname,-1) =='/';
             if (($flag == Dir::LS_DIR || $flag == Dir::LS_BOTH) &&  $isDir) $res[] = new Dir( $this->concat( $this->path , $fname), true); 
@@ -154,11 +157,14 @@ class Dir extends FileSystemObject implements iDir{
      *      $dirs = mkdir('non_existent_dir/dir1', 'dir2');
      * </code>
      *
+	 * Если параметры не указанны, то создается папка $this.
+	 *
+	 *
      * @throws FileSystemException
      * @return Dir, Array(Dir) 
      */
     public function mkdir(){
-        if (($fnc = func_num_args()) == 0) return null;
+        if (($fnc = func_num_args()) == 0) return Dir::get('/', true)->mkdir($this);
         $res = array();
         foreach(func_get_args() as $dir){
             if(is_null($dir) || empty($dir)) throw new FileSystemException('Directory name is empty or not set.');
@@ -291,11 +297,11 @@ class Dir extends FileSystemObject implements iDir{
      * @return bool true on success, false on failure
      */
     public function delete(){
-        $list = $this->ls(null, Dir::LS_BOTH, GLOB_NOSORT);
+        $list = $this->ls('{,.}*', Dir::LS_BOTH, GLOB_NOSORT|GLOB_BRACE);
         foreach($list as $o)
             if (!$o->delete()) throw new FileSystemException('Can\'t delete '.get_class($o).' '.$o);
-        $r = rmdir($this);
+        $r = file_exists($this)?rmdir($this):true;
         $this->path= null;
         return $r;
-    }// }}}
+     }// }}}
 }// }}}
