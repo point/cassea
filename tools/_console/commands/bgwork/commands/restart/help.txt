@@ -1,0 +1,3 @@
+Short: Restart the work by id
+Usage: COMMAND_PATH
+bgwork restart ID

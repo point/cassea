@@ -53,9 +53,7 @@ require('Autoload.php');
  * If they are not defined, "config.ini" and "config" are used instead.
  * In current implementation use IniDBConfig only
  */
-if(defined('CONFIG') && defined('CONFIG_SECTION'))
-	Config::init(new IniDBConfig(CONFIG,CONFIG_SECTION));
-else Config::init(new IniDBConfig("config.ini","config"));
+Config::init(new IniDBConfig());
 
 /**
  * Init helper class to lookup and include classes. One class per file is allowed.

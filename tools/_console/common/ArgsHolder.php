@@ -79,7 +79,7 @@ class ArgsHolder{
     /**
      * Регулярное выражение для комманды
      */
-    const COMMAND = '#^[a-zA-Z0-9.@_/~]+$#';
+    const COMMAND = '#^[a-zA-Z0-9.@_/~:-=<>]+$#';
     /**
      * Объект ArgsHolder
      *
@@ -125,7 +125,7 @@ class ArgsHolder{
             throw new ArgsHolderException('Unable get command line arguments');
         array_shift($args);
         foreach($args as $arg)
-            if (preg_match(self::COMMAND, $arg)) $this->commands[] = strtolower($arg); 
+            if (preg_match(self::COMMAND, $arg)) $this->commands[] = $arg; 
             elseif( preg_match('#^--([a-zA-Z0-9-]+)(=(.*))?$#', $arg, $m)){ 
                 if(isset($m[2])) $this->options[$m[1]] = $m[3];
                 else $this->options[$m[1]] = true;
@@ -163,12 +163,15 @@ class ArgsHolder{
     /**
      * Выталкивает первую команду из очереди.
      * Если очередь пуста возвращает false
-     *
+	 *
+	 * @param bool $lowerCase  приводить имя к нижнему регистру
      * @return string|bool имя комманды, false если очередь пуста
      */
-    function shiftCommand(){
-        if (count($this->commands))
-            return array_shift($this->commands);
+    function shiftCommand($lowerCase = true){
+		if (count($this->commands)){
+			$command = array_shift($this->commands);
+			return $lowerCase?strtolower($command):$command;
+		}
         return false;
     }//}}}
 

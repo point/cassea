@@ -1,0 +1,3 @@
+Short: Show more informaion for one comman
+Usage: COMMAND_PATH
+bgwork single ID

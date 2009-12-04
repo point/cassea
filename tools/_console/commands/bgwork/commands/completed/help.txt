@@ -1,0 +1,7 @@
+Short: Show the work that was completed
+Usage: COMMAND_PATH
+bgwork completed [--count=N]
+Option: --count 
+Use for dose priting
+
+

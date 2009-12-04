@@ -139,20 +139,6 @@ class Console{
      * инициализирует основные подсистемы движка(базу данных, конфигурацию итд).
      */
     static function initCore(){
-        static $isConnected = false;
-        if ($isConnected) return;
-        $v = IO::getVerboseLevel();
-        if ($v > IO::MESSAGE_TEXT ) IO::out('Connecting to Cassea...', false);
-		/*
-		 * point. TODO: remove due to Boot bootstrapper is used.
-		 * try{
-            Controller::makeEnv();
-        }
-        catch(Exception $e){
-            self::processException($e);
-		}*/
-        if ($v > IO::MESSAGE_TEXT ) IO::done();
-        $isConnected = true;
     }// }}}
 
 }// }}}
@@ -167,6 +153,6 @@ try {
     exit( $r );
 }
 catch (CasseaException $e){
-    Console::getInstance()->processException($e);
+    Console::processException($e);
 }
 

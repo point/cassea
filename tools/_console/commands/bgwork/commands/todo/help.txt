@@ -1,0 +1,5 @@
+Short: Show the work that do not working yet
+Usage: COMMAND_PATH
+bgwork todo [--count=N]
+Option: --count
+Use for dose priting

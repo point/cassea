@@ -77,7 +77,6 @@ class ConfigBase implements IteratorAggregate
 	 */
     protected function __construct(array $array = array())
     {
-		$this->data['root_dir'] = dirname(dirname(__FILE__));
 		$this->parseArray($array);
 	}
 	//}}}
@@ -119,8 +118,7 @@ class ConfigBase implements IteratorAggregate
         $name = strtolower($name);
         if(isset($this->data[$name]))
             return $this->data[$name];
-        else
-            throw new ConfigException("Config value ".$name." doesn't exists");
+        throw new ConfigException("Config value ".$name." doesn't exists");
 	}
 	//}}}
 
@@ -310,6 +308,9 @@ class IniConfig extends ConfigBase
 {
 	const CONFIG_DIR = "/config";
 	const CONFIG_CACHE_FILE = "/cache/config.cache";
+	const INHERIT_SEPARATOR=":";
+	const DEFAULT_CONFIG_FILE  = "config.ini";
+	const DEFAULT_CONFIG_SECTION = "config";
 
 	protected
 		/**
@@ -339,22 +340,15 @@ class IniConfig extends ConfigBase
 	 * @param string symbol that used as inherit separator. ":" by default.
 	 * @throws ConfigException with error message
 	 */
-	function __construct($filename, $section = null,  $inherit_separator = ":")
+	function __construct($filename= null, $section = null,  $inherit_separator = null)
     {
-        $_r = (!empty($_SERVER['DOCUMENT_ROOT']) && is_readable($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
-		if(!is_file($this->filename = $_r.self::CONFIG_DIR."/".$filename))
+		if(!isset($filename)) $filename = self::DEFAULT_CONFIG_FILE;
+		$this->section = isset($section)?$section:self::DEFAULT_CONFIG_SECTION;
+		$this->inherit_separator = isset($inherit_separator)?$inherit_separator:self::INHERIT_SEPARATOR;
+
+        $this->rd = (!empty($_SERVER['DOCUMENT_ROOT']) && is_readable($_SERVER['DOCUMENT_ROOT']))?$_SERVER['DOCUMENT_ROOT']:dirname(dirname(__FILE__));
+		if(!is_file($this->filename = $this->rd.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
-
-		if(!isset($inherit_separator))
-			throw new ConfigException("Inherit separator doesn't exists");
-
-		if(!isset($section))
-			throw new ConfigException("Section ".$section." doesn't exists");
-
-		$this->rd = $_r;
-
-		$this->section = $section;
-		$this->inherit_separator = (string)$inherit_separator;
 
 		if($this->checkCache())
 		{
@@ -395,6 +389,8 @@ class IniConfig extends ConfigBase
 
 			$sect_key = $inh_key;
 		}
+		// autodected root dir
+		$this->__set('root_dir', $this->rd);
 
 		//convert to hierarchy
 		foreach(array_reverse($config_values) as $v)
@@ -526,7 +522,9 @@ class IniConfig extends ConfigBase
 			fclose($fp);
 		}
 	}
+
 	//}}}
+	
 	// {{{ getParsedFilename
 	/**
 	 * Getter for <code>$this->filename</code> property.
@@ -537,6 +535,16 @@ class IniConfig extends ConfigBase
 	 */
 	function getParsedFilename(){
 		return $this->filename;
+	}// }}}
+
+	// {{{ getInheritSeparator
+	/**
+	 * Getter for <code>$this->inherit_separator</code> property.
+	 *
+	 * @return string
+	 */
+	function getInheritSeparator(){
+		return $this->inherit_separator;
 	}// }}}
 }
 //}}}

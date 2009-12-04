@@ -41,9 +41,9 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
     // {{{ init
     public function init(){
         if (Config::getInstance()->language->cache_langs)
-            self::$langs_cache = Storage::create('__Language::list1__');
+            self::$langs_cache = Storage::create('__Language::list__');
         if (Config::getInstance()->language->cache_consts)
-            self::$const_cache = Storage::create('__Language::consts1__');
+            self::$const_cache = Storage::create('__Language::consts__');
 
 		if (!isset(self::$langs_cache['__default__']) || !isset(self::$langs_cache['__list__']) ){
 			try{
@@ -201,7 +201,8 @@ class MultiLanguageProcessor implements iLanguageProcessor, iUpdatableLanguagePr
      */
 	function getPluralConst($n, $key, $model = null){
 		if (is_null($model)) $model = 'common';
-        $args = array_slice(func_get_args(),1); $args[0] = Language::getPluralKey($n, $key);
+        $f= Language::getPluralForm($n,$this->currentName());
+        $args = array_slice(func_get_args(),1); $args[0] = $key.'-'.$f;
         return  call_user_func_array(array($this,'getConst'), $args);
     }// }}}
 

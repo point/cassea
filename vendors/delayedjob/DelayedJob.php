@@ -52,7 +52,7 @@
     $param=array("text","test");
     $j= new DelayedJob('test',$param);
 	$j->at("next Monday")->priority(2)->attempts(5)->queue("default")->add();
- */
+*/
 
 //{{{DelayedJob
 class DelayedJob{
@@ -102,9 +102,10 @@ class DelayedJob{
     */
 
     function __construct($method,array $param=array(),$class=null,$path=null)
-    {
-        //$this->logFile = dirname(dirname(dirname(__FILE__))).'/logs/delayedjob.log';
-        $this->logFile = Config::get('root_dir').Config::get('logs_dir').'/delayedjob.log';
+	{
+		$root=Config::get("root_dir");
+		require_once($root."/includes/Log.php");
+        $this->logFile = $root.Config::get('logs_dir').'/delayedjob.log';
 		$r=debug_backtrace(false);
         if(empty($class))
 			if(isset($r[1]) && isset($r[1]['class']))
@@ -145,7 +146,8 @@ class DelayedJob{
         $this->at=$_at;
 		return $this;
     }
-     //}}}
+	//}}}
+	
     //{{{ in
     /**
      * Set time interval to run the job.
@@ -217,7 +219,7 @@ class DelayedJob{
      * @return int unix timestamp
      */
     public function getAt(){return $this->at;}
-     //}}}
+    //}}}
     
     //{{{getAtSys   
     /**
@@ -228,7 +230,7 @@ class DelayedJob{
 	{
 		return date("H:i m/d/y ",$this->getAt()+60);  
 	}
-     //}}}
+    //}}}
 
     //{{{getHandler
     /**
@@ -262,18 +264,6 @@ class DelayedJob{
     public function getPriority(){return $this->priority;}
     //}}}
     
-    //{{{+++++++++log Need to overwrite!!!
-   /**
-     * Need to overwrite!!!
-     *
-     */
-    private function log($str)
-    {
-       // exec("echo '".$str."'  >> ".$this->logFile);
-        file_put_contents($this->logFile, PHP_EOL.$str ,FILE_APPEND);
-    }
-    //}}}
-
     //{{{add
     /**
      * Insert into database all fields need to work. Run the JobHandler immediatly if 
@@ -291,7 +281,7 @@ class DelayedJob{
 
 		if(empty($php_path) || !is_executable($php_path))
 		{
-			$this->log("###".date("c")." PHP executable not found or could not be executed");
+			Log::get('dj')->error("PHP executable not found or could not be executed");
 			throw new DelayedJobException("PHP executable not found");
 		}
 
@@ -300,15 +290,18 @@ class DelayedJob{
 			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values( ? , ? , now() , ? , ?)";
 			$stmt=DB::getStmt($sql,'issi');
 			$stmt->execute(array($this->getPriority(),serialize($this->getHandler()),$this->getQueue(),$this->getAttempts()));
-            $this->log("### ".date("c")." Call the JobHandler.php".PHP_EOL);
+			Log::get('dj')->info(" =======================");
+			Log::get('dj')->info(" Call the JobHandler.php");
             exec($php_path.' '.trim(escapeshellarg(dirname(__FILE__)."/JobHandler.php"),"'").' >> '.$this->logFile.' 2>&1 &');
         }
         else
         {
-			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values(? , ? , FROM_UNIXTIME(?) , ? , ? )";
-			$stmt=DB::getStmt($sql,'isisi');
+			$sql="INSERT INTO ".self::TABLE."(priority,handler,run_at,queue,attempts) values(? , ? , FROM_UNIXTIME( ? ) , ? , ? )";
+			$stmt=DB::getStmt($sql,'isssi');
 			$stmt->execute(array($this->getPriority(),serialize($this->getHandler()),$this->getAt(),$this->getQueue(),$this->getAttempts()));
-            $this->log("### ".date("c")." Call command at for the JobHandler.php".PHP_EOL);
+			Log::get('dj')->info(" =======================");
+			Log::get('dj')->info(" Call command at for the JobHandler.php");
+			Log::get('dj')->info(" =======================");
             exec('echo "'.$php_path.' '.trim(escapeshellarg(dirname(__FILE__).'/JobHandler.php'),"'").' 2>&1 >> '.$this->logFile.' " | at '.$this->getAtSys());
         }
     }

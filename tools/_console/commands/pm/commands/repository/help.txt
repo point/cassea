@@ -1,0 +1,45 @@
+Short: Repository manager
+Main: Provide functionality of managing with repositories.
+
+
+Command: add
+Short: Adding repository
+Main: 
+Usage: COMMAND_PATH add URL
+.
+Host component is required in URL. Path component of URL can't contain '-'.
+
+Command: delete 
+Short: Delete repository
+Main: 
+Usage: COMMAND_PATH del URL
+
+URL must be one of URLs from 'COMMAND_PATH list'.
+
+
+Command: list 
+Short: List of registred repositories
+Main: 
+Usage: COMMAND_PATH list
+
+
+Command: update 
+Short: Update information about packages located at repository or repositories
+Main: 
+Usage: COMMAND_PATH update [URL]
+
+If URL given update only one repository with given URL.
+
+Command: flush 
+Short: Drop local infomation about all repositories
+Main: 
+Usage: COMMAND_PATH flush
+
+There is no package founded after this command. 
+
+
+
+
+
+
+

@@ -1,0 +1,3 @@
+Short: Delete the work by id
+Usage: COMMAND_PATH
+bgwork delete ID[queue]

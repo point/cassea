@@ -2,9 +2,10 @@
 
 class CmdBackup extends Command{
     
-    private $separate = false;
-	private $send_email = false;
-	private $email_address = "";
+    private $separate      = false;
+	private $send_email    = false;
+    private $email_address = "";
+    private $all           =false;
       
     public function __construct( $workingDir = '.', $info, $commandsSeq = array())
     {
@@ -141,19 +142,20 @@ class CmdBackup extends Command{
         {
             $cmd="tar --exclude='*~'  --exclude='.svn'  -uvf ".$root."/".$filename." ./web/css/ ./web/js/  2>&1";
             io::out('Adding web/css, web/js...', false);
-        }
-        exec($cmd,$out,$return);
-        if (($return ==0) && !$this->all) io::done();
-        if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
+            exec($cmd,$out,$return);
+            if (($return ==0) && !$this->all) io::done();
+            
+            if (IO::getVerboseLevel() == IO::MESSAGE_INFO || $return)
             foreach($out as $o)
                 io::out($o);
 
-        if($return){
-            io::out('Return code '.$return, IO::MESSAGE_FAIL);
-            io::out('Executed command: '.$cmd);
-            return;
+            if($return){
+                io::out('Return code '.$return, IO::MESSAGE_FAIL);
+                io::out('Executed command: '.$cmd);
+                return;
+            }
         }
-
+        
         io::out('Bzip '.$filename.'...', false);
         $cmd="bzip2 -9 ".$root."/".$filename;
         exec($cmd,$out,$return);

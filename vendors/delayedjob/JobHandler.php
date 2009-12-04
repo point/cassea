@@ -43,11 +43,6 @@ require_once(dirname(dirname(dirname(__FILE__))).'/includes/Boot.php');
 class JobHandler{
 
     /**
-     * @var string. LogFile path.
-     */
-    private $logFile     = null;
-    
-    /**
      * @var id of work
      */
     private $id          = null;
@@ -76,17 +71,16 @@ class JobHandler{
     //{{{__construct
     function __construct()
     {
-		//TODO substitute with logger. Will be deleted
-        
-        $this->logFile = Config::get('root_dir').Config::get('logs_dir').'/delayedjob.log';
         set_error_handler(array($this,'DJErrorHandler'),E_ERROR);
-		$r=DB::query('SELECT * FROM '.DelayedJob::TABLE.' where run_at <= now() and isnull(finished_at) and isnull(locked_at) and isnull(failed_at) ORDER BY priority FOR UPDATE');
+		$r=DB::query('SELECT * FROM '.DelayedJob::TABLE.' where run_at <= now() and 
+			isnull(finished_at) and isnull(locked_at) and isnull(failed_at) ORDER BY priority FOR UPDATE');
         if(count($r))
         {
             if($this->queueCheck())
             {
                 DB::query('update '.DelayedJob::TABLE.' set locked_at="'.date("Y-m-d H:i:s").'" where id="'.$this->id.'"');
-                $this->log("--- ".date('c')." Cheking the queue.Queue ".$this->queue." is free");
+				Log::get('dj')->info(" Cheking the queue. Queue ".$this->queue." is free.");
+				
 				$this->id       = $r[0]['id'];
 				$this->queue    = $r[0]['queue'];
 				$this->attempts = $r[0]['attempts'];
@@ -94,12 +88,12 @@ class JobHandler{
             }
             else
             {
-                $this->log(">>> ".date('c')." Other process try to run... Queue ".$this->queue." is locked![ EXIT ]");
+				Log::get('dj')->info("Other process try to run... Queue ".$this->queue." is locked![ EXIT ]");
                 die('Queue is locked');
             }
         }
         else {
-            $this->log(">>> ".date('c')." NOT AT TIME OR QUEUE IS LOCKED![ FAILED ]");
+			Log::get('dj')->notice(" Not at time or queue is locked! [ FAILED ]");
             die('Not At Time or queue is locked');
         }
     }
@@ -108,18 +102,10 @@ class JobHandler{
     //{{{DJErrorHandler
     public function DJErrorHandler($errno, $errstr, $errfile, $errline)
     {
-        //DB::query('update '.DelayedJob::TABLE.' set handler="'.$errno." ".$errstr." ".$errfile." ".$errline.'" where id="'.$this->id.'"');
-        $this->log(date('c').$errno." ".$errstr." ".$errfile." ".$errline);
+		Log::get('dj')->error( $errno." ".$errstr." ".$errfile." ".$errline );
         DB::query('update '.DelayedJob::TABLE.' set failed_at="'.date("Y-m-d H:i:s").'" where id="'.$this->id.'"');
-        $this->log("--- ".date('c')." Command was completed  with error![ FAILED ]");
-    }
-    //}}}
-    
-    //{{{++++++++++log need to use Logger
-    private function log($str)
-    {
-        //exec("echo '".$str."'  >> ".$this->logFile);
-        file_put_contents($this->logFile, PHP_EOL.$str ,FILE_APPEND);
+		Log::get('dj')->error("Command was completed with error![ FAILED ]");
+		return true;
     }
     //}}}
     
@@ -130,35 +116,34 @@ class JobHandler{
         DB::query('update '.DelayedJob::TABLE.' set locked_at="'.date("Y-m-d H:i:s").'" where id="'.$this->id.'"');
         include_once($this->handler['file']);
         
-        $this->log("\n");
-        $this->log(">>> ".date('c')." DelayedJob start working.Class ".$this->handler['class']." run the method ".$this->handler['method']."()<<<");
-        $this->log("--- ".date('c')." Cheking the queue.Quie ".$this->queue." is free");
+		Log::get('dj')->info(" DelayedJob start working.Class ".$this->handler['class']." run the method ".$this->handler['method']."()");
+		Log::get('dj')->info(" Cheking the queue.Quie ".$this->queue." is free");
 
         $counter=$this->attempts;
         while($counter>0)
         {
             try{
-                $this->log("--- ".date('c')." There are ".$counter." attempts.");
+				Log::get('dj')->info(" There are ".$counter." attempts.");
+				$counter--;
                 DB::query('update '.DelayedJob::TABLE.' set attempts=attempts-1 where id="'.$this->id.'"');
-                $counter--;
 				if(isset($this->handler['param']))
-                	$ret=call_user_func_array(array($this->handler['class'],$this->handler['method']),$this->handler['param']);
+					$ret=call_user_func_array(array($this->handler['class'],$this->handler['method']),$this->handler['param']);
                 if(!$ret)
                 {
                     DB::query('update '.DelayedJob::TABLE.' set failed_at="'.date("Y-m-d H:i:s").'" where id="'.$this->id.'"');
-                    $this->log("--- ".date('c')." Command was completed  with error (". var_export($ret,true).")![ FAILED ]");
+					Log::get('dj')->error("Command was completed  with error (". var_export($ret,true).")![ FAILED ]");
                 }
                 else 
                 {
 					DB::query('update '.DelayedJob::TABLE.' set finished_at="'.date("Y-m-d H:i:s").
 						'", failed_at = null where id="'.$this->id.'"');
-                    $this->log("--- ".date('c')." Command was completed successfully![ OK ]");
-				}
+					Log::get('dj')->info(" Command was completed successfully![ OK ]");
                     break 1;
+                }
             }catch(Exception $e)
                 {
-                    $this->log(date('c').' Work is Fail!');
-                    $this->log(' Message: '.$e->getMessage());
+					Log::get('dj')->error("Work is Fail [ FAILED ]");
+					Log::get('dj')->error('Message: '.$e->getMessage());
                     continue;
                 }
         }

@@ -301,6 +301,11 @@ class IO{
         //echo $message;
     }// }}}
 
+	static function info($message = '', $nl = true){
+		if ( self::$verboseLevel == IO::MESSAGE_INFO )
+			return self::out($message, $nl);
+	}
+
 	// {{{ done
 	/** 
 	 * Добавляет к выводу команды {@link IO::out()} надпись done зеленым цветом.
@@ -399,4 +404,3 @@ class IO{
 HELP;
     }// }}}
 }// }}}
-

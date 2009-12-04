@@ -251,7 +251,7 @@ class WText extends WContainer implements iStringProcessable
     function preRender()
     {
 		$this->checkAndSetData();
-		$template_name = 'default';
+		$template_name = null;
 		foreach($this->class_vars as $v)
 		{
 			if(preg_match("/^is_(\S+)$/",$v,$m) && $this->$v)

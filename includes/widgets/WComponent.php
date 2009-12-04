@@ -28,7 +28,7 @@
 }}} -*/
 
 
-// $Id$
+// $Id: WComponent.php 184 2009-11-05 15:14:47Z point $
 //
 WidgetLoader::load("WObject");
 //{{{ WComponent
@@ -54,7 +54,7 @@ abstract class WComponent extends WObject
         /**
         * @var      string
         */
-        $template_name = null,
+        $template_name = "default",
         /**
         * @var      CTemplate&
         */
@@ -272,6 +272,7 @@ abstract class WComponent extends WObject
     */
     function setTemplate($template_name = null)
 	{
+		if(!isset($template_name)) return;
 		$this->template_name = $template_name;
     }
     // }}}

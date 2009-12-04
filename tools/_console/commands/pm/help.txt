@@ -1,0 +1,37 @@
+Short: Package manager
+
+Command: info
+Short: infomation about given package
+Main:Usage: COMMAND_PATH info PACKAGE_NAME [VERSION]
+.
+Show information  description, author etc.
+If global option -v specified show dependency and tasks list 
+
+
+Command: list
+Short: display installed version of packages
+Main:
+Usage: COMMAND_PATH list
+.
+Show package name, version and summary.
+Output list in instalation order.
+
+Command: update
+Short: update information about packages in registred repositories
+Main:
+Usage: COMMAND_PATH update
+.
+Actualy it's link to
+COMMAND_PATH repository update 
+.
+See COMMAND_PATH repository update help for more information.
+
+Command: upgrade
+Short: upgrade all packages to lastest version finded in registred repositories.
+Main:
+Usage: COMMAND_PATH upgrade
+
+
+Command: unlock
+Short: unlock Package manager
+
