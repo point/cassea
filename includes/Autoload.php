@@ -70,7 +70,11 @@ class Autoload
 	/**
 	 * @var string cached vendor dir value
 	 */
-		$vd = null
+		$vd = null,
+	/**
+	 * @var string cached models dir value
+	 */
+		$md = null
 	;
 
 	//{{{ init
@@ -90,6 +94,7 @@ class Autoload
         $c=  Config::getInstance();
         self::$rd = $c->root_dir;
         self::$vd = self::$rd.$c->vendors_dir;
+        self::$md = self::$rd.$c->models_dir;
 		
 		self::addDir(self::$rd.'/includes');
 		self::addDir(self::$rd.'/includes/user');
@@ -206,6 +211,33 @@ class Autoload
 	}
 	//}}}
 	
+	//{{{ addModel
+	/**
+	 * Convert given parameters to canonical paths and adds they to look-up list.
+	 *
+	 * Use <code>Autoload::addVendor(_group_name_ , _plugin_name_)</code> 
+	 * (<code>Autoload::addVendor("session","database")</code>) to add to look-up list.
+	 * 
+	 * @param string model name
+	 * @retrun null
+	 * @throws AutoloadException with error message if somthing goes wrong
+	 */
+	public static function addModel($name)
+	{
+		if(!isset($name)) throw new AutoloadException('Models name must be specified');
+		$_d = self::$md."/".$name;
+		if(!is_dir($_d))
+			throw  new AutoloadException("Directory $_d doesn't exists");
+		if(!is_readable($_d))
+			throw new AutoloadException("Directory $_d is not readable");
+
+		if(file_exists("$_d/autoload.php"))
+			require_once("$_d/autoload.php");
+		else 
+			self::addDir($_d);
+	}
+	//}}}
+	
 	//{{{ ===DEPREACTED===
 	/* deprecated */
 	public static function addVendorDir($name1, $name2 = null)
@@ -234,12 +266,13 @@ class Autoload
             if (is_file($f= $d.'/'.$class.'.php') && is_readable($f))
 				return require_once($f);
 		
-		//die if could not load
-		echo 'Class "'.$class.'" not found.<br/>',
-        'Directory List: '.var_export(self::$dirs,true),"<br/>Call trace:";
-        print_pre(debug_backtrace(false));
-        die();
-
+		if (class_exists(AutoloadException, false)){
+			$ex = new AutoloadException('Class "'.$class.'" not found');
+			$ex->setExtra('Relative paths', implode(', ',str_replace(self::$rd.'/', '' ,self::$dirs)));
+			throw $ex; 
+		}
+		else
+			die('Class "'.$class.'" not found'.PHP_EOL.'Relative paths: '. implode(', ',str_replace(self::$rd.'/', '' ,self::$dirs)));
 }
 	//}}}
 }

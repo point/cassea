@@ -30,6 +30,16 @@
 // $Id:$
 
 //{{{ CasseaException
-class CasseaException extends Exception{}
+class CasseaException extends Exception{
+	protected $extra = array();
+
+	function getExtra(){
+		return $this->extra;
+	}
+
+	function setExtra($key , $data){
+		$this->extra[$key] = $data;
+	}
+}
 // }}}
 

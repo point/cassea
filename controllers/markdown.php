@@ -27,8 +27,25 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require("../includes/Controller.php");
-$c = Controller::getInstance();
-$c->setPoolName('markdownmedia');
-$c->init();
-$c->getHeadBodyTail(1);
+if (isset($_POST['data'])){
+        $data = $_POST['data'];
+        if(!is_string($data) || empty($data)) return;
+
+		require('../includes/Boot.php');
+        $html = Markdown($data);
+
+        // Substitute rendered text in user template
+        if (isset($_GET['preview_template']) && preg_match('#^[a-zA-Z0-9-_]+.html$#', trim($_GET['preview_template']))){
+            $file = Config::get('root_dir').Config::get('html_dir').'/markdown/'.$_GET['preview_template'];
+            if (is_file($file))
+                $html = str_replace('<!-- content -->', $html, file_get_contents($file));
+            else echo 'Template file <code>'.$_GET['preview_template'].'</code> not found.';
+		}
+		echo $html;
+}
+else{
+	require("../includes/Controller.php");
+	$c = Controller::getInstance();
+	$c->init();
+	$c->getHeadBodyTail(1);
+}

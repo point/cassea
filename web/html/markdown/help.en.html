@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+<meta  http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<meta  http-equiv="Content-Style-Type" content="text/css"/>
+<link  href="/0.1/default.css" type="text/css" rel="stylesheet"/>
+<link  href="/0.1/jquery.markitup_markdown.css" type="text/css" rel="stylesheet"/>
+<link  href="/0.1/jquery.markitup_main.css" type="text/css" rel="stylesheet"/>
+</head>
+<body>
+<style type="text/css" media="">
+table {
+    border-top: 1px solid #dddddd;
+    background-color: #fff;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+ table td {
+    padding: 8px 15px;
+    border-right: 1px solid #dddddd;
+    border-left: 1px solid #dddddd;
+    font-size: 11px;
+    color: #333;
+    font-weight: none;
+    font-family: Verdana;
+    text-align:center;
+}
+
+.lasttd{
+    border-top:1px solid #dddddd ;
+    border-left:0px;
+    border-right:0px;
+    border-bottom:0px;
+}
+
+.lefttd{
+    text-align:left;
+}
+
+
+.header {
+    background-color:#dddddd;
+}
+</style>
+<table width="100%">
+    <tr class=" header">
+        <td colspan="4">Font Styles</td>
+    </tr>
+    <tr>
+        <td width="5">
+            <img alt="Strong" src="/w_images/markitup/bold.png"/>
+        </td>
+        <td align="center" width="120">**Strong**</td>
+        <td align="center" width="90"> 
+            <strong >Strong</strong>
+        </td>
+        <td  class='lefttd'> 
+             Text wrapped with double *’s  will be wrapped with an HTML &lt;strong&gt;tag.
+        </td>
+    </tr>
+    <tr>
+        <td><img alt="Italic" src="/w_images/markitup/italic.png"/>
+        </td>
+        <td>_Italic_</td>
+        <td align="center"><i>Italic</i></td>
+        <td class='lefttd'>Text wrapped with one _’s will be wrapped with an HTML &lt;i&gt; tag.</td>
+    </tr>
+    <tr>
+        <td><img alt="Code" src="/w_images/markitup/code.png"/></td>
+        <td align="center">`Code`</td>
+        <td><code >Code</code></td>
+        <td class='lefttd'>To indicate a span of code, wrap it with backtick quotes (`).</td>
+    </tr>
+    <tr>
+        <td><img alt="Quotes" src="/w_images/markitup/quotes.png"/></td>
+        <td>&gt;Quotes</td>
+        <td>Quotes</td>
+        <td class='lefttd'>Markdown uses email-style &gt; characters for blockquoting.</td>
+    </tr>
+    <tr class=" header">
+        <td colspan="4">Lists</td>
+    </tr>
+    <tr>
+        <td><img alt="Unordered list" src="/w_images/markitup/list-bullet.png"/></td>
+        <td>*   Item 1<br />*   Item 2</td>
+        <td><ul><li>Item 1</li><li>Item 2</li></ul></td>
+        <td class='lefttd'>Unordered lists use asterisks, pluses, and hyphens — interchangably — as list markers.</td>
+    </tr>
+    <tr>
+        <td><img alt="Ordered list" src="/w_images/markitup/list-numeric.png"/></td>
+        <td>1. Item 1<br/>2. Item 2</td>
+        <td><ol><li>Item 1</li><li>Item 2</li></ol></td>
+        <td class='lefttd'>Ordered lists use numbers followed by periods.</td>
+    </tr>
+    <tr class=" header"><td colspan="4">Headings</td></tr>
+    <tr>
+        <td><img alt="Heading 1" src="/w_images/markitup/h1.png"/></td>
+        <td># Title 1 # <br/> <br/>
+            Title 1<br/> 
+            ====</td>
+        <td><h1>Title 1</h1></td>
+        <td valign="top"rowspan="5" class='lefttd'> 
+            Markdown supports two styles of headers, Setext and atx. Setext-style headers are “underlined” using equal signs (for first-level headers) and dashes (for second-level headers).Atx-style headers use 1-6 hash characters at the start of the line, corresponding to header levels 1-6.
+        </td>
+    </tr>
+    <tr><td><img alt="Heading 2" src="/w_images/markitup/h2.png"/></td>
+        <td>## Title 2 ## <br/><br/>Title 2<br/>-------</td>
+        <td><h2>Title 2</h2></td>
+    </tr>
+    <tr><td><img alt="Heading 3" src="/w_images/markitup/h3.png"/></td>
+        <td>### Title 3 ###</td><td><h3>Title 3</h3></td>
+    </tr>
+    <tr>
+        <td><img alt="Heading 4" src="/w_images/markitup/h4.png"/></td>
+        <td>#### Title 4 ####</td>
+        <td><h4>Title 4</h4></td>
+    </tr>
+    <tr>
+        <td><img alt="Heading 5" src="/w_images/markitup/h5.png"/></td>
+        <td>##### Title 5 #####</td>
+        <td><h5>Title 5</h5></td>
+    </tr>
+    <tr class="header"><td colspan="4">Links</td></tr>
+    <tr><td><img alt="Link" src="/w_images/markitup/link.png"/></td>
+        <td>This is [an example](http://example.com/) inline link.</td>
+        <td>This is <a href="http://example.com/">an example</a> inline link.</td>
+        <td class='lefttd'>To create an inline link, use a set of regular parentheses immediately after the link text’s closing square bracket. Inside the parentheses, put the URL where you want the link to point, along with an optional title for the link, surrounded in quotes.</td>
+    </tr>
+    <!--tr>
+        <td><img alt="Link" src="/w_images/markitup/link.png"/></td>
+        <td>This is [an example][id] reference-style link.</td>
+        <td>This is <a href="#id">an example</a> reference-style link.</td>
+        <td class='lefttd'>Reference-style links use a second set of square brackets, inside which you place a label of your choosing to identify the link</td>
+    </tr-->
+    <tr class="header">
+        <td colspan="4">Inline images</td>
+    </tr>
+    <tr>
+        <td><img alt="Image" src="/w_images/markitup/picture.png"/></td>
+        <td>![Alt text](/path/to/img.jpg)</td>
+        <td><img src='/w_images/markitup/picture.png' alt='Alt text'></td>
+        <td>Image syntax is very much like link syntax.</td>
+    </tr>
+    <!--tr class="header">
+        <td colspan="4">Reference-style images</td>
+    </tr>
+    <tr>
+        <td><img alt="Image" src="/w_images/markitup/picture.png"/></td>
+        <td>![Alt text][id]</td>
+        <td><img src='/w_images/markitup/picture.png' alt='Alt text' ></td>
+        <td>Image syntax is very much like link syntax.</td>
+    </tr-->
+    <tr>
+        <td align="right" colspan="4" class='lasttd'><a href="http://daringfireball.net/projects/markdown" target="_blank">More Information</a></td></tr>
+</table>
+</body></html>

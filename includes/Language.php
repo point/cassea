@@ -41,6 +41,7 @@ interface iLanguageProcessor{
 	public function getConst($key);
 	public function getLangList($raw = false);
 	public function getPluralConst($n, $key, $model = null);
+    public function getLangName($lang_id = null);
 }
 
 interface iUpdatableLanguageProcessor{
@@ -49,7 +50,6 @@ interface iUpdatableLanguageProcessor{
 	public function deleteLangConst($key, $model ='common');
 	public function getModelConst($model='common', $lang, $ruler);
 	public function getModelConstCount($model='common', $lang=0);
-    public function getLangName($lang_id = null);
 }
 
 
@@ -90,6 +90,9 @@ class Language{
         return call_user_func_array(array(self::$processor,'getConst'), $args);
 	}
 	static function getLangList($raw = false){return self::$processor->getLangList($raw);}
+	static function getLangName($lang_id){
+		return self::$processor->getLangName($lang_id);
+	}
 
 	static function getPluralKey($n, $key){
         return $key.'-'.self::getPluralForm( $n,self::currentName() );
@@ -139,10 +142,6 @@ class Language{
     }//}}} '
 
 	// {{{ Admin Proxy
-	static function getLangName($lang_id){
-		if (self::$processor instanceof iUpdatableLanguageProcessor)
-			return self::$processor->getLangName($lang_id);
-	}
 	static function setLangConst($key, $val, $model='common', $lang){
 		if (self::$processor instanceof iUpdatableLanguageProcessor)
 			return self::$processor->setLangConst($key, $val, $model, $lang);

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root >
+	<WDataSet>
+        <vendor>markdown</vendor>
+        <classname>Help</classname>
+        <datasource method="dsGetSrc"/>
+    </WDataSet>
+
+    <WText id='help'/>
+</root>

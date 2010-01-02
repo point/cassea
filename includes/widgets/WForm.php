@@ -299,6 +299,8 @@ class WForm extends WContainer
 	{
 		return $this->form_signature;
 	}
+	// }}}
+
     // {{{ assignVars
     /**
     * Method description

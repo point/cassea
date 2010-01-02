@@ -20,8 +20,9 @@ class CmdBackup extends Command{
         if ($r=ArgsHolder::get()->getOption('send-email'))
 		{
 			$this->send_email = true;
-			$this->email_address = (string)$r;
-			if(!preg_match(POSTChecker::$email_regexp,$this->email_address))
+            $this->email_address = explode(",",$r);
+            foreach($this->email_address as $emails)    
+                if(!preg_match(POSTChecker::$email_regexp,$emails))
 			{
 				io::out( "Incorrect email address format",IO::MESSAGE_FAIL);
 				return;
@@ -39,9 +40,14 @@ class CmdBackup extends Command{
 
             if($this->send_email)
             {
-                io::out("Sending email to ~WHITE~".$this->email_address.'~~~', false);
+                if(is_array($this->email_address))
+                    $toout=implode(',',$this->email_address);
+                else
+                    $toout=$this->email_address;
+                io::out("Sending email to ~WHITE~".$toout.'~~~', false);
                 $a=Mail::CreateMail();
-                $a->toAdd($this->email_address);
+                foreach($this->email_address as $emails)
+                    $a->toAdd($emails);
                 $a->setSubject("Backup ".$filename);
                 $a->setFromname(Config::getInstance()->mail->default_from_name);
                 $a->setFrom(Config::getInstance()->mail->default_from);

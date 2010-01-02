@@ -17,7 +17,7 @@ mySettings = {
 	onTab:			{keepDefault:false, replaceWith:'    ',},
 	previewAutorefresh: false,
 	//previewInWindow: 'width=800, height=600, resizable=yes, scrollbars=yes',
-	previewParserPath: '/markdownparser/',
+	//previewParserPath: '/markdownmedia',
 	markupSet: [
 		{name:'First Level Heading', key:'1', placeHolder:'Your title here...', closeWith:function(markItUp) { return miu.markdownTitle(markItUp, '=') } },
 		{name:'Second Level Heading', key:'2', placeHolder:'Your title here...', closeWith:function(markItUp) { return miu.markdownTitle(markItUp, '-') } },
@@ -36,7 +36,7 @@ mySettings = {
 		{separator:'---------------' },
 		/*{name:'Picture', key:'P', replaceWith:'![[![Alternative text]!]]([![Url:!:http://]!] "[![Title]!]")'},*/
 		{name:'Picture', beforeInsert:function(){
-				$('<iframe class="markdownmedia" src="/markdownmedia/" frameborder="0" scrolling="auto"></iframe>').dialog({
+				$('<iframe class="markdownmedia" src="/markdown/" frameborder="0" scrolling="auto"></iframe>').dialog({
 				bgiframe:true,
 				height:400,
 				width:600,
@@ -50,7 +50,20 @@ mySettings = {
 		{name:'Quotes', openWith:'> '},
 		{name:'Code Block / Code', openWith:'(!(\t|!|`)!)', closeWith:'(!(`)!)'},
 		{separator:'---------------'},
-		{name:'Preview', call:'preview', className:"preview"}
+		{name:'Preview', call:'preview', className:"preview"},
+        {separator:'---------------'},
+        {name:'Help', beforeInsert:function(){
+				$('<iframe class="markdownmedia" src="/markdown/help.html" frameborder="0" scrolling="auto"  title="Markdown Syntax Quick Reference"></iframe>').dialog({
+				bgiframe:true,
+				height:600,
+				width:600,
+				modal:true
+				});
+				$(".markdownmedia").width("97%");
+			}
+		}
+
+
 	]
 }
 

@@ -170,7 +170,6 @@ class MailObject implements IMailObject{
      */
     public function send()
     {
-        $this->transport = new SmtpMail();
         return $this->transport->send($this);
     }
     /*}}}*/
@@ -296,7 +295,7 @@ class MailObject implements IMailObject{
         }
         $filename = basename($path);
         $this-> attachmentName[] = $filename;
-        $this-> attachmentType[] = $this->fileTypes($path);
+        $this-> attachmentType[] = getMime($path);
         $this-> attachmentPath[]  = $path;
         $this-> attachDispos[]   = "attachment";
         $this-> attachSize      += filesize($path);
@@ -334,7 +333,7 @@ class MailObject implements IMailObject{
     	}
 		$filename = basename($path);
 		$this-> attachmentName[] =$filename;
-		$this-> attachmentType[] =$this->fileTypes($path);
+		$this-> attachmentType[] =getMime($path);
 		$this->attachmentPath[]  =$path;
         $this-> attachSize      += filesize($path);
         $this-> attachDispos[]   ="inline";
@@ -528,6 +527,7 @@ class MailObject implements IMailObject{
     public function mailBody(){
         $attach='';
         $inline='';
+		$body = '';
         switch($this->msgFlag){
             case '1':
                 for($i=0;$i<count($this->attachmentName);$i++){
@@ -602,17 +602,6 @@ class MailObject implements IMailObject{
     }
     /*}}}*/
     
-    /*{{{fileTypes
-     *функция, использующая расширение php fileinfo- выводит Mime-type приложенного к письму файла
-     */
-    private function fileTypes($path) {
-        $finfo = finfo_open( FILEINFO_MIME);
-		$mimeType = finfo_file($finfo,realpath($path));
-		finfo_close( $finfo);
-	   	return $mimeType;
-    }
-    /*}}}*/
-
 }
 //}}}
 ?>

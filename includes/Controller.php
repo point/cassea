@@ -382,27 +382,12 @@ class Controller extends EventBehaviour
 	 */
 	function setPageFunc($func)
 	{
-		if(is_callable($func))
-			$this->page_function = $func;
+		if(is_callable($func)) $this->page_function = $func;
+		else
+			throw new ControllerException('Given callback "'.print_r($func, true).'" isn\'t callable');
 	}
 	//}}}
 
-	//{{{ setPageClassMethod
-	/**
-	 * As {@link setPageFunc} this function also sets function that defines page name.
-	 * But it sets class static method to be used as callback. This classshould be required
-	 * at the calling moment.
-	 *
-	 * @param string name of the class
-	 * @param string static method name that should be called
-	 * @return null
-	 */
-	function setPageClassMethod($class_name,$func)
-	{
-		if(is_callable($class_name,$func))
-			$this->page_function = $class_name."::".$func;
-	}
-	//}}}
 
 	//{{{ init
 	/**
@@ -493,7 +478,7 @@ class Controller extends EventBehaviour
 		$this->trigger("BeforeFindPage",$this);
 
         $ret = null;
-		if(is_string($this->page_function))
+		if(!is_null($this->page_function))
 			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
 		if(!isset($ret))
 			if(!empty($this->p1))
@@ -505,10 +490,7 @@ class Controller extends EventBehaviour
 
 		$this->trigger("PageFinded",array($this,$this->page));
 
-		if(!file_exists(($full_path = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml"))){
-			Header::error(Header::NOT_FOUND);
-			throw new ControllerException('page file '.$this->page.'.xml not found');
-		}
+		$full_path = $this->pagePath($this->page);
 
         if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
             throw new ControllerException('page '.$this->page.' is for internal use only');
@@ -570,14 +552,17 @@ class Controller extends EventBehaviour
         if(empty($src))
 			throw new ControllerException('page file not set');
 
+
+		// page name to xml file
+		$src .= ((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
+		$src = ($src{0} != "/")?('/'.$this->controller_name.'/'.$src):$src;
+
 		if ($vendor_only) return  $this->vendorPagePath($src);
 		else
 		{
 			// models page
-			$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
-			$src = ($src{0} != "/")?('/'.$this->controller_name.'/'.$src):$src;
-			$src2 = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR").$src;
-			if(file_exists($src2)) return $src2;
+			$file = Dir::get(Config::get('ROOT_DIR'), true)->getDir(Config::get("XMLPAGES_DIR"))->getFile($src);
+			if($file->exists()) return $file;
 
 			// vendor pages
 			try{
@@ -600,11 +585,9 @@ class Controller extends EventBehaviour
 	 */
     protected final function vendorPagePath($src)
     {
-		$src = $src.((substr($src,-4) != '.xml')?'.xml':''); // first.xml.example.xml;
-		$src = (($src{0} != "/")?'/':'').$src;
-		$src2 = Config::get('ROOT_DIR').Config::get("vendors_dir").$src;
+		$file = Dir::get(Config::get('ROOT_DIR'), true)->getDir(Config::get("vendors_dir"))->getDir('pages')->getFile($src);
 
-		if(file_exists($src2)) return $src2;
+		if($file->exists()) return $file;
 		throw new ControllerException('vendor page file '.$src.' not found', 1);
 	}
 	//}}}
@@ -2537,7 +2520,7 @@ class AjaxController extends Controller
 		DataUpdaterPool::callHandlers($formid);
 		DataUpdaterPool::callFinalize($formid);
 
-		$this->trigger("AfterHandlePOST",array($this,$ret));
+		$this->trigger("AfterHandlePOST",array($this,null));
 
 	}
 	//}}}

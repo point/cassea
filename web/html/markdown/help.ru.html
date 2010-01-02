@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta  http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta  http-equiv="Content-Style-Type" content="text/css"/>
+        <link  href="/0.1/default.css" type="text/css" rel="stylesheet"/>
+        <link  href="/0.1/jquery.markitup_markdown.css" type="text/css" rel="stylesheet"/>
+        <link  href="/0.1/jquery.markitup_main.css" type="text/css" rel="stylesheet"/>
+        <style type="text/css">
+            table {
+                border-top: 1px solid #dddddd;
+                background-color: #fff;
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+            table td {
+                padding: 8px 15px;
+                border-right: 1px solid #dddddd;
+                border-left: 1px solid #dddddd;
+                font-size: 11px;
+                color: #333;
+                font-weight: none;
+                font-family: Verdana;
+                text-align:center;
+            }
+            .lasttd{
+                border-top:1px solid #dddddd ;
+                border-left:0px;
+                border-right:0px;
+                border-bottom:0px;
+            }
+            .lefttd{
+                text-align:left;
+            }
+            .header {
+                background-color:#dddddd;
+            }
+        </style>
+    </head>
+    <body>
+        <table width="100%">
+            <tr class=" header" >
+                <td colspan="4" >Стили шрифтов</td>
+            </tr>
+            <tr >
+                <td width="5" >
+                    <img alt="Жирный" src="/w_images/markitup/bold.png" />
+                </td>
+                <td align="center" width="150" >**Жирный**</td>
+                <td align="center" width="90" > 
+                    <strong >Жирный</strong>
+                </td>
+                <td class='lefttd' > 
+                    <span > Текст, обернутый в двойные * будет обрамлен  HTML тегом &lt;strong&gt; </span>
+                </td>
+            </tr>
+            <tr >
+                <td >
+                    <img alt="Italic" src="/w_images/markitup/italic.png" />
+                </td><td >_Курсив_</td><td > <i>Курсив</i></td>
+                <td class='lefttd' > <span >  Текст, обернутый в одинарные _ будет обрамлен HTML тегом &lt;i&gt; .</span></td>
+            </tr>
+            <tr >
+                <td ><img alt="Code" src="/w_images/markitup/code.png" /></td>
+                <td >`Код`</td>
+                <td >
+                    <code >Код</code>
+                </td>
+                <td class='lefttd' > <span >Чтобы выделить часть кода, необходимо обернуть текст в обратные кавычки(`).</span></td>
+            </tr>
+            <tr >
+                <td ><img alt="Quotes" src="/w_images/markitup/quotes.png" /></td>
+                <td >&gt;Цитата</td>
+                <td > <span >Цитата</span></td>
+                <td class='lefttd' > <span >Markdown использует стиль почты &gt; для выделения цитат.</span></td>
+            </tr>
+            <tr class=" header" >
+                <td colspan="4" >Списки</td>
+            </tr>
+            <tr >
+                <td ><img alt="Unordered list" src="/w_images/markitup/list-bullet.png" /></td>
+                <td > <span >*   Элемент 1 </span><br />
+                    <span >*   Элемент 2</span></td><td ><ul >
+                        <li >Элемент 1</li><li >Элемент 2</li>
+                </ul></td><td class='lefttd' > <span >Для обозначения ненумерованных списков используют звездочки , плюсики и дефисы.</span></td>
+            </tr>
+            <tr >
+                <td ><img alt="Ordered list" src="/w_images/markitup/list-numeric.png" /></td>
+                <td > <span >1. Элемент 1 </span><br />
+                    <span >2. Элемент 2</span></td>
+                <td ><ol >
+                        <li >Элемент 1</li>
+                        <li >Элемент 2</li>
+                    </ol>
+                </td><td class='lefttd' > <span >Нумерованные списки обозначаются номером перед элементом</span></td>
+            </tr>
+            <tr class=" header" >
+                <td colspan="4" >Заголовки</td>
+            </tr>
+            <tr >
+                <td ><img alt="Heading 1" src="/w_images/markitup/h1.png" />
+                </td>
+                <td ># Заголовок 1 #  <br/><br/>
+                    Заголовок 1<br/>
+                    =========== 
+                </td>
+                <td ><h1 >Заголовок 1</h1></td>
+                <td valign="top" rowspan="5" class='lefttd' > <span >Стиль подчеркивания заголовков использует знак равенства (на первом уровне заголовков) и тире (на втором уровне заголовков). Заголовки 1-6 уровней обозначаются символом решетки, количество решеток соответствует уровню заголовка 1-6.</span></td>
+            </tr>
+            <tr >
+                <td ><img alt="Heading 2" src="/w_images/markitup/h2.png" /></td>
+                <td >## Заголовок 2 ##<br/><br/>
+                    Заголовок 2<br/>
+                    -----------</td>
+                <td ><h2 >Заголовок 2</h2></td>
+            </tr>
+            <tr >
+                <td >
+                    <img alt="Heading 3" src="/w_images/markitup/h3.png" /></td>
+                <td >### Заголовок 3 ###</td>
+                <td ><h3 >Заголовок 3</h3></td>
+            </tr>
+            <tr >
+                <td ><img alt="Heading 4" src="/w_images/markitup/h4.png" /></td>
+                <td >#### Заголовок 4 ####</td>
+                <td ><h4 >Заголовок 4</h4></td>
+            </tr>
+            <tr >
+                <td ><img alt="Heading 5" src="/w_images/markitup/h5.png" /></td>
+                <td >##### Заголовок 5 #####</td>
+                <td ><h5 >Заголовок 5</h5></td>
+            </tr>
+            <tr class=" header" ><td colspan="4" >Ссылки</td>
+            </tr>
+            <tr >
+                <td ><img alt="Link" src="/w_images/markitup/link.png" /></td><td >Это [пример](http://example.com/) внешней ссылки.</td>
+                <td ><a href="http://example.com/" >пример</a></td><td class='lefttd' > <span >Для создания внешней ссылки используйте круглые и квадратные скобки. </span></td>
+            </tr>
+            <!--tr >
+            <td ><img alt="Link" src="/w_images/markitup/link.png" /></td>
+            <td >Это [пример][id] внутренней ссылки - якоря.</td>
+            <td ><a href="#" >http://foo.bar#test</a></td>
+            <td class='lefttd' > <span >Внутренняя ссылка представляется набором двух квадратных скобок с названием ссылки и идентифиратором метки </span></td>
+            </tr-->
+            <tr class=" header" >
+                <td colspan="4" >Изображения</td>
+            </tr>
+            <tr ><td ><img alt="Image" src="/w_images/markitup/picture.png" /></td>
+                <td >![Текст при наведении](/path/to/img.jpg)</td>
+                <td><img src='/w_images/markitup/picture.png' alt='Текст при наведении'></td>
+                <td>Синтаксис изображений схож с синтаксом ссылок.</td>
+            </tr>
+            <!--tr class=" header" >
+            <td colspan="4" >Ссылочные изображения</td>
+        </tr>
+        <tr >
+            <td >
+                <img alt="Image" src="/w_images/markitup/picture.png" />
+            </td>
+            <td >![Текст при наведении][id]</td>
+            <td><img src='/w_images/markitup/picture.png' alt="Текст при наведении"></td>
+            <td>Синтаксис изображений схож с синтаксом ссылок. Название изображения опционально.</td>
+            </tr-->
+            <tr >
+                <td align="right" colspan="4"   class='lasttd'   >
+                    <span ><a href="http://daringfireball.net/projects/markdown" target="_blank" >Еще информация</a></span>
+                </td>
+            </tr>
+        </table>
+</body></html>

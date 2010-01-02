@@ -82,6 +82,7 @@ class WRoll extends WContainer implements iOddEven
 		parent::__construct($id);
     }
     // }}}
+	
     // {{{ parseParams
     /**
     * Method description
@@ -106,11 +107,10 @@ class WRoll extends WContainer implements iOddEven
 		$this->items = new IterableCollection($this->getId(),$elem);
 		$this->addToMemento(array("count"));
 
-
 		parent::parseParams($elem);
-
     }
     // }}}
+	
     // {{{ buildComplete
     /**
     * Method description
@@ -128,9 +128,9 @@ class WRoll extends WContainer implements iOddEven
 		Controller::getInstance()->getDispatcher()->addSubscriber("roll_setlimits",$this->getId());
 		parent::buildComplete();
 
-
 	}    
 	// }}}
+	
     // {{{ preRender
     /**
     * Method description
@@ -181,6 +181,7 @@ class WRoll extends WContainer implements iOddEven
 		parent::messageInterchange();
 	}
 	//}}}	
+	
     // {{{ assignVars
     /**
     * Method description
@@ -196,6 +197,7 @@ class WRoll extends WContainer implements iOddEven
 		parent::assignVars();
     }
 	// }}}	
+	
     // {{{ setRuler 
     /**
     * Method description

@@ -59,7 +59,7 @@ class Browser
 			}catch(DecoratorException $e)
 			{ continue; }
 			$stat = $df->stat();
-			$r->f("#fname",$k)->text($df->getName())
+			@$r->f("#fname",$k)->text($df->getName())
 				->f("#fdel",$k)->additional_id($df->getName())
 				->f("#stat",$k)->text(
 					$df->getWidth()."&#215;".$df->getHeight()."&nbsp;".

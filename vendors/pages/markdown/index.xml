@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<root allow="admin">
+<root allow1="admin">
 	<WDataSet static="1">
-		<model>markdownmedia</model>
+		<vendor>markdown</vendor>
 		<classname>Browser</classname>
 		<datasource method="ls">
 			<param from="p2" as="array"/>
@@ -72,7 +72,7 @@ return false;
 	</WJavaScript>
 
 	<WDataHandler static="1" forms="mkdir">
-		<model>markdownmedia</model>
+		<vendor>markdown</vendor>
 		<classname>Browser</classname>
         <checker method='mkdirChecker'>
 			<param from="p2" as="array"/>
@@ -83,14 +83,14 @@ return false;
 	</WDataHandler>
 
 	<WDataHandler static="1" forms="delete">
-		<model>markdownmedia</model>
+		<vendor>markdown</vendor>
 		<classname>Browser</classname>
 		<handler method="delete">
 			<param from="p2" as="array"/>
 		</handler>
 	</WDataHandler>
 	<WDataHandler static="1" forms="upload">
-		<model>markdownmedia</model>
+		<vendor>markdown</vendor>
 		<classname>Browser</classname>
 		<handler method="upload">
 			<param from="p2" as="array"/>

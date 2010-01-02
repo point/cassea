@@ -80,7 +80,7 @@ class DBException extends CasseaException
      */
     function __construct( $message = NULL, $code = null, $query = NULL )
     {
-        if ($query !== NULL) $this->query = $query;
+        if ($query !== NULL) $this->query = $this->extra['query'] = $query;
         parent::__construct(wordwrap($message,75, "\r\n\t\t" ), $code);
     }//}}}
 

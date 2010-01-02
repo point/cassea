@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once("markdown.php");
+require_once(dirname(__FILE__)."/markdown.php");
 
 function print_pre($var)
 {

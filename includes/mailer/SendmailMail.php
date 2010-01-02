@@ -29,7 +29,7 @@
 
 require_once 'MailTransport.php';
 
-class MailException extends Exception{}
+class MailException extends CasseaException{}
 
 /*{{{class sendmailMail
  *класс реализует транспорт sendmail
@@ -63,6 +63,12 @@ class SendmailMail extends MailTransport{
                 $pointer->LargeBody($fp,'fwtite');
 			    fwrite($fp, "\r\n\n");
             }
+			else
+			{
+				fwrite($fp,$pointer->createHeader()."\r\n");
+				fwrite($fp,$pointer->mailBody()."\r\n");
+				fwrite($fp, "\n");
+			}
 			pclose($fp);
         }catch (MailException $e){echo $e->getMessage();return false;}
         return true;

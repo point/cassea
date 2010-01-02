@@ -29,7 +29,7 @@
 
 require_once 'MailTransport.php';
 
-class SmtpException extends Exception{}
+class SmtpException extends CasseaException{}
 
 /*{{{class smtpMail
  *класс содержит методы для отправки писем с помощью smtp протокола

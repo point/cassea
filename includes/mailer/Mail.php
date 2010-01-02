@@ -59,28 +59,4 @@ class Mail{
     }//}}}
 }
 //}}}
-/*
-    EXAMPLE
-
-    $a=Mail::CreateMail();
-    //$a->setTexthtml();
-	$a->setSubject("Тест");
-	$a->setFromname("Алексей Ковтунец");
-    $a->setFrom("climbonn@gmail.com");
-    $a->replyToAdd('x-kai-x@rambler.ru');
-    //$a->setFrom("skai@intvideo");
-	$a->htmlMessage("Это <b>html </b> текст...");
-    $a->Message("До нашего времени, криптография занималась исключительно конфиденциальностью 
-
-Основные классические виды шифрования это перестановочное шифрование, при котором буквы 
-	//$a->toAdd("point@intvideo");
-	$a->toAdd("x-kai-x@rambler.ru");
-	//$a->ccAdd("cccccc@fffs.com");
-	//$a->BccAdd("x-kai-x@rambler.ru");
-	$a->attachAdd("logo.gif");
-	$a->inlineAdd("logo.gif");
-    $a->attachAdd("call.php");
-
-    $a->send();
-*/
 ?>

@@ -48,6 +48,9 @@ class SingleLanguageProcessor implements iLanguageProcessor
 		return $raw?$a:array_values($a);
 	}
 
+	function getLangName($lang_id = null){
+		return $this->currentName;
+	}
 
  	// {{{ getPluralConst0
     /**

@@ -47,6 +47,14 @@ require("functions.php");
 require("env/Loader.php");
 require("Config.php");
 require('Autoload.php');
+require('ErrorsHandler.php');
+
+/**
+ * Setup errors and exceptions handlers.
+ *
+ * @see ErrorsHandler
+ */ 
+ErrorsHandler::setup();
 
 /**
  * Init config with CONFIG and CONFIG_SECTION constants
@@ -116,7 +124,7 @@ class Boot
 	
 	/**
 	 * Setting up plugins, that registered in the system.
-	 * It will lookup /vendors/plugins/*.php and require they.
+	 * They will be looked up in /vendors/plugins/*.php and required in order of string sorting.
 	 */
 	static function setupPlugins()
 	{
