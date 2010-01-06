@@ -27,21 +27,71 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- *
- * This file contains class FakeLog.
- *
- * @author Skai <climbonn@gmail.com>
+ * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
  * @version $Id: $
  * @package system
  * @since 
  */
-
-//{{{FakeLog
-class FakeLog 
+//{{{ FileLogger
+/**
+ */
+class FileLogger extends AbstractLogger implements iLog2Logger
 {
-    // {{{ __call 
-	public function __call($one,$two) {}
-		//}}}
+    
+    /**
+     * @var file path or a stream.
+     */
+	protected 
+		$fp = null,
+		$file_path = null,
+		$logs_buffer = array();
+;
+   
+    //{{{ __construct
+    /**
+     * @param file path or a stream
+     * @param write mode
+     * @return WriteFile object 
+     */
+	public function __construct($params)
+	{
+		$this->file_path = $params['path'];
+		if($this->file_path = basename($this->file_path))
+			$this->file_path = Config::get("root_dir")."/".Config::get("logs_dir")."/".$this->file_path;
+		if(!is_writeable($dir_name = dirname($this->file_path)))
+			throw new Log2Exception("Directory $dir_name is not writeable");
+		
+		$this->fp = fopen($this->file_path,"a");
+		if(!$this->fp)
+			throw new Log2Exception("Cound not open file {$this->file_path} for appending");
 
-} //}}}
+		parent::__construct();
+		
+    }
+    //}}}
+
+	public function log(array $params)
+	{
+		$this->logs_buffer[] = $this->formatString($params);
+		$this->try_write();
+	}
+
+	private function try_write()
+	{
+		if (flock($this->fp, LOCK_EX | LOCK_NB))
+		{
+			foreach($this->logs_buffer as $v)
+				fwrite($this->fp,$v);
+			$this->logs_buffer = array();
+			flock($this->fp,LOCK_UN);
+		}
+	}
+
+	function __destruct()
+	{
+		fclose($this->fp);
+	}
+
+} 
+//}}} 

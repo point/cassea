@@ -25,41 +25,24 @@
 * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- }}} -*/
+}}} -*/
 /**
- * This file contains abstract class WriterAbstract.
  *
- * @author Skai <climbonn@gmail.com>
+ * This file contains class WriterNull which abstract from WriterAbstract.
+ * WriterNull's responsibility is to record log data to a nowhere.
+ *
+ * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
  * @version $Id: $
  * @package system
  * @since 
  */
 
-//{{{ WriterAbstract 
+//{{{ NullLogger
 /**
- * Writer's responsibility is to record log data to a storage backend.
+ *  WriterNull's responsibility is to record log data to a nowhere.
  */
-abstract class WriterAbstract
+class NullLogger implements iLog2Logger
 {
-    protected $formatter;
-
-    // {{{ Write
-    /**
-     * write 
-     * @param  $event array of params
-     * @return null
-     */
-    abstract public function write($event);
-    // }}}
-    
-    // {{{ SetFormatter
-    /**
-     *
-     * @param  $formatter string or regexp
-     * @return null
-     */
-    public function setFormatter($formatter){
-        $this->formatter=$formatter;
-    }//}}}
-}//}}}
+	public function log($params) { }
+} //}}}

@@ -27,52 +27,16 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class FilterPriority for filter events by priority.
- *
- * @author Skai <climbonn@gmail.com>
+ * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
  * @version $Id: $
  * @package system
  * @since 
  */
-
-require_once("iLogFilter.php");
-
-//{{{ FilterPriority
+//{{{ iLog2Logger
 /**
- * FilterPriority make it possible to filter events by priority.  
  */
-
-class FilterPriority implements iLogFilter 
+interface iLog2Logger
 {
-    /**
-     * @var int  Priority for filter
-     */
-    protected $priority;
-    
-    // {{{_construct 
-    /** @param priority integer 
-     *  @return FilterPriority object
-     */
-    public function __construct($priority){
-        if(is_integer($priority))
-            $this->priority=$priority;
-        else{
-            throw new LogException("Invalid priority format");
-        }
-    }
-    //}}}
-
-    //{{{ accept
-    /**
-     * @param  $event 
-     * @return bool 
-     */
-    public function accept($event) {
-       return ($event['priority']==$this->priority) ? false : true;
-    }
-    //}}}
-} 
- //}}} end of class FilterPriority
-
-?>
+	function log(array $params);
+}

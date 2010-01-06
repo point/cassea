@@ -53,6 +53,10 @@ class Log2
      */
     private static $instance = null;
 
+	private static $forbidden_log_levels = array("format");
+
+	protected function __construct(){}
+
     //{{{ f
     /**
      */
@@ -68,7 +72,7 @@ class Log2
 	
 
 	// ->findLogConfigValue(self::$path,"priority");
-	private function findLogConfigValue($part1,$part2,$only_w_part2 = true, $failback_to_all = true)
+	private function findLogConfigValue($part1,$part2,$only_w_part2 = false, $failback_to_all = true)
 	{
 		$config = Config::getInstance()->log2;
 
@@ -135,11 +139,11 @@ class Log2
 		
 		return array($to_parse,$found_w_part2,$part1);
 	}
-	private function findLog4Priority($priority)
+	private function findLog4Level($log_level)
 	{
 		$o = null;
-		if(isset(self::$path_instances[self::$path.":".$priority]))
-			return self::$path_instances[self::$path.":".$priority];
+		if(isset(self::$path_instances[self::$path.":".$log_level]))
+			return self::$path_instances[self::$path.":".$log_level];
 		if(isset(self::$path_instances[self::$path]))
 			return self::$path_instances[self::$path];
 
@@ -152,25 +156,45 @@ class Log2
 		if(empty($parsed['scheme']))
 			throw new Log2Exception("Logger classname wasn't found");
 
-		$logger_class = "writer".preg_replace("/[^A-Za-z]/",$parsed['scheme']);
+		$logger_class = preg_replace("/[^A-Za-z]/",$parsed['scheme']).'Logger';
 		$parsed['params'] = parse_str($parsed['query']);
 		unset($parsed['scheme']);
 		unset($parsed['query']);
 		unset($parsed['fragment']);
 
-		return self::$path_instances[$found_at_path.($found_w_priority?(":".$priority):"")] = 
-			self::$path_instances[self::$path.($found_w_priority?(":".$priority):"")] = new $logger_class($parsed);
+		$o = new $logger_class($parsed);
+		if(!class_exists($logger_class))
+			$logger_class = "WriterNull";
+		if(!$o instanceof iLog2Logger)
+			throw new Log2Exception("Instance of the class $logger_class is not a member of iLog2Logger interface");
+
+		return self::$path_instances[$found_at_path.($found_w_priority?(":".$log_level):"")] = 
+			self::$path_instances[self::$path.($found_w_priority?(":".$log_level):"")] = $o;
+	}
+
+	private function findFormat($log_level)
+	{
+		list($format) = $this->findLogConfigValue($log_level,"format",true);
+		return $format;
 	}
 	
+	//Log::f("dj")->error("qwe","qwe2","qwe3");
     // {{{ __call
-	public function __call($priority, $message) {
+	public function __call($log_level, $params) {
 
-		$logger = $this->findLog4Priority($priority);
+		if(in_array($log_level,self::$forbidden_log_levels))
+			throw new Log2Exception("Log level $log_level is forbidden");
 
+		$logger = $this->findLog4Level($log_level);
+		if($logger instanceof iLog2Formattable)
+			$logger->setFormat($this->findFormat($log_level));
 
-        if(($k = array_search($priority,$this->priorities)) === false)
-			throw new LogException("Priority $priority is not available!");
-        $this->writeLog($message[0],$k);
+		if(!isset($params[0]))
+			$params[0] = "";
+		if(count($params) > 1)
+			$params[0] .= " ( ".implode(" , ",array_slice($params,1))." ) ";
+
+		$logger->log(array("message"=>$params[0],"log_level"=>$log_level));
 	}
 	//}}}
 }// }}} 

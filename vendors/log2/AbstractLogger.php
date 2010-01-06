@@ -27,52 +27,53 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class FilterMessage for filter events by regular expression.
- *
- * @author Skai <climbonn@gmail.com>
+ * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
  * @version $Id: $
  * @package system
  * @since 
  */
-
-require_once("iLogFilter.php");
-
-//{{{ FilterPriority
+//{{{ AbstractLogger
 /**
- * FilterMessage make it possible to filter events by use regular expression for the message.
  */
-
-class FilterMessage implements iLogFilter 
+abstract class AbstractLogger implements iLog2Formattable
 {
-    /**
-     * @var string Regexp for filter
-     */
-    protected $regexp;
+	protected 
+		$predefined_vars = array(),
+		$format = '$date $time $log_level $message'
+			;
 
-    // {{{_construct 
-    /** @param priority integer
-     *  @return FilterPriority object
-     */
-    public function __construct($regexp){
-        if(preg_match($regexp,'')===false)
-            {
-                throw new LogException("Invalid regular expression $regexp");
-            }
-        $this->regexp=$regexp;
-    }
-    //}}}
-
-    // {{{accept 
-    /**
-     * @param  $event 
-     * @return bool 
-     */
-    public function accept($event) {
-       return preg_match($this->regexp,$event['message']) > 0;
-    }
-    // }}}
-
-} //}}} end of class FilterMessage
-
-?>
+	function __construct()
+	{
+		$this->predefined_vars = array(
+			"http_host"=>$_SERVER['HTTP_HOST'],
+			"http_user_agent"=>$_SERVER['HTTP_USER_AGENT'],
+			"http_referer",
+			"http_via",
+			"http_x_forwarded_for", 
+			"http_cookie"=>$_SERVER['HTTP_COOKIE'], 
+			"remote_addr"=>$_SERVER['REMOTE_ADDR'],
+			"remote_port"=>$_SERVER['REMOTE_PORT'],
+			"server_addr"=>$_SERVER['SERVER_ADDR'],
+			"server_port"=>$_SERVER['SERVER_PORT'],
+			"server_protocol"=>$_SERVER['SERVER_PROTOCOL'],
+			"uri"=>$_SERVER['REQUEST_URI'],
+			"request_method"=>$_SERVER['REQUEST_METHOD'],
+			"hostname"=>$_SERVER['hostname'],
+			"rfc_date"=>date(DATE_RFC822),
+			"date"=>date("j M Y"),
+			"time"=>date("G:i:s")
+		);	
+	}
+	public function setFormat($format)
+	{
+		if(!empty($format))
+			$this->format = $format;
+	}
+	protected function formatString(array $params)
+	{
+		extract($this->predefined_vars+$params);
+		return @preg_replace('/(\$[A-Za-z][A-Za-z0-9]{0,})/e',"\\1",$this->format);
+	}
+}
+//}}}

@@ -27,29 +27,16 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- *
- * This file contains class WriterNull which abstract from WriterAbstract.
- * WriterNull's responsibility is to record log data to a nowhere.
- *
- * @author Skai <climbonn@gmail.com>
+ * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
  * @version $Id: $
  * @package system
  * @since 
  */
-
-//{{{WriterNull
+//{{{ iLog2Formattable
 /**
- *  WriterNull's responsibility is to record log data to a nowhere.
  */
-class WriterNull extends WriterAbstract 
+interface iLog2Formattable
 {
-    // {{{ write 
-    /**
-	 * Implements abstract method write of WriterAbstract
-	 *
-     * @param  $event 
-     */
-	public function write($event) { 
-	}//}}}
-} //}}}
+	function setFormat($format);
+}
