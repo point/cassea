@@ -39,10 +39,8 @@
  * @see Mail
  */
 
-require_once("WriterAbstract.php");
-
-//{{{WriterMail
-class WriterMail extends WriterAbstract
+//{{{ MailLogger
+class MailLogger extends AbstractFormattable
 /**
  * WriterMail's responsibility is to send log data by E-mail.
  */

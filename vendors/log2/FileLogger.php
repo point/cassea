@@ -36,7 +36,7 @@
 //{{{ FileLogger
 /**
  */
-class FileLogger extends AbstractLogger implements iLog2Logger
+class FileLogger extends AbstractFormattable implements iLog2Logger
 {
     
     /**

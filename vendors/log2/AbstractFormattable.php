@@ -33,10 +33,10 @@
  * @package system
  * @since 
  */
-//{{{ AbstractLogger
+//{{{ AbstractFormattable
 /**
  */
-abstract class AbstractLogger implements iLog2Formattable
+abstract class AbstractFormattable implements iLog2Formattable
 {
 	protected 
 		$predefined_vars = array(),
@@ -73,7 +73,7 @@ abstract class AbstractLogger implements iLog2Formattable
 	protected function formatString(array $params)
 	{
 		extract($this->predefined_vars+$params);
-		return @preg_replace('/(\$[A-Za-z][A-Za-z0-9]{0,})/e',"\\1",$this->format);
+		return @preg_replace('/(\$[A-Za-z][A-Za-z0-9]{1,})/e',"\\1",$this->format);
 	}
 }
 //}}}
