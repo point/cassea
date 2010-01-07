@@ -26,15 +26,83 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+/**
+ * This file contains class with simple template implementation.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
-// $Id$
-
+//{{{ Template
+/**
+ * This class used for simple variable substitution into
+ * various html or plain text files. It lies in the core of widget's 
+ * output.
+ *
+ * Inside the template all PHP core functions might be used. Be its 
+ * strongly recommended to use minimal subset. Core widgets are
+ * using only "isset" for checks, string casting and foreach loops.
+ *
+ * Simple example:
+ * <pre><code>
+ * 
+ * Random number - <?php echo rand();?> <br/>
+ *
+ * </code></pre>
+ *
+ * To output computed values, such as random values, use regular
+ * echo, printf, etc.
+ *
+ * To assign variables into template, special object is injected into
+ * template's scope.
+ * 
+ * For example, template code:
+ * <pre><code>
+ * 
+ * Constant value - <?php echo $p->constant_value; ?> <br/>
+ *
+ * </code></pre>
+ *
+ * To take output of this template, such code might be used:
+ *
+ * <pre><code>
+ * 
+ * $template = new Template("/tmp","template.html");
+ * $template->setParamsArray("constant_value"=>"some constant");
+ *  
+ *  OR 
+ * 
+ * $template->setParams(t(new TemplateParams())->set("constant_value","some constant"));
+ *
+ * </code></pre>
+ */
 class Template
 {
 	private 
+		/**
+		 * @var string
+		 * path to the file
+		 */
 		$path = null,
+		/**
+		 * @var string
+		 * name of the file with template
+		 */
 		$filename = null,
+		/**
+		 * @var TemplateParams
+		 * Holds params for current template
+		 */
 		$params = null;
+
+	//{{{ __construct
+	/**
+	 * @param string real path to the template
+	 * @param string template file name
+	 */
 	function __construct($path,$filename)
 	{
 		$path = rtrim($path,"/");
@@ -45,19 +113,59 @@ class Template
 		$this->filename = $filename;
 		$this->params = new TemplateParams;
 	}
+	//}}}
+
+	//{{{ setParams
+	/** 
+	 * Inject early created parms to the 
+	 * current template object.
+	 *
+	 * @param TemplateParams 
+	 * @return null
+	 */
 	function setParams(TemplateParams $p)
 	{
 		$this->params->merge($p);
 	}
+	//}}}
+
+	//{{{ setParamsArray
+	/**
+	 * Creates parameters from 2-dimensional array.
+	 * Key is the name of parameter, value is the value to
+	 * pass to the template
+	 *
+	 * @params array with parameters
+	 * @return null
+	 */
 	function setParamsArray($arr)
 	{
 		foreach($arr as $k => $v)
 			$this->params->set($k,$v);
 	}
+	//}}}
+
+	//{{{ flushVars
+	/**
+	 * Cleans current parameters.
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function flushVars()
 	{
 		$this->params = new TemplateParams;
 	}
+	//}}}
+
+	//{{{ getHTML
+	/**
+	 * Passes accumulated parametes into the template file 
+	 * as the variable $p, and collects output of this file.
+	 *
+	 * @param null
+	 * @return string evaluated template
+	 */
 	function getHTML()
 	{
 		ob_start();
@@ -69,4 +177,6 @@ class Template
 		$this->params = new TemplateParams;
 		return $s;
 	}
+	//}}}
 }
+//}}}
