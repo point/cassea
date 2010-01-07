@@ -62,7 +62,7 @@
  * For example, template code:
  * <pre><code>
  * 
- * Constant value - <?php echo $p->constant_value; ?> <br/>
+ * Constant value - <?php echo (string)$p->constant_value; ?> <br/>
  *
  * </code></pre>
  *
@@ -78,6 +78,9 @@
  * $template->setParams(t(new TemplateParams())->set("constant_value","some constant"));
  *
  * </code></pre>
+ *
+ * Note, that parameters in the template should be casted to string, because they are objects
+ * by the nature.
  */
 class Template
 {
