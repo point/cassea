@@ -262,6 +262,12 @@ class Controller extends EventBehaviour
 		 */
 		$checker_rules = array(),
 		/**
+		 * List of rules to check incoming files, sended via POST
+		 *
+		 * @var array
+		 */
+		$file_rules = array(),
+		/**
 		 * List of custom error messages for checking POST data
 		 *
 		 * @var array
@@ -1878,7 +1884,9 @@ class Controller extends EventBehaviour
 
 			$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
 
-			POSTChecker::checkByRules($this->post,$this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
+			POSTChecker::checkByRules($this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
+			POSTChecker::checkFiles(  $this->post->{WForm::signature_name},$this->file_rules,$this->checker_messages);
+			
 			if(POSTErrors::hasErrors())
 			{
 				POSTErrors::saveErrorList();
@@ -1967,16 +1975,20 @@ class Controller extends EventBehaviour
 	 * Primarily for internal use by WValueChecker class.
 	 *
 	 * @param string complete form signature, that will come via POST
-	 * @param string name name of the HTML control, which should be checked upon the rules
+	 * @param WControl object of HTML control, which should be checked upon the rules. WControl because
+	 * widget should have getName() method.
 	 * @param string name of the rule to apply ("required", "min", "max" etc)
 	 * @param string value for rule. May be empty if rule doesn't need value (such as required).
 	 * @param string optional message to be displayed, if default doesn't feet for particular needs.
 	 */
-	function setChecker($form_sig,$name,$rule,$rule_value, $message = null)
+	function setChecker($form_sig,WControl $widget,$rule,$rule_value, $message = null)
     {
-		if(!isset($form_sig,$name,$rule,$rule_value)) return;
-        $this->checker_rules[$form_sig][$name][$rule] = trim($rule_value);
-        if (!is_null($message)) $this->checker_messages[$form_sig][$name] = $message;
+		if(!isset($form_sig,$widget,$rule,$rule_value)) return;
+		if($widget instanceof iFileUploader)
+			$this->file_rules[$form_sig][$widget->getName()][$rule] = trim($rule_value);
+		else
+			$this->checker_rules[$form_sig][$widget->getName()][$rule] = trim($rule_value);
+        if (!is_null($message)) $this->checker_messages[$form_sig][$widget->getName()] = $message;
 	}
 	//}}}
 
@@ -2002,6 +2014,11 @@ class Controller extends EventBehaviour
 		if(!empty($_cm) && is_array($_cm))
 			$this->checker_messages = $_cm;
 		unset($_cm);
+		$_fr = $storage['file_rules'];
+		if(!empty($_fr) && is_array($_fr))
+			$this->file_rules = $_fr;
+		unset($_fr);
+
 	}
 	//}}}
 
@@ -2136,6 +2153,7 @@ class Controller extends EventBehaviour
 		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
 			$storage->set('signatures',$this->form_signatures);
 		    $storage->set('checker_rules',$this->checker_rules);
+		    $storage->set('file_rules',$this->file_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
             POSTErrors::flushErrors();
         }

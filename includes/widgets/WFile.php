@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WControl");
 //{{{ WEdit
-class WFile extends WControl
+class WFile extends WControl implements iFileUploader
 {
     protected
         $size = 40,

@@ -125,7 +125,7 @@ class WValueChecker extends WObject
 		$ta1 = $ta2 = array();
 		foreach($this->getWidgetFullNames() as $i => $w_name)
 		{
-			$w = Controller::getInstance()->getWidget($this->widget_ids[$i])->getName();
+			$w = Controller::getInstance()->getWidget($this->widget_ids[$i]);
 			$form_sig = Controller::getInstance()->getWidget($form_id)->getSignature();
 			Controller::getInstance()->setChecker($form_sig,$w,'filter',$this->filter);
 			$t1 = "'".$w_name."'".": {\n";
