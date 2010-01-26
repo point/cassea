@@ -350,12 +350,14 @@ class IniConfig extends ConfigBase
 		if(!is_file($this->filename = $this->rd.self::CONFIG_DIR."/".$filename))
 			throw new ConfigException("Config file ".$this->filename." doesn't exists");
 
-		if($this->checkCache())
+		@include($this->rd.self::CONFIG_CACHE_FILE);
+		if(@$this->checkCache($__config_cache_inode))
 		{
-			include($this->rd.self::CONFIG_CACHE_FILE);
+				//echo "using cache";
 			$this->parseArray($__config_cache);
 			return;
 		}
+		//echo "using ini";
 		$parsed_ini = parse_ini_file($this->filename,true);
 
 		list($sect_key,$sect_val) = $this->findSection($parsed_ini,$this->section);
@@ -478,21 +480,29 @@ class IniConfig extends ConfigBase
 	 * @param null
 	 * @return bool true if cache is in actual state
 	 */
-	function checkCache()
+	function checkCache($ino = -1)
 	{
 		$synced = false;
+		$to_touch = false;
 		if(($fp = fopen($this->filename, 'r')) === false) return false;
 		if(flock($fp, LOCK_SH))
 		{
-			$config_stat = stat($this->filename);
+			$config_stat = fstat($fp);
 			$config_cache_stat = @stat($this->rd.self::CONFIG_CACHE_FILE);
 			if(!empty($config_stat) && !empty($config_cache_stat) 
 				&& $config_stat['mtime'] <= $config_cache_stat['mtime'] 
-				&& $config_cache_stat['size'] > 30)
+				&& $config_cache_stat['size'] > 50)
 				$synced = true;
+
+			if($ino != -1)
+				if($config_cache_stat['ino'] != $ino)
+				{$synced = false;$to_touch = true;}
+
 			flock($fp,LOCK_UN);
 		}
 		fclose($fp);
+		if($to_touch)
+			touch($this->filename,time()+1);
 
 		return $synced;
 
@@ -511,8 +521,10 @@ class IniConfig extends ConfigBase
 			if(($fp = fopen($this->rd.self::CONFIG_CACHE_FILE,"a")) === false) return;
 			if(flock($fp,LOCK_EX))
 			{
+				$fstat = fstat($fp);
 				ftruncate($fp,0);
-				fputs($fp,'<?php'.PHP_EOL.'$__config_cache = '.var_export($this->toArray(),true).';');
+				fputs($fp,'<?php'.PHP_EOL.'$__config_cache_inode='.$fstat['ino'].';'.PHP_EOL.
+					'$__config_cache = '.var_export($this->toArray(),true).';');
 				$time = time();
 				touch($this->rd.self::CONFIG_CACHE_FILE,$time);
 				touch($this->filename,$time);
