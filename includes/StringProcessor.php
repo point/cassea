@@ -288,16 +288,16 @@ class StringProcessor extends EventBehaviour
 			return $ret;
 		}
 
-        if ($delta > 7200)
-            $string .= ($f = floor($delta / 3600))." ".$this->_plural($f,"hour").", ";
-        else if ($delta > 3660)
+        if (abs($delta) > 7200)
+            $string .= ($f = floor(abs($delta) / 3600))." ".$this->_plural($f,"hour").", ";
+        else if (abs($delta) > 3660)
             $string .= "1 ".$this->_plural(1, "hour").", ";
-        else if ($delta >= 3600)
+        else if (abs($delta) >= 3600)
             $string .= "1 ".$this->_plural(1, "hour")." ";
         $delta  %= 3600;
         
-        if ($delta > 60)
-            $string .= ($f = floor($delta / 60)) . " ".$this->_plural($f,"minutes")." ";
+        if (abs($delta) > 60)
+            $string .= ($f = floor(abs($delta) / 60)) . " ".$this->_plural($f,"minutes")." ";
         else
             $string .= abs($delta)." ".$this->_plural(abs($delta),"seconds")." ";
         $ret = ($delta > 0)?($string." ".Language::message('widgets',"ago")):(Language::message('widgets',"date_in")." ".$string);
