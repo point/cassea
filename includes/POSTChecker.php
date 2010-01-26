@@ -123,10 +123,7 @@ class POSTChecker
 							elseif(is_array($p_val2) && count($p_val2) == 1 && ($p_val2[0] === null || $p_val2[0] === ""))
                                 POSTErrors::addError($name,$add_id,Language::message('checkers','REQUIRED'));
 					elseif(!t(new UploadedFiles($name))->isUploaded($name))
-					{
-						echo 1;
 						POSTErrors::addError($name,$add_id,Language::message('checkers','REQUIRED'));
-					}
 
 				if($rule === 'minlength' && is_numeric($rule_value) && isset($p_val))
 					if(is_string($p_val) && strlen(htmlspecialchars_decode($p_val,ENT_QUOTES)) < 0+$rule_value)
