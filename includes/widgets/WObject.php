@@ -103,13 +103,15 @@ abstract class WObject
 	// }}}
 
 	// {{{ __clone
-	function __clone(){
+	/*function __clone(){
 		foreach($this as $name => $value){
-			if(gettype($value)=='object'){
+			//if(gettype($value)=='object'){
+			if(is_object($value)){
+				if($value instanceof WComponent && !$value->getObjectChanged()) continue;
 				$this->$name= clone($this->$name);
 			}
 		}
-	}
+		}*/
 	// }}}
 }
 //}}}

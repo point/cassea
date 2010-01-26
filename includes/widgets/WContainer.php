@@ -33,14 +33,15 @@ WidgetLoader::load("WControl");
 // {{{ WContainer
 class WContainer extends WComponent
 {
-	// {{{
-	/*function __clone()
+	//{{{ __clone
+		function __clone()
 	{
 		foreach($this->class_vars as $v)
 			if($this->$v instanceof WidgetCollection)
                 $this->$v = clone $this->$v;
-    }*/
+		}
 	// }}}
+
 	// {{{ preRender
 	function preRender()
 	{
@@ -515,7 +516,6 @@ class IterableCollection extends WidgetCollection
 				for($i = 0, $c = $this->count();$i < $c; $i++)
 				{
 					$this->i_elem[$j][$i]->postRender();
-					unset($this->i_elem[$j][$i]);
 				}
 		else 
 			parent::postRender();

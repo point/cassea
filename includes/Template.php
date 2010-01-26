@@ -99,8 +99,18 @@ class Template
 		 * @var TemplateParams
 		 * Holds params for current template
 		 */
-		$params = null;
-
+		$params = null,
+		/**
+		 * @var string
+		 * Holds memoized version of current template output
+		 */
+		$output_cache = "",
+		/**
+		 * @var int
+		 * Count of misses into cache
+		 */
+		$cache_misses = 0
+		;
 	//{{{ __construct
 	/**
 	 * @param string real path to the template
@@ -166,18 +176,24 @@ class Template
 	 * Passes accumulated parametes into the template file 
 	 * as the variable $p, and collects output of this file.
 	 *
+	 * It also uses primitive heuristics to reduce memory usage.
+	 *
 	 * @param null
 	 * @return string evaluated template
 	 */
 	function getHTML()
 	{
+		if($this->cache_misses < 3 && !empty($this->output_cache) && !$this->params->hasChanged())
+			return $this->output_cache;
+	
+		$this->cache_misses++;
 		ob_start();
 		$p = $this->params;
 		include($this->path."/".$this->filename);
 		$s = ob_get_contents();
 		ob_end_clean();
-		unset($this->params);
-		$this->params = new TemplateParams;
+		if(!isset($s{2048}) && $this->cache_misses < 3 && $this->cache_misses > 1)
+			$this->output_cache = $s;
 		return $s;
 	}
 	//}}}
