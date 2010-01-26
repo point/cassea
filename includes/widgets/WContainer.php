@@ -459,6 +459,9 @@ class IterableCollection extends WidgetCollection
 	// {{{ preReder
 	function preRender()
     {
+		if(!Controller::getInstance()->getWidget($this->parent_id) instanceof iIterableContainer)
+			throw new CasseaException("Only iIterableContainer class can aggregate IterableCollection");
+
 		$oddeven = false;
 		if(($holder=Controller::getInstance()->getWidget($this->parent_id)) instanceof iOddEven) 
 			$oddeven=true;

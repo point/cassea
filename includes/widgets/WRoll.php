@@ -33,7 +33,7 @@
 //
 WidgetLoader::load("WContainer");
 //{{{ WRoll
-class WRoll extends WContainer implements iOddEven
+class WRoll extends WContainer implements iOddEven,iIterableContainer
 {
     protected
         /**

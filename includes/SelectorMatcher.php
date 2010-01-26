@@ -475,7 +475,7 @@ class SelectorMatcher
 				if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
 				{
 					while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
-						if($controller->getWidget($p) instanceof WRoll) {$parent = $p;break;}
+						if($controller->getWidget($p) instanceof iIterableContainer) {$parent = $p;break;}
 						else $w2 = $controller->getWidget($p);
 					if($parent == null) return self::FALSE_CACHE;
 					$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
@@ -517,7 +517,7 @@ class SelectorMatcher
 								if(($_parent = $controller->getAdjacencyList()->getParentRollForId($_w2->getId())) === null)
 								{
 									while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
-										if($controller->getWidget($_p) instanceof WRoll) {$_parent = $_p;break;}
+										if($controller->getWidget($_p) instanceof iIterableContainer) {$_parent = $_p;break;}
 										else  $_w2 = $controller->getWidget($_p);
 
 									$controller->getAdjacencyList()->setParentRollForIdCache($_w3->getId(),$_parent); 
