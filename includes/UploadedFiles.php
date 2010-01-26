@@ -114,7 +114,7 @@ class UploadedFiles
 	 */
     function __construct($names = null)
     {
-        if (is_null($names)) $defiles = $_FILES;
+        if (is_null($names)) $httpFiles = $_FILES;
         else $httpFiles = array_intersect_key($_FILES, array_flip(is_scalar($names)? array($names): $names));
         foreach($httpFiles as $name => $v)
             if(is_scalar($v['error']))
