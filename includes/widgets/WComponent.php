@@ -647,7 +647,7 @@ abstract class WComponent extends WObject
 		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
 		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
-        $this->addToMemento(array("enabled","title","visible","html_id","style","style_class","tooltip","javascript",
+        $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
             "javascript_before","javascript_after","hide_if_hidden","hide_if_empty","tpl"));
 
     }
@@ -864,12 +864,12 @@ EOD;
 	function createMemento()
 	{
 		$x = new ReflectionClass(get_class($this));
-		$t_vars = array();
 		foreach($this->memento_vars as $v)
 			if($x->hasProperty($v))
-				$t_vars[$v] = $this->$v;
-		if(count($t_vars))
-			$this->memento = $t_vars;
+				if(is_object($this->$v))
+					$this->memento[$v] = clone $this->$v;
+				else
+					$this->memento[$v] = $this->$v;
 	}
 	//}}}	
     
@@ -935,8 +935,6 @@ EOD;
     {
         $this->checkAndSetData();
 
-		if(isset($this->tpl))
-			$this->tpl->flushVars();
 
 		$controller = Controller::getInstance();
 		if($this->do_increment)
