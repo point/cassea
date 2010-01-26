@@ -54,7 +54,17 @@ class TemplateParams
 		 * @var array
 		 * List of parameters
 		 */
-		$properties = array()
+		$properties = array(),
+		/**
+		 * @var string
+		 * Strores previous state of inner objects
+		 */
+		$inner_hash1 = null,
+		/**
+		 * @var string
+		 * Strores current state of inner objects
+		 */
+		$inner_hash2 = null
 		;
 
 	//{{{ __set
@@ -146,7 +156,27 @@ class TemplateParams
 	function merge(TemplateParams $t)
 	{
 		foreach($t->attr() as $k=>$v)
+			if($v instanceof TemplateParam)
 				$this->properties[$k] = $v;
+	}
+	//}}}
+
+	//{{{ hasChanged
+	/**
+	 * Determines whenever object has changed since last 
+	 * method call. It summarize hashes of inner TemplateParam objects.
+	 *
+	 * @param null
+	 * @return bool
+	 */
+	function hasChanged()
+	{
+		$this->inner_hash1 = $this->inner_hash2;
+		$this->inner_hash2 = "";
+		foreach($this->properties as $v)
+			$this->inner_hash2 .= $v->getHash();
+		$this->inner_hash2 = md5($this->inner_hash2);
+		return $this->inner_hash2 == $this->inner_hash1;
 	}
 	//}}}
 }
@@ -259,6 +289,19 @@ class TemplateParam implements IteratorAggregate,ArrayAccess
 	function __toString()
 	{
 		return (string)$this->scalar;
+	}
+	//}}}
+
+	//{{{ getHash
+	/**
+	 * Returns unique hash, representing current object state.
+	 *
+	 * @param null
+	 * @return string
+	 */
+	function getHash()
+	{
+		return spl_object_hash($this);
 	}
 	//}}}
 }
