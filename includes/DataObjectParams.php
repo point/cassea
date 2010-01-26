@@ -151,7 +151,6 @@ class DataObjectParams
 			}
 			elseif($param['from'] == "p2")
 			{
-
 				$total_count = count($controller->p2);
 				if(isset($param['offset']))
 					if((int)$param['offset'] > 0)
@@ -159,6 +158,19 @@ class DataObjectParams
 					elseif((int)$param['offset'] < 0)
 						$p2_cursor = max(0,$total_count - abs((int)$param['offset']));
 
+				if(isset($param['regexp']) && preg_match($param['regexp'],$controller->p2[$p2_cursor],$matches))
+				{
+					$p = null;
+					if(isset($matches['param']))
+						$p  = $matches['param'];
+					elseif(isset($matches[1]))
+						$p = $matches[1];
+					
+					$this->params[] = isset($param->filter)?Filter::apply($p,(string)$param->filter):$p;
+					$this->params_from[] = "p2";
+				}
+				else
+				{
 				$c = 1;
 				if(isset($param['count']))
 					$c = abs(0+$param['count']);
@@ -177,6 +189,7 @@ class DataObjectParams
 					{
 						$this->params[] = isset($param->filter)?Filter::apply($_p,(string)$param->filter):$_p;
 						$this->params_from[] = "p2";
+						}
 					}
 			}
 			elseif($param['from'] == "p3" && isset($param['var']))
