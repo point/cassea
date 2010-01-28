@@ -7,11 +7,11 @@
 #PHP_VALUE mbstring.func_overload 6
 AddDefaultCharset utf-8
 
-ErrorDocument 400 /error_pages/50x.html
-ErrorDocument 401 /error_pages/50x.html
-ErrorDocument 403 /error_pages/50x.html
-ErrorDocument 404 /error_pages/50x.html
-ErrorDocument 503 /error_pages/50x.html
+#ErrorDocument 400 /error_pages/50x.html
+#ErrorDocument 401 /error_pages/50x.html
+#ErrorDocument 403 /error_pages/50x.html
+#ErrorDocument 404 /error_pages/50x.html
+#ErrorDocument 503 /error_pages/50x.html
 
 RewriteEngine On
 Options +FollowSymLinks -MultiViews -Indexes -Includes
@@ -19,15 +19,15 @@ Options +FollowSymLinks -MultiViews -Indexes -Includes
 RewriteBase /
 RewriteRule \.htaccess - [F]
 
+RewriteCond %{ENV:REDIRECT_STATUS} !^$
 RewriteCond %{REQUEST_URI} ^/?web 
-RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f [OR]
-RewriteCond %{REQUEST_URI} ^/?web/.*\.css [OR] 
-RewriteCond %{REQUEST_URI} ^/?web/.*\.js [OR] 
-RewriteCond %{REQUEST_URI} ^/?web/(.*\.(jpg|png|jpeg|gif|ico)) [OR]
-RewriteCond %{REQUEST_URI} ^/?web/.*\.swf [OR] 
-
+RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f 
 RewriteRule ^.* - [L]
 
+RewriteCond %{ENV:REDIRECT_STATUS} !^$
+RewriteCond %{REQUEST_URI} ^/?web 
+RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} !-f 
+RewriteRule ^.* - [L,R=404]
 
 RewriteCond %{REQUEST_URI} ^/?(robots.txt|sitemap[^\.]*\.xml(\.gz)?)
 RewriteRule ^(.*) /web/$1 [L]
