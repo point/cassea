@@ -43,16 +43,17 @@
  * This class simplifies management of uploaded files. 
  * For example:
  * <pre><code>
- * $uploaded_files = t(new UploadedFiles)->count(2)->allowedExtensions(array("jpeg","jpg"))-"jpeg","jpg"))->allowedImageSize(640,480);
+ * $uploaded_files = t(new UploadedFiles)->count(2)->allowedExtensions(array("jpeg","jpg"))->allowedImageSize(640,480);
  * </code></pre>
  *
  * Newly created object could be passed, for example, to upload() method of Dir object.
  *
  * Note, that current implementation could handle uploaded files only with one
- * level of HTML ....
+ * HTML netsing level
+ * <code><input type="file" name="file[1]"/></code> is allowed, but
  * <code><input type="file" name="file[1][2]"/></code> will be skipped silently.
  *
- * Note, that all kind of filters (maxCount,allowedExtensions etc), will be applied only to the current object.
+ * Besides, all kind of filters (maxCount,allowedExtensions etc), will be applied only to the current object.
  * Newly created object of UploadedFiles without any filters will hold all uploaded files with only one exception:
  * files, uploaded with error (status not equal to UPLOAD_ERR_OK), would be filtered from the list.
  */
@@ -207,7 +208,7 @@ class UploadedFiles
 	//{{{ getUploaded
 	/**
 	 * Returns raw info for all successfully uploaded files and 
-	 * with files, which has passed all specified filters.
+	 * with files, which has been passed all specified filters.
 	 *
 	 * @param null
 	 * @return array of arrays with info
