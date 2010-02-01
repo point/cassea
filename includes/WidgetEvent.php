@@ -27,7 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class for sending messages between widgets.
+ * This file contains class which incapsulates all data
+ * for message interchanging between widgets.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
