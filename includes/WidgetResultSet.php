@@ -25,17 +25,60 @@
 * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-}}} -*/
+}}} -*/ 
+/**
+ * This file contains class for encapsultaing data, pasing to the
+ * widget during the managing data.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
  
-// $Id:$
-
+//{{{ WidgetResultSet
+/**
+ * This class is only for internal using. No one user-land
+ * function should create instance of this class.
+ *
+ * It creates by the internal classes when system intend to
+ * pass some data to the widget. For example, 'text' for WText.
+ *
+ * Data, stored inside the object could be merged with some 
+ * additional data, passed from <code>DataObjectPool</code>
+ *  or <code>ResultSet</code> object. They are use only 
+ *  setter-like methods and <code>merge()</code>.
+ *
+ * Instance of this class passed to the widget's <code>setData</code>
+ * method. Widget could retreive data with all kind of getter-like
+ * methods: <code>get()</code>, <code>getDef()</code> or
+ * directly through the <code>__get</code> magick method.
+ */
 class WidgetResultSet implements IteratorAggregate
 {
 	private
+		/**
+		 * Array of stored values
+		 * @var array
+		 */
 		$properties = array(),
+		/**
+		 * Default value
+		 * @var mixed
+		 */
 		$def = null
 		;
+
+	//{{{ merge
+	/**
+	 * Used to mix already stored data with new data.
+	 * Usually called while gathering info from datasets.
+	 *
+	 * @var array array
+	 * @return null
+	 */
 	function merge($arr)
 	{
         if(!is_array($arr)) return;
@@ -43,34 +86,97 @@ class WidgetResultSet implements IteratorAggregate
 			if(is_scalar($k) && !is_resource($v))
 				$this->properties[$k] = $v;
 	}
+	//}}}
+
+	//{{{ get
+	/**
+	 * Used by widgets to retreive value with the given key.
+	 * 
+	 * @var string the key
+	 * @return mixed 
+	 */ 
 	function get($key)
 	{
 		return (isset($this->properties[$key]))?$this->properties[$key]:null;
 	}
+	//}}}
+
+	//{{{ getDef
+	/**
+	 * Returns default widget value. It might be setted if no data for
+	 * the widget was found. For example, for WText, "text" property is default
+	 * and could be setted by the system.
+	 *
+	 * @var mixed default value
+	 * @return null
+	 * @see getDef
+	 */
 	function setDef($value)
 	{
 		if(!isset($value) || is_resource($value)) return;
 		$this->def = $value;
 	}
+	//}}}
+	
+	//{{{ getDef
+	/**
+	 * Returns default value for widget
+	 * 
+	 * @param null
+	 * @return mixed
+	 * @see getDef
+	 */
 	function getDef()
 	{
 		return $this->def;
 	}
+	//}}}
+
+	//{{{ __get
+	/**
+	 * Handy replacement for {@link get} method.
+	 *
+	 * @var string the key
+	 * @return mixed
+	 */
 	function __get($key)
 	{
 		return $this->get($key);
 	}
+	//}}}
+
+	//{{{ __isset
+	/**
+	 * Checks if value exists in the object
+	 *
+	 * @param string the key
+	 * @return bool
+	 */
 	function __isset($key)
 	{
 		return isset($this->properties[$key]);
 	}
+	//}}}
+
+	//{{{ isEmpty
+	/**
+	 * Checks if current object has no assigned data
+	 *
+	 * @param null
+	 * @return bool
+	 */
 	function isEmpty()
 	{
 		return (empty($this->properties) && empty($this->def));
 	}
+	//}}}
+
+	// {{{ getIterator
 	// implements
 	function getIterator(){	return t(new ArrayObject($this->properties))->getIterator();}
+	//}}}
 
 }
+//}}}
 
 
