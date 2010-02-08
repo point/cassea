@@ -455,7 +455,7 @@ class SelectorMatcher
 				$ind = ($list = $controller->getAdjacencyList()->getChildren($parent))?
 					$controller->getAdjacencyList()->checkIndex($list,$widget->getId()):-2;
 				if(is_numeric($parsed_selector['pseudo_value']))
-				   return $ind != (abs($parsed_selector['pseudo_value'])-1)?self::FALSE_CACHE:self::TRUE_CACHE;
+				   return $ind !== (abs($parsed_selector['pseudo_value'])-1)?self::FALSE_CACHE:self::TRUE_CACHE;
 				elseif($parsed_selector['pseudo_value'] == "odd")
 				   return $ind%2?self::FALSE_CACHE:self::TRUE_CACHE;
 				elseif($parsed_selector['pseudo_value'] == "even")
@@ -472,13 +472,13 @@ class SelectorMatcher
                 // inconvinient in case of nested rolls
                 // to select odd rows, for example, "wroll > wtablerow:odd" syntax should be used
 
-				if(($parent = $controller->getAdjacencyList()->getParentRollForId($w2->getId())) === null)
+				if(($parent = $controller->getAdjacencyList()->getParentIterableForId($w2->getId())) === null)
 				{
 					while($w2 && ($p = $controller->getAdjacencyList()->getParentForId($w2->getId())) !== null)
 						if($controller->getWidget($p) instanceof iIterableContainer) {$parent = $p;break;}
 						else $w2 = $controller->getWidget($p);
 					if($parent == null) return self::FALSE_CACHE;
-					$controller->getAdjacencyList()->setParentRollForIdCache($widget->getId(),$parent); 
+					$controller->getAdjacencyList()->setParentIterableForIdCache($widget->getId(),$parent); 
 				}
 
 				if(!is_array($parsed_selector['pseudo_value']))
@@ -514,13 +514,13 @@ class SelectorMatcher
 							$_parent = null;
                             foreach(RSIndexer::toArray($k) as $next_index)
 							{
-								if(($_parent = $controller->getAdjacencyList()->getParentRollForId($_w2->getId())) === null)
+								if(($_parent = $controller->getAdjacencyList()->getParentIterableForId($_w2->getId())) === null)
 								{
 									while($_w2 && ($_p = $controller->getAdjacencyList()->getParentForId($_w2->getId())) !== null)
 										if($controller->getWidget($_p) instanceof iIterableContainer) {$_parent = $_p;break;}
 										else  $_w2 = $controller->getWidget($_p);
 
-									$controller->getAdjacencyList()->setParentRollForIdCache($_w3->getId(),$_parent); 
+									$controller->getAdjacencyList()->setParentIterableForIdCache($_w3->getId(),$_parent); 
 								}
                                 if($_parent && $controller->getDisplayModeParams()->getCurrent($_parent,$cur_scope) != $next_index)
                                 {$flag = false;break;}
