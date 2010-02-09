@@ -494,7 +494,7 @@ class Controller extends EventBehaviour
 		else
 			$this->page = $ret;
 
-		$this->trigger("PageFinded",array($this,$this->page));
+		$this->trigger("PageFinded",array($this,&$this->page));
 
 		$full_path = $this->pagePath($this->page);
 
@@ -650,7 +650,7 @@ class Controller extends EventBehaviour
 	 */
     protected function processPage(DomDocument $dom)
     {
-		$this->trigger("BeforePageProcess",array($this,$dom));
+		$this->trigger("BeforePageProcess",array($this,&$dom));
 
         if(! $dom instanceof DOMNode || !isset($dom->firstChild))
             throw new ControllerException("XML document not valid");
@@ -660,7 +660,7 @@ class Controller extends EventBehaviour
         if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
         
 
-		$this->trigger("BeforPageExtendsLookup",array($this,$dom));
+		$this->trigger("BeforPageExtendsLookup",array($this,&$dom));
 
         // extends
         $adj_list = array($dom);
@@ -681,7 +681,7 @@ class Controller extends EventBehaviour
             $this->ie_files[] = $pp;
         }
 
-		$this->trigger("BeforePageParentLookup",array($this,$dom));
+		$this->trigger("BeforePageParentLookup",array($this,&$dom));
 
         // searching for <parent> blocks
         for($i = 1, $c = count($adj_list);$i < $c;$i++)
@@ -702,7 +702,7 @@ class Controller extends EventBehaviour
         }
         // extending
 
-		$this->trigger("BeforePageExtending",array($this,$dom));
+		$this->trigger("BeforePageExtending",array($this,&$dom));
 
         if(count($adj_list) > 1)
             for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
@@ -729,7 +729,7 @@ class Controller extends EventBehaviour
 
             }
 
-		$this->trigger("BeforePageClearingBlocks",array($this,$dom));
+		$this->trigger("BeforePageClearingBlocks",array($this,&$dom));
 
         // clean up from <block>
         $node_list = $dom->getElementsByTagName('block');
@@ -740,7 +740,7 @@ class Controller extends EventBehaviour
             $el->parentNode->removeChild($el);
         }
 
-		$this->trigger("BeforePageIncluding",array($this,$dom));
+		$this->trigger("BeforePageIncluding",array($this,&$dom));
 
         // include
         $node = $dom->getElementsByTagName("include");
@@ -792,7 +792,7 @@ class Controller extends EventBehaviour
             
         }
 
-		$this->trigger("AfterPageProcess",array($this,$dom));
+		$this->trigger("AfterPageProcess",array($this,&$dom));
 
         return $dom;
     }
@@ -816,7 +816,7 @@ class Controller extends EventBehaviour
 	 */
 	protected function parsePageOnGET(DomDocument $dom)
 	{
-		$this->trigger("BeforeParsePageOnGET",array($this,$dom));
+		$this->trigger("BeforeParsePageOnGET",array($this,&$dom));
 
 		$node = $dom->getElementsByTagName("WPageHandler");
 		if($node->length)
@@ -867,7 +867,7 @@ class Controller extends EventBehaviour
 		$this->getDispatcher()->notify(new WidgetEvent("all_build_complete"));
 		unset($d);
 
-		$this->trigger("AfterParsePageOnGET",array($this,$dom));
+		$this->trigger("AfterParsePageOnGET",array($this,&$dom));
 
 	}
 	//}}}
@@ -889,7 +889,7 @@ class Controller extends EventBehaviour
 	 */
 	protected function parsePageOnPOST(DomDocument $dom)
 	{
-		$this->trigger("BeforeParsePageOnPOST",array($this,$dom));
+		$this->trigger("BeforeParsePageOnPOST",array($this,&$dom));
 
 		$node = $dom->getElementsByTagName("WDataHandler");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
@@ -918,7 +918,7 @@ class Controller extends EventBehaviour
 			$el->parentNode->removeChild($el);
 		}
 
-		$this->trigger("BeforeParsePageOnPOST",array($this,$dom));
+		$this->trigger("BeforeParsePageOnPOST",array($this,&$dom));
 	}
 	//}}}
 
@@ -940,7 +940,7 @@ class Controller extends EventBehaviour
 	 */
 	function buildWidget(SimpleXMLElement $elem,$system = 0)
 	{
-		$this->trigger("BeforeBuildWidget",array($this,&$elem,$system));
+		$this->trigger("BeforeBuildWidget",array($this,&$elem,&$system));
 
 		if(($widget_name = WidgetLoader::load($elem->getName())) === false) return;
 
@@ -1009,7 +1009,7 @@ class Controller extends EventBehaviour
 	 */
 	function addDataSet(SimpleXMLElement $elem)
 	{
-		$this->trigger("BeforeAddDataSet",array($this,$elem));
+		$this->trigger("BeforeAddDataSet",array($this,&$elem));
 
 		if(WidgetLoader::load("WDataSet") === false) return;
 
@@ -1034,7 +1034,7 @@ class Controller extends EventBehaviour
 	 */
 	function addDataHandler(SimpleXMLElement $elem)
 	{
-		$this->trigger("BeforeAddDataHandler",array($this,$elem));
+		$this->trigger("BeforeAddDataHandler",array($this,&$elem));
 
 		if(WidgetLoader::load("WDataHandler") === false) return;
 
@@ -1061,7 +1061,7 @@ class Controller extends EventBehaviour
 	 */ 
 	protected function addStyle(SimpleXMLElement $elem)
 	{
-		$this->trigger("BeforeAddStyle",array($this,$elem));
+		$this->trigger("BeforeAddStyle",array($this,&$elem));
 
 		WidgetLoader::load("WStyle");
 		if(empty($elem['id'])) return;
@@ -1093,7 +1093,7 @@ class Controller extends EventBehaviour
 	 */
 	protected function addJS(SimpleXMLElement $elem)
 	{
-		$this->trigger("BeforeAddJS",array($this,$elem));
+		$this->trigger("BeforeAddJS",array($this,&$elem));
 
 		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
 
@@ -1124,7 +1124,7 @@ class Controller extends EventBehaviour
 	 */
 	protected function addPageHandler(SimpleXMLElement $elem, $is_get = false)
 	{
-		$this->trigger("BeforeAddPageHandler",array($this,$elem));
+		$this->trigger("BeforeAddPageHandler",array($this,&$elem));
 
 		if(WidgetLoader::load("WPageHandler") === false) return;
 
@@ -1157,7 +1157,7 @@ class Controller extends EventBehaviour
 	 */
 	protected function addValueChecker(SimpleXMLElement $elem)
 	{
-		$this->trigger("BeforeAddValueChecker",array($this,$elem));
+		$this->trigger("BeforeAddValueChecker",array($this,&$elem));
 
 		if(!isset($elem['id'])) return;
 
@@ -1313,7 +1313,7 @@ class Controller extends EventBehaviour
 		$v = $this->header->send();
 		$v .= "<body>\n";
 
-		$this->trigger("AfterHead",array($this,$v));
+		$this->trigger("AfterHead",array($this,&$v));
 
 		if($echo)
 			echo $v;
@@ -1343,7 +1343,7 @@ class Controller extends EventBehaviour
 
         $v = "\n</body></html>";
 
-		$this->trigger("AfterTail",array($this,$v));
+		$this->trigger("AfterTail",array($this,&$v));
 
 		if($echo)
 			echo $v;
@@ -1400,7 +1400,7 @@ class Controller extends EventBehaviour
 		
         if(isset($this->response_string))
 		{
-			$this->trigger("AfterHeadBodyTailResponce",array($this,$this->response_string));
+			$this->trigger("AfterHeadBodyTailResponce",array($this,&$this->response_string));
             if ($echo) echo $this->response_string;
 			else return $this->response_string;
 		}
@@ -1409,7 +1409,7 @@ class Controller extends EventBehaviour
             $body = $this->allHTML();
             $head = $this->head(0);
             $tail = $this->tail(0);
-			$this->trigger("AfterHeadBodyTailRegular",array($this,$head,$body,$tail));
+			$this->trigger("AfterHeadBodyTailRegular",array($this,&$head,&$body,&$tail));
             if ($echo) echo $head,$body,$tail;
             else return ($head.$body.$tail);
 		}
@@ -1510,7 +1510,7 @@ class Controller extends EventBehaviour
 	 */
 	function addScript($src = null,$cond = null,$priority=10)
 	{
-		$this->trigger("BeforeAddScript",array($this,$src,$cond,$priority));
+		$this->trigger("BeforeAddScript",array($this,&$src,&$cond,&$priority));
 
 		if(empty($src)) return;
 		$priority = (int)$priority;
@@ -1559,7 +1559,7 @@ class Controller extends EventBehaviour
 	 */
 	function addCSS($src = null,$cond = null,$priority = 10,$media = null)
 	{
-		$this->trigger("BeforeAddCSS",array($this,$src,$cond, $priority,$media));
+		$this->trigger("BeforeAddCSS",array($this,&$src,&$cond, &$priority,&$media));
 
 		if(empty($src)) return;
 
@@ -1882,7 +1882,7 @@ class Controller extends EventBehaviour
 
 			POSTErrors::flushErrors();
 
-			$this->trigger("BeforeCheckByRules",array($this->post,$this->post->{WForm::signature_name}));
+			$this->trigger("BeforeCheckByRules",array(&$this->post,&$this->post->{WForm::signature_name}));
 
 			POSTChecker::checkByRules($this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
 			POSTChecker::checkFiles(  $this->post->{WForm::signature_name},$this->file_rules,$this->checker_messages);
@@ -1894,7 +1894,7 @@ class Controller extends EventBehaviour
 			}
 			//DataUpdaterPool::restorePool();
 		}
-		$this->trigger("BeforeCallHandlers",array($this,$formid));
+		$this->trigger("BeforeCallHandlers",array($this,&$formid));
 
 		try
 		{
@@ -1915,7 +1915,7 @@ class Controller extends EventBehaviour
         if(isset($this->pagehandler))
             $ret = $this->pagehandler->handle();
 
-		$this->trigger("AfterHandlePOST",array($this,$ret));
+		$this->trigger("AfterHandlePOST",array($this,&$ret));
 
         if(is_numeric($ret))
             $this->gotoLocation($this->navigator->getStepURL($ret));
@@ -2525,7 +2525,7 @@ class AjaxController extends Controller
 
 		$formid = null;
 
-		$this->trigger("BeforeCallHandlers",array($this,$formid));
+		$this->trigger("BeforeCallHandlers",array($this,&$formid));
 
 		try
 		{
@@ -2538,7 +2538,7 @@ class AjaxController extends Controller
 		DataUpdaterPool::callHandlers($formid);
 		DataUpdaterPool::callFinalize($formid);
 
-		$this->trigger("AfterHandlePOST",array($this,null));
+		$this->trigger("AfterHandlePOST",$this);
 
 	}
 	//}}}

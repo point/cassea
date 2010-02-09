@@ -191,7 +191,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 	//{{{ trigger
 	/**
-	 * Will cause to propagate the event.
+	 * Will cause event propagation.
 	 *
 	 * It usually called by the internal classes, and all 
 	 * registered event handlers for this event name is called.
