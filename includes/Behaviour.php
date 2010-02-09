@@ -36,7 +36,6 @@
  * @since 
  */
 
-
 //{{{ Behaviour
 /**
  * Class Behaviour defines behaviour, that could be disabled/enabled. 

@@ -169,7 +169,7 @@ class HTTPParamHolder implements IteratorAggregate
 	}
 	//}}}
 
-	//{{{
+	//{{{ cleanStrings
 	/**
 	 * Removes empty string from the array of checked values.
 	 *

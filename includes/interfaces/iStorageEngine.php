@@ -30,6 +30,7 @@
 //{{{ iStorageEngine
 interface iStorageEngine
 {
+	function __construct($storage_name, $ttl = null);
     function set($var, $val);
     function get($var);
     function is_set($var);
