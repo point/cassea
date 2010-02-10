@@ -26,10 +26,21 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
-
-// $Id:$
+/**
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
 //{{{ CheckerException
+/**
+ * This exception may be thrown out by the user's model
+ * inside the checker method. This exception once been thrown
+ * halts call sequence and display passed error message. 
+ * All data, except sent files are preserved.
+ */
 class CheckerException extends CasseaException
 {
     protected

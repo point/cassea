@@ -26,8 +26,13 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
-
-// $Id:$
+/**
+ * @author billy <alexey.mirniy@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
 //{{{ CasseaException
 class CasseaException extends Exception{
