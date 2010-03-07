@@ -98,12 +98,13 @@ class POSTChecker
 	 * @param array optional array of custom messages
 	 * @return null
 	 */
-	static function checkByRules(HTTPParamHolder $post, $formid_name, $rules, $messages=array())
+	static function checkByRules($formid_name, $rules, $messages=array())
 	{
 		if(empty($rules) || empty($rules[$formid_name])) return;
         $rules = $rules[$formid_name];
 		if(isset($messages[$formid_name]))
 			POSTErrors::setCustomMessages($messages[$formid_name]);
+		$post = Controller::getInstance()->post;
 		foreach($rules as $name => $cr)
 		{
 			if(isset($cr['filter']))
@@ -262,6 +263,23 @@ class POSTChecker
 		}
 	}
 	//}}}
+
+	static function checkFiles($formid_name, $rules, $messages=array())
+	{
+		if(empty($rules) || empty($rules[$formid_name])) return;
+        $rules = $rules[$formid_name];
+		if(isset($messages[$formid_name]))
+			POSTErrors::setCustomMessages($messages[$formid_name]);
+		foreach($rules as $name => $cr)
+		{
+			foreach($cr as $rule=>$rule_value)
+            {
+				if($rule === 'required' && $rule_value === 'true' &&
+					!t(new UploadedFiles($name))->isUploaded($name))
+					POSTErrors::addError($name,$add_id,Language::message('checkers','REQUIRED'));
+			}
+		}
+	}
 }
 //}}}
 

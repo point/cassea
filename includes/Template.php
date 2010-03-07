@@ -192,7 +192,7 @@ class Template
 		include($this->path."/".$this->filename);
 		$s = ob_get_contents();
 		ob_end_clean();
-		if(!isset($s{2048}) && $this->cache_misses < 3 && $this->cache_misses > 1)
+		if(!isset($s{2048}) && $this->cache_misses == 2)
 			$this->output_cache = $s;
 		return $s;
 	}

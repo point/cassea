@@ -77,7 +77,7 @@ class POSTErrors
     }
 	//}}}
 
-	//{{{
+	//{{{ addError
 	/**
 	 * Adds error message to the specified widget.
 	 * Widget is defined by the name and optional additional_id which

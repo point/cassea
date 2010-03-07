@@ -1882,7 +1882,7 @@ class Controller extends EventBehaviour
 
 			POSTErrors::flushErrors();
 
-			$this->trigger("BeforeCheckByRules",array(&$this->post,&$this->post->{WForm::signature_name}));
+			$this->trigger("BeforeCheckByRules",array(&$this->post,$this->post->{WForm::signature_name}));
 
 			POSTChecker::checkByRules($this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
 			POSTChecker::checkFiles(  $this->post->{WForm::signature_name},$this->file_rules,$this->checker_messages);

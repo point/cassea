@@ -176,7 +176,7 @@ class TemplateParams
 		foreach($this->properties as $v)
 			$this->inner_hash2 .= $v->getHash();
 		$this->inner_hash2 = md5($this->inner_hash2);
-		return $this->inner_hash2 == $this->inner_hash1;
+		return ($this->inner_hash2 != $this->inner_hash1);
 	}
 	//}}}
 }

@@ -68,7 +68,7 @@ class ImageDecorator extends Decorator{
         if (is_null($targetFile)) $targetFile = $this;
         $this->getImageSize();
         $proportion = $this->width / $this->height;
-        if($this->width >= $this->height)
+        /*if($this->width >= $this->height)
         {
             $tw = $maxWidth;
             $th = (int)round($tw / $proportion);
@@ -76,7 +76,8 @@ class ImageDecorator extends Decorator{
         else{
             $th = $maxHeight;
             $tw = (int)round( $proportion * $th);
-        } 
+		}*/ 
+		list($tw,$th) = recalcSize($this->width,$this->height,$maxWidth, $maxHeight);
         $image = $this->createImage();
         $image_p = imagecreatetruecolor($tw, $th);
         imagecopyresampled($image_p, $image, 0, 0, 0, 0, $tw, $th, $this->width, $this->height);

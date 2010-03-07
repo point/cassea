@@ -266,7 +266,7 @@ class Autoload
             if (is_file($f= $d.'/'.$class.'.php') && is_readable($f))
 				return require_once($f);
 		
-		if (class_exists(AutoloadException, false)){
+		if (class_exists('AutoloadException', false)){
 			$ex = new AutoloadException('Class "'.$class.'" not found');
 			$ex->setExtra('Relative paths', implode(', ',str_replace(self::$rd.'/', '' ,self::$dirs)));
 			throw $ex; 

@@ -29,24 +29,42 @@
 
 // $Id:$
 
-// {{{ Decorator
-abstract class Decorator /*implements iFile */{
-    protected $file;
-    
-    public function __construct ( $file){
-        if ($file instanceof iFile || $file instanceof Decorator)
-            $this->file = $file;
-        else throw new DecoratorException('$file parameter in Decorator constructor must be instance of iFile or Decorator');
-    }
+//{{{ ThumbDecorator
+class ThumbDecorator extends Decorator{
 
-    public function __toString(){
-        return ''.$this->file;
-    }
+	protected $styles = array();
+	function __construct($file, array $styles = array("thumb"=>"100x100"))
+	{
+		parent::__construct($file);
+		$this->styles = preg_grep("/\d+x\d+/",$styles);
+	}
+	function createThumbs()
+	{
+		foreach($this->styles as $dir=>$dim)
+		{
+			list($w,$h) = explode("x",$dim);
+			t(new ImageDecorator(
+				$this->file->copy(
+					$this->file->getParent()->mkdir($dir))))
+			->resize(null,$w,$h);
+		}
+	}
+	function getThumb($style="thumb")
+	{
+		if(!isset($this->styles[$style])) throw new DecoratorException("There is no such style '$style' ThumbDecorator");
+		return $this->file->getParent()->getDir($style)->getFile($this->file->getName());
+	}
+	// if null delete file from all styles
+	// if string - delete file only from this style
+	// if array - delete from list of styles
+	function delete($styles = null) 
+	{
+		if(!isset($styles))
+			$styles = array_keys($this->styles);
+		elseif(is_string($styles))
+			$styles = array($styles);
 
-    public function __call($method, $arguments){
-        //print_pre(get_class($this).' '.$method);
-        $r= call_user_func_array(array($this->file, $method), $arguments);
-        return $r;
-    }
-
-}// }}}
+		foreach($styles as $style)
+			$this->file->getParent()->getDir($style)->getFile($this->file->getName())->delete();
+	}
+}//}}}

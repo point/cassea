@@ -233,7 +233,7 @@ class UploadedFiles
 	 *		$uf = new UploadedFiles('image');
 	 *		if (!$uf->isUploaded('image')) return; // no image was selected
 	 *
-	 *      $uf->allowedMimesLike('image/')->allowedSize(0, 4000*1024)->count(1);
+	 *      $uf->allowedMimesLike('image/')->allowedSize(4000*1024)->count(1);
 	 *      if ($uf->hasErrors()) throw new CheckerException ($uf->getErrorsFor('image'), 'image');
 	 * }
 	 * </code></pre>
