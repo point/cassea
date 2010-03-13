@@ -32,7 +32,7 @@
  * @author point <alex.softx@gmail.com>
  * @author billy <a.mirniy@gmail.com>
  * @link http://cassea.wdev.tk/
- * @version $Id:$
+ * @version $Id: Storage.php 186 2009-11-13 08:55:14Z point $
  * @package system
  * @since 
  */
@@ -81,12 +81,12 @@ class Storage
 	 * @return iStorageEngine 
 	 * @see createWithSession
 	 */
-	static function create($storage_name,$ttl = null)
+	static function create($storage_name, $ttl = null, $useSession = false)
 	{
-		if(!isset(self::$classname))
-			self::init();
-		$o = new self::$classname($storage_name, $ttl);
-		if(!$o instanceof iStorageEngine)
+		if(!isset(self::$classname)) self::init();
+
+		$o = new self::$classname($storage_name, $ttl, $useSession);
+		if(!$o instanceof AbstractStorage)
 			throw new CasseaException("Select proper storage engine using storage_engine variable at config.ini");
 		return $o;
 	}
@@ -105,9 +105,75 @@ class Storage
 	 */
 	static function createWithSession($storage_name,$ttl = null)
 	{
-		return self::create($storage_name.Session::getId(),$ttl);
+		return self::create($storage_name, $ttl, true);
 	}
 	//}}}
 }
 //}}}
-?>
+
+
+//{{{ AbstractStorage
+abstract class AbstractStorage implements ArrayAccess{
+	static private $refCount = 0;
+
+	protected $name;
+	protected $ttl;
+
+	function __construct($storageName, $ttl = null, $withSession=false){
+		if(empty($storageName))
+			throw(new StorageException('Storage name is empty'));
+		$this->name = $storageName;
+
+		if (is_null($ttl)) $ttl = Config::getInstance()->session->length;
+		$this->ttl = (int)$ttl;
+
+		if($this->ttl <= 0) throw StorageException('Storage Time To Live(ttl) must be positive integer');
+		self::$refCount++;
+	}
+
+	function __destruct(){
+		if ( !--self::$refCount ) $this->cleanup();
+	}
+
+	static function getInstanceCount(){
+		return self::$refCount;
+	}
+
+	abstract function set($var, $val);
+    abstract function get($var);
+    abstract function is_set($var);
+    abstract function un_set($var);
+
+	//{{{ setMulti
+	/**
+	 * Dummy realization of multiple items storing.
+	 *
+	 * Method return key=>value array;
+	 * @param array $data
+	 * @return array 
+	 */
+	public function setMulti($data){
+		foreach( $data as $k=>$v)
+			$this->set($k, $v);
+
+	}//}}}
+
+	//{{{ getMulti
+	/**
+	 *
+	 */
+	public function getMulti($keys){
+		$res = array();
+		foreach($keys as $key)
+			$res[$key] = $this->get($key);
+	}//}}}
+
+	function cleanup(){}
+
+    //  {{{ ArrayAccess interface
+    final public function offsetExists($key){ return $this->is_set($key);}
+    final public function offsetGet($key){ return $this->get($key);}
+    final public function offsetSet($key, $val){ return $this->set($key, $val);}
+    final public function offsetUnset($key){ return $this->un_set($key);}
+    // }}}
+}//}}}

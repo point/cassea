@@ -52,6 +52,37 @@ class File extends FileSystemObject implements iFile{
         parent::__construct($path, $absPath);
     }// }}} 
 
+	// {{{ setContent
+	/**
+	 *
+	 */
+	function setContent($content = ''){
+		if (@file_put_contents($this->path, $content) === false)
+			throw new FileSystemException('Cant put content to file '.$this); 
+		return true;
+	}// }}}
+
+
+	function append($content){
+		if (@file_put_contents($this->path, $content, FILE_APPEND) === false)
+			throw new FileSystemException('Cant append content to file '.$this); 
+		return true;
+		
+
+	}
+
+	// {{{ getContent
+	/**
+	 *
+	 */
+	function getContent()
+	{
+		if (($r = @file_get_contents($this)) === false)
+			throw new FileSystemException('Can\'t get file contents '.$this); 
+		return $r;
+	}// }}}
+
+	
     // {{{ getExtension
     /**
      * Возвращает расширение файла.

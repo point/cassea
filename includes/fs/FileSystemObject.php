@@ -211,4 +211,29 @@ class FileSystemObject implements iFileSystemObject{
         return (substr($p,0,1) == '/'?'/':'').implode('/',$res);
     }// }}}
 
+	// {{{ getter && settter
+	// {{{ __get
+	/**
+	 *
+	 */
+	public function __get($property){
+		return $this->accessor('get', $property);
+	}// }}} 
+
+	// {{{ __set
+	public function __set($property, $value){
+		return $this->accessor('set', $property, $value);
+	}// }}}
+
+	// {{{ accessor
+	/**
+	 * Check accesses if needed
+	 *
+	 */
+	private function accessor($type, $property, $value = null){
+		if (!method_exists($this, ($method = $type.ucfirst($property))))
+			throw new FileSystemException('Unknown method "'.$method.'" isn\'t defined.'); 
+		return $this->$method($value);
+	}// }}}
+	// }}}
 }// }}}

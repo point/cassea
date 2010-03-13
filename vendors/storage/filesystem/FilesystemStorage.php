@@ -32,126 +32,123 @@
  * @package Storage
  */
 
-// {{{ FSStorage
+// {{{ FilesystemStorage
 /**
  *
  */
-class FilesystemStorage implements iStorageEngine, ArrayAccess
+class FilesystemStorage extends AbstractStorage
 {
-	private $storage_name		= null,
-			$vars				= array(),
-			$ttl				= null,
-			$real_storage_path  = null,
-			$ext			    = '.cache'
-            ;
+
+	private	$vars = array(),
+			$sync = array(),
+			$dir;
+	//
     //{{{ __construct
-	function __construct($storage_name, $ttl = null)
-	{
-		self::cleanup();
-		if(empty($storage_name))
-			throw(new StorageException('storage name is empty'));
-        $this->storage_name = $storage_name;
-        
-        if(!is_dir(Config::get('ROOT_DIR').Config::get('STORAGE_DIR')))
-            mkdir(Config::get('ROOT_DIR').Config::get('STORAGE_DIR'));
-
-		$this->real_storage_path = Config::get('ROOT_DIR').Config::get('STORAGE_DIR')."/".md5($storage_name);
-		
-		if(!is_dir($this->real_storage_path))
-			mkdir($this->real_storage_path);
-
-		if(!is_dir($this->real_storage_path))
-			throw(new StorageException('storage dir is empty'));
-		
-        if (!isset($ttl)) $ttl = Config::getInstance()->session->length;
-		$this->ttl = (int)$ttl;
-
-		file_put_contents($this->real_storage_path."/.ttl",time()+$this->ttl);
-
+	function __construct($storageName, $ttl = null, $withSession=false){
+		parent::__construct($storageName, $ttl, $withSession);
+		if ($withSession) $this->name .= Session::getId();
+		$this->name = md5($this->name);
+		$this->dir = self::getDir($this->name);
 	}// }}}
 
+	// {{{ getDir
+	/**
+	 *
+	 */
+	static function getDir($storageName){
+		static $dir = null;
+		if (is_null($dir)){ 
+			$dir = Dir::get( Config::get('ROOT_DIR').Config::get('STORAGE_DIR'), true );
+			TTL::init();
+		}
+		return $dir->getDir('data/'.$storageName);
+	}// }}}
+
+	// {{{ destroy
+	static function destroy($storageName){
+		self::getDir($storageName)->delete();
+	}// }}}
+
+	static private function getKeyName($key){
+		return md5($key);
+	}
+
+	private function getKeyFile($key){
+		return $this->dir->getFile((self::getKeyName($key)));
+	}
+
 	// {{{is_set
-	function is_set($var)
+	function is_set($key)
 	{
-		if(!isset($var)) return false;
-		$m=md5($var);
-		if(!isset($this->vars[$m]))
-			if(!file_exists($file=$this->real_storage_path."/".$m.$this->ext))return false;
-			else $this->vars[$m]=unserialize(file_get_contents($file));
-		return true;
+		$k = self::getKeyName($key);
+		if(isset($this->vars[$k])) return true;
+		try{
+			$this->vars[$k]=unserialize($this->getKeyFile($key)->content);
+			return true;
+		}
+		// file with var  or storage dir not exists
+		catch(FileSystemException $e){}
+		return false;
     }// }}}
 
     // {{{ set
-	function set($var,$val)
+	function set($key,$val)
 	{
-		$this->vars[md5($var)] = $val;
+		$key = self::getKeyName($key);
+		if (isset($this->vars[$key]) && $this->vars[$key] === $val) return true;
+		$this->vars[$key] = $val;
+		$this->sync[] = $key;
 		return true;
     }// }}}
 
     // {{{ un_set
-	function un_set($var)
+	function un_set($key)
 	{
-		$m = md5($var);
-		if(isset($this->vars[$m]))
-			unset($this->vars[$m]);
-        if(file_exists($this->real_storage_path."/".$m.$this->ext))
-		    unlink($this->real_storage_path."/".$m.$this->ext);
+		$this->getKeyFile($key)->delete();
+		unset($this->vars[self::getKeyName($key)]);
 	}
 	//}}}
 	
 	//{{{get
-	function get($var)
+	function get($key)
 	{
-		if($this->is_set($var))
-			return $this->vars[md5($var)];
+		if($this->is_set($key))
+			return $this->vars[self::getKeyName($key)];
 		return false;
     }// }}}
 
     // {{{ sync
     function sync()
 	{
-		foreach($this->vars as $key=>$value)
-		{
-			$f = fopen($this->real_storage_path."/".$key.$this->ext,'a');
-			if(flock($f,LOCK_EX)) 
-			{ 
-				ftruncate($f, 0) ; 
-				fwrite($f, serialize($value)); 
-				flock($f, LOCK_UN) ; 
-			}
-			fclose($f);unset($f);
+		if (!count($this->sync)) return;
+		try{$this->syncData();}
+		catch(FileSystemException $e){
+			$this->dir->mkdir();
+			if (!$this->dir->canWrite()) throw $e;
+			$this->syncData();
 		}
+		$this->sync = array(); // for multiple sync
 	}
 	// }}}
 
-    // {{{ cleanup 
-	static function cleanup()
-	{
-		$dir = Config::get('ROOT_DIR').Config::get('STORAGE_DIR');
-		$l = glob($dir."/*/*.ttl");
-		foreach((is_array($l)?$l:array()) as $f)
-			if(intval(file_get_contents($f)) < time())
-				deltree(dirname($f));
-    }// }}}
+	private function syncData(){
+		foreach($this->sync as $key)
+			$this->dir->getFile($key)->content = serialize($this->vars[$key]);
+	}
 
-    // {{{ close
-	function close()
+    // {{{ cleanup 
+	function cleanup()
 	{
-    }
-	// }}}
+		TTL::updateGroup();
+		TTL::cleanup();
+    }// }}}
 
 	//{{{__destruct
 	public function __destruct(){
 		$this->sync();
+		if($this->dir->exists()) TTL::queued($this->name, $this->ttl);
+		parent::__destruct();
 	}	
 	//}}}
 	
-    //  {{{ ArrayAccess interface
-    public function offsetExists($key){ return $this->is_set($key);}
-    public function offsetGet($key){ return $this->get($key);}
-    public function offsetSet($key, $val){ return $this->set($key, $val);}
-    public function offsetUnset($key){ return $this->un_set($key);}
-    // }}}
-
 }// }}}
-

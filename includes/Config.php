@@ -518,7 +518,8 @@ class IniConfig extends ConfigBase
 	{
 		if(!$this->checkCache())
 		{
-			if(($fp = fopen($this->rd.self::CONFIG_CACHE_FILE,"a")) === false) return;
+			$cacheFile = new File($this->rd.self::CONFIG_CACHE_FILE,true);
+			if( ($fp = fopen($cacheFile,"a")) === false) return;
 			if(flock($fp,LOCK_EX))
 			{
 				$fstat = fstat($fp);
@@ -526,8 +527,8 @@ class IniConfig extends ConfigBase
 				fputs($fp,'<?php'.PHP_EOL.'$__config_cache_inode='.$fstat['ino'].';'.PHP_EOL.
 					'$__config_cache = '.var_export($this->toArray(),true).';');
 				$time = time();
-				touch($this->rd.self::CONFIG_CACHE_FILE,$time);
-				touch($this->filename,$time);
+				touch($cacheFile);
+				touch($this->filename);
 				fflush($fp);
 				flock($fp,LOCK_UN);
 			}
