@@ -45,11 +45,14 @@ else $rewrite = "/".$controller.$rewrite;
 if(preg_match('#^/([^/\.]{1,2})/.*$#',$rewrite,$match))
     {header("HTTP/1.0 404 Not found");exit();}
 
+$_GET['__p1'] = "index.xml";
+$_GET['__p2'] = "";
 if(preg_match('#^/([^/\.]{3,})(/([^\.]+))?(/([^/]+)\.(htm|html|xml)?)?$#',$rewrite,$match)){
-    $_GET['__p1'] = $match[5];
-    $_GET['__p2'] = $match[3];
+	if(isset($match[5]))
+		$_GET['__p1'] = $match[5];
+	if(isset($match[3]))
+		$_GET['__p2'] = $match[3];
 }
-
 //make env for scripts
 $_SERVER['PHP_SELF'] = "/controllers/$controller.php";
 set_include_path(realpath($_SERVER['DOCUMENT_ROOT'])."/controllers/". PATH_SEPARATOR . get_include_path());

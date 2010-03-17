@@ -193,7 +193,8 @@ class Autoload
 		// directories list
 		if(empty($name2))
 		{
-			if(count(glob("$_d/*")) != count(($dirs = glob("$_d/*",GLOB_ONLYDIR))))
+			//$dirs could be false in case of error
+			if(count(glob("$_d/*")) != count(($dirs = glob("$_d/*",GLOB_ONLYDIR))) || $dirs === false)
 				if(file_exists("$_d/autoload.php"))
 					require_once("$_d/autoload.php");
 				else 

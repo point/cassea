@@ -575,7 +575,7 @@ class Controller extends EventBehaviour
 				return $this->vendorPagePath($src);
 			}
 			catch(ControllerException $e)
-			{throw new ControllerException('page file '.$src.' not found');}
+			{throw new ControllerException('page file '.$file->getAbsPath().' not found');}
 		}
 		
 	}
