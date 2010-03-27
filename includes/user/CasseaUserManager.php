@@ -36,7 +36,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
     function auth($login, $password)
     {
 		//if (!preg_match(self::REGEXP_LOGIN, $login) || !preg_match(self::REGEXP_PASSWORD, $password))
-		if(!$this->checkLogin($login) || !$this->checkPassord($password))
+		if(!$this->checkLogin($login) || !$this->checkPassword($password))
             return false;
 
         $r = DB::query('select *  from '.self::TABLE.' where login="'.$login.'" limit 1');
@@ -74,7 +74,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 	function addUser($login, $password, $email, $confirm= null)
 	{
 		//if (!preg_match(self::REGEXP_LOGIN, $login) || !preg_match(self::REGEXP_PASSWORD, $password))
-		if(!$this->checkLogin($login) || !$this->checkPassord($password))
+		if(!$this->checkLogin($login) || !$this->checkPassword($password))
 			throw new UserManagerException('User '.$login.' has incorrect login or password');
 
 		if(!$this->checkEmail($email))
@@ -182,7 +182,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 		
 		if(!is_numeric($uid) || $uid < 1) return;
 		$password = Filter::apply($password,Filter::STRING_QUOTE_ENCODE);
-		if (!self::checkPassord($password))
+		if (!self::checkPassword($password))
 			throw new UserManagerException('Password not match security standards.');
 
         if ($password === null) $password = $this->generatePassword();
@@ -399,6 +399,7 @@ class CasseaUserManager extends AbstractUserManager implements iUserManager,iReg
 
         $r = $a->send();
         $this->setPassword($uid, $new_password);
+		return $new_password;
 
     }
 

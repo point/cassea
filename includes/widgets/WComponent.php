@@ -1113,7 +1113,7 @@ EOD;
 		}
 		
 		if (is_null($tpl_name) && is_null($this->template_name)) $tpl_name = 'default.tpl';
-        elseif(isset($this->template_name))
+		elseif(isset($this->template_name)&&(is_null($tpl_name)))
             $tpl_name = $this->template_name;
 
         $tpl_name = $tpl_name.(substr($tpl_name, -4) == '.tpl'?'':".tpl"); 

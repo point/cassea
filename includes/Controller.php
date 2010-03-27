@@ -60,6 +60,9 @@ require_once(dirname(__FILE__)."/Boot.php");
 
 //{{{ WidgetLoader
 /**
+ * !!! Deprecated 
+ * Widgets are now loading with system-wide Autoload machanism.
+ *
  * Helper class to include files with widgets.
  * Used instead of default autoload mechanism, because in calling side 
  * need to know does such widget exists.
@@ -735,6 +738,8 @@ class Controller extends EventBehaviour
         $node_list = $dom->getElementsByTagName('block');
         for($i = 0, $c = $node_list->length; $i < $c; $i++)
         {
+			$el = $node_list->item(0);
+			if(ACL::check($el->getAttribute('allow'),$el->getAttribute('deny')))
             for($el = $node_list->item(0),$el_cn = $el->childNodes,$j = 0, $c2 = $el_cn->length;$j < $c2;$j++)
                 $el->parentNode->insertBefore($el_cn->item($j)->cloneNode(true),$el);
             $el->parentNode->removeChild($el);
@@ -754,7 +759,7 @@ class Controller extends EventBehaviour
 			if(!ACL::check($_a,$_d))  {$el->parentNode->removeChild($el);continue;}
 
 			try{
-				$src = $this->pagePath($src, ($el->getAttribute('vendor') == '1'));
+				$src = $this->pagePath($src, (bool)$el->getAttribute('vendor'));
 			}
 			catch(ControllerException $e){ 
 				throw new ControllerException('include page file '.$src.' not found');

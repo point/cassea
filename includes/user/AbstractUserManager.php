@@ -84,7 +84,7 @@ class AbstractUserManager
 	{
         return preg_match(iUserManager::REGEXP_LOGIN, $login);
 	}
-	function checkPassord($password)
+	function checkPassword($password)
 	{
 		return preg_match(iUserManager::REGEXP_PASSWORD, $password);
 	}

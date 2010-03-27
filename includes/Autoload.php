@@ -97,13 +97,15 @@ class Autoload
         self::$md = self::$rd.$c->models_dir;
 		
 		self::addDir(self::$rd.'/includes');
-		self::addDir(self::$rd.'/includes/user');
+
+		self::addDir(self::$vd.'/widgets');
+		self::addDir(self::$rd.'/includes/widgets');
+
 		self::addDir(self::$rd.'/includes/fs');
+		self::addDir(self::$rd.'/includes/user');
 		self::addDir(self::$rd.'/includes/exceptions');
 		self::addDir(self::$rd.'/includes/interfaces');
 		self::addDir(self::$rd.'/includes/mailer');
-
-		//self::addDir(self::$rd.'/includes/widgets');
 
         self::addDir(self::$vd.'/includes');
 	}

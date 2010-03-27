@@ -63,13 +63,14 @@ class File extends FileSystemObject implements iFile{
 	}// }}}
 
 
+	// {{{ append
 	function append($content){
 		if (@file_put_contents($this->path, $content, FILE_APPEND) === false)
 			throw new FileSystemException('Cant append content to file '.$this); 
 		return true;
 		
 
-	}
+	}// }}}
 
 	// {{{ getContent
 	/**
