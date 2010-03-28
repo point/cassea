@@ -32,7 +32,7 @@ class Profile
 
 	static function get($user_id = null)
 	{
-		if(!$user_id === null)
+		if($user_id === null)
 			$user_id = User::get()->getId();
 
 		$profile_classname = self::getProfileClass();

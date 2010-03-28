@@ -2545,6 +2545,12 @@ class AjaxController extends Controller
 
 		$this->trigger("AfterHandlePOST",$this);
 
+		// if we need to pass some responce string to $.post method
+        if(isset($this->response_string))
+            echo $this->response_string;
+
+		exit();
+
 	}
 	//}}}
 	

@@ -116,7 +116,9 @@ function show_error_boxes()
 		firstdiv = firstdiv.eq(0);
 
 		var message=firstdiv.text(); 
-		var input=firstdiv.prevAll(" .wsnaperror, :input,:text,:checkbox label,:radio label,:file");
+		var input=firstdiv.prevAll(" .wsnaperror");
+        if(!input.length)
+		    var input=firstdiv.prevAll(":input,:text,:checkbox label,:radio label,:file");
         if(!input.size()) return;
 		input = input.eq(input.length - 1);
 		firstdiv.remove();

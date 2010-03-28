@@ -92,10 +92,19 @@ class Browser
 	{
 		$f = null;
 		$d = Dir::get(self::ROOT)->getDir(implode("/",$path));
+		$fdel = $ddel = null;
 		if(!empty($post->fdel)) 
-			$o = $d->getFile(key($post->fdel))->delete();
+		{
+			$fdel = $post->fdel;
+		}
+		if(!empty($post->ddel))
+		{
+			$ddel = $post->ddel;
+		}
+		if(!empty($fdel)) 
+			$o = $d->getFile(key($fdel))->delete();
 		elseif(!empty($post->ddel))
-			$o = $d->getDir(key($post->ddel))->delete();
+			$o = $d->getDir(key($ddel))->delete();
 	}
 	static function upload($post,$path)
 	{
