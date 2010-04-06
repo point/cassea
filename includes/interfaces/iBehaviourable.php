@@ -31,7 +31,8 @@
 interface iBehaviourable
 {
     /* 
-     * Must be!
+	 * This functions must exist but couldn't be 
+	 * pointed in interface defenition.
      *
     function __set($name, $value);
     function __isset($name);

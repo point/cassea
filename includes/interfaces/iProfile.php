@@ -27,6 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+//{{{ iProfile
 interface iProfile
 {
 	static function addUser($user_id);
@@ -34,3 +35,4 @@ interface iProfile
 	function set($field_name, $value);
 	function __set($field_name, $value);
 }
+//}}}

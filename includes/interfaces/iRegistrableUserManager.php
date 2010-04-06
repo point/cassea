@@ -27,6 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+//{{{
 interface iRegistrableUserManager
 {
 
@@ -42,3 +43,4 @@ interface iRegistrableUserManager
 	function recoverPassword($email);
 
 }
+//}}}

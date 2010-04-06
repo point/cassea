@@ -27,6 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+//{{{ iUserManager
 interface iUserManager
 {
 
@@ -49,3 +50,4 @@ interface iUserManager
 	function getEmail($uid);
 	function getLogin($uid);
 }
+//}}}

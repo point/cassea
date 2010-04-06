@@ -2518,6 +2518,8 @@ class AjaxController extends Controller
 	 *
 	 * Considering that formid is not populating, all chekers and handlers 
 	 * will be called.
+	 * Optionally, responce string could be specified to define the responce to 
+	 * $.ajax or $.post jQuery call.
 	 * 
 	 * @param null
 	 * @return null
@@ -2538,7 +2540,7 @@ class AjaxController extends Controller
 		}
 		catch(CheckerException $e)
 		{
-			exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName);
+			exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName());
 		}
 		DataUpdaterPool::callHandlers($formid);
 		DataUpdaterPool::callFinalize($formid);
