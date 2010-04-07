@@ -27,7 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-interface IMailObject{
+//{{{ iMailObject
+interface iMailObject{
 	
     public function send();
 
@@ -69,4 +70,5 @@ interface IMailObject{
 
     public function getBcc();
 }
+//}}}
 ?>

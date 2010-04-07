@@ -27,8 +27,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once 'IMailObject.php';
-
 /*{{{class mailObject
  *Класс "mailObject",интерфейсом которого является "ImailObject"
  *предназначен для формирования самого тела письма(в кодировке UTF-8) которое впоследствии приймет транспорт.
@@ -42,7 +40,7 @@ require_once 'IMailObject.php';
  *    ReplyTo
  */
 
-class MailObject implements IMailObject{
+class MailObject implements iMailObject{
 	
     //{{{class variables
     
