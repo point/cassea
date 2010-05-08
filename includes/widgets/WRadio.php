@@ -75,6 +75,9 @@ class WRadio extends WControl
 		
 		$this->addToMemento(array("checked","text"));
 		parent::parseParams($elem);		    	
+        $t = (string)$elem;
+        if(!empty($t))
+            $this->setText($t);
     }
     // }}}
     // {{{ setChecked 

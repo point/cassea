@@ -556,6 +556,7 @@ abstract class WComponent extends WObject
         }
     }
     // }}}
+
     // {{{ getDataSetterMethod
     /**
     * Method description
@@ -568,7 +569,7 @@ abstract class WComponent extends WObject
 	{
 		return "setData";
 	}
-
+	//}}}
 
     // {{{ getDataSet 
     /**
@@ -1065,6 +1066,7 @@ EOD;
     	return $this->hide_if_empty_id;
     }
     // }}}
+	
 	// {{{ setStringProcess
     /**
     * Method description

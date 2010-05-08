@@ -167,7 +167,7 @@ class Template
 	 */
 	function flushVars()
 	{
-		$this->params = new TemplateParams;
+		$this->params->flushVars();
 	}
 	//}}}
 
