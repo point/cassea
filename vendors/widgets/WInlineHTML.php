@@ -50,7 +50,7 @@ class WInlineHTML extends WContainer implements iNotSelectable
 	function buildComplete()
 	{
 		if(!isset($this->tpl))
-			if(in_array($this->real_tagname,array("hr","br","img")))
+			if(in_array($this->real_tagname,array("hr","br","img","input", "param", "col","area","frame","meta","link","base","basefont","isindex")))
 				$this->tpl = $this->createTemplate(null,"short_tag.tpl");
 			else
 				$this->tpl = $this->createTemplate();
