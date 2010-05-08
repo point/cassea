@@ -27,12 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require("MailObject.php");
-require("MailMail.php");
-require("SmtpMail.php");
-require("SendmailMail.php");
 
-/*{{{class mail
+/*{{{ Mail
 *
 * Класс 'mail' содержит функцию,которая реализует фабричный метод создания 
 * обьектов транспорта сообщений. 
@@ -49,13 +45,10 @@ class Mail{
     *
     */
     public static function createMail(){
-        $className=Config::getInstance()->mail->transport."Mail";
-        try{
-				if (!class_exists($className))
-	        		throw new Exception("<b>Cannot find class {$className}!!!!</b> ");
-                return new mailObject(new $className());;
-	    }
-        catch (Exception $e){echo $e->getMessage();}
+		$className=nameToClass(Config::getInstance()->mail->transport."Mail");
+		if (!class_exists($className))
+			throw new MailException("Cannot find class {$className}");
+		return new mailObject(new $className());
     }//}}}
 }
 //}}}

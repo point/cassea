@@ -27,11 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once 'MailTransport.php';
 
-class MailException extends CasseaException{}
-
-/*{{{class sendmailMail
+/*{{{class SendmailMail
  *класс реализует транспорт sendmail
  *
  */
@@ -50,12 +47,9 @@ class SendmailMail extends MailTransport{
      *отправляет письмо с помощью внешней программы
      */
     public function send($pointer) {
-        try{
 		    $fp = popen($this->sendmail." -t -i", "wb");
 			if ( ! is_resource($fp))
-				{
-					throw new MailException("<b>Cannot open {$this->sendmail}!!!!</b> ");
-                }
+					throw new MailException("Cannot open sendmail process in '{$this->sendmail}'");
             
             if($pointer->memoryLimit)
             {
@@ -70,7 +64,6 @@ class SendmailMail extends MailTransport{
 				fwrite($fp, "\n");
 			}
 			pclose($fp);
-        }catch (MailException $e){echo $e->getMessage();return false;}
         return true;
     }
     /*}}}*/

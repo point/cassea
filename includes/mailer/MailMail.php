@@ -27,9 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once 'MailTransport.php';
-require_once 'MailObject.php';
-/*{{{class mailMail
+/*{{{class MailMail
  *
  */
 class MailMail extends MailTransport{
@@ -38,8 +36,8 @@ class MailMail extends MailTransport{
      *входным параметром является указатель на объект в котором происходит формирование тела письма
      *@return true если отправка выполнилась успешно
      */
-    public function Send($pointer){
-        if($pointer->memoryLimit) throw new Exception("The size of attachment more then memory limit!");
+    public function send($pointer){
+        if($pointer->memoryLimit) throw new MailException("The size of attachment more than memory limit");
 		$header = $pointer->createHeader();
 		$body = $pointer->mailBody();
         return mail(implode(",",$pointer->getTo()),$pointer->getSubject(),$body,$header);

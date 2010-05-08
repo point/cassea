@@ -27,8 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-/*{{{class mailObject
- *Класс "mailObject",интерфейсом которого является "ImailObject"
+/*{{{class MailObject
+ *Класс "MailObject",интерфейсом которого является "ImailObject"
  *предназначен для формирования самого тела письма(в кодировке UTF-8) которое впоследствии приймет транспорт.
  *Реализованы следующие возможности:
  *    Формирование письма для доставки нескольким адресатам (CC, Bcc).

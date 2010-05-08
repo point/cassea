@@ -27,11 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-require_once 'MailTransport.php';
-
-class SmtpException extends CasseaException{}
-
-/*{{{class smtpMail
+/*{{{class SmtpMail
  *класс содержит методы для отправки писем с помощью smtp протокола
  */
 class SmtpMail extends MailTransport{
@@ -60,9 +56,7 @@ class SmtpMail extends MailTransport{
         else $this->smtpCt = fsockopen($this->smtpHost,$this->smtpPort,$errno,$errstr,$this->smtpTimeo);
         sleep(1);
 		if(!is_resource($this->smtpCt))
-			{
-				throw new SmtpException("<b>Cannot connect with smtp server!!!!</b> ");
-			}
+				throw new MailException("Cannot connect with smtp server");
     }
     /*}}}*/
 
@@ -184,7 +178,7 @@ class SmtpMail extends MailTransport{
 			if($code != 250) {$this->errMsg('sendMessage',' ');fclose($this->smtpCt);return false;}
 			fputs($this->smtpCt,"QUIT"."\r\n");
 			fclose($this->smtpCt);
-		} catch (SmtpException $e){echo $e->getMessage();return false;}
+		} catch (MailException $e){echo $e->getMessage();return false;}
             return true;
     }
     /*}}}*/
