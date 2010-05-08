@@ -247,7 +247,7 @@ function moveDown($table,$priority_field,$id_field,$id,$priority=null)
 }
 
 function nameToClass($name){
-	return strtoupper(substr($name,0,1)).substr($name,1);
+	return strtoupper(substr($name,0,1)).substr(preg_replace("/_(\S)/e","strtoupper('\\1')",$name),1);
 }
 //http://php.net/manual/en/function.str-word-count.php
 define("WORD_COUNT_MASK", "/\p{L}[\p{L}\p{Mn}\p{Pd}'\x{2019}]*/u");
