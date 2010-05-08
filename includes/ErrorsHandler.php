@@ -90,7 +90,9 @@ class ErrorsHandler{
     // {{{ processError
     private static function processError($data){
         if (self::$displayErrors)
-            echo self::fillTemplate(php_sapi_name() == 'cli'?self::$textTemplate:self::$webTemplate, $data);
+			echo self::fillTemplate(php_sapi_name() == 'cli'?self::$textTemplate:
+				(Controller::getInstance()->isAjax()?self::$textTemplate:self::$webTemplate)
+				, $data);
         if (self::$logErrors && is_writable(self::$errorLog))
             @file_put_contents(self::$errorLog, '['.date('d-M-Y H:i:s').'] '.self::fillTemplate(self::$textTemplate, $data), FILE_APPEND);
     }// }}}
