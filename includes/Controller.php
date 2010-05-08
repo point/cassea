@@ -2035,7 +2035,7 @@ class Controller extends EventBehaviour
 	 * While POST request incoming form singnature will be checked upon this list.
 	 * It gives some defense from CSRF attacks.
 	 *
-	 * The list made as leaky bucket. Maximum number of elements defines with MAX_SIGNATURES 
+	 * The list made as fixed length queue. Maximum number of elements defines with MAX_SIGNATURES 
 	 * constant. Default is 32.
 	 *
 	 * @param string signature to be added
@@ -2044,7 +2044,6 @@ class Controller extends EventBehaviour
 	function addSignature($sig)
 	{
 		if(!isset($sig)) return;
-		if(User::get()->isGuest()) return;
 		if(count($this->form_signatures) >= self::MAX_SIGNATURES)
 		{
 			$first_sig = array_shift($this->form_signatures);
@@ -2061,14 +2060,12 @@ class Controller extends EventBehaviour
 	/**
 	 * Checks whenever given signature is valid, so located in list.
 	 * If so, it will be removed and true value returned.
-	 * For anonymous user it will return true everytime.
 	 * 
 	 * @param string signature to be checked
 	 * @return bool if signature is valid
 	 */
 	protected function checkSignature($sig = null)
 	{
-		if(User::get()->isGuest()) return true;
 		if(!isset($sig)) return false;
 		if(($k = array_search($sig,$this->form_signatures)) !== false)
 		{
@@ -2090,10 +2087,9 @@ class Controller extends EventBehaviour
 	 */
 	protected function restoreSignatures()
 	{
-		if(User::get()->isGuest()) return;
-		$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
+		$storage = Storage::createWithSession("controller");
 		$this->form_signatures = $storage->get('signatures');
-		//$storage->un_set('signatures');
+
 		if(!is_array($this->form_signatures))
 			$this->form_signatures = array();
 	}
@@ -2155,8 +2151,9 @@ class Controller extends EventBehaviour
 		{
 			$this->trigger("DestructInited",$this);
 
-		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
+		    $storage = Storage::createWithSession("controller");
 			$storage->set('signatures',$this->form_signatures);
+		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
 		    $storage->set('checker_rules',$this->checker_rules);
 		    $storage->set('file_rules',$this->file_rules);
 		    $storage->set('checker_messages',$this->checker_messages);
@@ -2440,10 +2437,10 @@ class AjaxController extends Controller
 
 	//{{{ init
 	/**
-	 * Like {@link Controller::init} but without signature and form checks.
-	 * Scripts and stylesheets are not added.
+	 * Lite version of Controller::init method. 
+	 * Navigator object isn't created and step isn't added, 
+	 * standard JS and CSS isn't added to the head part.
 	 *
-	 * "BeforeAddScript" event is not raising.
 	 * @param null
 	 * @return nul
 	 */
@@ -2458,7 +2455,6 @@ class AjaxController extends Controller
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
-		$this->navigator = new Navigator();
 
         $full_path = $this->findPage();
 
@@ -2466,10 +2462,12 @@ class AjaxController extends Controller
         if($dom->load($full_path) === false)
             throw new ControllerException("Can not load XML ".$full_path);
 
+		$this->restoreSignatures();
 		$this->trigger("BeforeHandlePOST",$this);
 
         if($_SERVER['REQUEST_METHOD'] == "POST")
 		{
+			$this->restoreCheckers();
 			$this->parsePageOnPOST($this->processPage($dom));
 			$this->handlePOST();
 			exit();
@@ -2483,14 +2481,66 @@ class AjaxController extends Controller
 
 	//{{{ head
 	/**
-	 * Returns empty head, due to it doesn't need while AJAX request.
-	 * 
+	 * This method optimized for work with jQuert <code>$.post</code> and 
+	 * <code>$.get</code> functions.
+	 *
+	 * If responce string was specified, given cotent will be outputed, depending
+	 * of the <code>$echo</code> flag.
+	 *
+	 * While the regular GET request, JS and CSS links will be outputed with {@link Header}
+	 * class to the &lt; head &gt; part of the document. 
+	 * This method override such method. It will wrap CSS and JS links to with the
+	 * JS wrapper function (defined in default.js), which will check if such file already exists in the document.
+	 * This approach prevents eventual CSS rule overriding (and JS functions (re)defenitions)
+	 * due to incorrect order. This makes loading of partial content less error prone.
+	 *  
 	 * @param bool unused. Leaved for compatibility with Controller::head
 	 * @return string empty string
 	 */
 	function head($echo = 1)
 	{
-        return "";
+
+		$head = "";
+
+		$this->trigger("BeforeHead",$this);
+	
+        if(isset($this->response_string))
+            if ($echo) echo $this->response_string;
+            else return $this->response_string;
+
+		usort($this->scripts,create_function('$a,$b',
+			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
+			 else return $a["priority"] - $b["priority"];'));
+
+		foreach($this->scripts as $v)
+		{
+			if(isset($v['cond']))
+				$head .= "<!--[if ".$v['cond']."]>\n";
+			$head .= "<script type=\"text/javascript\">loadScript(\"{$v['src']}\");</script>\n";
+			if(isset($v['cond']))
+				$head .= "<![endif]-->\n";
+		}
+
+		usort($this->css,create_function('$a,$b',
+			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
+			 else return $a["priority"] - $b["priority"];'));
+
+		foreach($this->css as $v)
+		{
+			$f = null;
+			if(isset($v['cond']))
+				$head .= "<!--[if ".$v['cond']."]>\n";
+			$head .= "<script type=\"text/javascript\">loadCSS(\"{$v['src']}\");</script>";
+			if(isset($v['cond']))
+				$head .= "<![endif]-->\n";
+
+		}
+
+		$this->trigger("AfterHead",array($this,&$v));
+
+		if($echo)
+			echo $head;
+		else return $head;
 	}
 	//}}}
 
@@ -2510,16 +2560,22 @@ class AjaxController extends Controller
 	//{{{ handlePOST
 	/**
 	 * Handles POST data while AJAX request.
-	 * It works like {Controller::handlePOST} but signature will not be checked,
-	 * form data won't be checked too. Page handler doesn't creating.
-	 * 
-	 * Events "BeforeCheckSignature", 
-	 * "BeforeCheckByRules" are not raised.
+	 * It works like {Controller::handlePOST} and signaatures will be checked unless 
+	 * form is on the current page and <code>no_check</code> attribute is not specified.
 	 *
-	 * Considering that formid is not populating, all chekers and handlers 
-	 * will be called.
-	 * Optionally, responce string could be specified to define the responce to 
-	 * $.ajax or $.post jQuery call.
+	 * Typical use-case of this function is posting form with javascript with 
+	 * <code>$(form).serialize()</code> method or <code>ajaxSubmit</code> from
+	 * jquert.form plugin.
+	 *
+	 * Instead of redirects, like in <code>Controller::handlePOST()</code>
+	 * method, <code>exit()</code> calls will be used.
+	 *
+	 * Another difference is that no "save form values and show error boxes" sequence 
+	 * is used. If some checker of validator error are present, <code>exit()</code>
+	 * will terminate futher form processing.
+	 *
+	 * Additionally, unlike <code>Controller::handlePOST</code>, handler methods could specify 
+	 * <code>responce_string</code> to return status of form processing. It will be echo'ed at once.
 	 * 
 	 * @param null
 	 * @return null
@@ -2528,44 +2584,65 @@ class AjaxController extends Controller
     {
 		$this->trigger("BeforeHandlePOST",$this);
 
-		if($this->post->isEmpty()) $this->gotoStep0();
+		if($this->post->isEmpty()) 
+			Header::redirect(requestURI(true), Header::SEE_OTHER); 
 
 		$formid = null;
 
-		$this->trigger("BeforeCallHandlers",array($this,&$formid));
+		WidgetLoader::load("WForm");
+		list($formid) = explode(":",$this->post->{WForm::signature_name});
+		if(!empty($formid)  && !in_array($formid,$this->no_check_forms))
+		{
+			$this->trigger("BeforeCheckSignature",$this);
+			if(!$this->checkSignature($this->post->{WForm::signature_name}))
+				exit("Error while checking POST data 1");
 
-		try
-		{
-			DataUpdaterPool::callCheckers($formid);
+			POSTErrors::flushErrors();
+
+			$this->trigger("BeforeCheckByRules",array(&$this->post,$this->post->{WForm::signature_name}));
+
+			POSTChecker::checkByRules($this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
+			POSTChecker::checkFiles(  $this->post->{WForm::signature_name},$this->file_rules,$this->checker_messages);
+
+			if(POSTErrors::hasErrors())
+				//Header::redirect(requestURI(true), Header::SEE_OTHER); 
+				exit("Error while checking POST data 2");
+
+			$this->trigger("BeforeCallHandlers",array($this,&$formid));
+
+			try
+			{
+				DataUpdaterPool::callCheckers($formid);
+			}
+			catch(CheckerException $e)
+			{
+				exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName);
+			}
+			DataUpdaterPool::callHandlers($formid);
+			DataUpdaterPool::callFinalize($formid);
 		}
-		catch(CheckerException $e)
+		else
 		{
-			exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName());
+			try
+			{
+				DataUpdaterPool::callCheckers($formid);
+			}
+			catch(CheckerException $e)
+			{
+				exit("Error ".$e->getMessage()." in widget ".$e->getWidgetName);
+			}
+			DataUpdaterPool::callHandlers($formid);
+			DataUpdaterPool::callFinalize($formid);
 		}
-		DataUpdaterPool::callHandlers($formid);
-		DataUpdaterPool::callFinalize($formid);
 
 		$this->trigger("AfterHandlePOST",$this);
 
-		// if we need to pass some responce string to $.post method
         if(isset($this->response_string))
+		{
+			$this->trigger("AfterHeadBodyTailResponce",array($this,&$this->response_string));
             echo $this->response_string;
+		}
 
-		exit();
-
-	}
-	//}}}
-	
-	//{{{ __destruct
-	/**
-	 * Just closes database connection
-	 *
-	 * @param null
-	 * @return null
-	 */
-	function __destruct()
-	{
-		DB::close();
 	}
 	//}}}
 }

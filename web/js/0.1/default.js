@@ -112,14 +112,14 @@ function show_error_boxes()
 	function show_error_boxes_int()
 	{
 		var firstdiv=$("span.w-error");
-		if(!firstdiv.size()) return;
+		if(!firstdiv.size()) return true;
 		firstdiv = firstdiv.eq(0);
 
 		var message=firstdiv.text(); 
 		var input=firstdiv.prevAll(" .wsnaperror");
         if(!input.length)
 		    var input=firstdiv.prevAll(":input,:text,:checkbox label,:radio label,:file");
-        if(!input.size()) return;
+        if(!input.size()) return true;
 		input = input.eq(input.length - 1);
 		firstdiv.remove();
 		$("div.w_error_box").remove(); 
@@ -137,6 +137,29 @@ function show_error_boxes()
 	$("span.w-error").hide();
 	//$("form").submit(function(){ $("div.w_error_box").remove(); });
 	return show_error_boxes_int();
+}
+function loadScript(src)
+{
+	var flag = false;
+	var port = window.location.port?(":"+window.location.port):"";
+	var host = window.location.protocol+'//'+window.location.hostname+port+'/';
+	$("head script").each(function(index, el){
+		if( el.src == src || (el.baseURI+src.replace(/^\/?/,''))== el.src || 
+			host+src.replace(/^\/?/,'') == el.src)
+			 flag = true;
+	});
+	if(!flag)$.getScript(src);
+}
+function loadCSS(src)
+{
+	var flag = false;
+	$("head link").each(function(index, el){
+		if(el.type != "text/css" || !el.href) return;
+		if(el.href == src || (el.baseURI+src.replace(/^\/?/,''))== el.href)
+			 flag = true;
+	});
+	if(!flag)
+		$('<link rel="stylesheet" type="text/css" href="'+src+'" />').appendTo("head");
 }
 $(document).ready(function(){ 
 	show_error_boxes(); 
