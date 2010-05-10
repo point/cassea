@@ -29,7 +29,8 @@
 
 class Profile
 {
-	static $loadedProfiles = array();
+	private static $loadedProfiles = array();
+	private static $profile_classname = "CasseaProfile";
 
 	static function get($user_id = null)
 	{
@@ -38,7 +39,10 @@ class Profile
 		if (isset(self::$loadedProfiles[$user_id])) return self::$loadedProfiles[$user_id];
 
 		$profile_classname = self::getProfileClass();
-		return self::$loadedProfiles[$user_id] = new $profile_classname($user_id);
+		$o = new $profile_classname($user_id);
+		if(!$o instanceof iProfile)
+			throw new ProfileException("Profile must be instance of iProfile interface");
+		return self::$loadedProfiles[$user_id] = $o;
 	}
 
 	static function addUser($user_id, $param=null){
@@ -46,22 +50,18 @@ class Profile
 	}
 
 	static private function getProfileClass(){
-		$profile_classname = null;
+		if(self::$profile_classname) return self::$profile_classname;
+
 		try {
-			$profile_classname = Config::getInstance()->profile->name;
+			self::$profile_classname = Config::getInstance()->profile->name;
 		}
-		catch(ConfigException $e){	$profile_classname = null; }
-
-		if($profile_classname === null || $profile_classname == "cassea")
-			return 'CasseaProfile';
-		else
-		{
-			//Autoload::addVendorDir('profile',nameToClass($profile_classname));
-			//return $profile_classname;
-			Autoload::addVendor($profile_classname);
-			return nameToClass($profile_classname);
+		catch(ConfigException $e){
+			//just normal. Using default profile class
 		}
 
+		self::$profile_classname = nameToClass($profile_classname);
+		Autoload::addVendor(self::$profile_classname);
+		return self::$profile_classname;
 	}
 }
 
