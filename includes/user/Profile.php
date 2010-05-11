@@ -33,7 +33,7 @@
  * 
  * By default, built-in CasseaProfile is used.
  *
- * But this behaviour could be changed with config option
+ * But this behavior could be changed with config option
  * <pre><code>
  * profile.name = "..."
  * </code></pre>
@@ -80,7 +80,7 @@ class Profile
 	/**
 	 * Main function which returns instance of profile class, selected in config file.
 	 *
-	 * <code>$user_id</code> parameter is used to define which info shoud contain profile object.
+	 * <code>$user_id</code> parameter is used to define which info should contain profile object.
 	 * If this parameter is omitted, profile for current user will be returned.
 	 *
 	 * For performance reasons, objects are saved to reduce DB queries. If calling this method 
@@ -88,7 +88,7 @@ class Profile
 	 *
 	 * @param mixed $user_id it could be either null or int with id of user to retrieve data.
 	 * @return iProfile initialized object of profile class.
-	 * @throws ProfileException if class isn't impements iProfile interface.
+	 * @throws ProfileException if class isn't implements iProfile interface.
 	 */
 	static function get($user_id = null)
 	{
@@ -126,7 +126,7 @@ class Profile
 	 * Tries to calculate name of the class from config and add to vendor lookup
 	 * paths list retrieved directory.
 	 *
-	 * For performance reasons, obtained classname is memerozed in internal private variable.
+	 * For performance reasons, obtained classname is memorized in internal private variable.
 	 *
 	 * @param null
 	 * @return string class name of the profile.
