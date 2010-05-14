@@ -1521,10 +1521,12 @@ class Controller extends EventBehaviour
 		$priority = (int)$priority;
 		if($priority < 1) $priority=10;
 
-		//if(in_array($src,$this->scripts))return;
-		$this->scripts[] = array('src'=>
-			strpos($src,"http://") === false?
-			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond,'priority'=>$priority,"ind"=>count($this->scripts));
+		$src = strpos($src,"http://") === false?
+			"/".Config::get("JS_VER")."/".ltrim($src,"/"):$src;
+
+		if(in_array(array('src'=>$src),$this->scripts))return;
+		$this->scripts[] = array('src'=>$src,
+			'cond'=>$cond,'priority'=>$priority,"ind"=>count($this->scripts));
 	}
 	//}}}
 	
@@ -1571,10 +1573,12 @@ class Controller extends EventBehaviour
 		$priority = (int)$priority;
 		if($priority < 1) $priority=10;
 
-		//if(in_array($src,$this->css)) return;
-		$this->css[] = array('src'=>
-			strpos($src,"http://") === false?
-			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src,'cond'=>$cond, 'media'=>$media,'priority'=>$priority,"ind"=>count($this->css));
+		$src = strpos($src,"http://") === false?
+			"/".Config::get("CSS_VER")."/".ltrim($src,"/"):$src;
+
+		if(in_array(array('src'=>$src),$this->css)) return;
+		$this->css[] = array('src'=>$src,
+			'cond'=>$cond, 'media'=>$media,'priority'=>$priority,"ind"=>count($this->css));
 	}
 	//}}}
 	
