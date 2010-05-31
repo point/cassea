@@ -418,7 +418,7 @@ GO;
     * @param    string $src    
     * @return   void
     */
-    function addCSS($src,$cond = null,$media)
+    function addCSS($src,$cond = null,$media='screen')
 	{
 		static $ccss = array();
 		if(empty($src) || !is_string($src)) return;

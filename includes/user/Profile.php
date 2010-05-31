@@ -29,14 +29,16 @@
 
 class Profile
 {
+	static $loadedProfiles = array();
 
 	static function get($user_id = null)
 	{
 		if($user_id === null)
 			$user_id = User::get()->getId();
+		if (isset(self::$loadedProfiles[$user_id])) return self::$loadedProfiles[$user_id];
 
 		$profile_classname = self::getProfileClass();
-		return new $profile_classname($user_id);
+		return self::$loadedProfiles[$user_id] = new $profile_classname($user_id);
 	}
 
 	static function addUser($user_id, $param=null){

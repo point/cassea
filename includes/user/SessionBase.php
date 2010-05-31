@@ -71,7 +71,7 @@ abstract class SessionBase
         $ss = $this->getServerSession($cs['sid']);
 
         $param = array();
-        if (is_array($ss) && $this->remoteIP == $ss['ip'] && $cs['cast'] =  $ss['cast'] ){
+        if (is_array($ss) && $this->remoteIP == $ss['ip'] && $cs['cast'] ==  $ss['cast'] ){
             $param = $ss;
             $this->id = $cs['sid'];
         }
@@ -157,7 +157,7 @@ abstract class SessionBase
     */
     private function makeCast()
     {
-        @$str = $_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING'];
+		@$str = $_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING'];
         return md5($str);
     }// }}}
     
