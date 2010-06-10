@@ -82,6 +82,8 @@
  */
 class EventBehaviour implements iEventable, iBehaviourable
 {
+	protected static $to_delegate = array();
+
 	protected 
 		/**
 		 * Array of registered events.
@@ -96,6 +98,29 @@ class EventBehaviour implements iEventable, iBehaviourable
 		 */
 		$behaviours = array();
 
+	
+	static function delegate($classname, $name, $value)
+	{
+		self::$to_delegate[$classname][] = array($name,$value);
+	}
+
+	static function undelegate($classname,$name)
+	{
+		if(self::$to_delegate[$classname])
+			foreach(self::$to_delegate[$classname] as &$v)
+				if($v[0] == $name) $v = null;
+		self::$to_delegate = array_values(self::$to_delegate);
+	}
+
+	function __construct()
+	{
+		if(self::$to_delegate[$classname = get_class($this)])
+			foreach(self::$to_delegate[$classname] as $v)
+			{
+				list($name, $value) = $v;
+				$this->$name = $value;
+			}
+	}
 	//{{{ __set
 	/**
 	 * Adding event or behaviour to the current object.
