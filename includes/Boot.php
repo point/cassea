@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * Cassea boot file. Require it to bootstrap all depended class and files.
+ * Cassea boot file. Require it to bootstrap all depended classes and files.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
