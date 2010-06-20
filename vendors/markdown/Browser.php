@@ -93,7 +93,7 @@ class Browser
 		$f = null;
 		$d = Dir::get(self::ROOT)->getDir(implode("/",$path));
 		$fdel = $ddel = null;
-		if(!empty($post->fdel)) 
+		if(!empty($post->fdel))
 		{
 			$fdel = $post->fdel;
 		}
