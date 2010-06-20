@@ -82,6 +82,7 @@ class FilesystemStorage extends AbstractStorage
 	{
 		$k = self::getKeyName($key);
 		if(isset($this->vars[$k])) return true;
+		if(!$this->getKeyFile($key)->exists()) return false;
 		try{
 			$this->vars[$k]=unserialize($this->getKeyFile($key)->content);
 			return true;
