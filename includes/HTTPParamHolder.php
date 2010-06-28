@@ -201,6 +201,12 @@ class HTTPParamHolder implements IteratorAggregate
 		$this->checked_vars[$var_name] = Filter::apply($this->checked_vars[$var_name],Filter::getFilter($type));
 	}
 	//}}}
+	
+	function bindRegexp($var_name,$regexp)
+	{
+		if(!isset($this->checked_vars[$var_name])) return;
+		$this->checked_vars[$var_name] =  preg_match($regexp,$this->checked_vars[$var_name])?$this->checked_vars[$var_name]:null;
+	}
 
 	//{{{ isEmpty
 	/**
