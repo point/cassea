@@ -255,6 +255,8 @@ function moveDown($table,$priority_field,$id_field,$id,$priority=null)
 }
 
 function nameToClass($name){
+	$t = explode("/",$name);
+	$name = end($t);
 	return strtoupper(substr($name,0,1)).substr(preg_replace("/_(\S)/e","strtoupper('\\1')",$name),1);
 }
 //http://php.net/manual/en/function.str-word-count.php
