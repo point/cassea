@@ -338,7 +338,7 @@ class Controller extends EventBehaviour
 
 		if(preg_match("/^\/controllers\/(\w+)\.php$/",$_SERVER['PHP_SELF'],$m))
 			$this->controller_name = $m[1];
-		else throw new ControllerException('controller name not defined');
+		else throw new ControllerException('controller name is not defined');
 
         //some browsers (ie) have bugs, if host contains underscore
         if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
