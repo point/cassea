@@ -184,6 +184,8 @@ class Autoload
 	public static function addVendor($name1, $name2 = null)
 	{
 		if(!isset($name1) && !isset($name2)) throw new AutoloadException('Vendor name must be specified');
+		$name1 = trim($name1,"/");
+		$name2 = trim($name2,"/");
 		$_d = self::$vd."/$name1";
 		if(!is_dir($_d))
 			throw  new AutoloadException("Directory $_d doesn't exists");
