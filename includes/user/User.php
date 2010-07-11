@@ -31,10 +31,9 @@
 /**
 * @author       billy
 */
-class User
+class User extends EventBehaviour
 {
     const GUEST = -1;
-
 
 	/**
     * @var      int
@@ -59,7 +58,28 @@ class User
 
 	protected 
 		$last_login = null,
-		$date_joined;
+		$date_joined = null,
+		$single_access_token = null, //for auth at RSS/Atom request
+		$one_time_token = null //password-changer, etc
+		;
+		
+
+    //{{{ get
+    /**
+    * @return   User
+    */
+    public static function get($user_id = null)
+	{
+		if($user_id === null)
+		{
+			if (!is_object(self::$instance))
+				    self::$instance = new User();
+			return self::$instance;
+		}
+		if((int)$user_id < 1)
+			throw new UserException("User id could not be negative");
+		return new self($user_id);
+    }// }}}
 
 
     //{{{ __construct
@@ -67,39 +87,28 @@ class User
      *
      *
      */
-    private function __construct( ){
-        if ( !is_int($uid =  Session::get()->getUserId()) || $uid <= 0 ) return;
-        $this->id = $uid;
+	protected function __construct( $user_id = null)
+	{
+		if($user_id === null) //init session and find user
+			$this->id = Session::init();
+    }//}}}
 
-		if(($data = UserManager::get()->getUserData($this->id)) === false)
-			throw new Exception("User data for uid '".$this->id."' not found");
-		
+	function loadUser($user_id)
+	{
 		$this->login = $data['login'];
 		$this->email = $data['email'];
 		$this->last_login = $data['last_login'];
 		$this->date_joined = $data['date_joined'];
-
-    }//}}}
-
+	}
+	
 	// {{{
 	static function renew()
 	{
 		self::$instance = null;
 		User::get();
 	}
-
     // }}}
 
-    //{{{ get
-    /**
-    * @return   User
-    */
-    public static function get()
-    {
-        if (!is_object(self::$instance))
-                self::$instance = new User();
-        return self::$instance;
-    }// }}}
 
     //{{{ getId
     /**
@@ -154,7 +163,7 @@ class User
 	{
 		return $this->date_joined;
 	}
-
+	function findBySingleAccessToken($token_key){}
 }// }}}
 
 ?>

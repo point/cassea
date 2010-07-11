@@ -96,7 +96,9 @@ class EventBehaviour implements iEventable, iBehaviourable
 		 *
 		 * @var array
 		 */
-		$behaviours = array();
+		$behaviours = array(),
+		
+		$injected_properties = array();
 
 	
 	static function delegate($classname, $name, $value)
@@ -154,8 +156,8 @@ class EventBehaviour implements iEventable, iBehaviourable
 				$this->events[substr($name,2)][] =	$value;
 		else
 			// behaviour
-			if(!is_callable($value) && !is_string($value) && !$value instanceof Behaviour && (!is_array($value) || count($value) != 2))
-				throw new BehaviourException("Wrong callback function in behaviour $name");
+			if(!is_callable($value) && !$value instanceof Behaviour && (!is_array($value) || count($value) != 2))
+				$this->injected_properties[$name] = $value;
 			elseif(array_key_exists($name,$this->behaviours))
 				throw new BehaviourException("Behaviour {$name} already exists");
 			else
@@ -163,6 +165,14 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 	}
 	//}}}
+
+	// retrieve injected properties
+	function __get($name)
+	{
+		if(!array_key_exists($name,$this->injected_properties))
+			throw new BehaviourException("Injected property '$name' doesn't exist");
+		return $this->injected_properties[$name];
+	}
 
 	//{{{ __isset
 	/**
@@ -272,7 +282,8 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if($t instanceof Behaviour)
 			if($t->getEnabled())
 				return call_user_func_array($t->getCallback(),$arguments);
-			else return null;
+			else 
+				throw new BehaviourException("Behaviour $name temporary disabled");
 		else
 			return call_user_func_array($t,$arguments);
 	}

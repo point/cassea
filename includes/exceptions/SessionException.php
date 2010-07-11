@@ -26,58 +26,15 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
-
-//{{{ MemcacheSession
 /**
-* @author       billy
-*/
-class MemcacheSession extends SessionEngine
-{
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
-    private $storage = null; 
-    
-    //{{{ getServerSession
-    /**
-    * @param    string Client Sid 
-    * @return   mixed Bool false is session no exists, else array with session params;
-    */
-    public function getServerSession($sid)
-    {
-        if(empty($sid)) return false;
-		$ss = array();
-        $this->storage = Storage::create($this->getStorageName($sid), 0+Config::getInstance()->session->length);
-		$params = $this->storage['params'];
-        if (!isset($params['cast']))
-            return array("id"=>null,"cast"=>null,"ip"=>null);
-		else return $params;
-		//what for ?
-        //unset($this->storage);
-    }// }}}
-    
-    //{{{ save
-    /**
-    * @param    array $param
-    * @return   void
-    */
-    public function save($sid, array $params)
-    {
-        $this->storage = Storage::create($this->getStorageName($sid), $params['time']);
-		unset($params['time']);
-		$this->storage['params'] = $params;
-    }// }}}
-    
-    //{{{ kill
-    /**
-    * @return   void
-    */
-    public function kill()
-    {
-        unset($this->storage['params']);
-    }// }}}
-    
-	function deleteExpired(){}
+//{{{ ACLException
+class SessionException extends CasseaException{}
+//}}}
 
-    private function getStorageName($sid){
-        return 'session:'.$sid;
-    }
-}// }}}

@@ -31,14 +31,33 @@
 /**
  * @package user
 */
-class Session
+class Session extends EventBehaviour
 {
-    const COOKIE_NAME = 'sid';
-
     /**
     * @var      SessionBase
     */
-    private static $session = null;
+    protected static $instance = null;
+	protected $engine = null;
+    /**
+    * @var      int
+    */
+    protected $ip;
+    /**
+    * Id сессси
+    * @var      int
+    */
+    protected  $id = null;
+    /**
+    * @var      int
+    */
+	protected $user_id = null;
+
+	protected $remebmer_me = false;
+
+
+	protected $cast = null;
+
+	public $params2save = array();
     
     //{{{ init
     /**
@@ -46,25 +65,91 @@ class Session
     */
     public static function init()
     {
-        if (is_object(self::$session)) return;
-        if (!class_exists('SessionBase', false)) require('SessionBase.php');
+        if (is_object(self::$instance)) return;
+
+		$config = Config::getInstance();
+
+		$this->trigger("BeforeInit",$this);
+
+		$this->params2save += array("user_id","cast","ip","remember_me");
 		
 		$sessionEngine = Config::getInstance()->session->engine;
-		$classname = nameToClass($sessionEngine).'Session';
-		Autoload::addVendor('session', $sessionEngine);
+		$classname = nameToClass($sessionEngine);
+		Autoload::addVendor($sessionEngine);
 
-        self::$session = new $classname();
-        self::$session->init();
+        $this->engine = new $classname();
+		if(!$this->engine instanceof SessionEngine)
+			throw new SessionException("Class '$classname' is not valid session engine");
+
+        $this->engine->init();
+
+        $this->deleteExpired();
+        $this->ip  = $this->getFullIP();
+
+		$this->trigger("BeforeSessionSearch",$this);
+		
+		if($this->id === null && $this->user_id === null) //id or user_id can be set in the event handler
+		{
+			$cs = $this->getClientSession();
+			$ss = $this->getServerSession($cs['id']);
+
+			$param = array();
+
+			if($ss['id'] == $cs['id'] && 
+				$config->session->snap_to_ip?  $this->ip == $ss['ip']:true && 
+				$config->session->check_cast ? $cs['cast'] ==  $ss['cast']:true)
+
+				foreach($this->params2save as $v)
+					if(array_key_exists($v, $ss))
+						$this->$v = $ss[$v];
+			else
+				$this->setupGuest();
+		}
+
+
+		if($this->user_id == User::GUEST && $config->session->single_access->allowed 
+			&& isset(Controller::getInstance()->get->{$config->single_access->key})) //chek request type or accept params
+		{
+			$this->user_id = User::findBySingleAccessToken(
+				Controller::getInstance()->get->{$config->single_access->key}
+			);
+			$this->remember_me = 0;
+		}
+
+		$this->trigger("AfterSessionSearch",$this);
+
+		if(!$this->id || !$this->user_id)
+			throw new SessionException("Session id or user id not found");
+
+		$this->trigger("AfterInit",$this);
+
+		return $this->user_id;
+
     }// }}}
     
+	function setupGuest()
+	{
+		$this->trigger("BeforeSetupGuest",$this);
+
+		$this->user_id = User::GUEST;
+		$this->remember_me = 0+Config::getInstance()->session->remember_me;
+		$this->cast = $this->makeCast();
+		$this->id =  @md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
+		
+		$this->trigger("AfterSetupGuest",$this);
+			
+		return $this->user_id;
+	}
+
     //{{{ get
     /**
     * Возвращает объект Сессии
     * @return   SessionBase
     */
-    public static function get()
-    {
-        return self::$session;
+    public static function getInstance()
+	{
+		//always initialized first by the User
+        return self::$instance;
     }// }}}
     
     //{{{ getId
@@ -74,7 +159,7 @@ class Session
     */
     public static function getId()
 	{
-        return self::$session->getSessionId();
+        return $this->id;
     }// }}}
 
 
@@ -84,9 +169,167 @@ class Session
     */
     public static function kill()
     {
-        self::$session->kill() ;
-        self::$session = null;
-    }// }}}
-}// }}}
+		$config = Config::getInstance();
+        setcookie($config->session->cookie_name, null, time() - 1000,Config::get('cookie_path'));
+		$this->engine->kill($this->id);
+		$this->setupGuest();
 
+    }// }}}
+
+    //{{{ deleteExpired
+    /**
+    * @return   int
+    */
+	function deleteExpired()
+	{
+		$this->engine->deleteExpired();
+	}
+    // }}}
+
+   // {{{ getFullIP
+    /**
+    * get client ip.
+    * Return string like "151.2.41.55, 192.168.0.4" 
+    *
+    * @return string
+    */
+	private function getFullIP()
+	{
+        $strRemoteIP = $_SERVER['REMOTE_ADDR'];
+        if (!$strRemoteIP) {
+            $strRemoteIP = urldecode(getenv('HTTP_CLIENTIP'));
+        }
+        if (getenv('HTTP_X_FORWARDED_FOR')) {
+            $strIP = getenv('HTTP_X_FORWARDED_FOR');
+        }
+        elseif (getenv('HTTP_X_FORWARDED')) {
+            $strIP = getenv('HTTP_X_FORWARDED');
+        }
+        elseif (getenv('HTTP_FORWARDED_FOR')) {
+            $strIP = getenv('HTTP_FORWARDED_FOR');
+        }
+        elseif (getenv('HTTP_FORWARDED')) {
+            $strIP = getenv('HTTP_FORWARDED');
+        } else {
+            $strIP = $_SERVER['REMOTE_ADDR'];
+        }
+		if(ip2long($strRemoteIP) === false)
+            throw new SessionException("Session: user ip is invalid");
+
+        if ($strRemoteIP != $strIP && !empty($strIp)) {
+            $strIP = $strRemoteIP . ', ' . $strIP;
+        }
+        return Filter::apply($strIP,Filter::STRING_QUOTE_ENCODE);
+    }// }}}
+
+   // {{{ getIP
+    /**
+    * get client ip.
+	* Return string like "151.2.41.55". ip2long of it !== false anytime 
+	* if correct env variables was passed
+    *
+    * @return string
+	*/
+	public function getIp()
+	{
+		$ip = $this->getFullIP();
+		if(strpos($ip,",") !== false)
+			list($ip) = explode(",",$ip);
+		return trim($ip);
+	}
+	//}}}
+    //{{{ getClientSession
+    /**
+    * @return   array
+    */
+    protected function getClientSession()
+    {
+		$cookie_name = Config::getInstance()->session->cookie_name;
+		Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}$/');
+		$sid = Controller::getInstance()->cookie->$cookie_name;
+        return array(
+            'id' => $sid,
+	 		'cast' => $this->makeCast()
+        );
+    }// }}}
+
+	function save()
+	{
+		$this->trigger("BeforeSendCookieOnSave",$this);
+		$succ =  setcookie(Config::getInstance()->session->cookie_name, 
+			$this->id, 
+			time() + Config::getInstance()->session->cookie_length,
+			Config::get('cookie_path'));
+        if ( !$succ )throw new SessionException('COOKIE:Unable set Session ID. Probably  headers already sent.');
+
+		$params = array();
+		foreach($this->params2save as $v)
+			$params[$v] = $this->$v;
+
+		$params['time'] = (time() + Config::getInstance()->session->length) +
+			($this->remember_me()?Config::getInstance()->session->remember_me_for:0);
+		
+		$this->trigger("BeforeSave",$params);
+
+		$this->engine->save($this->id,$params);
+
+		$this->trigger("AfterSave",$this);
+	}
+
+	function __destruct()
+	{
+		$this->save();
+	}
+
+    //{{{ makeCast
+    /**
+    * @return   String
+    */
+    protected function makeCast()
+    {
+		return @md5($_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING']):"";
+    }// }}}
+
+    //{{{ getServerSession
+    /**
+    * @return   Object
+    */
+	protected function getServerSession($sid)
+	{
+		return $this->engine->getServerSession($sid);
+	}
+	// }}}
+
+	function setId($id)
+	{
+		if(empty($id))
+			throw new SessionException("id is empty");
+		$this->id = $id;
+	}
+	function getId() { return $this->id;}
+
+	function setRememberMe($remember_me)
+	{
+		$this->remember_me = 0+$remember_me;
+	}
+	function getRememberMe() { return $this->remember_me; }
+
+	function setCast($cast) 
+	{ 
+		if(!is_scalar($cast))
+			throw new SessionException("Wrong cast format");
+		$this->cast = (string)$cast;
+	}
+	function getCast() { return $this->cast; }
+		
+	//this cause using given user_id for a whole session lifetime, not only for paricular request
+	function setUserId($user_id)
+	{
+		if(!is_numeric($user_id) && $user_id < 1)
+			throw new SessionException("Wrong user_id. Use setupGuest instead");
+		$this->user_id = (int)$user_id;
+	}
+	function getUserId() { return $this->user_id; }
+
+}// }}}
 ?>

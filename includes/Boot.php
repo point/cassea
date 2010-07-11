@@ -42,8 +42,6 @@ set_include_path('.');
  * Require some common files and classes
  */
 require("functions.php");
-//require("exceptions.php");
-//require("interfaces.php");
 require("env/Loader.php");
 require("Config.php");
 require('Autoload.php');
@@ -83,9 +81,9 @@ if(!empty($tz))
 	date_default_timezone_set($tz);
 
 /**
- * Boot is a helper class which allow to initialize essential but not commonly used subsystems,
+ * Boot is a helper class which allows to initialize essential but not commonly used subsystems,
  * like session, user, etc. In case of usual web application, {@link Boot::setupAll} may be used.
- * It initialize session, user, language with one method call.
+ * It initialize session, user and language with one method call.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
@@ -95,24 +93,6 @@ if(!empty($tz))
  */
 class Boot
 {
-	/**
-	 * Setting up session. Type of session and its behaviour defines in confuguration file. 
-	 * @param null
-	 * @return null
-	 * @see Session::init
-	 */
-	static function setupSession()
-	{
-		Session::init();
-	}
-	/** 
-	 * Setting up user subsystem. It contains info about user, who makes a request.
-	 * @see User
-	 */
-	static function setupUser()
-	{
-        User::get();
-	}
 	/**
 	 * Setting up language discovering and i18n subsystem. 
 	 * @see Language
@@ -133,14 +113,25 @@ class Boot
 			require_once($f);
 	}
 
+	static function setupInitializerPlugins()
+	{
+		foreach(t(new Dir(Config::get('root_dir'),true))->getDir(Config::get('vendors_dir'))
+			->getDir('plugins/initializers')->ls('*.php') as $f)
+			require_once($f);
+	}
+
 	/**
 	 * Setting up session, user and language by one method call
 	 */
 	static function setupAll()
 	{
-		self::setupSession();
-		self::setupUser();
+		//this should be first
+		self::setupInitializerPlugins();
+		
 		self::setupLanguage();
+		// any other setup methods (may be appear later)
+		// ...
+		
 		self::setupPlugins();
 	}
 }

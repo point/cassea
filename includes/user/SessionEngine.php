@@ -27,27 +27,16 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//{{{ iUserManager
-interface iUserManager
+
+//{{{ SessionEngine
+
+abstract class SessionEngine
 {
-
-    const REGEXP_LOGIN ='#^[a-zA-Z0-9_\-\.]{3,20}$#';
-    const REGEXP_EMAIL = '/^[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+$/is';
-    const REGEXP_PASSWORD = '/^[a-zA-Z0-9#!@$%\\^&*()_\-+\.,]{5,20}$/';
-    const ERROR_USER_NOT_EXIST = 1;
-    const ERROR_PASSWORD_INCORRECT = 2;
-    const ERROR_USER_BANNED = 3;
-    const ERROR_USER_NOTACTIVE = 4;
-    const ERROR_USER_DELETED = 5;
-
-	function auth($login, $password);
-
-	function isActive($uid);
-	function isBanned($uid);
-	function exists($uid);
-	function existsLogin($login);
-	function emailExists($email);
-	function getEmail($uid);
-	function getLogin($uid);
+	function init() {}
+	function kill($sid) {}
+	function deleteExpired() {}
+	abstract function save($sid,array $params);
+	abstract function getServerSession($sid);
 }
+
 //}}}

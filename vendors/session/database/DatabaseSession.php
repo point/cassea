@@ -32,7 +32,7 @@
 /**
 * @author       billy
 */
-class DatabaseSession extends SessionBase
+class DatabaseSession extends SessionEngine
 {
 
     const TABLE = 'user_session';
@@ -45,41 +45,32 @@ class DatabaseSession extends SessionBase
     {
         $sql = "select user_id as user, user_ip as ip, cast  from " . self::TABLE . " where id='" . $sid . "' LIMIT 1" ;
         $res = DB::query($sql);
-        return (count($res) == 1)?$res[0]:null;
+        return (count($res) == 1)?$res[0]:array("id"=>null,"cast"=>null,"ip"=>null);
     }// }}}
     
-    //{{{ updateSession
+    //{{{ save
     /**
-    * @param    String $someparam    
-    * @return   void
     */
-    public function updateSession($param)
+    public function save($sid, array $params)
     {
-        parent::updateSession($param);
-        $sql = 'replace into '. self::TABLE.'( id, user_id, user_ip,  cast, time) values '.
+		//making string "replace into user_session (id, param1, param2, paramN) value (?, ?,?,?)"
+		//and execute prepared statement with $params
+		DB::getStmt('replace into '. self::TABLE.' ( id, '.implode(", ",array_keys($params)).') value ('.
+			implode(",",array_pad(array(),count($params)+1,"?")).")")
+			->execute(array_merge(array($sid),array_values($params)));
+
+        /*$sql = 'replace into '. self::TABLE.'( id, user_id, user_ip,  cast, time) values '.
             '( "'.$this->id.'", '.$param['user'].', "'.$param['ip'].'", "'.$param['cast'].'", "'.time().'" )'; 
-        DB::query($sql);        
-    }// }}}
-    
-    //{{{ setUserId
-    /**
-    * @return   boolean
-    */
-    public function setUserId($id)
-    {
-        if (!parent::setUserId($id)) return false;
-        $sql = 'update '.self::TABLE.' set user_id = '.$id.' where id ="'. $this->id.'"';
-        DB::query($sql);
+		DB::query($sql);        */
     }// }}}
     
     //{{{ kill
     /**
     * @return   void
     */
-    public function kill()
+    public function kill($sid)
     {
-        $r = DB::query( "delete from " . self::TABLE . ' where id = "'.$this->id.'"');
-        parent::kill();
+        $r = DB::query( "delete from " . self::TABLE . ' where id = "'.$sid.'"');
     }// }}}
     
     //{{{ deleteExpired
@@ -88,21 +79,9 @@ class DatabaseSession extends SessionBase
     */
     public function deleteExpired()
     {
-        $expiry_time = time() - Config::getInstance()->session->length;
-        $sql = 'delete from ' . self::TABLE . ' where time < '.$expiry_time;
+        $sql = 'delete from ' . self::TABLE . ' where time < curtime()';
         DB::query($sql);
         return DB::getMysqli()->affected_rows;
     }// }}}
     
-    //{{{ getOnlineUsers
-    /**
-    * @return   array
-    */
-    public function getOnlineUsers( )
-    {
-        $r = DB::query('select distinct user_id from '.self::TABLE.' where user_id != '.User::GUEST );
-        for ($i =0, $c = count($r); $i < $c; $i++)
-            $r[$i] = $r[$i]['user_id'];
-        return $r;
-    }// }}}
 }// }}}
