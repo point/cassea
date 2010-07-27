@@ -144,7 +144,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 		$name = strtolower($name);
 
-		if(method_exists($this, $name) || property_exists(get_class($this),$name))
+		if(method_exists($this, $name) || property_exists_safe(get_class($this),$name))
 			throw new EventException("Method or property $name in class ".get_class($this)." already exists");
 
 
