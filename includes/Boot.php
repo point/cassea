@@ -42,6 +42,8 @@ set_include_path('.');
  * Require some common files and classes
  */
 require("functions.php");
+//require("exceptions.php");
+//require("interfaces.php");
 require("env/Loader.php");
 require("Config.php");
 require('Autoload.php');
@@ -94,6 +96,16 @@ if(!empty($tz))
 class Boot
 {
 	/**
+	 * Setting up session. Type of session and its behaviour defines in confuguration file. 
+	 * @param null
+	 * @return null
+	 * @see Session::init
+	 */
+	static function setupSession()
+	{
+		Session::init();
+	}
+	/**
 	 * Setting up language discovering and i18n subsystem. 
 	 * @see Language
 	 */
@@ -127,7 +139,9 @@ class Boot
 	{
 		//this should be first
 		self::setupInitializerPlugins();
-		
+
+		self::setupSession();
+
 		self::setupLanguage();
 		// any other setup methods (may be appear later)
 		// ...
