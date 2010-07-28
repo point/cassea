@@ -34,136 +34,228 @@
 class User extends EventBehaviour
 {
     const GUEST = -1;
-
+    const TABLE = 'user';
 	/**
     * @var      int
     */
-    private $id = User::GUEST;
+    private $id = self::GUEST;
     /**
     * @var      String
     */
-    private $login = 'Guest';
+    protected $login = 'Guest';
     /**
     * @var      int
     */
-    private $email = 'guest@example.com';
-    /**
-    * @var      Profile
-    */
-    private $profile;
+    protected $email = 'guest@example.com';
+
+	//default is 'active', 'not_confirmed', 'banned'. 
+	//See DB schema for full info
+	protected $state = 'active'; 
     /**
     * @var      User
     */
-    private static $instance;
+    private static $instance = null;
+
+	private $password = null;
+	private $salt = null;
 
 	protected 
 		$last_login = null,
 		$date_joined = null,
-		$single_access_token = null, //for auth at RSS/Atom request
-		$one_time_token = null //password-changer, etc
+		$single_access_token = null //for auth at RSS/Atom request
 		;
-		
 
     //{{{ get
     /**
     * @return   User
     */
-    public static function get($user_id = null)
+	public static function get($user_id = null)
 	{
 		if($user_id === null)
 		{
 			if (!is_object(self::$instance))
-				    self::$instance = new User();
+				self::$instance = new User();
 			return self::$instance;
 		}
-		if((int)$user_id < 1)
-			throw new UserException("User id could not be negative");
 		return new self($user_id);
     }// }}}
 
 
     //{{{ __construct
-    /**
-     *
-     *
-     */
-	protected function __construct( $user_id = null)
+	public function __construct( $user_id = null)
 	{
 		if($user_id === null) //init session and find user
-			$this->id = Session::init();
-    }//}}}
+			$this->id = Session::get()->find();
+		elseif(isset($user_id) && is_numeric($user_id))
+			$this->id = (int)$user_id;
+		else throw new UserException("Wrong user id '$user_id'");
 
-	function loadUser($user_id)
-	{
-		$this->login = $data['login'];
-		$this->email = $data['email'];
-		$this->last_login = $data['last_login'];
-		$this->date_joined = $data['date_joined'];
+		$this->trigger("BeforeUserInit",$this);
+
+		if($user_id !== self::GUEST)
+		{
+			$r = DB::query("select * from ".self::TABLE." where id='".$this->user_id."' limit 1");
+			if(!isset($r[0]))
+				throw new UserException("Data for user_id='{$this->user_id}' not found");
+			$data = $r[0];
+			$this->login = $data['login'];
+			$this->email = $data['email'];
+			$this->state = $data['state']; 
+			$this->last_login = $data['last_login'];
+			$this->date_joined = $data['date_joined'];
+			$this->single_access_token = $data['single_access_token'];
+
+			$this->trigger("FillUserData",array($this,$data));
+		}
 	}
-	
+	//}}}
+
 	// {{{
 	static function renew()
 	{
 		self::$instance = null;
-		User::get();
+		return User::get();
 	}
     // }}}
 
+	function logout()
+	{
+		Session::kill();
+		return User::renew();
+	}
 
     //{{{ getId
     /**
     * @return   int
     */
-    public function getId()
-    {
-        return $this->id;
-
-    }// }}}
+	public function getId() {  return $this->id;  }
+	// }}}
     
     //{{{ getLogin
     /**
     * @return   string
     */
-    public function getLogin()
-    {
-        return $this->login;
-    }// }}}
+	public function getLogin() {  return $this->login; }
+	// }}}
 
-    //{{{ getEmail
+	//TODO
+	public function setLogin() {}
+
+    //{{{ getEmail 
     /**
     * @return   string
     */
-    public function getEmail()
-    {
-        return $this->email;
-    }// }}}
+	public function getEmail() {  return $this->email; }
+	// }}}
+
+	public function setEmail($email)
+	{
+		if(!self::checkEmail($email))
+			throw new UserException("Email '$email' doesn't fit to regular expression");
+		$this->email  = $email;
+	}
+
+	public function getState() { return $this->state; }
+	
+	public function setState($state)
+	{
+		if(empty($state) || !is_string($state))
+			throw new UserException("State paramenter '$state' has incorrect format");
+		$this->state = $state;
+	}
     
     //{{{ getProfile
     /**
     * @return   Profile
     */
-    public function getProfile()
-    {
-		if(isset($this->profile))
-			return $this->profile;
-		else return $this->profile = Profile::get($this->id);
-	}
+    public function getProfile() { return Profile::get($this->id);	}
 	// }}}
 
-	public function isGuest()
+	public function isGuest() { return $this->id == self::GUEST; }
+
+	function getLastLogin() { return $this->last_login; }
+
+	function setLastLogin($last_login)
 	{
-		return $this->id == self::GUEST;
+		if(empty($last_login))
+			throw new UserException("Last login paramenter '$last_login' has incorrect format");
+		if(is_numeric($last_login))
+			$this->last_login = 0+$last_login;
+		else 
+			$this->last_login = strtotime($last_login);
 	}
 
-	function getLastLogin()
+	function getDateJoined() { 	return $this->date_joined; 	}
+
+	function setDateJoined($date_joined) 
 	{
-		return $this->last_login;
+		if(empty($date_joined))
+			throw new UserException("Date joined paramenter '$date_joined' has incorrect format");
+		if(is_numeric($date_joined))
+			$this->date_joined = 0+$date_joined;
+		else 
+			$this->date_joined = strtotime($date_joined);
 	}
-	function getDateJoined()
+	function getSingleAccessToken() { return $this->single_access_token; }
+		
+	function setSingleAccessToken($token)
 	{
-		return $this->date_joined;
+		if(empty($token))
+			throw new UserException("Single access token '$token' has incorrect format");
+		$this->single_access_token = (string)$token;
 	}
-	function findBySingleAccessToken($token_key){}
+
+	static function checkLogin($login)
+	{
+        return !empty($login) && preg_match(Config::getInstance()->user->login_regexp, $login);
+	}
+
+	static function checkPassword($password)
+	{
+		return !empty($password) && preg_match(Config::getInstance()->user->password_regexp, $password);
+	}
+	function checkEmail($email)
+	{
+		return !empty($email && )preg_match(POSTChecker::$email_regexp,$email);
+	}
+
+	// {{{ generatePassword
+	static function generatePassword( $length = 8 )
+	{
+		$length = min($length,64);
+
+		$str='123456789QWERTYUIPASDFGHJKLZXCVBNM';
+		$len_1 = strlen($str)-1;
+		$res='';
+		for($i=0;$i<$length;$i++)
+			$res.=$str[mt_rand(0,$len_1)];
+		return $res;
+	}//}}}
+
+    // {{{ generateSalt
+    static function generateSalt(){
+        return substr(md5(uniqid(rand(), true)),rand(0,15),16);
+	}
+	//}}}
+
+	//TODO
+	function save() {}
+
+	function __destruct() { $this->save(); 	}
+
+	//TODO
+	static function findBySingleAccessToken($token_key){}
+
+
+	// Need for console functions
+	function getUsersList(){
+		return DB::query('select * from '.self::TABLE.'');
+    }
+    function getNotConfirmed(){
+       return DB::query('select * from '.self::TABLE_REGISTRATION.' order by expires');
+	}
+
+
 }// }}}
 
 ?>
