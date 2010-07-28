@@ -59,14 +59,9 @@ class Session extends EventBehaviour
 
 	public $params2save = array();
     
-    //{{{ init
-    /**
-    * @return   SessionBase
-    */
-    public static function init()
-    {
-        if (is_object(self::$instance)) return;
-
+	
+	protected function __construct()
+	{
 		$config = Config::getInstance();
 
 		$this->trigger("BeforeInit",$this);
@@ -83,10 +78,32 @@ class Session extends EventBehaviour
 
         $this->engine->init();
 
-        $this->deleteExpired();
-        $this->ip  = $this->getFullIP();
+		$this->trigger("AfterInit",$this);
+	}
+
+    //{{{ init
+    /**
+    * @return   SessionBase
+    */
+    public static function init()
+    {
+        if (is_object(self::$instance)) return;
+
+		self::$instance = new self();
+	}
+	//}}}
+	
+	//{{{ find
+	public function find()
+	{
+		$config = Config::getInstance();
+
+		//move it to session save
+		//$this->deleteExpired();
 
 		$this->trigger("BeforeSessionSearch",$this);
+
+        $this->ip  = $this->getFullIP();
 		
 		if($this->id === null && $this->user_id === null) //id or user_id can be set in the event handler
 		{
@@ -121,7 +138,6 @@ class Session extends EventBehaviour
 		if(!$this->id || !$this->user_id)
 			throw new SessionException("Session id or user id not found");
 
-		$this->trigger("AfterInit",$this);
 
 		return $this->user_id;
 
@@ -148,21 +164,12 @@ class Session extends EventBehaviour
     */
     public static function getInstance()
 	{
-		//always initialized first by the User
+		//always initialized first by the Boot.php
+		if(is_null(self::$instance))
+			throw new SessionException("Session subsystem wasn't initialized in proper way");
         return self::$instance;
     }// }}}
     
-    //{{{ getId
-    /**
-    * Возвращает Id сесси
-    * @return   String
-    */
-    public static function getId()
-	{
-        return $this->id;
-    }// }}}
-
-
     //{{{ kill 
     /**
     * @return   
@@ -287,7 +294,7 @@ class Session extends EventBehaviour
     */
     protected function makeCast()
     {
-		return @md5($_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING']):"";
+		return @md5($_SERVER['HTTP_USER_AGENT'].$_SERVER['HTTP_ACCEPT_LANGUAGE'].$_SERVER['HTTP_ACCEPT_CHARSET'].$_SERVER['HTTP_ACCEPT_ENCODING']);
     }// }}}
 
     //{{{ getServerSession
@@ -306,7 +313,7 @@ class Session extends EventBehaviour
 			throw new SessionException("id is empty");
 		$this->id = $id;
 	}
-	function getId() { return $this->id;}
+	function getId() { return $this->id; }
 
 	function setRememberMe($remember_me)
 	{
