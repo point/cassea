@@ -82,7 +82,7 @@
  */
 class EventBehaviour implements iEventable, iBehaviourable
 {
-	protected static $to_delegate = array();
+	protected static $__to_delegate = array();
 
 	protected 
 		/**
@@ -90,34 +90,34 @@ class EventBehaviour implements iEventable, iBehaviourable
 		 *
 		 * @var array
 		 */
-		$events = array(),
+		$__events = array(),
 		/**
 		 * Array of registered behaviours.
 		 *
 		 * @var array
 		 */
-		$behaviours = array(),
+		$__behaviours = array(),
 		
-		$injected_properties = array();
+		$__injected_properties = array();
 
 	
 	static function delegate($classname, $name, $value)
 	{
-		self::$to_delegate[$classname][] = array($name,$value);
+		self::$__to_delegate[$classname][] = array($name,$value);
 	}
 
 	static function undelegate($classname,$name)
 	{
-		if(self::$to_delegate[$classname])
-			foreach(self::$to_delegate[$classname] as &$v)
+		if(self::$__to_delegate[$classname])
+			foreach(self::$__to_delegate[$classname] as &$v)
 				if($v[0] == $name) $v = null;
-		self::$to_delegate = array_values(self::$to_delegate);
+		self::$__to_delegate = array_values(self::$__to_delegate);
 	}
 
 	function __construct()
 	{
-		if(self::$to_delegate[$classname = get_class($this)])
-			foreach(self::$to_delegate[$classname] as $v)
+		if(self::$__to_delegate[$classname = get_class($this)])
+			foreach(self::$__to_delegate[$classname] as $v)
 			{
 				list($name, $value) = $v;
 				$this->$name = $value;
@@ -153,15 +153,15 @@ class EventBehaviour implements iEventable, iBehaviourable
 			if(!is_callable($value) && !is_string($value) && (!is_array($value) || count($value) != 2))
 				throw new EventException("Wrong callback function in event $name");
 			else
-				$this->events[substr($name,2)][] =	$value;
+				$this->__events[substr($name,2)][] =	$value;
 		else
 			// behaviour
 			if(!is_callable($value) && !$value instanceof Behaviour && (!is_array($value) || count($value) != 2))
-				$this->injected_properties[$name] = $value;
-			elseif(array_key_exists($name,$this->behaviours))
+				$this->__injected_properties[$name] = $value;
+			elseif(array_key_exists($name,$this->__behaviours))
 				throw new BehaviourException("Behaviour {$name} already exists");
 			else
-				$this->behaviours[$name] = $value;
+				$this->__behaviours[$name] = $value;
 
 	}
 	//}}}
@@ -169,9 +169,9 @@ class EventBehaviour implements iEventable, iBehaviourable
 	// retrieve injected properties
 	function __get($name)
 	{
-		if(!array_key_exists($name,$this->injected_properties))
+		if(!array_key_exists($name,$this->__injected_properties))
 			throw new BehaviourException("Injected property '$name' doesn't exist");
-		return $this->injected_properties[$name];
+		return $this->__injected_properties[$name];
 	}
 
 	//{{{ __isset
@@ -192,7 +192,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if(strpos($name, "on") === 0)
 			$name = substr($name,2);
 
-		return ((isset($this->events[$name]) && count($this->events[$name])) || isset($this->behaviours[$name]));
+		return ((isset($this->__events[$name]) && count($this->__events[$name])) || isset($this->__behaviours[$name]));
 	}
 	//}}}
 
@@ -215,11 +215,11 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if(strpos($name, "on") === 0)
 		{
 			$name = substr($name,2);
-			if(isset($this->events[$name]))
-				unset($this->events[$name]);
+			if(isset($this->__events[$name]))
+				unset($this->__events[$name]);
 		}
-		elseif(isset($this->behaviours[$name]))
-			unset($this->behaviours[$name]);
+		elseif(isset($this->__behaviours[$name]))
+			unset($this->__behaviours[$name]);
 
 	}
 	//}}}
@@ -242,11 +242,11 @@ class EventBehaviour implements iEventable, iBehaviourable
 			throw new EventException("Wrong triggered event name");
 		$event_name = strtolower($event_name);
 
-		if(!isset($this->events[$event_name])) return;
+		if(!isset($this->__events[$event_name])) return;
 		
 		if(!is_array($data))
 			$data = array($data);
-		foreach($this->events[$event_name] as &$callback)
+		foreach($this->__events[$event_name] as &$callback)
 			call_user_func_array($callback, $data);
 	}
 	//}}}
@@ -272,13 +272,13 @@ class EventBehaviour implements iEventable, iBehaviourable
 			throw new BehaviourException("Wrong behaviour method name");
 
 		$name = strtolower($name);
-		if(!isset($this->behaviours[$name])) 
+		if(!isset($this->__behaviours[$name])) 
 			throw new CasseaException("Class ".get_class($this)." doesn't have method $name");
 
 		if(!is_array($arguments))
 			$arguments = array($arguments);
 
-		$t = $this->behaviours[$name] ;
+		$t = $this->__behaviours[$name] ;
 		if($t instanceof Behaviour)
 			if($t->getEnabled())
 				return call_user_func_array($t->getCallback(),$arguments);
@@ -313,12 +313,12 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 		$name = strtolower($name);
 
-		if(!isset($this->behaviours[$name]))
+		if(!isset($this->__behaviours[$name]))
 			throw new BehaviourException("Behaviour $name doesn't exists");
-		if(!$this->behaviours[$name] instanceof Behaviour)
+		if(!$this->__behaviours[$name] instanceof Behaviour)
 			throw new BehaviourException("Behaviour $name could not be disabled. Should be instance of Behaviour class");
 		
-		$this->behaviours[$name]->setEnabled(0);
+		$this->__behaviours[$name]->setEnabled(0);
 		
 	}
 	//}}} 
@@ -349,12 +349,12 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 		$name = strtolower($name);
 
-		if(!isset($this->behaviours[$name]))
+		if(!isset($this->__behaviours[$name]))
 			throw new BehaviourException("Behaviour $name doesn't exists");
-		if(!$this->behaviours[$name] instanceof Behaviour)
+		if(!$this->__behaviours[$name] instanceof Behaviour)
 			throw new BehaviourException("Behaviour $name could not be disabled. Should be instance of Behaviour class");
 		
-		$this->behaviours[$name]->setEnabled(1);
+		$this->__behaviours[$name]->setEnabled(1);
 	}
 	//}}}
 }
