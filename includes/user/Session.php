@@ -125,13 +125,17 @@ class Session extends EventBehaviour
 
 
 		if($this->user_id == User::GUEST && $config->session->single_access->allowed 
-			&& isset(Controller::getInstance()->get->{$config->single_access->key})) //chek request type or accept params
+			&& isset(Controller::getInstance()->get->{$config->single_access->token})) //chek request type or accept params
 		{
 			$this->user_id = User::findBySingleAccessToken(
-				Controller::getInstance()->get->{$config->single_access->key}
+				Controller::getInstance()->get->{$config->single_access->token}
 			);
 			$this->remember_me = 0;
 		}
+
+		//TODO:
+		//add auth with one_time_token
+		//
 
 		$this->trigger("AfterSessionSearch",$this);
 
@@ -166,7 +170,7 @@ class Session extends EventBehaviour
 	{
 		//always initialized first by the Boot.php
 		if(is_null(self::$instance))
-			throw new SessionException("Session subsystem wasn't initialized in proper way");
+			throw new SessionException("Session subsystem wasn't initialized in proper way. Check session.enabled config variable.");
         return self::$instance;
     }// }}}
     
@@ -268,6 +272,9 @@ class Session extends EventBehaviour
 			time() + Config::getInstance()->session->cookie_length,
 			Config::get('cookie_path'));
         if ( !$succ )throw new SessionException('COOKIE:Unable set Session ID. Probably  headers already sent.');
+
+
+		if(Config::getInstance()->session->single_access->allowed()) return;
 
 		$params = array();
 		foreach($this->params2save as $v)
