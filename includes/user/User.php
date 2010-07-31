@@ -92,7 +92,7 @@ class User extends EventBehaviour
 
 		$this->trigger("BeforeUserInit",$this);
 
-		if($user_id !== self::GUEST)
+		if($user_id !== self::GUEST) 
 		{
 			$r = DB::query("select * from ".self::TABLE." where id='".$this->user_id."' limit 1");
 			if(!isset($r[0]))
@@ -205,46 +205,27 @@ class User extends EventBehaviour
 		$this->single_access_token = (string)$token;
 	}
 
-	static function checkLogin($login)
-	{
-        return !empty($login) && preg_match(Config::getInstance()->user->login_regexp, $login);
-	}
-
-	static function checkPassword($password)
-	{
-		return !empty($password) && preg_match(Config::getInstance()->user->password_regexp, $password);
-	}
-	function checkEmail($email)
-	{
-		return !empty($email && )preg_match(POSTChecker::$email_regexp,$email);
-	}
-
-	// {{{ generatePassword
-	static function generatePassword( $length = 8 )
-	{
-		$length = min($length,64);
-
-		$str='123456789QWERTYUIPASDFGHJKLZXCVBNM';
-		$len_1 = strlen($str)-1;
-		$res='';
-		for($i=0;$i<$length;$i++)
-			$res.=$str[mt_rand(0,$len_1)];
-		return $res;
-	}//}}}
-
-    // {{{ generateSalt
-    static function generateSalt(){
-        return substr(md5(uniqid(rand(), true)),rand(0,15),16);
-	}
-	//}}}
-
 	//TODO
 	function save() {}
 
 	function __destruct() { $this->save(); 	}
 
 	//TODO
-	static function findBySingleAccessToken($token_key){}
+	static function findBySingleAccessToken($token)
+	{
+		if(empty($token))
+			throw new UserException("Token is empty");
+
+		$r = DB::query("select id from ".self::TABLE." where single_access_token='".
+			Filter::apply($token, Filter::STRING_QUOTE_ENCODE)." limit 1");
+		return isset($r[0])?$r[0]:null;
+	}
+
+	//for single principle with findBySingleAccessToken
+	static function findByOneTimeToken($token) 
+	{
+		return OneTimeTokenAuth::findByOneTimeToken($token);
+	}
 
 
 	// Need for console functions
@@ -253,6 +234,11 @@ class User extends EventBehaviour
     }
     function getNotConfirmed(){
        return DB::query('select * from '.self::TABLE_REGISTRATION.' order by expires');
+	}
+
+	function checkEmail($email)
+	{
+		return !empty($email && )preg_match(POSTChecker::$email_regexp,$email);
 	}
 
 

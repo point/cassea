@@ -57,6 +57,8 @@ class Session extends EventBehaviour
 
 	protected $cast = null;
 
+	protected $verified_guest = false;
+
 	public $params2save = array();
     
 	
@@ -98,8 +100,12 @@ class Session extends EventBehaviour
 	{
 		$config = Config::getInstance();
 
-		//move it to session save
-		//$this->deleteExpired();
+		//if session disabled => return guest user
+		if(!$config->session->use)
+		{ 
+			$this->setupGuest(); 
+			return $this->user_id;
+		}
 
 		$this->trigger("BeforeSessionSearch",$this);
 
@@ -108,11 +114,15 @@ class Session extends EventBehaviour
 		if($this->id === null && $this->user_id === null) //id or user_id can be set in the event handler
 		{
 			$cs = $this->getClientSession();
-			$ss = $this->getServerSession($cs['id']);
+			$ss = array();
+
+			//leave $ss empty (if verified_guest and cookie was marked) to setup guest session
+			if(!$config->session->mark_guest_cookie->use || !($this->verified_guest = $cs['verified_guest']))
+				$ss = $this->getServerSession($cs['id']);
 
 			$param = array();
 
-			if($ss['id'] == $cs['id'] && 
+			if($ss && $ss['id'] == $cs['id'] && 
 				$config->session->snap_to_ip?  $this->ip == $ss['ip']:true && 
 				$config->session->check_cast ? $cs['cast'] ==  $ss['cast']:true)
 
@@ -124,7 +134,8 @@ class Session extends EventBehaviour
 		}
 
 
-		if($this->user_id == User::GUEST && $config->session->single_access->allowed 
+		if($this->user_id == User::GUEST && !$this->verified_guest
+			&& $config->session->single_access->allowed 
 			&& isset(Controller::getInstance()->get->{$config->single_access->token})) //chek request type or accept params
 		{
 			$this->user_id = User::findBySingleAccessToken(
@@ -132,10 +143,6 @@ class Session extends EventBehaviour
 			);
 			$this->remember_me = 0;
 		}
-
-		//TODO:
-		//add auth with one_time_token
-		//
 
 		$this->trigger("AfterSessionSearch",$this);
 
@@ -169,8 +176,10 @@ class Session extends EventBehaviour
     public static function getInstance()
 	{
 		//always initialized first by the Boot.php
-		if(is_null(self::$instance))
+		if(is_null(self::$instance) && !Config::getInstance()->session->use)
 			throw new SessionException("Session subsystem wasn't initialized in proper way. Check session.enabled config variable.");
+		
+		//may return null in case if session_enbaled is false
         return self::$instance;
     }// }}}
     
@@ -254,27 +263,53 @@ class Session extends EventBehaviour
     * @return   array
     */
     protected function getClientSession()
-    {
-		$cookie_name = Config::getInstance()->session->cookie_name;
-		Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}$/');
-		$sid = Controller::getInstance()->cookie->$cookie_name;
+	{
+		$config = Config::getInstance();
+		$cookie_name = $config->session->cookie_name;
+		$verified_guest = false;
+
+		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookie->$cookie_name) &&
+			substr($t_sid,32) == $config->session->mark_guest_cookie->appended)
+		{
+			
+			Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}'.
+				$config->session->mark_guest_cookie->append.'$/');
+			if($sid)
+				$sid = substr(Controller::getInstance()->cookie->$cookie_name,0,32);
+			$verified_guest = true;
+		}
+		else 
+		{
+			Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}$/');
+			$sid = Controller::getInstance()->cookie->$cookie_name;
+		}
         return array(
             'id' => $sid,
-	 		'cast' => $this->makeCast()
+	 		'cast' => $this->makeCast(),
+			'verified_guest' => $verified_guest && !empty($sid)
         );
     }// }}}
 
 	function save()
 	{
+		$this->deleteExpired();
+
+		$config = Config::getInstance();
+
 		$this->trigger("BeforeSendCookieOnSave",$this);
-		$succ =  setcookie(Config::getInstance()->session->cookie_name, 
-			$this->id, 
+
+		if($config->session->single_access->allowed()) return;
+		
+		$succ =  setcookie($config->session->cookie_name, 
+			($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
+				($this->id.$config->mark_guest_cookie->append):$this->id), 
 			time() + Config::getInstance()->session->cookie_length,
-			Config::get('cookie_path'));
+			$config->cookie_path);
         if ( !$succ )throw new SessionException('COOKIE:Unable set Session ID. Probably  headers already sent.');
 
 
-		if(Config::getInstance()->session->single_access->allowed()) return;
+		//do not save session data to DB/storage/etc if verified guest
+		if($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST && $this->verified_guest) return;
 
 		$params = array();
 		foreach($this->params2save as $v)
@@ -283,9 +318,10 @@ class Session extends EventBehaviour
 		$params['time'] = (time() + Config::getInstance()->session->length) +
 			($this->remember_me()?Config::getInstance()->session->remember_me_for:0);
 		
-		$this->trigger("BeforeSave",$params);
+		$this->trigger("BeforeSave",&$params);
 
-		$this->engine->save($this->id,$params);
+		if($params)
+			$this->engine->save($this->id,$params);
 
 		$this->trigger("AfterSave",$this);
 	}
