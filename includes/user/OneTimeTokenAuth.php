@@ -31,14 +31,51 @@
 
 class OneTimeTokenAuth
 {
+	const TABLE = "user_one_time_tokens";
 
-		// searching one time token. E.g. for password changing, registration, etc ..
-		/*if($this->user_id == User::GUEST && !$this->verified_guest)
-		{
-			$this->user_id = User::findByOneTimeToken(
-				Controller::getInstance()->get->{$config->single_access->token}
-			);
-			$this->remember_me = 0;
-		}*/
+	static function auth() {}
+
+	static function findByOneTimeToken($token)
+	{
+		$config = Config::getInstance();
+
+		if(!$config->session->one_time_token->allowed)
+			throw new UserException("One time tokens are not maintained");
+		if(!preg_match($config->session->one_time_token->regexp,$token))
+			throw new UserException("Token doesn't match format.");
+
+		$res = DB::query("select * from ".self::TABLE." where token='".$token."' and time > unix_timestamp()");
+
+		return isset($res[0])?$res[0]['user_id']:User::GUEST;
+	}
+
+	protected static function deleteExpired()
+	{
+        $sql = 'delete from ' . self::TABLE . ' where time < unix_timestamp()';
+        DB::query($sql);
+        return DB::getMysqli()->affected_rows;
+	}
+
+	static function addToken($token, $user_id)
+	{
+		$config = Config::getInstance();
+		if(!$config->session->one_time_token->allowed)
+			throw new UserException("One time tokens are not maintained");
+		if(!preg_match($config->session->one_time_token->regexp,$token))
+			throw new UserException("Token doesn't match format.".
+			   " If it was auto-genereated, reset session.one_time_token.regexp to default value");
+		if(empty($user_id) || !is_numeric($user_id) || $user_id == User::GUEST)
+			throw new UserException("Incorrect user id was given");
+
+		self::deleteExpired();
+
+		DB::query("insert ignore into ".self::TABLE." token='".$token."', time='".
+			time()+(int)$config->session->one_time_token->valid_for."', user_id='".(int)$user_id);
+	}
+	static function generateAndAddToken($user_id)
+	{
+		self::addToken(($token = md5(rand()*time())),$user_id);
+		return $token;
+	}
 }
 //}}}
