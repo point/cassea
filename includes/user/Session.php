@@ -117,7 +117,7 @@ class Session extends EventBehaviour
 			$ss = array();
 
 			//leave $ss empty (if verified_guest and cookie was marked) to setup guest session
-			if(!$config->session->mark_guest_cookie->use || !($this->verified_guest = $cs['verified_guest']))
+			if($config->session->mark_guest_cookie->use && !($this->verified_guest = $cs['verified_guest']))
 				$ss = $this->getServerSession($cs['id']);
 
 			$param = array();
