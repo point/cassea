@@ -56,8 +56,8 @@ class User extends EventBehaviour
     */
     private static $instance = null;
 
-	private $password = null;
-	private $salt = null;
+	private $hashed_password = null;
+	private $db_salt = null;
 
 	protected 
 		$last_login = null,
@@ -99,6 +99,8 @@ class User extends EventBehaviour
 				throw new UserException("Data for user_id='{$this->user_id}' not found");
 			$data = $r[0];
 			$this->login = $data['login'];
+			$this->hashed_password = $data['password'];
+			$this->db_salt = $data['salt'];
 			$this->email = $data['email'];
 			$this->state = $data['state']; 
 			$this->last_login = $data['last_login'];
@@ -113,15 +115,45 @@ class User extends EventBehaviour
 	// {{{
 	static function renew()
 	{
+		$this->trigger("BeforeRenew");
+
 		self::$instance = null;
 		return User::get();
 	}
     // }}}
 
-	function logout()
+	static function logout()
 	{
+		$this->trigger("BeforeLogout");
+
 		Session::kill();
 		return User::renew();
+	}
+
+	function delete()
+	{
+		if($this->id == self::GUEST) return;
+
+		$this->trigger("BeforeDelete",$this);
+
+		DB::query("delete from ".self::TABLE." where id='".$this->id."' limit 1");
+
+		$this->id = self::GUEST;
+	}
+
+	//TODO 
+	function setPassword($plain_password)
+	{
+		if(empty($plain_password))
+			throw new UserException("Password could not be empty");
+	}
+
+	function setHashedPassword($hashed_password)
+	{
+		if(empty($plain_password) || !is_string($hashed_password))
+			throw new UserException("Incorrect hashed password");
+
+		$this->hashed_password = (string)$hashed_password;
 	}
 
     //{{{ getId
@@ -141,6 +173,10 @@ class User extends EventBehaviour
 	//TODO
 	public function setLogin() {}
 
+
+	public function getSalt() { return $this->db_salt;}
+
+	public function getHashedPasssword() { return $this->hashed_password; }
     //{{{ getEmail 
     /**
     * @return   string
@@ -206,11 +242,13 @@ class User extends EventBehaviour
 	}
 
 	//TODO
-	function save() {}
+	function save()
+	{
+	
+	}
 
 	function __destruct() { $this->save(); 	}
 
-	//TODO
 	static function findBySingleAccessToken($token)
 	{
 		if(empty($token))
@@ -218,7 +256,7 @@ class User extends EventBehaviour
 
 		$r = DB::query("select id from ".self::TABLE." where single_access_token='".
 			Filter::apply($token, Filter::STRING_QUOTE_ENCODE)." limit 1");
-		return isset($r[0])?$r[0]:null;
+		return isset($r[0])?$r[0]:self::GUEST;
 	}
 
 	//for single principle with findBySingleAccessToken
