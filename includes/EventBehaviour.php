@@ -101,13 +101,27 @@ class EventBehaviour implements iEventable, iBehaviourable
 		$__injected_properties = array();
 
 	
-	static function delegate($classname, $name, $value)
+	private static function get_called_class()
 	{
+		if(function_exists('get_called_class'))
+			return get_called_class();
+
+		$bt = debug_backtrace(); 
+		$lines = file($bt[1]['file']); 
+		preg_match('/([a-zA-Z0-9\_]+)::'.$bt[1]['function'].'/', 
+			$lines[$bt[1]['line']-1], 
+			$matches); 
+		return $matches[1]; 
+	}
+	static function delegate($name, $value)
+	{
+		$classname = self::get_called_class();
 		self::$__to_delegate[$classname][] = array($name,$value);
 	}
 
-	static function undelegate($classname,$name)
+	static function undelegate($name)
 	{
+		$classname = self::get_called_class();
 		if(self::$__to_delegate[$classname])
 			foreach(self::$__to_delegate[$classname] as &$v)
 				if($v[0] == $name) $v = null;
@@ -244,10 +258,9 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 		if(!isset($this->__events[$event_name])) return;
 		
-		if(!is_array($data))
-			$data = array($data);
 		foreach($this->__events[$event_name] as &$callback)
-			call_user_func_array($callback, $data);
+			$data = call_user_func_array($callback, is_array($data)?$data:array($data));
+		return $data;
 	}
 	//}}}
 
