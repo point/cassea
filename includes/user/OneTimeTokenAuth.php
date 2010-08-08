@@ -33,9 +33,10 @@ class OneTimeTokenAuth
 {
 	const TABLE = "user_one_time_tokens";
 
+	//TODO
 	static function auth() {}
 
-	static function findByOneTimeToken($token)
+	static function findUser($token)
 	{
 		$config = Config::getInstance();
 
@@ -46,7 +47,7 @@ class OneTimeTokenAuth
 
 		$res = DB::query("select * from ".self::TABLE." where token='".$token."' and time > unix_timestamp()");
 
-		return isset($res[0])?$res[0]['user_id']:User::GUEST;
+		return isset($res[0])?$res[0]['user_id']:null;
 	}
 
 	protected static function deleteExpired()

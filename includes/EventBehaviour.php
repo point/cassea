@@ -256,7 +256,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 			throw new EventException("Wrong triggered event name");
 		$event_name = strtolower($event_name);
 
-		if(!isset($this->__events[$event_name])) return;
+		if(!isset($this->__events[$event_name])) return $data;
 		
 		foreach($this->__events[$event_name] as &$callback)
 			$data = call_user_func_array($callback, is_array($data)?$data:array($data));

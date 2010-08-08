@@ -26,29 +26,14 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
+/**
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 
-//{{{ HashProvider
-
-class HashProiver extends EventBehaviour
-{
-
-	//use HashProiver::delegate('onHashProiverHash','CustomHashProvider::custom_hash');
-	function hash($string, $method = null)
-	{
-		if($method === null)
-			$method = Config::getInstance()->user->password->hash_class;
-		if(in_array($method,hash_algos()))
-			return hash($method,$string);
-
-		//using custom hash method
-		$ret =  $this->trigger("HashProviderHash",array($string,$method));
-		if(!is_string($ret))
-			throw new UserException("Return value of hash function must be a sting");
-		if($ret == $string || $ret === null)
-			throw new UserException("No hash function was applied");
-		return $ret;
-	}
-
-}
+//{{{ UserAuthException
+class UserAuthException extends UserException {}
 //}}}
-

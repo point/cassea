@@ -60,6 +60,8 @@ class Session extends EventBehaviour
 	protected $verified_guest = false;
 
 	public $params2save = array();
+
+	protected $is_persistent = true;
     
 	
 	protected function __construct()
@@ -79,6 +81,8 @@ class Session extends EventBehaviour
 			throw new SessionException("Class '$classname' is not valid session engine");
 
         $this->engine->init();
+
+		Controller::getInstance()->onBeforeHeadBodyTail = array($this,"save");
 
 		$this->trigger("AfterInit",$this);
 	}
@@ -111,7 +115,7 @@ class Session extends EventBehaviour
 
         $this->ip  = $this->getFullIP();
 		
-		if($this->id === null && $this->user_id === null) //id or user_id can be set in the event handler
+		if($this->id !== null && $this->user_id !== null) //id or user_id can be set in the event handler
 		{
 			$cs = $this->getClientSession();
 			$ss = array();
@@ -141,6 +145,7 @@ class Session extends EventBehaviour
 			$this->user_id = User::findBySingleAccessToken(
 				Controller::getInstance()->get->{$config->single_access->token}
 			);
+			$this->is_persistent = ($this->user_id == User::GUEST);
 			$this->remember_me = 0;
 		}
 
@@ -202,7 +207,9 @@ class Session extends EventBehaviour
     */
 	function deleteExpired()
 	{
+		$this->trigger("BeforeDeleteExpired");
 		$this->engine->deleteExpired();
+		$this->trigger("AfterDeleteExpired");
 	}
     // }}}
 
@@ -298,7 +305,7 @@ class Session extends EventBehaviour
 
 		$this->trigger("BeforeSendCookieOnSave",$this);
 
-		if($config->session->single_access->allowed()) return;
+		if(!$this->is_persistent) return;
 		
 		$succ =  setcookie($config->session->cookie_name, 
 			($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
@@ -318,17 +325,12 @@ class Session extends EventBehaviour
 		$params['time'] = (time() + Config::getInstance()->session->length) +
 			($this->remember_me()?Config::getInstance()->session->remember_me_for:0);
 		
-		$this->trigger("BeforeSave",&$params);
+		$this->trigger("BeforeSave",array(&$params));
 
 		if($params)
 			$this->engine->save($this->id,$params);
 
 		$this->trigger("AfterSave",$this);
-	}
-
-	function __destruct()
-	{
-		$this->save();
 	}
 
     //{{{ makeCast
@@ -380,6 +382,8 @@ class Session extends EventBehaviour
 		$this->user_id = (int)$user_id;
 	}
 	function getUserId() { return $this->user_id; }
+	function getPersistent() { return $this->is_persistent; }
+	function setPersistent($is_persistent = true) { $this->is_persistent = (bool)$is_persistent; }
 
 }// }}}
 ?>

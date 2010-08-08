@@ -141,6 +141,12 @@ class User extends EventBehaviour
 		$this->id = self::GUEST;
 	}
 
+	//TODO
+	static function add() {}
+	
+	//TODO
+	static function recoverPassword() {}
+
 	//TODO 
 	function setPassword($plain_password)
 	{
@@ -244,6 +250,7 @@ class User extends EventBehaviour
 	//TODO
 	function save()
 	{
+		//TODO do not forget trigger event
 	
 	}
 
@@ -264,19 +271,79 @@ class User extends EventBehaviour
 	{
 		return OneTimeTokenAuth::findByOneTimeToken($token);
 	}
+	static function findIdBy($key = "login", $value = "")
+	{
+		if(empty($key) || !is_string($key))
+			throw new UserException("Incorrect key '$key'");
+		if(empty($value) || !is_string($value))
+			throw new UserException("Incorrect value '$value'");
+
+		try {
+			$ret = DB::query("select id from ".self::TABLE.
+				" where `".Filter::apply($key,Filter::STRING_QUOTE_ENCODE)."`='".Filter::apply($value,Filter::STRING_QUOTE_ENCODE).
+				"' limit 1");
+		}catch(DBException $e) {
+			throw new UserException("Could not find user with '$key'='$value'");
+		}
+		return isset($ret[0])?$ret[0]['id']:null;
+	}
+
+	//return user object
+	static function findBy($key = "login",$value = "") { $id = self::findIdBy($key,$value); return $id?self::get($id):null; }
 
 
+	function auth(array $auth_tokens)
+	{
+		if($this->id !== self::GUEST)
+			throw new UserException("User already authenticated");
+		if(empty($auth_tokens))
+			throw new UserException("You must specify auth tokens. E.g. array('login'=>'qwe', 'password'=>'qwe') ");
+		$this->trigger("BeforeAuth",array($this,&$auth_tokens));
+
+		
+		if(User::renew()->isGuest() && //there was no custom auth. Still guest
+			isset($auth_tokens['login'], $auth_tokens['password']))
+		{
+		
+			if(is_null($new_user = self::findBy("login",$auth_tokens['login'])))
+				throw new UserAuthException("No such user");
+
+			if(Config::getInstance()->user->split_auth_message)
+				if(!PasswordAuth::match($new_user, $unhashed_password))
+					throw new UserAuthException("Password don't match");
+				elseif($new_user->getState() != "active") 
+					throw new UserAuthException("User is not active");
+			elseif($new_user->getState() != "active" || !PasswordAuth::match($new_user, $unhashed_password))
+					throw new UserAuthException("Login or password don't match");
+
+			Session::setUserId($new_user->getId()); //setting user id for seesion
+			User::renew();
+		}
+
+		if(User::renew()->isGuest() && //there was no custom auth => auth with one time token
+			Config::getInstance()->one_time_token->allowed &&
+			isset($auth_tokens['one_time_token']))
+		{
+			if(is_null($user_id = OneTimeTokenAuth::findUser($auth_tokens['one_time_token'])))
+				throw new UserAuthException("Wrong one time token");
+			
+			$new_user = self::findBy("id",$user_id);
+
+			Session::setUserId($new_user->getId());
+			User::renew();
+		}
+	}
 	// Need for console functions
-	function getUsersList(){
+	/*function getUsersList(){
 		return DB::query('select * from '.self::TABLE.'');
     }
     function getNotConfirmed(){
        return DB::query('select * from '.self::TABLE_REGISTRATION.' order by expires');
-	}
+	}*/
 
 	function checkEmail($email)
 	{
-		return !empty($email && )preg_match(POSTChecker::$email_regexp,$email);
+		return !empty($email) && preg_match(POSTChecker::$email_regexp,$email);
 	}
 
 

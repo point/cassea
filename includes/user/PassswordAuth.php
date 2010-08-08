@@ -61,12 +61,10 @@ class PasswordAuth
 	//}}}
 
 	// {{{
-	static function matches(User $user, array $params)
+	static function match(User $user, $unhashed_password)
 	{
-		if(count($params) != 1) 
-			throw new UserException("Params array should contain 1 elements");
-
-		$unhashed_password = list($params);
+		if(empty($unhashed_password))
+			throw new UserException("Password could not be empty");
 
 		$config = Config::getInstance();
 		$hp = new HashProiver();
