@@ -195,7 +195,7 @@ class Session extends EventBehaviour
     public static function kill()
     {
 		$config = Config::getInstance();
-        setcookie($config->session->cookie_name, null, time() - 1000,Config::get('cookie_path'));
+        setcookie($config->session->cookie->name, null, time() - 1000,Config::get('cookie_path'));
 		$this->engine->kill($this->id);
 		$this->setupGuest();
 
@@ -272,23 +272,23 @@ class Session extends EventBehaviour
     protected function getClientSession()
 	{
 		$config = Config::getInstance();
-		$cookie_name = $config->session->cookie_name;
+		$cookie_name = $config->session->cookie->name;
 		$verified_guest = false;
 
-		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookie->$cookie_name) &&
+		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookies->$cookie_name) &&
 			substr($t_sid,32) == $config->session->mark_guest_cookie->appended)
 		{
 			
-			Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}'.
+			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}'.
 				$config->session->mark_guest_cookie->append.'$/');
 			if($sid)
-				$sid = substr(Controller::getInstance()->cookie->$cookie_name,0,32);
+				$sid = substr(Controller::getInstance()->cookies->$cookie_name,0,32);
 			$verified_guest = true;
 		}
 		else 
 		{
-			Controller::getInstance()->cookie->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}$/');
-			$sid = Controller::getInstance()->cookie->$cookie_name;
+			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}$/');
+			$sid = Controller::getInstance()->cookies->$cookie_name;
 		}
         return array(
             'id' => $sid,
@@ -307,12 +307,18 @@ class Session extends EventBehaviour
 
 		if(!$this->is_persistent) return;
 		
-		$succ =  setcookie($config->session->cookie_name, 
+		$succ =  setcookie(
+			$config->session->cookie->name, 
+
 			($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
 				($this->id.$config->mark_guest_cookie->append):$this->id), 
-			time() + Config::getInstance()->session->cookie_length,
-			$config->cookie_path);
-        if ( !$succ )throw new SessionException('COOKIE:Unable set Session ID. Probably  headers already sent.');
+
+			($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
+				(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0)),
+
+			$config->cookie_path
+		);
+        if ( !$succ )throw new SessionException('COOKIE:Unable to set Session ID. Probably  headers already sent.');
 
 
 		//do not save session data to DB/storage/etc if verified guest

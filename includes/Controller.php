@@ -349,7 +349,7 @@ class Controller extends EventBehaviour
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
         $this->post->cleanStrings();
-        $this->cookie = new HTTPParamHolder($_COOKIE);
+        $this->cookies = new HTTPParamHolder($_COOKIE);
 
 		$this->parseP1P2();	
 
