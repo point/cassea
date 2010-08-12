@@ -45,7 +45,7 @@ class CryptoProiver extends EventBehaviour
 			throw new CryptoProviderException("Module mcrypt wasn't found");
 	}
 	
-	//use HashProiver::delegate('onHashProiverHash','CustomHashProvider::custom_hash');
+	//use CryptoProiver::delegate('onCryptoProiverHash','CustomCryptoProvider::custom_hash');
 	function hash($string, $method = null)
 	{
 		if($method === null)
@@ -54,7 +54,7 @@ class CryptoProiver extends EventBehaviour
 			return hash($method,$string);
 
 		//using custom hash method
-		$ret =  $this->trigger("HashProviderHash",array($string,$method));
+		$ret =  $this->trigger("CryptoProviderHash",array($string,$method));
 		if(!is_string($ret))
 			throw new CryptoProviderException("Return value of hash function must be a sting");
 		if($ret == $string || $ret === null)

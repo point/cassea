@@ -67,23 +67,23 @@ class PasswordAuth
 			throw new UserException("Password could not be empty");
 
 		$config = Config::getInstance();
-		$hp = new HashProiver();
+		$cp = new CryptoProvider();
 
 		$res = $res2 = false;
 
 		$password_string = $unhashed_password.$user->getSalt().
 			($config->user->server_salt->use?$config->user->server_salt->salt:"");
 		
-		$res = ($hp->hash($password_string) == $user->getHashedPasssword());
+		$res = ($cp->hash($password_string) == $user->getHashedPasssword());
 
 		//currect hash algo didn't return proper value. Trying to use transition hash algo
 		if(!$res && $config->user->password->transition->use)
 			foreach(array_map('trim',explode(",",$config->user->password->transition->hash_classes)) as $v)
-				if(($res2 = $hp->hash($password_string,$v))) break;
+				if(($res2 = $cp->hash($password_string,$v))) break;
 
 		// if user hash hash with recieved from old hash function -> change his hash with new hash algo
 		if($res2)
-			$user->setHashedPassword($hp->hash($password_string));
+			$user->setHashedPassword($cp->hash($password_string));
 
 		return ($res || $res2);
     } // }}}
