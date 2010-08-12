@@ -65,7 +65,7 @@ unset($_COOKIE['$Domain']);
  * Keep in mind, that if array as a value was given, it will sanitize recursively.
  *
  */
-class HTTPParamHolder implements IteratorAggregate
+class HTTPParamHolder implements IteratorAggregate,ArrayAccess
 {
 	private 
 		/**
@@ -154,6 +154,11 @@ class HTTPParamHolder implements IteratorAggregate
 		return null;
 	}
 	//}}}
+	
+	public function offsetGet($offset)
+	{
+		return $this->__get($offset);
+	}
 
 	//{{{ __isset
 	/**
@@ -168,6 +173,11 @@ class HTTPParamHolder implements IteratorAggregate
 		return isset($this->checked_vars[$var_name]);
 	}
 	//}}}
+	
+	public function offsetExists($offset) 
+	{
+		return $this->__isset($offset);
+	}
 
 	//{{{ cleanStrings
 	/**
@@ -264,6 +274,10 @@ class HTTPParamHolder implements IteratorAggregate
 	}
 	//}}}
 
+	public function offsetUnset($offset)
+	{
+		$this->__unset($offset);
+	}
 	//{{{ sanitizeVars
 	/**
 	 * Removes unwanted sequences from the given string or array.
