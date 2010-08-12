@@ -349,7 +349,7 @@ class Controller extends EventBehaviour
 		$this->get = new HTTPParamHolder($_GET);
         $this->post = new HTTPParamHolder($_POST,1);
         $this->post->cleanStrings();
-        $this->cookies = new HTTPParamHolder($_COOKIE);
+        $this->cookies = new HTTPCookieHolder($_COOKIE);
 
 		$this->parseP1P2();	
 
@@ -1297,11 +1297,12 @@ class Controller extends EventBehaviour
 	function head($echo = 1)
 	{
 		$this->trigger("BeforeHead",$this);
-	
-        if(isset($this->response_string))
+
+		$this->cookie->send();
+        /*if(isset($this->response_string))
             if ($echo) echo $this->response_string;
             else return $this->response_string;
-
+		 */
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
 			 else return $a["priority"] - $b["priority"];'));
