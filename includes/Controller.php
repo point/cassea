@@ -1298,9 +1298,6 @@ class Controller extends EventBehaviour
 	{
 		$this->trigger("BeforeHead",$this);
 
-		if(!$this->cookie->send())
-			throw new ControllerException('COOKIE:Unable to send cookies. Probably  headers already sent.');
-
         /*if(isset($this->response_string))
             if ($echo) echo $this->response_string;
             else return $this->response_string;
@@ -1408,6 +1405,9 @@ class Controller extends EventBehaviour
 		
         if(isset($this->response_string))
 		{
+			if(!$this->cookies->send())
+				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
+
 			$this->trigger("AfterHeadBodyTailResponce",array($this,&$this->response_string));
             if ($echo) echo $this->response_string;
 			else return $this->response_string;
@@ -1417,6 +1417,10 @@ class Controller extends EventBehaviour
             $body = $this->allHTML();
             $head = $this->head(0);
             $tail = $this->tail(0);
+
+			if(!$this->cookies->send())
+				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
+
 			$this->trigger("AfterHeadBodyTailRegular",array($this,&$head,&$body,&$tail));
             if ($echo) echo $head,$body,$tail;
             else return ($head.$body.$tail);
@@ -2511,9 +2515,9 @@ class AjaxController extends Controller
 
 		$this->trigger("BeforeHead",$this);
 	
-        if(isset($this->response_string))
+        /*if(isset($this->response_string))
             if ($echo) echo $this->response_string;
-            else return $this->response_string;
+			else return $this->response_string;*/
 
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
