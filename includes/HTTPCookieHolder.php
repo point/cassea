@@ -107,8 +107,10 @@ class HTTPCookieHolder extends HTTPParamHolder implements ArrayAccess
 
 	function send()
 	{
+		$res = true;
 		foreach($this->to_send as $v)
-			setcookie($v['name'],$v['value'],$v['expire'],$v['path'],$v['domain'],$v['secure'],$v['httponly']);
+			$res = $res && setcookie($v['name'],$v['value'],$v['expire'],$v['path'],$v['domain'],$v['secure'],$v['httponly']);
+		return $res;
 	}
 
 }

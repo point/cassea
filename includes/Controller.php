@@ -1298,7 +1298,9 @@ class Controller extends EventBehaviour
 	{
 		$this->trigger("BeforeHead",$this);
 
-		$this->cookie->send();
+		if(!$this->cookie->send())
+			throw new ControllerException('COOKIE:Unable to send cookies. Probably  headers already sent.');
+
         /*if(isset($this->response_string))
             if ($echo) echo $this->response_string;
             else return $this->response_string;
