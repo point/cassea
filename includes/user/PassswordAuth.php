@@ -41,7 +41,7 @@ class PasswordAuth
 		return !empty($password) && preg_match(Config::getInstance()->user->password_regexp, $password);
 	}
 
-	// {{{ generatePassword
+	//{{{ generatePassword
 	static function generatePassword( $length = 8 )
 	{
 		$length = min($length,64);
@@ -52,31 +52,26 @@ class PasswordAuth
 		for($i=0;$i<$length;$i++)
 			$res.=$str[mt_rand(0,$len_1)];
 		return $res;
-	}//}}}
+	}
+	//}}}
 
-    // {{{ generateSalt
+    //{{{ generateSalt
     static function generateSalt(){
         return substr(md5(uniqid(rand(), true)),rand(0,15),16);
 	}
 	//}}}
 
-	// {{{
+	//{{{
 	static function match(User $user, $unhashed_password)
 	{
-		if(empty($unhashed_password))
-			throw new UserException("Password could not be empty");
-
 		$config = Config::getInstance();
 		$cp = new CryptoProvider();
 
 		$res = $res2 = false;
 
-		$password_string = $unhashed_password.$user->getSalt().
-			($config->user->server_salt->use?$config->user->server_salt->salt:"");
-		
-		$res = ($cp->hash($password_string) == $user->getHashedPasssword());
+		$res = (self::hashPassword($user,$unhashed_password)== $user->getHashedPasssword());
 
-		//currect hash algo didn't return proper value. Trying to use transition hash algo
+		//current hash algo didn't return proper value. Trying to use transition hash algo
 		if(!$res && $config->user->password->transition->use)
 			foreach(array_map('trim',explode(",",$config->user->password->transition->hash_classes)) as $v)
 				if(($res2 = $cp->hash($password_string,$v))) break;
@@ -86,7 +81,20 @@ class PasswordAuth
 			$user->setHashedPassword($cp->hash($password_string));
 
 		return ($res || $res2);
-    } // }}}
+	} 
+	//}}}
+
+	static function hashPassword($user,$unhashed_password)
+	{
+		if(empty($unhashed_password))
+			throw new UserException("Password could not be empty");
+
+		$cp = new CryptoProvider();
+		$user_salt = ($user->getSalt() !== null)?$user->getSalt():self::generateSalt();
+		$password_string = $unhashed_password.$user_salt.
+			($config->user->server_salt->use?$config->user->server_salt->salt:"");
+		return $cp->hash($password_string) ;
+	}
 }
 
 
