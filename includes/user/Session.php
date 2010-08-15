@@ -307,18 +307,13 @@ class Session extends EventBehaviour
 
 		if(!$this->is_persistent) return;
 		
-		$succ =  setcookie(
-			$config->session->cookie->name, 
-
-			($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
+		Controller::getInstance()->cookies[$config->session->cookie->name] = array(
+			"value"=>($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
 				($this->id.$config->mark_guest_cookie->append):$this->id), 
 
-			($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
-				(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0)),
-
-			$config->cookie_path
+			"expire"=>($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
+			(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0))
 		);
-        if ( !$succ )throw new SessionException('COOKIE:Unable to set Session ID. Probably  headers already sent.');
 
 
 		//do not save session data to DB/storage/etc if verified guest
