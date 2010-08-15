@@ -33,10 +33,7 @@ class OneTimeTokenAuth
 {
 	const TABLE = "user_one_time_tokens";
 
-	//TODO
-	static function auth() {}
-
-	static function findUser($token)
+	static function findUser($token,$delete_after = false)
 	{
 		$config = Config::getInstance();
 
@@ -45,9 +42,14 @@ class OneTimeTokenAuth
 		if(!preg_match($config->session->one_time_token->regexp,$token))
 			throw new UserException("Token doesn't match format.");
 
-		$res = DB::query("select * from ".self::TABLE." where token='".$token."' and time > unix_timestamp()");
+		$res = DB::query("select * from ".self::TABLE." where token='".Filter::apply($token,Filter::STRING_QUOTE_ENCODE)."' and time > unix_timestamp()");
 
-		return isset($res[0])?$res[0]['user_id']:null;
+		if(isset($res[0]))
+		{
+			if($delete_after) DB::query("delete from ".self::TABLE." where token='".Filter::apply($token,Filter::STRING_QUOTE_ENCODE)."' limit 1");
+			return $res[0]['user_id'];
+		}
+		return null;
 	}
 
 	protected static function deleteExpired()
