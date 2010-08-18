@@ -54,15 +54,17 @@ class DatabaseSession extends SessionEngine
     */
     public function save($sid, array $params)
     {
-		//making string "replace into user_session (id, param1, param2, paramN) value (?, ?,?,?)"
-		//and execute prepared statement with $params
-		DB::getStmt('replace into '. self::TABLE.' ( id, '.implode(", ",array_keys($params)).') value ('.
-			implode(",",array_pad(array(),count($params)+1,"?")).")")
-			->execute(array_merge(array($sid),array_values($params)));
+		//$params should be array of "key"=>"value". So query will be "  update set `key`='value'  "
 
-        /*$sql = 'replace into '. self::TABLE.'( id, user_id, user_ip,  cast, time) values '.
-            '( "'.$this->id.'", '.$param['user'].', "'.$param['ip'].'", "'.$param['cast'].'", "'.time().'" )'; 
-		DB::query($sql);        */
+		$to_sql = array();
+		foreach($params as $k=>$v)
+			if(is_string($k))
+				$to_sql[] = "`$k`='".Filter::apply($v,Filter::STRING_QUOTE_ENCODE."'");
+
+		if(empty($to_sql))
+			throw new CasseaException("Cannot save session. Data array is empty");
+
+		DB::query("update ".self::TABLE. " set ".implode(", ",$to_sql)." where id=".$sid." limit 1");
     }// }}}
     
     //{{{ kill
