@@ -309,7 +309,7 @@ class User extends EventBehaviour
 	function setSingleAccessToken($new_token) 
 	{ 
 		if(empty($new_token) || !preg_match("/[A-Za-z0-9]+/",$new_token))
-			throw new UserException("Incorrect token parameter");
+			throw new UserException("Single access token '$token' has incorrect format");
 		$this->single_access_token = $new_token;
 	}
 	function setRandomSingleAccessToken()
@@ -318,13 +318,7 @@ class User extends EventBehaviour
 		$this->setSingleAccessToken(PasswordAuth::generateSalt());
 	}
 		
-	function setSingleAccessToken($token)
-	{
-		if(empty($token))
-			throw new UserException("Single access token '$token' has incorrect format");
-		$this->single_access_token = (string)$token;
-	}
-
+	//describe params2save format in php docs
 	function save()
 	{
 		//no need to save guest user
@@ -335,39 +329,52 @@ class User extends EventBehaviour
 		if($this->id === null)
 		{
 			$params2save = array(
-				"login"=>		Filter::apply($this->getLogin(),Filter::STRING_QUOTE_ENCODE)
-				"email"=>		Filter::apply($this->getEmail(),Filter::STRING_QUOTE_ENCODE)
-				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE)
-				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE)
-				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE)
-				"last_login =now()".
-				"date_joined =now()".
+				"login"=>		Filter::apply($this->getLogin(),Filter::STRING_QUOTE_ENCODE),
+				"email"=>		Filter::apply($this->getEmail(),Filter::STRING_QUOTE_ENCODE),
+				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE),
+				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE),
+				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE),
+				"last_login = now()",
+				"date_joined = now()",
 				"single_access_token"=>Filter::apply($this->getSingleAccessToken(),Filter::STRING_QUOTE_ENCODE));
 
 			$this->trigger("BeforeSaveNewUser",array($this,&$params2save));
 
-			//TODO!!Ask  Billy
-			$this->id = DB::getStmt('insert into '. self::TABLE.' ('.implode(", ",array_keys($params2save)).') value ('.
-				implode(",",array_pad(array(),count($params2save),"?")).")")
-				->execute(array_values($params));
+			$to_sql = array();
+			foreach($params2save as $k=>$v)
+				if(is_string($k))
+					$to_sql[] = "`$k`='$v'";
+				elseif(is_int($k))
+					$to_sql = $v;
+			if(empty($to_sql))
+				throw new UserException("Can't insert new user. Data is empty");
+
+			$this->id = DB::query("insert into ".self::TABLE." set ".implode(", ",$to_sql));
 
 			$this->trigger("AfterSaveNewUser",array($this));
 		}
 		else
 		{
 			$params2save = array(
-				"email"=>		Filter::apply($this->getEmail(),Filter::STRING_QUOTE_ENCODE)
-				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE)
-				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE)
-				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE)
-				"last_login = from_unixtime(".$this->getLastLogin()."), "
+				"email"=>		Filter::apply($this->getEmail(),Filter::STRING_QUOTE_ENCODE),
+				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE),
+				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE),
+				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE),
+				"last_login = from_unixtime(".$this->getLastLogin().") ",
 				"single_access_token"=>Filter::apply($this->getSingleAccessToken(),Filter::STRING_QUOTE_ENCODE));
 
 			$this->trigger("BeforeSaveUser",array($this,&$params2save));
 
-			DB::getStmt('update '. self::TABLE.' ('.implode(", ",array_keys($params2save)).') value ('.
-				implode(",",array_pad(array(),count($params2save),"?")).") where id='".$this->id."' limit 1")
-				->execute(array_values($params));
+			$to_sql = array();
+			foreach($params2save as $k=>$v)
+				if(is_string($k))
+					$to_sql[] = "`$k`='$v'";
+				elseif(is_int($k))
+					$to_sql = $v;
+			if(empty($to_sql))
+				throw new UserException("Can't save user. Data is empty");
+
+			DB::query("update ".self::TABLE." set ".implode(", ",$to_sql)." where id={$this->id} limit 1");
 
 			$this->trigger("AfterSaveUser",array($this));
 		}
@@ -399,10 +406,10 @@ class User extends EventBehaviour
 
 		try {
 			$ret = DB::query("select id from ".self::TABLE.
-				" where `".Filter::apply($key,Filter::STRING_QUOTE_ENCODE)."`='".Filter::apply($value,Filter::STRING_QUOTE_ENCODE).
+				" where `".Filter::apply(strtolower($key),Filter::STRING_QUOTE_ENCODE)."`='".Filter::apply($value,Filter::STRING_QUOTE_ENCODE).
 				"' limit 1");
 		}catch(DBException $e) {
-			throw new UserException("Could not find user with '$key'='$value'");
+			throw new UserException("Cannot not find user with '$key'='$value'");
 		}
 		return isset($ret[0])?$ret[0]['id']:null;
 	}
@@ -453,13 +460,15 @@ class User extends EventBehaviour
 		}
 
 	}
-	// Need for console functions
-	/*function getUsersList(){
-		return DB::query('select * from '.self::TABLE.'');
-    }
-    function getNotConfirmed(){
-       return DB::query('select * from '.self::TABLE_REGISTRATION.' order by expires');
-	}*/
+
+	static function getAll($state = "all",$full_info = false)
+	{
+		$all = array();
+		$state = Filter::apply($state,Filter::STRING_QUOTE_ENCODE);
+		foreach(DB::query("select ".($full_info?"*":"id")." from ".self::TABLE.($state !== "all"?" where state='$state'":"")) as $v)
+			$all[] = $full_info?$v:$v['id'];
+		return $all;
+	}
 
 	static function checkEmailFormat($email)
 	{

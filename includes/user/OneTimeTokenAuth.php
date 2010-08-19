@@ -80,5 +80,26 @@ class OneTimeTokenAuth
 		self::addToken(($token = md5(rand()*time())),$user_id);
 		return $token;
 	}
+	static function exists($user_id)
+	{
+		if(empty($user_id) || !is_numeric($user_id))
+			throw new UserExeption("Incorrect user_id was given");
+
+		$res = DB::query("select count(*) as c from ".self::TABLE." where user_id=".(int)$user_id);
+		return $res && $res[0]['c'] == 1;
+	}
+	static function deleteByToken($token)
+	{
+		if(empty($token))
+			throw new UserExeption("Incorrect token parameter was given");
+
+		DB::query("delete from ".self::TABLE." where token='".Filter::apply($token,Filter::STRING_QUOTE_ENCODE)."' limit 1");
+	}
+	static function deleteByUserId($user_id)
+	{
+		if(empty($user_id) || !is_numeric($user_id))
+			throw new UserExeption("Incorrect user_id was given");
+		DB::query("delete from ".self::TABLE." where user_id=".(int)$user_id);
+	}
 }
 //}}}

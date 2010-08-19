@@ -13,10 +13,6 @@ Usage: COMMAND_PATH del LOGIN
 Option: --confirm
 Delete not-confirmed user.
 
-Command: delExpired
-Short: Delete all users with delayed confirmation.
-
-
 Command: info
 Short: Show user info
 Main:

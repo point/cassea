@@ -17,14 +17,15 @@ class CmdUser extends Command{
         $confirm = false;
         io::out('Adding user: ~WHITE~'.$login.' <'.$email.'>~~~', false);
         try{
-            UserManager::get()->addUser($login, $password, $email, $confirm);        
-        }catch (UserManagerException $e) {
+			User::add(array("login"=>$login, "password"=>$password, "email"=>$email)/*, $confirm*/ );        
+        }catch (UserException $e) {
             return io::out(PHP_EOL.$e->getMessage(), IO::MESSAGE_FAIL) | 127;
         }
         io::done();
     }
 
-    public function cmdDelExpired(){
+	/* meaningless. System deletes expired user automatically
+	 * public function cmdDelExpired(){
         try{
         $c=UserManager::get()->lookForNotConfirmed();
         if(count($c))
@@ -38,7 +39,7 @@ class CmdUser extends Command{
         }else io::out( 'There is no such users.');
         }catch (UserManagerException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
 
-    }
+	}*/
 
     public function cmdDel(){
         if (($login = ArgsHolder::get()->shiftCommand()) === false) 
@@ -48,23 +49,23 @@ class CmdUser extends Command{
 
         try{
         if(ArgsHolder::get()->getOption('confirm')) 
-            if (UserManager::get()->existsRegistration($login)){ 
+			if(OneTimeTokenAuth::exists(($user_id = User::findIdBy('login',$login)))){
                 io::out('Deleting User... ', false);
-                UserManager::get()->deleteFromRegistration($login);
+				OneTimeTokenAuth::deleteByUserId($user_id);
                 return io::done();
             }   
             else  
                 return io::out( 'There is no user ~WHITE~'.$login.'~~~',IO::MESSAGE_FAIL) | 2 ;
 
 
-        if (UserManager::get()->existsLogin($login)){
+        if (($user = User::findBy("login",$login))){
             io::out('Deleting user ', false);
-            $res=UserManager::get()->deleteUser($login);
+			$user->delete();
             io::done();
         }
         else 
             return io::out( 'There is no user ~WHITE~'.$login.'~~~',IO::MESSAGE_FAIL) | 2 ;
-        }catch (UserManagerException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
+        }catch (UserException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
     }
 
     public function cmdInfo(){
@@ -72,54 +73,57 @@ class CmdUser extends Command{
             return io::out('Incorrect param count', IO::MESSAGE_FAIL) | 1;
         
         try{
-        $um = UserManager::get();
-        if(is_numeric($login)) $id=$login;
-        elseif(!$id= $um->getIdByLogin($login))
-            $id=$um->getIdByEmail($login);
+		$user = null;
+        if(is_numeric($login)) $user = User::findBy('id',$login);
+        elseif(!$user= User::findBy('login',$login))
+            $user=User::findBy('email',$login);
 
-        if ($um->exists($id)&&($id))
+        if ($user)
         {
             //$p=new Profile($id);    
             IO::out("");
             IO::out("~WHITE~User Info~~~:");
             $info = array(
-                'Id' => $id,
-                'Login' => $um->getLogin($id),
-                'E-mail' => $um->getEmail($id),
-                'State'=> $um->isBanned($id)?'~RED~Banned~~~':
-                            ($um->isActive($id)?'~GREEN~Active~~~':'~CYAN~Deleted~~~')
+                'Id' => $user->getId(),
+                'Login' => $user->getLogin(),
+                'E-mail' => $user->getEmail(),
+                'State'=> $user->getState() == "banned"?'~RED~Banned~~~':
+                            ($user->getState() == "active"?'~GREEN~Active~~~':'~CYAN~Deleted~~~')
                 );
 
-            if (Usermanager::Get() instanceof CasseaUserManager){
-                if (IO::getVerboseLevel()> IO::MESSAGE_TEXT){
-                    $info[''] = '';
-                    $info['~WHITE~CasseaUserManager~~~'] = '';
-                }
-                $info['Joined'] = $um->getDateJoined($id);
-                $info['Last seen'] = (( $l = $um->getLastLogin($id)) != '0000-00-00 00:00:00')?$um->getLastLogin($id): 'never';
-            }
+			/*What is this ?
+				if (IO::getVerboseLevel()> IO::MESSAGE_TEXT){
+					$info[''] = '';
+					$info['~WHITE~CasseaUserManager~~~'] = '';
+				}*/
+			$info['Joined'] = $user->getDateJoined();
+			$info['Last seen'] = (( $l = $user->getLastLogin()) != '0000-00-00 00:00:00')?$l: 'never';
             
             IO::outOptions($info);
             //TODO SHow user profile
         }
         else 
             return io::out( 'There is no user ~WHITE~'.$login.'~~~',IO::MESSAGE_FAIL) | 2 ;
-        }catch (UserManagerException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
+        }catch (UserException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
     }
 
 
     public function cmdList(){
         try{
+
+			$all_users_count = count(User::getAll());
+			$active_users_count = count(User::getAll("active"));
+			$not_confirmed_users_count = count(User::getAll("not_confirmed"));
+
             if (ArgsHolder::get()->getOption('count')){
-                $notconfirm =UserManager::get()->getNotConfirmed();
-                $registered =UserManager::get()->getUsersList();
-                IO::out('~WHITE~Count of users~~~:      ~GREEN~'.(count($registered)+count($notconfirm)).'~~~');
-                IO::out('~WHITE~Registered users~~~:    ~GREEN~'.count($registered).'~~~');
-                IO::out('~WHITE~Not-confirmed users~~~: ~GREEN~'.count($notconfirm).'~~~');
+                IO::out('~WHITE~Count of users~~~:      ~GREEN~'.($all_users_count).'~~~');
+                IO::out('~WHITE~Active users~~~:    ~GREEN~'.count($active_users_count).'~~~');
+                IO::out('~WHITE~Not-confirmed users~~~: ~GREEN~'.count($not_confirmed_users_count).'~~~');
                 return;
             }
 
-            $list= (ArgsHolder::get()->getOption('not-confirmed'))?UserManager::get()->getNotConfirmed():UserManager::get()->getUsersList();
+			$list= (ArgsHolder::get()->getOption('not-confirmed'))?
+				User::getAll("not_confirmed",true):User::getAll("all",true);
             io::out('~CYAN~');
             IO::out(sprintf("%-20s %-20s %s", "Id", "Login", "EMail"));
             IO::out('~~~',false);
@@ -128,7 +132,7 @@ class CmdUser extends Command{
             for($i=0;$i<count($list);$i++)
                 IO::out(sprintf($format, $list[$i]['id'], $list[$i]['login'], $list[$i]['email']));
             IO::out('~WHITE~Total~~~:'.count($list));
-        }catch (UserManagerException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
+        }catch (UserException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
     }
 
 
@@ -139,7 +143,7 @@ class CmdUser extends Command{
 
             if ($login === false ) return io::out('Incorrect param count', IO::MESSAGE_FAIL) | 1;
 
-            if (UserManager::get()->existslogin($login))
+            if (($user = User::findBy("login",$login)))
             {
                 if (!$password){
                     IO::out('New password: ', false);
@@ -148,13 +152,13 @@ class CmdUser extends Command{
                     $p2 = IO::in(IO::TYPE_STRING);
 
                     if($password != $p2) return io::out('Passwords not match.',IO::MESSAGE_FAIL ) | 2;
-                }                
-                UserManager::get()->setpassword(UserManager::get()->getidbylogin($login),$password);
+                }
+                $user->setPassword($password);
             }
             else 
                 return io::out( PHP_EOL.'User ~WHITE~'.$login.'~~~ not found',IO::MESSAGE_FAIL)| 3;
 
-        }catch (UserManagerException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
+        }catch (UserException $e) {  return io::out($e->getMessage(), IO::MESSAGE_FAIL) | 127;  }
     }
 
-}    
+}

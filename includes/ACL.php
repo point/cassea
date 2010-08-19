@@ -162,8 +162,8 @@ class ACL
     {
         $ret= array();
         $r = DB::query("select ".self::ACL_TABLE.".groups,".AbstractUserManager::TABLE.".login 
-            from ".self::ACL_TABLE." left join ".AbstractUserManager::TABLE." 
-            on ".self::ACL_TABLE.".user_id=".AbstractUserManager::TABLE.".id order by ".self::ACL_TABLE.".groups"); 
+            from ".self::ACL_TABLE." left join ".User::TABLE." 
+            on ".self::ACL_TABLE.".user_id=".User::TABLE.".id order by ".self::ACL_TABLE.".groups"); 
 
         foreach(self::getGroups() as $group)
             foreach($r as $l)
