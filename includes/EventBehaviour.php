@@ -130,7 +130,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 	function __construct()
 	{
-		if(self::$__to_delegate[$classname = get_class($this)])
+		if(array_key_exists(($classname = get_class($this)),self::$__to_delegate))
 			foreach(self::$__to_delegate[$classname] as $v)
 			{
 				list($name, $value) = $v;

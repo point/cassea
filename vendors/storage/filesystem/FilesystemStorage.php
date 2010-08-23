@@ -46,7 +46,7 @@ class FilesystemStorage extends AbstractStorage
     //{{{ __construct
 	function __construct($storageName, $ttl = null, $withSession=false){
 		parent::__construct($storageName, $ttl, $withSession);
-		if ($withSession) $this->name .= Session::getId();
+		if ($withSession) $this->name .= Session::getInstance()->getId();
 		$this->name = md5($this->name);
 		$this->dir = self::getDir($this->name);
 	}// }}}

@@ -160,6 +160,8 @@ class HTTPParamHolder implements IteratorAggregate,ArrayAccess
 		return $this->__get($offset);
 	}
 
+	public function offsetSet($offset,$value){}
+
 	//{{{ __isset
 	/**
 	 * Magic method which checks whenever value with given 

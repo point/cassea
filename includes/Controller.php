@@ -332,7 +332,7 @@ class Controller extends EventBehaviour
 	 * @throws ControllerException if controller name wasn't defined
 	 * @see parseP1P2
 	 */
-	protected function __construct()
+	public function __construct()
 	{
 		$this->trigger("BeforeConstruct",$this);
 
@@ -355,6 +355,7 @@ class Controller extends EventBehaviour
 
 		$this->trigger("AfterConstruct",$this);
 
+		parent::__construct();
 	}
 	//}}}
 
@@ -2439,7 +2440,7 @@ class AjaxController extends Controller
 	/**
 	 * Constructor
 	 */
-    protected function __construct()
+    public function __construct()
     {
         $this->is_ajax = true;
         parent::__construct();

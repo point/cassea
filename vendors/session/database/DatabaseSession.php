@@ -43,9 +43,13 @@ class DatabaseSession extends SessionEngine
     */
     public function getServerSession($sid)
     {
-		$sql = "select user_id as user, user_ip as ip, cast  from " . self::TABLE . " where id='" . $sid . 
-			"' and time > unix_timestamp() LIMIT 1" ;
-        $res = DB::query($sql);
+		$res = array();
+		if($sid)
+		{
+			$sql = "select user_id as user, user_ip as ip, cast  from " . self::TABLE . " where id='" . $sid . 
+				"' and time > unix_timestamp() LIMIT 1" ;
+			$res = DB::query($sql);
+		}
         return (count($res) == 1)?$res[0]:array("id"=>null,"cast"=>null,"ip"=>null);
     }// }}}
     
@@ -56,15 +60,19 @@ class DatabaseSession extends SessionEngine
     {
 		//$params should be array of "key"=>"value". So query will be "  update set `key`='value'  "
 
-		$to_sql = array();
+		$sql_k = $sql_v = array();
 		foreach($params as $k=>$v)
 			if(is_string($k))
-				$to_sql[] = "`$k`='".Filter::apply($v,Filter::STRING_QUOTE_ENCODE."'");
+			{
+				$sql_k[] = "`$k`";
+				$sql_v[] = "'".Filter::apply($v,Filter::STRING_QUOTE_ENCODE)."'";
+			}
 
-		if(empty($to_sql))
+		if(empty($sql_k))
 			throw new CasseaException("Cannot save session. Data array is empty");
 
-		DB::query("update ".self::TABLE. " set ".implode(", ",$to_sql)." where id=".$sid." limit 1");
+		DB::query("replace into ".self::TABLE. " ( ".implode(", ",$sql_k)." ) values (".
+			implode(", ",$sql_v).")");
     }// }}}
     
     //{{{ kill

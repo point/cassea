@@ -64,7 +64,7 @@ class Session extends EventBehaviour
 	protected $is_persistent = true;
     
 	
-	protected function __construct()
+	public function __construct()
 	{
 		$config = Config::getInstance();
 
@@ -74,7 +74,9 @@ class Session extends EventBehaviour
 		
 		$sessionEngine = Config::getInstance()->session->engine;
 		$classname = nameToClass($sessionEngine);
-		Autoload::addVendor($sessionEngine);
+		Autoload::addVendor("session",$sessionEngine);
+
+		$classname .= "Session";
 
         $this->engine = new $classname();
 		if(!$this->engine instanceof SessionEngine)
@@ -115,7 +117,7 @@ class Session extends EventBehaviour
 
         $this->ip  = $this->getFullIP();
 		
-		if($this->id !== null && $this->user_id !== null) //id or user_id can be set in the event handler
+		if($this->id === null && $this->user_id === null) //id or user_id can be set in the event handler
 		{
 			$cs = $this->getClientSession();
 			$ss = array();
@@ -126,15 +128,17 @@ class Session extends EventBehaviour
 
 			$param = array();
 
-			if($ss && $ss['id'] == $cs['id'] && 
-				$config->session->snap_to_ip?  $this->ip == $ss['ip']:true && 
-				$config->session->check_cast ? $cs['cast'] ==  $ss['cast']:true)
+			if($cs['id'] && $ss && $ss['id'] && $ss['id'] == $cs['id'] && 
+				($config->session->snap_to_ip?  $this->ip == $ss['ip']:true) && 
+				($config->session->check_cast ? $cs['cast'] ==  $ss['cast']:true))
 
+			{
 				foreach($this->params2save as $v)
-					if(array_key_exists($v, $ss))
+					if(array_key_exists($v, $ss) && $ss[$v])
 						$this->$v = $ss[$v];
+			}
 			else
-				$this->setupGuest();
+				$this->setupGuest($cs['id']);
 		}
 
 
@@ -159,14 +163,14 @@ class Session extends EventBehaviour
 
     }// }}}
     
-	function setupGuest()
+	function setupGuest($sid = null)
 	{
 		$this->trigger("BeforeSetupGuest",$this);
 
 		$this->user_id = User::GUEST;
 		$this->remember_me = 0+Config::getInstance()->session->remember_me;
 		$this->cast = $this->makeCast();
-		$this->id =  @md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
+		$this->id =  $sid?$sid:@md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT'] . mt_rand(100000,999999));
 		
 		$this->trigger("AfterSetupGuest",$this);
 			
@@ -275,14 +279,14 @@ class Session extends EventBehaviour
 		$cookie_name = $config->session->cookie->name;
 		$verified_guest = false;
 
-		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookies->$cookie_name) &&
-			substr($t_sid,32) == $config->session->mark_guest_cookie->appended)
+		$t_sid = Controller::getInstance()->cookies[$cookie_name];
+		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookies[$cookie_name]) &&
+			substr($t_sid,32) == $config->session->mark_guest_cookie->append)
 		{
 			
 			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}'.
 				$config->session->mark_guest_cookie->append.'$/');
-			if($sid)
-				$sid = substr(Controller::getInstance()->cookies->$cookie_name,0,32);
+			$sid = substr(Controller::getInstance()->cookies->$cookie_name,0,32);
 			$verified_guest = true;
 		}
 		else 
@@ -309,12 +313,13 @@ class Session extends EventBehaviour
 		
 		Controller::getInstance()->cookies[$config->session->cookie->name] = array(
 			"value"=>($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
-				($this->id.$config->mark_guest_cookie->append):$this->id), 
+				($this->id.$config->session->mark_guest_cookie->append):$this->id), 
 
 			"expire"=>($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
 			(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0))
 		);
 
+		$this->trigger("AfterSendCookieOnSave",$this);
 
 		//do not save session data to DB/storage/etc if verified guest
 		if($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST && $this->verified_guest) return;
@@ -324,7 +329,7 @@ class Session extends EventBehaviour
 			$params[$v] = $this->$v;
 
 		$params['time'] = (time() + Config::getInstance()->session->length) +
-			($this->remember_me()?Config::getInstance()->session->remember_me_for:0);
+			($this->remember_me?Config::getInstance()->session->remember_me_for:0);
 		
 		$this->trigger("BeforeSave",array(&$params));
 

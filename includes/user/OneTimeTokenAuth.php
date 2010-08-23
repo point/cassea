@@ -31,7 +31,7 @@
 
 class OneTimeTokenAuth
 {
-	const TABLE = "user_one_time_tokens";
+	const TABLE = "user_one_time_token";
 
 	static function findUser($token,$delete_after = false)
 	{

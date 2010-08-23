@@ -85,9 +85,10 @@ class User extends EventBehaviour
 	public function __construct( $user_id = null)
 	{
 		if($user_id === User::GUEST) //init session and find user
-			$this->id = Session::get()->find();
+			$this->id = Session::getInstance()->find();
+
 		
-		if(is_null($iser_id)) return; //simply user object without initial info
+		if(is_null($user_id)) return; //simply user object without initial info
 
 		elseif(isset($user_id) && is_numeric($user_id))
 			$this->id = (int)$user_id;
@@ -345,7 +346,7 @@ class User extends EventBehaviour
 				if(is_string($k))
 					$to_sql[] = "`$k`='$v'";
 				elseif(is_int($k))
-					$to_sql = $v;
+					$to_sql[] = $v;
 			if(empty($to_sql))
 				throw new UserException("Can't insert new user. Data is empty");
 
@@ -442,7 +443,7 @@ class User extends EventBehaviour
 			elseif($new_user->getState() != "active" || !PasswordAuth::match($new_user, $unhashed_password))
 					throw new UserAuthException("Login or password don't match");
 
-			Session::get()->setUserId($new_user->getId()); //setting user id for seesion
+			Session::getInstance()->setUserId($new_user->getId()); //setting user id for seesion
 			User::renew();
 		}
 
@@ -455,7 +456,7 @@ class User extends EventBehaviour
 			
 			$new_user = self::findBy("id",$user_id);
 
-			Session::get()->setUserId($new_user->getId());
+			Session::getInstance()->setUserId($new_user->getId());
 			User::renew();
 		}
 
