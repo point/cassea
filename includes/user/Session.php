@@ -106,13 +106,6 @@ class Session extends EventBehaviour
 	{
 		$config = Config::getInstance();
 
-		//if session disabled => return guest user
-		if(!$config->session->use)
-		{ 
-			$this->setupGuest(); 
-			return $this->user_id;
-		}
-
 		$this->trigger("BeforeSessionSearch",$this);
 
         $this->ip  = $this->getFullIP();
@@ -185,7 +178,7 @@ class Session extends EventBehaviour
     public static function getInstance()
 	{
 		//always initialized first by the Boot.php
-		if(is_null(self::$instance) && !Config::getInstance()->session->use)
+		if(is_null(self::$instance))
 			throw new SessionException("Session subsystem wasn't initialized in proper way. Check session.enabled config variable.");
 		
 		//may return null in case if session_enbaled is false

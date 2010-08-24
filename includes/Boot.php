@@ -103,8 +103,7 @@ class Boot
 	 */
 	static function setupSession()
 	{
-		if(Config::getInstance()->session->use)
-			Session::init();
+		Session::init();
 	}
 	/**
 	 * Setting up language discovering and i18n subsystem. 
