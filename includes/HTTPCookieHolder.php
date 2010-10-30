@@ -155,7 +155,7 @@ class EncryptedCookieContainer extends CookieContainer
 		if(!is_scalar($value['value']))
 			$value['value'] = serialize($value['value']); 
 
-		$cp = new CryptoProiver();
+		$cp = new CryptoProvider();
 		$value['value'] = base64_encode($cp->encrypt($val));
 		parent::offsetSet($offset,$value);
 	}
@@ -164,7 +164,7 @@ class EncryptedCookieContainer extends CookieContainer
 	{
 		$raw = parent::__get($offset);
 
-		$cp = new CryptoProiver();
+		$cp = new CryptoProvider();
 		return $cp->decrypt(base64_decode($raw));
 	}
 }

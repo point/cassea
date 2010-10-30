@@ -31,21 +31,21 @@
 
 class CryptoProviderException extends CasseaException {}
 
-class CryptoProiver extends EventBehaviour
+class CryptoProvider extends EventBehaviour
 {
 	const SECRET_MIN_LENGHT = 30;
 
 	function __construct()
 	{
 		parent::__construct();
-		if(!method_exists("hash"))
+		if(!function_exists("hash"))
 			throw new CryptoProviderException("Function 'hash' could not be found");
 
 		if(!function_exists('mcrypt_module_open'))
 			throw new CryptoProviderException("Module mcrypt wasn't found");
 	}
 	
-	//use CryptoProiver::delegate('onCryptoProiverHash','CustomCryptoProvider::custom_hash');
+	//use CryptoProvider::delegate('CryptoProviderHash','CustomCryptoProvider::custom_hash');
 	function hash($string, $method = null)
 	{
 		if($method === null || $method == ":default")

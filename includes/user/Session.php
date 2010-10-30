@@ -117,7 +117,7 @@ class Session extends EventBehaviour
 
 			//leave $ss empty (if verified_guest and cookie was marked) to setup guest session
 			if(!($this->verified_guest = $cs['verified_guest']) || 
-				($this->verified_guest && !$this->session->encrypt_guest_cookie->use))
+				($this->verified_guest && !$config->session->encrypt_guest_cookie->use))
 				$ss = $this->getServerSession($cs['id']);
 
 			$param = array();
@@ -277,10 +277,10 @@ class Session extends EventBehaviour
 		{
 			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}:'.
 				//base64 part
-				'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$');
+				'(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/');
 
 			$cp = new CryptoProvider();
-			list($sid,$hash) = @explode(":",Controller::getInstance()->cookies->$cookie_name);
+			@list($sid,$hash) = @explode(":",Controller::getInstance()->cookies->$cookie_name);
 			if($hash && $hash == $this->getGuestHash($sid))
 				$verified_guest = true;
 		}
@@ -308,7 +308,7 @@ class Session extends EventBehaviour
 		
 		Controller::getInstance()->cookies[$config->session->cookie->name] = array(
 			"value"=>($config->session->encrypt_guest_cookie->use && $this->user_id == User::GUEST ?
-				$this->getGuestHash($this->id):$this->id), 
+				($this->id.":".$this->getGuestHash($this->id)):$this->id), 
 
 			"expire"=>($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
 			(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0))
