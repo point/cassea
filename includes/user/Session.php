@@ -116,13 +116,14 @@ class Session extends EventBehaviour
 			$ss = array();
 
 			//leave $ss empty (if verified_guest and cookie was marked) to setup guest session
-			if($config->session->mark_guest_cookie->use && !($this->verified_guest = $cs['verified_guest']))
+			if(!($this->verified_guest = $cs['verified_guest']) || 
+				($this->verified_guest && !$this->session->encrypt_guest_cookie->use))
 				$ss = $this->getServerSession($cs['id']);
 
 			$param = array();
 
 			if($cs['id'] && $ss && $ss['id'] && $ss['id'] == $cs['id'] && 
-				($config->session->snap_to_ip?  $this->ip == $ss['ip']:true) && 
+				($config->session->snap_to_ip ? $this->ip == $ss['ip']:true) && 
 				($config->session->check_cast ? $cs['cast'] ==  $ss['cast']:true))
 
 			{
@@ -142,7 +143,7 @@ class Session extends EventBehaviour
 			$this->user_id = User::findBySingleAccessToken(
 				Controller::getInstance()->get->{$config->single_access->token}
 			);
-			$this->is_persistent = ($this->user_id == User::GUEST);
+			$this->is_persistent = ($this->user_id != User::GUEST);
 			$this->remember_me = 0;
 		}
 
@@ -150,7 +151,6 @@ class Session extends EventBehaviour
 
 		if(!$this->id || !$this->user_id)
 			throw new SessionException("Session id or user id not found");
-
 
 		return $this->user_id;
 
@@ -273,14 +273,16 @@ class Session extends EventBehaviour
 		$verified_guest = false;
 
 		$t_sid = Controller::getInstance()->cookies[$cookie_name];
-		if($config->session->mark_guest_cookie->use && ($t_sid = Controller::getInstance()->cookies[$cookie_name]) &&
-			substr($t_sid,32) == $config->session->mark_guest_cookie->append)
+		if($config->session->encrypt_guest_cookie->use && $t_sid && strpos($t_sid,":"))
 		{
-			
-			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}'.
-				$config->session->mark_guest_cookie->append.'$/');
-			$sid = substr(Controller::getInstance()->cookies->$cookie_name,0,32);
-			$verified_guest = true;
+			Controller::getInstance()->cookies->bindRegexp($cookie_name,'/^[A-Za-z0-9]{32}:'.
+				//base64 part
+				'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$');
+
+			$cp = new CryptoProvider();
+			list($sid,$hash) = @explode(":",Controller::getInstance()->cookies->$cookie_name);
+			if($hash && $hash == $this->getGuestHash($sid))
+				$verified_guest = true;
 		}
 		else 
 		{
@@ -305,8 +307,8 @@ class Session extends EventBehaviour
 		if(!$this->is_persistent) return;
 		
 		Controller::getInstance()->cookies[$config->session->cookie->name] = array(
-			"value"=>($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST ?
-				($this->id.$config->session->mark_guest_cookie->append):$this->id), 
+			"value"=>($config->session->encrypt_guest_cookie->use && $this->user_id == User::GUEST ?
+				$this->getGuestHash($this->id):$this->id), 
 
 			"expire"=>($config->session->cookie->length == 0 && !$config->session->remember_me)?0: 
 			(time() + $config->session->cookie->length + ($config->session->remember_me?$config->session->remember_me_for:0))
@@ -315,7 +317,7 @@ class Session extends EventBehaviour
 		$this->trigger("AfterSendCookieOnSave",$this);
 
 		//do not save session data to DB/storage/etc if verified guest
-		if($config->session->mark_guest_cookie->use && $this->user_id == User::GUEST && $this->verified_guest) return;
+		if($config->session->encrypt_guest_cookie->use && $this->user_id == User::GUEST && $this->verified_guest) return;
 
 		$params = array();
 		foreach($this->params2save as $v)
@@ -351,6 +353,14 @@ class Session extends EventBehaviour
 	}
 	// }}}
 
+	private function getGuestHash($sid)
+	{
+		$cp = new CryptoProvider;
+		$config = Config::getInstance();
+
+		return base64_encode($cp->hash($sid.$config->crypto->secret,
+				$config->session->encrypt_guest_cookie->hash));
+	}
 	function setId($id)
 	{
 		if(empty($id))

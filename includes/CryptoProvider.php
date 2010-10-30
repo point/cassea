@@ -48,7 +48,7 @@ class CryptoProiver extends EventBehaviour
 	//use CryptoProiver::delegate('onCryptoProiverHash','CustomCryptoProvider::custom_hash');
 	function hash($string, $method = null)
 	{
-		if($method === null)
+		if($method === null || $method == ":default")
 			$method = Config::getInstance()->crypto->hash;
 		if(in_array($method,hash_algos()))
 			return hash($method,$string);
