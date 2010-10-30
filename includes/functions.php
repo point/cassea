@@ -32,25 +32,33 @@
  */
 require_once(dirname(__FILE__)."/markdown.php");
 
-function print_pre($var)
+// {{{ print_pre
+/**
+ * Простой метода для отладки приложения.
+ *
+ * Выводит в читабельной форме все свои аргументы.
+ * <code>
+ *	print_pre('string',$_GET,$_POST, $this);
+ * </code>
+ */
+function print_pre()
 {
-	echo "<pre>";
-	print_r($var);
-	echo "</pre>";
-}
-function deltree($f) {
-  if (is_dir($f)) {
-	  $l = glob($f.'/*');
-    foreach((is_array($l)?$l:array()) as $sf) {
-      if (is_dir($sf) && !is_link($sf)) {
-        deltree($sf);
-      } else {
-        unlink($sf);
-      }  
-    }  
-  }
-  rmdir($f);
-}
+	$isCLI = isset($_SERVER['HTTP_HOST']);
+	$args = func_get_args();
+	if (count($args) == 0) return;
+	echo ($isCLI?'<pre>':'').PHP_EOL;
+	foreach($args as $a){
+		switch (gettype($a)){
+			case 'boolean': echo "bool:".($a?'Y':'N'); break;
+			case 'string':	echo '"'.$a.'"';break;
+			default: echo trim(print_r($a, true));
+		}
+		echo ($isCLI?'<br>':PHP_EOL).PHP_EOL;
+	}
+	echo ($isCLI?'</pre>':'');
+}// }}}
+
+
 function property_exists_safe($class, $prop)
 {
 	$r = property_exists($class, $prop);

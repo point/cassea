@@ -78,7 +78,8 @@ class File extends FileSystemObject implements iFile{
 	 */
 	function getContent()
 	{
-		if (($r = @file_get_contents($this)) === false)
+		$r = @file_get_contents($this);
+		if ($r === false)
 			throw new FileSystemException('Can\'t get file contents '.$this); 
 		return $r;
 	}// }}}
