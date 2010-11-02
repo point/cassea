@@ -78,7 +78,7 @@ class PasswordAuth
 
 		// if user hash hash with recieved from old hash function -> change his hash with new hash algo
 		if($res2)
-			$user->setHashedPassword($cp->hash($password_string));
+			$user->setHashedPassword($cp->hash($password_string,$config->password->hash));
 
 		return ($res || $res2);
 	} 
@@ -86,14 +86,17 @@ class PasswordAuth
 
 	static function hashPassword($user,$unhashed_password)
 	{
+		$config = Config::getInstance();
+
 		if(empty($unhashed_password))
 			throw new UserException("Password could not be empty");
 
 		$cp = new CryptoProvider();
-		$user_salt = ($user->getSalt() !== null)?$user->getSalt():self::generateSalt();
+		$user_salt = $user->getSalt()?$user->getSalt():self::generateSalt();
+		$user->setSalt($user_salt);
 		$password_string = $unhashed_password.$user_salt.
 			($config->user->server_salt->use?$config->user->server_salt->salt:"");
-		return $cp->hash($password_string) ;
+		return $cp->hash($password_string, Config::getInstance()->user->password->hash) ;
 	}
 }
 

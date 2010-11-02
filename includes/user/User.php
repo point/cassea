@@ -113,14 +113,13 @@ class User extends EventBehaviour
 
 			$this->trigger("FillUserData",array($this,$data));
 		}
+		register_shutdown_function(array($this,"save"));
 	}
 	//}}}
 
 	// {{{
 	static function renew()
 	{
-		$this->trigger("BeforeRenew");
-
 		self::$instance = null;
 		return User::get();
 	}
@@ -195,8 +194,8 @@ class User extends EventBehaviour
 		if(!PasswordAuth::checkPasswordFormat($plain_password))
 			throw new UserException("Incorret password parameter");
 
-		if($this->id !== null)
-			throw new UserException("Cannot change password for already logged-in or guest user. Use User::add instead");
+		if($this->id == self::GUEST)
+			throw new UserException("Cannot change password for guest user. Use User::add instead");
 
 		$this->hashed_password = PasswordAuth::hashPassword($this,$plain_password);
 	}
@@ -230,8 +229,8 @@ class User extends EventBehaviour
 		if(!PasswordAuth::checkLoginFormat($new_login))
 			throw new UserException("Incorrect login parameter");
 
-		if($this->id !== null)
-			throw new UserException("Cannot change login for already logged-in or guest user. Use User::add instead");
+		if($this->id == self::GUEST)
+			throw new UserException("Cannot change login for guest user. Use User::add instead");
 
 		if(self::findBy("login",$new_login) !== null)
 			throw new UserException("User with login '$new_login' already exists");
@@ -245,7 +244,7 @@ class User extends EventBehaviour
 	public function setSalt($salt) 
 	{ 
 		if(empty($salt) || !preg_match("/[A-Za-z0-9]+/",$salt))
-			throw new UserException("Incorrect salt parameter");
+			throw new UserException("Incorrect salt parameter '{$salt}'");
 		$this->db_salt = $salt;
 	}
 
@@ -361,7 +360,8 @@ class User extends EventBehaviour
 				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE),
 				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE),
 				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE),
-				"last_login = from_unixtime(".$this->getLastLogin().") ",
+				"last_login = ".(is_numeric($this->getLastLogin())?
+				" from_unixtime('".$this->getLastLogin()."') ":"'".$this->getLastLogin()."'"),
 				"single_access_token"=>Filter::apply($this->getSingleAccessToken(),Filter::STRING_QUOTE_ENCODE));
 
 			$this->trigger("BeforeSaveUser",array($this,&$params2save));
@@ -371,7 +371,7 @@ class User extends EventBehaviour
 				if(is_string($k))
 					$to_sql[] = "`$k`='$v'";
 				elseif(is_int($k))
-					$to_sql = $v;
+					$to_sql[] = $v;
 			if(empty($to_sql))
 				throw new UserException("Can't save user. Data is empty");
 
@@ -380,8 +380,6 @@ class User extends EventBehaviour
 			$this->trigger("AfterSaveUser",array($this));
 		}
 	}
-
-	function __destruct() { $this->save(); 	}
 
 	static function findBySingleAccessToken($token)
 	{
@@ -448,7 +446,7 @@ class User extends EventBehaviour
 		}
 
 		if(User::renew()->isGuest() && //there was no custom auth => auth with one time token
-			Config::getInstance()->one_time_token->allowed &&
+			Config::getInstance()->session->one_time_token->allowed &&
 			isset($auth_tokens['one_time_token']))
 		{
 			if(is_null($user_id = OneTimeTokenAuth::findUser($auth_tokens['one_time_token'],true)))
@@ -457,6 +455,7 @@ class User extends EventBehaviour
 			$new_user = self::findBy("id",$user_id);
 
 			Session::getInstance()->setUserId($new_user->getId());
+			Session::getInstance()->save();
 			User::renew();
 		}
 

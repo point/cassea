@@ -46,7 +46,7 @@ class DatabaseSession extends SessionEngine
 		$res = array();
 		if($sid)
 		{
-			$sql = "select user_id as user, user_ip as ip, cast  from " . self::TABLE . " where id='" . $sid . 
+			$sql = "select * from " . self::TABLE . " where id='" . $sid . 
 				"' and time > unix_timestamp() LIMIT 1" ;
 			$res = DB::query($sql);
 		}
@@ -90,7 +90,7 @@ class DatabaseSession extends SessionEngine
     */
     public function deleteExpired()
     {
-        $sql = 'delete from ' . self::TABLE . ' where time < unix_timestamp()';
+        $sql = 'delete from ' . self::TABLE . ' where `time` < unix_timestamp()';
         DB::query($sql);
         return DB::getMysqli()->affected_rows;
     }// }}}

@@ -70,7 +70,7 @@ class Session extends EventBehaviour
 
 		$this->trigger("BeforeInit",$this);
 
-		$this->params2save += array("user_id","cast","ip","remember_me");
+		$this->params2save += array("id","user_id","cast","ip","remember_me");
 		
 		$sessionEngine = Config::getInstance()->session->engine;
 		$classname = nameToClass($sessionEngine);
@@ -128,11 +128,11 @@ class Session extends EventBehaviour
 
 			{
 				foreach($this->params2save as $v)
-					if(array_key_exists($v, $ss) && $ss[$v])
+					if(array_key_exists($v, $ss))
 						$this->$v = $ss[$v];
 			}
 			else
-				$this->setupGuest($cs['id']);
+				$this->setupGuest();
 		}
 
 
@@ -141,8 +141,7 @@ class Session extends EventBehaviour
 			&& isset(Controller::getInstance()->get->{$config->single_access->token})) //chek request type or accept params
 		{
 			$this->user_id = User::findBySingleAccessToken(
-				Controller::getInstance()->get->{$config->single_access->token}
-			);
+				Controller::getInstance()->get->{$config->single_access->token});
 			$this->is_persistent = ($this->user_id != User::GUEST);
 			$this->remember_me = 0;
 		}
@@ -298,8 +297,6 @@ class Session extends EventBehaviour
 
 	function save()
 	{
-		$this->deleteExpired();
-
 		$config = Config::getInstance();
 
 		$this->trigger("BeforeSendCookieOnSave",$this);
@@ -322,6 +319,8 @@ class Session extends EventBehaviour
 		$params = array();
 		foreach($this->params2save as $v)
 			$params[$v] = $this->$v;
+
+		$this->deleteExpired();
 
 		$params['time'] = (time() + Config::getInstance()->session->length) +
 			($this->remember_me?Config::getInstance()->session->remember_me_for:0);
