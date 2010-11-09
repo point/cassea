@@ -1406,6 +1406,7 @@ class Controller extends EventBehaviour
 		
         if(isset($this->response_string))
 		{
+			$this->trigger("BeforeSendingCookiesResponce",$this->cookies);
 			if(!$this->cookies->send())
 				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
 
@@ -1419,6 +1420,7 @@ class Controller extends EventBehaviour
             $head = $this->head(0);
             $tail = $this->tail(0);
 
+			$this->trigger("BeforeSendingCookiesRegular",$this->cookies);
 			if(!$this->cookies->send())
 				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
 

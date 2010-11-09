@@ -72,8 +72,8 @@ class OneTimeTokenAuth
 
 		self::deleteExpired();
 
-		DB::query("insert ignore into ".self::TABLE." token='".$token."', time='".
-			time()+(int)$config->session->one_time_token->valid_for."', user_id='".(int)$user_id);
+		DB::query("insert ignore into ".self::TABLE." (token, time,user_id) values('".$token."', '".
+			(time()+(int)$config->session->one_time_token->valid_for)."', '".(int)$user_id."')");
 	}
 	static function generateAndAddToken($user_id)
 	{

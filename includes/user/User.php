@@ -74,7 +74,7 @@ class User extends EventBehaviour
 		if($user_id === null)
 		{
 			if (!is_object(self::$instance))
-				self::$instance = new User(User::GUEST); //passing GUEST to find current session
+				self::$instance = new self(User::GUEST); //passing GUEST to find current session
 			return self::$instance;
 		}
 		return new self($user_id);
@@ -82,13 +82,13 @@ class User extends EventBehaviour
 
 
     //{{{ __construct
-	public function __construct( $user_id = null)
+	public function __construct($user_id = null)
 	{
 		if($user_id === User::GUEST) //init session and find user
-			$this->id = Session::getInstance()->find();
-
+			$user_id = Session::getInstance()->find();
 		
 		if(is_null($user_id)) return; //simply user object without initial info
+		if($this->id == $user_id && $this->login) return; //we have loaded info. No need to do it againg
 
 		elseif(isset($user_id) && is_numeric($user_id))
 			$this->id = (int)$user_id;
@@ -125,23 +125,26 @@ class User extends EventBehaviour
 	}
     // }}}
 
-	static function logout()
+	function logout()
 	{
+		if($this->id != Session::getInstance()->getUserId()) return;
 		$this->trigger("BeforeLogout");
 
-		Session::kill();
+		Session::getInstance()->kill();
 		return User::renew();
 	}
 
 	function delete()
 	{
-		if($this->id == self::GUEST) return;
+		if($this->id == self::GUEST) 
+			throw new UserException("Cannot delete guest user");
 
 		$this->trigger("BeforeDelete",$this);
 
 		DB::query("delete from ".self::TABLE." where id='".$this->id."' limit 1");
 
 		$this->id = self::GUEST;
+		Session::getInstance()->setUserId($this->id);
 	}
 
 	static function add(array $params)
@@ -258,7 +261,7 @@ class User extends EventBehaviour
 
 	public function setEmail($email)
 	{
-		if(!self::checkEmail($email))
+		if(!self::checkEmailFormat($email))
 			throw new UserException("Email '$email' doesn't fit to regular expression");
 		$this->email = $email;
 	}
@@ -315,7 +318,8 @@ class User extends EventBehaviour
 	function setRandomSingleAccessToken()
 	{
 		//salt is pretty fit as single acess token, so why not to use
-		$this->setSingleAccessToken(PasswordAuth::generateSalt());
+		$this->setSingleAccessToken($token = PasswordAuth::generateSalt());
+		return $token;
 	}
 		
 	//describe params2save format in php docs
@@ -420,11 +424,11 @@ class User extends EventBehaviour
 	function auth(array $auth_tokens)
 	{
 		if($this->id !== self::GUEST)
-			throw new UserException("User already authenticated");
+			throw new UserException("User already authenticated.Log out before.");
 		if(empty($auth_tokens))
 			throw new UserException("You must specify auth tokens. E.g. array('login'=>'qwe', 'password'=>'qwe') ");
-		$this->trigger("BeforeAuth",array($this,&$auth_tokens));
 
+		$this->trigger("BeforeAuth",array($this,&$auth_tokens));
 		
 		if(User::renew()->isGuest() && //there was no custom auth. Still guest
 			isset($auth_tokens['login'], $auth_tokens['password']))
@@ -440,9 +444,6 @@ class User extends EventBehaviour
 					throw new UserAuthException("User is not active");
 			elseif($new_user->getState() != "active" || !PasswordAuth::match($new_user, $unhashed_password))
 					throw new UserAuthException("Login or password don't match");
-
-			Session::getInstance()->setUserId($new_user->getId()); //setting user id for seesion
-			User::renew();
 		}
 
 		if(User::renew()->isGuest() && //there was no custom auth => auth with one time token
@@ -454,11 +455,12 @@ class User extends EventBehaviour
 			
 			$new_user = self::findBy("id",$user_id);
 
-			Session::getInstance()->setUserId($new_user->getId());
-			Session::getInstance()->save();
-			User::renew();
 		}
 
+		Session::getInstance()->setUserId($new_user->getId());
+		Session::getInstance()->save();
+		User::renew();
+		return $new_user;
 	}
 
 	static function getAll($state = "all",$full_info = false)

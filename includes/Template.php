@@ -187,7 +187,8 @@ class Template
 			return $this->output_cache;
 	
 		$this->cache_misses++;
-		ob_start();
+		//anon function to prevent polution to wrapper output buffer if exists
+		ob_start(create_function('$a','return "";'));
 		$p = $this->params;
 		include($this->path."/".$this->filename);
 		$s = ob_get_contents();

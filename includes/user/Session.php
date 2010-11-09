@@ -87,6 +87,7 @@ class Session extends EventBehaviour
 		Controller::getInstance()->onBeforeHeadBodyTail = array($this,"save");
 
 		$this->trigger("AfterInit",$this);
+		register_shutdown_function(array($this,"save"));
 	}
 
     //{{{ init
@@ -188,10 +189,13 @@ class Session extends EventBehaviour
     /**
     * @return   
     */
-    public static function kill()
+    public function kill()
     {
 		$config = Config::getInstance();
-        setcookie($config->session->cookie->name, null, time() - 1000,Config::get('cookie_path'));
+		Controller::getInstance()->cookies[$config->session->cookie->name] = array(
+			"value"=>null,
+			"expire"=>time() - 1000,
+		);
 		$this->engine->kill($this->id);
 		$this->setupGuest();
 
