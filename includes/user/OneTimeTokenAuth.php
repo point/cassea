@@ -33,7 +33,7 @@ class OneTimeTokenAuth
 {
 	const TABLE = "user_one_time_token";
 
-	static function findUser($token,$delete_after = false)
+	static function findUser($token,$delete_after = true)
 	{
 		$config = Config::getInstance();
 

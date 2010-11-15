@@ -136,7 +136,6 @@ class Session extends EventBehaviour
 				$this->setupGuest();
 		}
 
-
 		if($this->user_id == User::GUEST && !$this->verified_guest
 			&& $config->session->single_access->allowed 
 			&& isset(Controller::getInstance()->get->{$config->single_access->token})) //chek request type or accept params

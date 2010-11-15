@@ -65,6 +65,8 @@ class User extends EventBehaviour
 		$single_access_token = null //for auth at RSS/Atom request
 		;
 
+	private $checksum = null;
+
     //{{{ get
     /**
     * @return   User
@@ -157,7 +159,7 @@ class User extends EventBehaviour
 		$config = Config::getInstance();
 		
 		if(empty($params['state']))
-			$params['state'] = ($config->user->registration_confirm)?"not_active":"active";
+			$params['state'] = ($config->user->registration_confirm)?"not_confirmed":"active";
 
 		if(self::findBy('login',$params['login']))
 			throw new UserException("User with the same login already exists");
@@ -360,12 +362,13 @@ class User extends EventBehaviour
 		else
 		{
 			$params2save = array(
+				"login"=>		Filter::apply($this->getLogin(),Filter::STRING_QUOTE_ENCODE),
 				"email"=>		Filter::apply($this->getEmail(),Filter::STRING_QUOTE_ENCODE),
 				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE),
 				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE),
 				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE),
-				"last_login = ".(is_numeric($this->getLastLogin())?
-				" from_unixtime('".$this->getLastLogin()."') ":"'".$this->getLastLogin()."'"),
+				"last_login = from_unixtime('".$this->getLastLogin()."') ",
+				"date_joined = from_unixtime('".$this->getDateJoined()."') ",
 				"single_access_token"=>Filter::apply($this->getSingleAccessToken(),Filter::STRING_QUOTE_ENCODE));
 
 			$this->trigger("BeforeSaveUser",array($this,&$params2save));
@@ -391,14 +394,15 @@ class User extends EventBehaviour
 			throw new UserException("Token is empty");
 
 		$r = DB::query("select id from ".self::TABLE." where single_access_token='".
-			Filter::apply($token, Filter::STRING_QUOTE_ENCODE)." limit 1");
-		return isset($r[0])?$r[0]:self::GUEST;
+			Filter::apply($token, Filter::STRING_QUOTE_ENCODE)."' limit 1");
+		$id = isset($r[0])?$r[0]['id']:self::GUEST;
+		return new self($id);
 	}
 
 	//for single principle with findBySingleAccessToken
-	static function findByOneTimeToken($token) 
+	static function findByOneTimeToken($token, $delete_after = true) 
 	{
-		return OneTimeTokenAuth::findByOneTimeToken($token);
+		return new self(OneTimeTokenAuth::findUser($token, $delete_after));
 	}
 	static function findIdBy($key = "login", $value = "")
 	{
@@ -419,7 +423,6 @@ class User extends EventBehaviour
 
 	//return user object
 	static function findBy($key = "login",$value = "") { $id = self::findIdBy($key,$value); return $id?self::get($id):null; }
-
 
 	function auth(array $auth_tokens)
 	{
@@ -454,9 +457,12 @@ class User extends EventBehaviour
 				throw new UserAuthException("Wrong one time token");
 			
 			$new_user = self::findBy("id",$user_id);
-
 		}
+		return self::forceAuth($new_user);
+	}
 
+	static function forceAuth($new_user) 
+	{
 		Session::getInstance()->setUserId($new_user->getId());
 		Session::getInstance()->save();
 		User::renew();
@@ -476,8 +482,6 @@ class User extends EventBehaviour
 	{
 		return !empty($email) && preg_match(POSTChecker::$email_regexp,$email);
 	}
-
-
 }// }}}
 
 ?>
