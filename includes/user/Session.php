@@ -117,9 +117,15 @@ class Session extends EventBehaviour
 			$ss = array();
 
 			//leave $ss empty (if verified_guest and cookie was marked) to setup guest session
-			if(!($this->verified_guest = $cs['verified_guest']) || 
-				($this->verified_guest && !$config->session->encrypt_guest_cookie->use))
-				$ss = $this->getServerSession($cs['id']);
+			$this->verified_guest = $cs['verified_guest'];
+			if($this->verified_guest && $config->session->encrypt_guest_cookie->use)
+			{
+				$this->setupGuest($cs['id']);
+				$this->trigger("AfterSessionSearch",$this);
+				return $this->user_id;
+			}
+
+			$ss = $this->getServerSession($cs['id']);
 
 			$param = array();
 
@@ -179,7 +185,9 @@ class Session extends EventBehaviour
 		//always initialized first by the Boot.php
 		if(is_null(self::$instance))
 			throw new SessionException("Session subsystem wasn't initialized in proper way. Check session.enabled config variable.");
-		
+
+		if(self::$instance->getId() === null)
+			self::$instance->find();
 		//may return null in case if session_enbaled is false
         return self::$instance;
     }// }}}

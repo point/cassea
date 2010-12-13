@@ -340,7 +340,8 @@ class User extends EventBehaviour
 				"state"=>		Filter::apply($this->getState(),Filter::STRING_QUOTE_ENCODE),
 				"password"=>	Filter::apply($this->getHashedPasssword(),Filter::STRING_QUOTE_ENCODE),
 				"salt"=>		Filter::apply($this->getSalt(),Filter::STRING_QUOTE_ENCODE),
-				"last_login = now()",
+				// actually we are not intend to log him in
+				//"last_login = now()", 
 				"date_joined = now()",
 				"single_access_token"=>Filter::apply($this->getSingleAccessToken(),Filter::STRING_QUOTE_ENCODE));
 
@@ -436,17 +437,21 @@ class User extends EventBehaviour
 		if(User::renew()->isGuest() && //there was no custom auth. Still guest
 			isset($auth_tokens['login'], $auth_tokens['password']))
 		{
-		
-			if(is_null($new_user = self::findBy("login",$auth_tokens['login'])))
-				throw new UserAuthException("No such user");
-
+			$new_user = self::findBy("login",$auth_tokens['login']);
 			if(Config::getInstance()->user->split_auth_message)
-				if(!PasswordAuth::match($new_user, $unhashed_password))
+			{
+				if(is_null($new_user))
+					throw new UserAuthException("No such user with login '{$auth_tokens['login']}'");
+
+				if(!PasswordAuth::match($new_user, $auth_tokens['password']))
 					throw new UserAuthException("Password don't match");
+
 				elseif($new_user->getState() != "active") 
 					throw new UserAuthException("User is not active");
-			elseif($new_user->getState() != "active" || !PasswordAuth::match($new_user, $unhashed_password))
-					throw new UserAuthException("Login or password don't match");
+			}
+			elseif(is_null($new_user) || $new_user->getState() != "active" || 
+				!PasswordAuth::match($new_user, $auth_tokens['password']))
+					throw new UserAuthException("Login or password don't match or user is not active");
 		}
 
 		if(User::renew()->isGuest() && //there was no custom auth => auth with one time token
@@ -463,6 +468,8 @@ class User extends EventBehaviour
 
 	static function forceAuth($new_user) 
 	{
+		$new_user->setLastLogin(time());
+		$new_user->save();
 		Session::getInstance()->setUserId($new_user->getId());
 		Session::getInstance()->save();
 		User::renew();

@@ -136,6 +136,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 				list($name, $value) = $v;
 				$this->$name = $value;
 			}
+		$this->trigger('EventBehaviourConstruct');
 	}
 	//{{{ __set
 	/**
@@ -257,10 +258,12 @@ class EventBehaviour implements iEventable, iBehaviourable
 		$event_name = strtolower($event_name);
 
 		if(!isset($this->__events[$event_name])) return $data;
-		
+
+		$ret = null;
+		$data = is_array($data)?$data:array($data);
 		foreach($this->__events[$event_name] as &$callback)
-			$data = call_user_func_array($callback, is_array($data)?$data:array($data));
-		return $data;
+			$ret = call_user_func_array($callback, $data);
+		return $ret;
 	}
 	//}}}
 
@@ -290,6 +293,9 @@ class EventBehaviour implements iEventable, iBehaviourable
 
 		if(!is_array($arguments))
 			$arguments = array($arguments);
+
+		if($arguments[0] && $arguments[0] !== $this)
+			array_unshift($arguments, $this);
 
 		$t = $this->__behaviours[$name] ;
 		if($t instanceof Behaviour)

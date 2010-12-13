@@ -1414,19 +1414,25 @@ class Controller extends EventBehaviour
             if ($echo) echo $this->response_string;
 			else return $this->response_string;
 		}
-        else
-        {
-            $body = $this->allHTML();
-            $head = $this->head(0);
-            $tail = $this->tail(0);
+		else
+		{
+			//prevent cookie corruptiion
+			//anon function to prevent polution to wrapper output buffer if exists
+			ob_start(create_function('$a','return "";'));
+			$body = $this->allHTML();
+			$head = $this->head(0);
+			$tail = $this->tail(0);
+			$s = ob_get_contents();
+			ob_end_clean();
 
 			$this->trigger("BeforeSendingCookiesRegular",$this->cookies);
 			if(!$this->cookies->send())
 				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
 
+			if($s) echo $s;
 			$this->trigger("AfterHeadBodyTailRegular",array($this,&$head,&$body,&$tail));
-            if ($echo) echo $head,$body,$tail;
-            else return ($head.$body.$tail);
+			if ($echo) echo $head,$body,$tail;
+			else return ($head.$body.$tail);
 		}
 	}
 	//}}}
