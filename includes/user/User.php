@@ -27,6 +27,17 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ * This file contains class, storing basic user information, such as login, email, etc.
+ * All the information is stored in DB table.
+ *
+ * @author billy <alexey.mirniy@gmail.com>
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id:$
+ * @package system
+ * @since 
+ */
 //{{{ User
 /**
 * @author       billy
