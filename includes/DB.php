@@ -1016,7 +1016,7 @@ class DB{
      */
     static public function clearResultset($result = null){
         if (is_object($result)) $result->free();    
-        while(self::$mysqli->next_result()){
+        while(self::$mysqli->more_results() && self::$mysqli->next_result()){
             if($result = self::$mysqli->use_result()){
                 $result->free();
             }
