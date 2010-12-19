@@ -113,9 +113,11 @@ class User extends EventBehaviour
 			$this->date_joined = $data['date_joined'];
 			$this->single_access_token = $data['single_access_token'];
 
-			$this->trigger("FillUserData",array($this,$data));
+			$this->trigger("FillUserData",array($this));
 		}
-		register_shutdown_function(array($this,"save"));
+
+		$this->mix(new DirtyMixin($this, 'instance'));
+		register_shutdown_function(array($this,"save"), false);
 	}
 	//}}}
 
@@ -325,7 +327,7 @@ class User extends EventBehaviour
 	}
 		
 	//describe params2save format in php docs
-	function save()
+	function save($force = true)
 	{
 		//no need to save guest user
 		if($this->id == self::GUEST)
@@ -360,7 +362,7 @@ class User extends EventBehaviour
 
 			$this->trigger("AfterSaveNewUser",array($this));
 		}
-		else
+		elseif($force || $this->dirty())
 		{
 			$params2save = array(
 				"login"=>		Filter::apply($this->getLogin(),Filter::STRING_QUOTE_ENCODE),
@@ -383,7 +385,7 @@ class User extends EventBehaviour
 			if(empty($to_sql))
 				throw new UserException("Can't save user. Data is empty");
 
-			DB::query("update ".self::TABLE." set ".implode(", ",$to_sql)." where id={$this->id} limit 1");
+			DB::query("update ".self::TABLE." set ".implode(", ",$to_sql)." where id='{$this->id}' limit 1");
 
 			$this->trigger("AfterSaveUser",array($this));
 		}
@@ -434,7 +436,8 @@ class User extends EventBehaviour
 
 		$this->trigger("BeforeAuth",array($this,&$auth_tokens));
 		
-		if(User::renew()->isGuest() && //there was no custom auth. Still guest
+		$new_user = User::renew();
+		if($new_user->isGuest() && //there was no custom auth. Still guest
 			isset($auth_tokens['login'], $auth_tokens['password']))
 		{
 			$new_user = self::findBy("login",$auth_tokens['login']);
@@ -463,6 +466,9 @@ class User extends EventBehaviour
 			
 			$new_user = self::findBy("id",$user_id);
 		}
+
+		$this->trigger("AfterAuth",array($this,&$new_user));
+		
 		return self::forceAuth($new_user);
 	}
 

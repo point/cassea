@@ -291,7 +291,7 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if(!isset($this->__behaviours[$name])) 
 			throw new CasseaException("Class ".get_class($this)." doesn't have method $name");
 
-		if(!is_array($arguments))
+		if(!is_array($arguments) || empty($arguments))
 			$arguments = array($arguments);
 
 		if($arguments[0] && $arguments[0] !== $this)
@@ -376,5 +376,17 @@ class EventBehaviour implements iEventable, iBehaviourable
 		$this->__behaviours[$name]->setEnabled(1);
 	}
 	//}}}
+
+	//$object = class or object
+	function mix($object)
+	{
+		$class_name = is_object($object)?get_class($object):$object;
+
+		foreach(t(new ReflectionClass($object))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) 
+			if(substr($method->name, 0, 2) == "__") continue;
+			else
+				$this->{$method->name} = $method->isStatic()?
+					array($class_name, $method->name):array($object, $method->name);
+	}
 }
 //}}}
