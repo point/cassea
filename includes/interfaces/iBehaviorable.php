@@ -27,8 +27,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-//{{{ iBehaviourable
-interface iBehaviourable
+//{{{ iBehaviorable
+interface iBehaviorable
 {
     /* 
 	 * This functions must exist but couldn't be 
@@ -39,8 +39,8 @@ interface iBehaviourable
     function __unset($name);
     function __call($name, $arguments);
     */
-    function disableBehaviour($name);
-    function enableBehaviour($name);
+    function disableBehavior($name);
+    function enableBehavior($name);
 }
  //}}}
 

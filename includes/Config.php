@@ -54,7 +54,7 @@ class ConfigException extends Exception {}
  * It simply parse and store in hierarchical view as array of netsted ConfigBase objects.
  * It allows to use namespaces in config values. For example, <code>mail->default_from</code>. 
  * Here <code>mail</code> is namespaces for sets of configuraton flags, which twealk various aspects 
- * of mail subsystem behaviour.
+ * of mail subsystem behavior.
  *
  * Mostly used internaly by other derived classes.
  */
@@ -686,7 +686,7 @@ class IniDBConfig extends IniConfig
 	/**
 	 * Unsets config value or whole namespace if exists. 
 	 * If config value presents in DB it deletes from DB.
-	 * Otherwise behaviour would be similar to {@link ConfigBase::__unset}.
+	 * Otherwise behavior would be similar to {@link ConfigBase::__unset}.
 	 *
 	 * @param string config value name or namespace name
 	 * @return null
@@ -710,7 +710,7 @@ class IniDBConfig extends IniConfig
 class Config
 {
 	/**
-	 * Instance of self. For singleton behaviour
+	 * Instance of self. For singleton behavior
 	 */
 	private static $instance = null;
 	//{{{ init

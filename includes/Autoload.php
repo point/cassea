@@ -154,7 +154,7 @@ class Autoload
 	 * For example <code>/vendors/feed</code> . This folder will be added to look-up list. 
 	 * If e.g. <pre><code>Feed::create()</code></pre> is called, file with name 
 	 * <code>Feed.php</code> will be searched in this directory. In case when this 
-	 * behaviour doesn't feet to developer's needs, he may create file <code>autoload.php</code>
+	 * behavior doesn't feet to developer's needs, he may create file <code>autoload.php</code>
 	 * in the plugin root (<code>/vendors/feed</code>) and define there 
 	 * <code>require()</code> or <code>spl_autoload_register()</code>
 	 * constructions to properly include PHP files in non-trivial directory hierarchy.

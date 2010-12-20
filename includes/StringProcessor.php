@@ -49,7 +49,7 @@
  * Calling <code> process($string) </code> will change given $string
  * according to the registered processors.
  *
- * Due to this class extends EventBehaviour it might be mixing up with
+ * Due to this class extends EventBehavior it might be mixing up with
  * various user's functions, installed as a plug-in.
  *
  * All processor functions must have at least 1 parameter -- string to be
@@ -58,7 +58,7 @@
  * publi function another_processor($string, $parameter1 = null, $parameter2 = null) {}
  * </code></pre>
  */
-class StringProcessor extends EventBehaviour
+class StringProcessor extends EventBehavior
 {
     protected
 		/**
@@ -102,7 +102,7 @@ class StringProcessor extends EventBehaviour
         {
             $params = $p['parameters'];
             array_unshift($params,$s);
-            if(method_exists($this,$p['name']) || isset($this->behaviours[$p['name']]))
+            if(method_exists($this,$p['name']) || isset($this->behaviors[$p['name']]))
                 $s = call_user_func_array(array($this,$p['name']),$params);
         }
         return $s;

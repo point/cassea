@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 /**
- * This file contains class for managing behaviours.
+ * This file contains class for managing behaviors.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
@@ -36,16 +36,16 @@
  * @since 
  */
 
-//{{{ Behaviour
+//{{{ Behavior
 /**
- * Class Behaviour defines behaviour, that could be disabled/enabled. 
- * If you need just simple behaviour action, see {@link EventBehaviour} instead.
+ * Class Behavior defines behavior, that could be disabled/enabled. 
+ * If you need just simple behavior action, see {@link EventBehavior} instead.
  */
-class Behaviour
+class Behavior
 {
 	private 
 		/**
-		 * @var bool state of current behaviour
+		 * @var bool state of current behavior
 		 */
 		$enabled = 1,
 		/**
@@ -59,15 +59,15 @@ class Behaviour
 	 * Constructor of behavoiur. initialize object variables
 	 *
 	 * @param mixed callback to be called when behavoiur is used. Could be iether array, string or callable.
-	 * @param bool defines should be newly created behaviour enabled or not. Default is true.
+	 * @param bool defines should be newly created behavior enabled or not. Default is true.
 	 * @return null
-	 * @throws BehaviourException on wrong callback parameters.
-	 * @see EventBehaviour::__set
+	 * @throws BehaviorException on wrong callback parameters.
+	 * @see EventBehavior::__set
 	 */
 	function __construct($callback,$enabled = 1)
 	{
 		if(!is_callable($callback) && !is_string($callback) && (!is_array($callback) || count($callback) != 2))
-			throw new BehaviourException("Wrong callback parameter");
+			throw new BehaviorException("Wrong callback parameter");
 
 		$this->callback = $callback;
 		$this->enabled = (bool)$enabled;
@@ -76,10 +76,10 @@ class Behaviour
 
 	//{{{ getEnabled
 	/**
-	 * Return enabled state of current behaviour.
+	 * Return enabled state of current behavior.
 	 *
 	 * @param null
-	 * @return bool state of current behaviour.
+	 * @return bool state of current behavior.
 	 */
 	function getEnabled()
 	{
@@ -89,9 +89,9 @@ class Behaviour
 
 	//{{{ setEnabled
 	/** 
-	 * Sets state of current behaviour.
+	 * Sets state of current behavior.
 	 *
-	 * @param bool new state of behaviour
+	 * @param bool new state of behavior
 	 * @retrun null
 	 */
 	function setEnabled($enabled = 1)
@@ -102,7 +102,7 @@ class Behaviour
 
 	//{{{ getCallback
 	/**
-	 * Returns callback of current behaviour
+	 * Returns callback of current behavior
 	 *
 	 * Mostly used for internal puproses.
 	 *

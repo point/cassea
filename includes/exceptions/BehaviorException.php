@@ -34,6 +34,6 @@
  * @since 
  */
 
-//{{{ BehaviourException
-class BehaviourException extends CasseaException{}
+//{{{ BehaviorException
+class BehaviorException extends CasseaException{}
 //}}}

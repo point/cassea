@@ -42,7 +42,7 @@
 /**
 * @author       billy
 */
-class User extends EventBehaviour
+class User extends EventBehavior
 {
     const GUEST = -1;
     const TABLE = 'user';

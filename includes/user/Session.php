@@ -31,7 +31,7 @@
 /**
  * @package user
 */
-class Session extends EventBehaviour
+class Session extends EventBehavior
 {
     /**
     * @var      SessionBase

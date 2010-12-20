@@ -29,7 +29,7 @@
 
 /**
  * This file contains class for managing custom events and 
- * behaviour functions, which could be attached to the object.
+ * behavior functions, which could be attached to the object.
  *
  * @author point <alex.softx@gmail.com>
  * @link http://cassea.wdev.tk/
@@ -38,7 +38,7 @@
  * @since 
  */
 
-//{{{ EventBehaviour
+//{{{ EventBehavior
 /**
  * This class adds great possibilities to extend core objects with various
  * userland methods or makes some user functions to be triggered when 
@@ -63,24 +63,24 @@
  * 'AfterTail' event is triggered inside the Controller object. See docs for more 
  * information.
  *
- * There is pitfall of using events/behaviours. Only object parameters are passed to the handler by reference.
+ * There is pitfall of using events/behaviors. Only object parameters are passed to the handler by reference.
  * As of PHP 5.3 this will be fixed.
  *
- * Example of custom behaviours:
+ * Example of custom behaviors:
  *
  * <pre><code>
  * Controller::getInstance()->customMethod = create_function('','echo time();');
  * Controller::getInstance()->customMethod = array('Article','doCustomMethod');
  * Controller::getInstance()->customMethod = array($object,'doCustomMethod');
- * Controller::getInstance()->customMethod = new Behaviour(create_function('','echo time();'));
+ * Controller::getInstance()->customMethod = new Behavior(create_function('','echo time();'));
  * </code></pre>
  *
- * Using last syntax allowing to enable/disable this behaviour by 
+ * Using last syntax allowing to enable/disable this behavior by 
  * <pre><code>
- * Controller::getInstance()->disableBehaviour('customMethod');
+ * Controller::getInstance()->disableBehavior('customMethod');
  * </code></pre>
  */
-class EventBehaviour implements iEventable, iBehaviourable
+class EventBehavior implements iEventable, iBehaviorable
 {
 	protected static $__to_delegate = array();
 
@@ -92,11 +92,11 @@ class EventBehaviour implements iEventable, iBehaviourable
 		 */
 		$__events = array(),
 		/**
-		 * Array of registered behaviours.
+		 * Array of registered behaviors.
 		 *
 		 * @var array
 		 */
-		$__behaviours = array(),
+		$__behaviors = array(),
 		
 		$__injected_properties = array();
 
@@ -136,21 +136,21 @@ class EventBehaviour implements iEventable, iBehaviourable
 				list($name, $value) = $v;
 				$this->$name = $value;
 			}
-		$this->trigger('EventBehaviourConstruct');
+		$this->trigger('EventBehaviorConstruct');
 	}
 	//{{{ __set
 	/**
-	 * Adding event or behaviour to the current object.
+	 * Adding event or behavior to the current object.
 	 * 
 	 * If method name begins with 'on', it considered to be event. 
-	 * Or behaviour otherwise.
+	 * Or behavior otherwise.
 	 *
-	 * @param string the name of the event/behaviour
+	 * @param string the name of the event/behavior
 	 * @param mixed It might be callable (in case of lambda-function); array of class/object and  method name;
-	 * or instance of Behaviour class
+	 * or instance of Behavior class
 	 * @return null
 	 * @throws EventException in case of error
-	 * @throws BehaviourException in case of error
+	 * @throws BehaviorException in case of error
 	 */
 	function __set($name, $value)
 	{
@@ -170,13 +170,13 @@ class EventBehaviour implements iEventable, iBehaviourable
 			else
 				$this->__events[substr($name,2)][] =	$value;
 		else
-			// behaviour
-			if(!is_callable($value) && !$value instanceof Behaviour && (!is_array($value) || count($value) != 2))
+			// behavior
+			if(!is_callable($value) && !$value instanceof Behavior && (!is_array($value) || count($value) != 2))
 				$this->__injected_properties[$name] = $value;
-			elseif(array_key_exists($name,$this->__behaviours))
-				throw new BehaviourException("Behaviour {$name} already exists");
+			elseif(array_key_exists($name,$this->__behaviors))
+				throw new BehaviorException("Behavior {$name} already exists");
 			else
-				$this->__behaviours[$name] = $value;
+				$this->__behaviors[$name] = $value;
 
 	}
 	//}}}
@@ -185,18 +185,18 @@ class EventBehaviour implements iEventable, iBehaviourable
 	function __get($name)
 	{
 		if(!array_key_exists($name,$this->__injected_properties))
-			throw new BehaviourException("Injected property '$name' doesn't exist");
+			throw new BehaviorException("Injected property '$name' doesn't exist");
 		return $this->__injected_properties[$name];
 	}
 
 	//{{{ __isset
 	/**
-	 * Checks whenever given event or behaviour is attached to the object.
+	 * Checks whenever given event or behavior is attached to the object.
 	 *
 	 * As of {@link __set} method, if $name begins with 'on', it considered to be event
 	 *
-	 * @param string name of the event/behaviour
-	 * @return bool true if specified event/behaviour registered.
+	 * @param string name of the event/behavior
+	 * @return bool true if specified event/behavior registered.
 	 */
 	function __isset($name)
 	{
@@ -207,18 +207,18 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if(strpos($name, "on") === 0)
 			$name = substr($name,2);
 
-		return ((isset($this->__events[$name]) && count($this->__events[$name])) || isset($this->__behaviours[$name]));
+		return ((isset($this->__events[$name]) && count($this->__events[$name])) || isset($this->__behaviors[$name]));
 	}
 	//}}}
 
 	//{{{ __unset
 	/**
-	 * Detaches event or behaviours from the object.
+	 * Detaches event or behaviors from the object.
 	 *
 	 * As of {@link __set} method, if $name begins with 'on', it considered to be event and
 	 * all event handlers for this name will be detached.
 	 *
-	 * @param string name of the event/behaviour
+	 * @param string name of the event/behavior
 	 * @return null
 	 */
 	function __unset($name)
@@ -233,8 +233,8 @@ class EventBehaviour implements iEventable, iBehaviourable
 			if(isset($this->__events[$name]))
 				unset($this->__events[$name]);
 		}
-		elseif(isset($this->__behaviours[$name]))
-			unset($this->__behaviours[$name]);
+		elseif(isset($this->__behaviors[$name]))
+			unset($this->__behaviors[$name]);
 
 	}
 	//}}}
@@ -271,24 +271,24 @@ class EventBehaviour implements iEventable, iBehaviourable
 	/**
 	 * This function is called  when user trying to make a call of 
 	 * non-existent method. It will look up given name upon the registered 
-	 * behaviours and if such behaviour was found it will be called.
+	 * behaviors and if such behavior was found it will be called.
 	 *
 	 * Otherwise, CasseaException exception will be raised.
 	 *
 	 * @param string name of the method, trying to call
-	 * @param mixed parameters to pass to the desired behaviour. 
+	 * @param mixed parameters to pass to the desired behavior. 
 	 * It could be array or single value.
 	 * @return mixed the output of the aggregated method or callable object
-	 * @throws CasseaException if there is no such behaviour
-	 * @throws BehaviourException if other error occurred.
+	 * @throws CasseaException if there is no such behavior
+	 * @throws BehaviorException if other error occurred.
 	 */
 	function __call($name, $arguments = array())
 	{
 		if(empty($name) || !is_string($name))
-			throw new BehaviourException("Wrong behaviour method name");
+			throw new BehaviorException("Wrong behavior method name");
 
 		$name = strtolower($name);
-		if(!isset($this->__behaviours[$name])) 
+		if(!isset($this->__behaviors[$name])) 
 			throw new CasseaException("Class ".get_class($this)." doesn't have method $name");
 
 		if(!is_array($arguments) || empty($arguments))
@@ -297,83 +297,83 @@ class EventBehaviour implements iEventable, iBehaviourable
 		if($arguments[0] && $arguments[0] !== $this)
 			array_unshift($arguments, $this);
 
-		$t = $this->__behaviours[$name] ;
-		if($t instanceof Behaviour)
+		$t = $this->__behaviors[$name] ;
+		if($t instanceof Behavior)
 			if($t->getEnabled())
 				return call_user_func_array($t->getCallback(),$arguments);
 			else 
-				throw new BehaviourException("Behaviour $name temporary disabled");
+				throw new BehaviorException("Behavior $name temporary disabled");
 		else
 			return call_user_func_array($t,$arguments);
 	}
 	//}}}
 
-	//{{{ disableBehaviour
+	//{{{ disableBehavior
 	/**
-	 * Temporary disable given behaviour. This function might be used only if 
-	 * desired behaviour was registered via {@link Behaviour} class.
+	 * Temporary disable given behavior. This function might be used only if 
+	 * desired behavior was registered via {@link Behavior} class.
 	 * Otherwise exception will be raised.
 	 *
 	 * For example:
 	 * <pre><code>
-	 * Controller::getInstance()->customMethod = new Behaviour(create_function('','echo time();'));
-	 * Controller::getInstance()->disableBehaviour('customMethod');
+	 * Controller::getInstance()->customMethod = new Behavior(create_function('','echo time();'));
+	 * Controller::getInstance()->disableBehavior('customMethod');
 	 * </code></pre>
 	 *
-	 * @param string name of the behaviour to be disabled
+	 * @param string name of the behavior to be disabled
 	 * @return null
-	 * @throws BehaviourException in case of errors
-	 * @see enableBehaviour
+	 * @throws BehaviorException in case of errors
+	 * @see enableBehavior
 	 */
-	function disableBehaviour($name)
+	function disableBehavior($name)
 	{
 		if(empty($name) || !is_string($name))
-			throw new BehaviourException("Wrong behaviour method name");
+			throw new BehaviorException("Wrong behavior method name");
 
 		$name = strtolower($name);
 
-		if(!isset($this->__behaviours[$name]))
-			throw new BehaviourException("Behaviour $name doesn't exists");
-		if(!$this->__behaviours[$name] instanceof Behaviour)
-			throw new BehaviourException("Behaviour $name could not be disabled. Should be instance of Behaviour class");
+		if(!isset($this->__behaviors[$name]))
+			throw new BehaviorException("Behavior $name doesn't exists");
+		if(!$this->__behaviors[$name] instanceof Behavior)
+			throw new BehaviorException("Behavior $name could not be disabled. Should be instance of Behavior class");
 		
-		$this->__behaviours[$name]->setEnabled(0);
+		$this->__behaviors[$name]->setEnabled(0);
 		
 	}
 	//}}} 
 
 	//{{{ enable
 	/**
-	 * Enables temporary disabled behaviour with given name. 
+	 * Enables temporary disabled behavior with given name. 
 	 * This function might be used only if 
-	 * desired behaviour was registered via {@link Behaviour} class.
+	 * desired behavior was registered via {@link Behavior} class.
 	 * Otherwise exception will be raised.
 	 *
 	 * For example:
 	 * <pre><code>
-	 * Controller::getInstance()->customMethod = new Behaviour(create_function('','echo time();'));
-	 * Controller::getInstance()->disableBehaviour('customMethod');
-	 * Controller::getInstance()->enableBehaviour('customMethod');
+	 * Controller::getInstance()->customMethod = new Behavior(create_function('','echo time();'));
+	 * Controller::getInstance()->disableBehavior('customMethod');
+	 * Controller::getInstance()->enableBehavior('customMethod');
 	 * </code></pre>
 	 *
-	 * @param string name of the behaviour to be enabled
+	 * @param string name of the behavior to be enabled
 	 * @return null
-	 * @throws BehaviourException in case of errors
-	 * @see enableBehaviour
+	 * @throws BehaviorException in case of errors
+	 * @see enableBehavior
 	 */
-	function enableBehaviour($name)
+	function enableBehavior($name)
 	{
 		if(empty($name) || !is_string($name))
-			throw new BehaviourException("Wrong behaviour method name");
+			throw new BehaviorException("Wrong behavior method name");
 
 		$name = strtolower($name);
 
-		if(!isset($this->__behaviours[$name]))
-			throw new BehaviourException("Behaviour $name doesn't exists");
-		if(!$this->__behaviours[$name] instanceof Behaviour)
-			throw new BehaviourException("Behaviour $name could not be disabled. Should be instance of Behaviour class");
+		if(!isset($this->__behaviors[$name]))
+			throw new BehaviorException("Behavior $name doesn't exists");
+		if(!$this->__behaviors[$name] instanceof Behavior)
+			throw new BehaviorException("Behavior $name could not be disabled. Should be instance of Behavior class");
 		
-		$this->__behaviours[$name]->setEnabled(1);
+		$this->__behaviors[$name]->setEnabled(1);
 	}
 	//}}}
 

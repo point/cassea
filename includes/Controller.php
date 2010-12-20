@@ -42,7 +42,7 @@
  * </code></pre>
  *
  * This code could be founded at <root_dir>/controllers/common.php.inc
- * If this behaviour is enough for particular front controller, user may simply
+ * If this behavior is enough for particular front controller, user may simply
  * require <root_dir>/controllers/common.php.inc file.
  *
  * @author point <alex.softx@gmail.com>
@@ -96,7 +96,7 @@ class WidgetLoader
 //}}}
 
 //{{{ Controller
-class Controller extends EventBehaviour
+class Controller extends EventBehavior
 {
 	/**
 	 * Max count of form signatures per user to store

@@ -31,7 +31,7 @@
 
 class CryptoProviderException extends CasseaException {}
 
-class CryptoProvider extends EventBehaviour
+class CryptoProvider extends EventBehavior
 {
 	const SECRET_MIN_LENGHT = 30;
 

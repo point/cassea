@@ -36,7 +36,7 @@
 
 //{{{ EventException
 /**
- * This exception may be thrown by the eventBehaviour routines.
+ * This exception may be thrown by the eventBehavior routines.
  */
 class EventException extends CasseaException{}
 //}}}

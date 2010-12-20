@@ -96,7 +96,7 @@ if(!empty($tz))
 class Boot
 {
 	/**
-	 * Setting up session. Type of session and its behaviour defines in confuguration file. 
+	 * Setting up session. Type of session and its behavior defines in confuguration file. 
 	 * @param null
 	 * @return null
 	 * @see Session::init
