@@ -27,26 +27,58 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ * This class maintains password authentification of the users.
+ * It use code and DB salting mechanisms to prevent cracking passwords
+ * with rainbow tables.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: Controller.php 184 2009-11-05 15:14:47Z point $
+ * @since 
+ */
 //{{{ PasswordAuth
-
 class PasswordAuth
 {
+
+	//{{{ checkLoginFormat
+	/**
+	 * Checks login for conformity with the format, defined in config.
+	 *
+	 * @return bool result of conformity check
+	 */
 	static function checkLoginFormat($login)
 	{
         return !empty($login) && preg_match(Config::getInstance()->user->login_regexp, $login);
 	}
+	//}}}
 
+	//{{{ checkPasswordFormat
+	/**
+	 * Checks password for conformity with the format, defined in config.
+	 *
+	 * @return bool result of conformity check
+	 */
 	static function checkPasswordFormat($password)
 	{
 		return !empty($password) && preg_match(Config::getInstance()->user->password_regexp, $password);
 	}
+	//}}}
 
 	//{{{ generatePassword
-	static function generatePassword( $length = 8 )
+	/**
+	 * Generates password with required length with limited possible chars 
+	 * to escape misunderstood. e.g. 0 and O. The length must be > 2 and < 64.
+	 * In other cases, the length will be reduced to the specified values.
+	 *
+	 * @param int 
+	 * @return string genarated password
+	 */
+	static function generatePassword($length = 8)
 	{
-		$length = min($length,64);
+		$length = max(2, min($length,64));
 
-		$str='123456789QWERTYUIPASDFGHJKLZXCVBNM';
+		$str = 'ABCDEFGHIJKLMNPQRSTUVWYXZabcdefghijkmnpqrstuvwyxz123456789';
 		$len_1 = strlen($str)-1;
 		$res='';
 		for($i=0;$i<$length;$i++)
@@ -56,12 +88,38 @@ class PasswordAuth
 	//}}}
 
     //{{{ generateSalt
+	/**
+	 * Generates salt for the DB salting of the password. Returns 
+	 * unique string of variable length, but not grater 16 letters.
+	 *
+	 * @return string genarated salt
+	 */
     static function generateSalt(){
-        return substr(md5(uniqid(rand(), true)),rand(0,15),16);
+        return substr(md5(uniqid(rand(), true)),rand(0,13),16);
 	}
 	//}}}
 
-	//{{{
+	//{{{ match
+	/**
+	 * Returns if password matches with the hashed password of the given user.
+	 *
+	 * This method contain additional functionality to move existece base of passwords to the 
+	 * newer hashing algorithm. To do it, specify old names of the hash classes in
+	 * <code>user.password.transition.hash_classes</code> config parameter, separated
+	 * with the "," .
+	 * In this case, 
+	 * this method will try to match the password using current hash function.
+	 * In case of failure, every hash class from the transition will be used sequentially
+	 * to check the password. If this search was succeed, password hash will be updated with
+	 * newer version of hash algorithm.
+	 *
+	 * All hash manipulations are made using {@link CryptoProvider} class.
+	 *
+	 * @param User instance of the user, which password is checking
+	 * @param string unhashed password, usually entered in "password" field on the form
+	 * @return bool true if hashed passwords are equal
+	 * @see CryptoProvider
+	 */
 	static function match(User $user, $unhashed_password)
 	{
 		$config = Config::getInstance();
@@ -76,7 +134,7 @@ class PasswordAuth
 			foreach(array_map('trim',explode(",",$config->user->password->transition->hash_classes)) as $v)
 				if(($res2 = $cp->hash($password_string,$v))) break;
 
-		// if user hash hash with recieved from old hash function -> change his hash with new hash algo
+		// if user hash hash with received from old hash function -> change his hash with new hash algo
 		if($res2)
 			$user->setHashedPassword($cp->hash($password_string,$config->password->hash));
 
@@ -84,6 +142,24 @@ class PasswordAuth
 	} 
 	//}}}
 
+	//{{{ hashPassword
+	/**
+	 * Performs hashing of the password. 
+	 * If user is newly created, new random hash will be assigned. This salt
+	 * is mandatory.
+	 *
+	 * The server-side salt is optional and could be mixed in if config parameter 
+	 * <code>user.server_salt.use</code> is set.
+	 *
+	 * Hashing method is defined by the <code>user.password.hash</code> config parameter.
+	 * It could be as custom as default for all hashing (user.password.hash=":default")
+	 *
+	 * @param User instance of the user, which salt is taken.
+	 * @param string unhashed password to be hashed
+	 * @return string hashed password
+	 * @see CryptoProvider
+	 * @throws UserException
+	 */
 	static function hashPassword($user,$unhashed_password)
 	{
 		$config = Config::getInstance();
@@ -98,7 +174,6 @@ class PasswordAuth
 			($config->user->server_salt->use?$config->user->server_salt->salt:"");
 		return $cp->hash($password_string, Config::getInstance()->user->password->hash) ;
 	}
+	//}}}
 }
-
-
 //}}}
