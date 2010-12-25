@@ -54,7 +54,7 @@
  */
 
 /**
- * Need for properly booting of app
+ * Need for proper booting of app
  */
 require_once(dirname(__FILE__)."/Boot.php");
 
