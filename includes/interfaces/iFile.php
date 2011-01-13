@@ -28,12 +28,60 @@
 }}} -*/
 
 //{{{ iFile
+/**
+ * Interface declares required methods for file objects.
+ */
 interface iFile extends iFileSystemObject{
-    public function getUrl();
-    public function size();
-    public function copy(iFileSystemObject $target);
-    public function rename($newName);
-    public function move($target);
+
+	/**
+	 * Returns URL to access to the object.
+	 *
+	 * @return string
+	 */
+	public function getUrl();
+
+	/**
+	 * Returns size of the file.
+	 *
+	 * @return string
+	 */
+	public function size();
+
+	/**
+	 * Copying file to the target object.
+	 *
+	 * $target object can represents file or directory.
+	 *
+	 * @param  iFileSystemObject The target object.
+	 * @return $iFile Instance of the copied object.
+	 */
+	public function copy(iFileSystemObject $target);
+
+	/**
+	 * Depends of the value of $newName method renames or moves object.
+	 *
+	 * @param mixed $newName Renames/moves target.!!
+	 *
+	 * @retrun iFile Instance of the renamed/moved object.
+	 */
+	public function rename($newName);
+
+	/**
+	 * Moves object.
+	 *
+	 * Depends of the $target type moves object in different manner.
+	 *
+	 * @param mixed $target Target path/name or object.
+	 * @return iFile Instance of the moved object.
+	 */ 
+	public function move($target);
+
+	/**
+	 * Deletes object from file system.
+	 *
+	 * @return bool Returns true if the object was deleted successfully,
+	 *				otherwise returns false.
+	 */
     public function delete();
 }
 //}}}
