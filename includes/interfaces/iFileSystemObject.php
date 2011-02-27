@@ -28,13 +28,63 @@
 }}} -*/
 
 //{{{ iFileSystemObject
+/**
+ * This Interface declares common operations for
+ * file system objects.
+ */ 
 interface iFileSystemObject{
-    public function getName();
-    public function getPath();
-    public function getAbsPath();
-    public function getParent();
-    public function exists();
-    public function canWrite();
+
+	/**
+	 * Returns the name of object.
+	 *
+	 * E.g. name of file or directory.
+	 *
+	 * @return string
+	 */
+	public function getName();
+
+	/**
+	 * Returns relative path of the object.
+	 *
+	 * E.g. path of directory relative to docroot.
+	 *
+	 * @return string
+	 */
+	public function getPath();
+
+	/**
+	 * Returns absolute path of the object.
+	 *
+	 * @return string
+	 */
+	public function getAbsPath();
+
+	/**
+	 * Returns object of parent directory.
+	 *
+	 * @return iFileSystemObject
+	 */
+	
+	public function getParent();
+	/**
+	 * Checks whether the object exists.
+	 *
+	 * @return bool
+	 */
+	public function exists();
+
+	/**
+	 * Tells whether the object is writable.
+	 *
+	 * @return bool
+	 */
+	public function canWrite();
+
+	/**
+	 * Magic method returns string representation of object.
+	 *
+	 * @retrun string
+	 */
     public function __toString();
 }
 //}}}
