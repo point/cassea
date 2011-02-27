@@ -51,9 +51,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`id`, `login`, `email`, `password`, `salt`, `state`, `last_login`, `date_joined`, `single_access_token`) VALUES
-(-1, '', '', '', '', 'active', '0000-00-00 00:00:00', '0000-00-00 00:00:00', ''),
-(9, 'Vasya2', 'new_vasya@qwe.com', 'b5e30a0fcf0ea5ef98529c88fbc41a6a', 'saltsaltsalt', 'active', '2010-12-20 23:19:54', '1970-01-01 03:32:50', 'token'),
-(10, 'Vasya3', 'new_vasya@qwe.com', 'b5e30a0fcf0ea5ef98529c88fbc41a6a', 'saltsaltsalt', 'active', '1970-01-01 03:33:30', '1970-01-01 03:32:50', 'token');
+(-1, '', '', '', '', 'active', '0000-00-00 00:00:00', '0000-00-00 00:00:00', '');
 
 -- --------------------------------------------------------
 
@@ -69,12 +67,6 @@ CREATE TABLE IF NOT EXISTS `user_one_time_token` (
   KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
---
--- Дамп данных таблицы `user_one_time_token`
---
-
-INSERT INTO `user_one_time_token` (`token`, `user_id`, `time`) VALUES
-('dd3b8896bf78670e5b43078462b3a81e', 9, 1290622613);
 
 -- --------------------------------------------------------
 
