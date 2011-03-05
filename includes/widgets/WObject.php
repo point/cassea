@@ -27,64 +27,61 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
-
-// $Id$
+/**
+ * This file contains root class for the whole widgets hierarchy.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
 //{{{ WObject
 abstract class WObject
 {
- 
- 	private $log;   
 	private static $s_counter = 0;
 	/**
-    * @var      string
-    */
+	 * @var      string
+	 */
 	protected $id = null;
 
 	// {{{ __construct
-    function __construct($id = null)
-    {
-    	$this->log = null; //&WLog::getInstance();
-		$this->setID($id);
-        //$this->setClassNameToLower(strtolower(get_class($this)));
-    }
-	// }}}
-	
-	// {{{ getID 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getID()
-    {
-		return $this->id;
-    }
-    // }}}
-    
-    // {{{ setID 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $id    
-    * @return   void
-    */
-    function setID($id = null)
+	function __construct($id = null)
 	{
-		if(empty($id) || is_numeric(substr($id,0,1)))
-			$id = "__s".(self::$s_counter++);
-        else
-            $id = (string)$id;
+		$this->setID($id);
+	}
+	// }}}
 
-		if(strpos($id,'[') !== false || strpos($id,']') !== false)
-			$id = str_replace('[','_',
-				str_replace(']','_',$id));
-		$this->id = $id;
-    }
-    // }}}
+	// {{{ getID 
+	/**
+	 * Method description
+	 *
+	 * More detailed method description
+	 * @param    void
+	 * @return   string
+	 */
+	function getID()
+	{
+		return $this->id;
+	}
+	// }}}
+
+	// {{{ setID 
+	/**
+	 * Method description
+	 * http://mathiasbynens.be/notes/html5-id-class
+	 *
+	 * More detailed method description
+	 * @param    string $id    
+	 * @return   void
+	 */
+	function setID($id = null)
+	{
+		$this->id = empty($id)? ("__s".(self::$s_counter++)):
+			str_replace(array("\r", "\r\n", "\n", "\t"),"",(string)$id);
+	}
+	// }}}
 	// {{{ getProperties
 	function getProperties()
 	{
@@ -93,27 +90,13 @@ abstract class WObject
 		foreach($this as $k=>$v)
 		{
 			try{
-			$prop = new ReflectionProperty($class, $k);
-			if($prop->isPublic() || $prop->isProtected())
-				$ret_prop[] = $k;
+				$prop = new ReflectionProperty($class, $k);
+				if($prop->isPublic() || $prop->isProtected())
+					$ret_prop[] = $k;
 			}catch(Exception $e){}
 		}
 		return $ret_prop;
 	}
 	// }}}
-
-	// {{{ __clone
-	/*function __clone(){
-		foreach($this as $name => $value){
-			//if(gettype($value)=='object'){
-			if(is_object($value)){
-				if($value instanceof WComponent && !$value->getObjectChanged()) continue;
-				$this->$name= clone($this->$name);
-			}
-		}
-		}*/
-	// }}}
 }
 //}}}
-
-?>

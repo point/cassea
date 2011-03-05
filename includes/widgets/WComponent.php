@@ -1045,8 +1045,8 @@ EOD;
     {
 		if(!isset($empty_id)) 
 		{
-			$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				"Enable parameter is empty"),LOG_LEVEL_WARNING);
+			/*$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
+				"Enable parameter is empty"),LOG_LEVEL_WARNING);*/
 			return;
 		}	
 		$this->hide_if_empty_id = "".$empty_id;
