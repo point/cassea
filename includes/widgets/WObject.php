@@ -38,51 +38,69 @@
  */
 
 //{{{ WObject
+/**
+ * It provides basic methods for widget naming, property listing, etc.
+ */
 abstract class WObject
 {
+	/**
+	 * @var int counter for widgets w/o id of with malformed ids.
+	 * As it's static, it shares between all of the widgets.
+	 */
 	private static $s_counter = 0;
 	/**
-	 * @var      string
+	 * @var string id of the widget
 	 */
 	protected $id = null;
 
-	// {{{ __construct
+	//{{{ __construct
+	/**
+	 * @param string|null id of the widget
+	 */
 	function __construct($id = null)
 	{
 		$this->setID($id);
 	}
-	// }}}
+	//}}}
 
-	// {{{ getID 
+	//{{{ getID 
 	/**
-	 * Method description
+	 * Returns id of the widget
 	 *
-	 * More detailed method description
-	 * @param    void
 	 * @return   string
 	 */
 	function getID()
 	{
 		return $this->id;
 	}
-	// }}}
+	//}}}
 
-	// {{{ setID 
+	//{{{ setID 
 	/**
-	 * Method description
+	 * Sets id for the widget. It's strongly recommended to setup
+	 * id only in constructor and keep without changes during the lifetime.
+	 * That's because many parts of the system rely on that id.
+	 *
+	 * Allowed characters in id attribute in HTML5 spec: 
 	 * http://mathiasbynens.be/notes/html5-id-class
 	 *
-	 * More detailed method description
-	 * @param    string $id    
+	 * @param    string id of the widget
 	 * @return   void
 	 */
-	function setID($id = null)
+	protected function setID($id = null)
 	{
 		$this->id = empty($id)? ("__s".(self::$s_counter++)):
 			str_replace(array("\r", "\r\n", "\n", "\t"),"",(string)$id);
 	}
-	// }}}
-	// {{{ getProperties
+	//}}}
+
+	//{{{ getProperties
+	/**
+	 * Returns public and protected properties of the widget
+	 *
+	 * @param null
+	 * @return array with properties names
+	 */
 	function getProperties()
 	{
 		$class = get_class($this);
@@ -97,6 +115,6 @@ abstract class WObject
 		}
 		return $ret_prop;
 	}
-	// }}}
+	//}}}
 }
 //}}}
