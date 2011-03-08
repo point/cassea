@@ -27,240 +27,193 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/
 
+/**
+ * This file contains implementation of almost the basic class in
+ * the whole widgets hierarchy. The successors of this class
+ * should be displayed to the browser.
+ *
+ * @author point <alex.softx@gmail.com>
+ * @link http://cassea.wdev.tk/
+ * @version $Id: $
+ * @package system
+ * @since 
+ */
 
-// $Id: WComponent.php 184 2009-11-05 15:14:47Z point $
-//
-WidgetLoader::load("WObject");
 //{{{ WComponent
+/**
+ * This class defines basic behavior, basic methods for all
+ * widgets.
+ */
 abstract class WComponent extends WObject
 {
-		protected
-        /**
-        * @var      WStyle&
-        */
-        $style = null,
-        /**
-        * @var      string
-        */
-        $style_class = null,
-        /**
-        * @var      boolean
-        */
-        $state = 1,
-        /**
-        * @var      string
-        */
-        $template_path = "",
-        /**
-        * @var      string
-        */
-        $template_name = "default",
-        /**
-        * @var      CTemplate&
-        */
-        $tpl = null,
-                /**
-        * @var      string
-        */
-        $title = null,
+	protected
 		/**
-        * @var      string
-        */
-        $tooltip = null,
-        /**
-        * @var      WJavaScript&
-        */
-        $javascript = null,
-        /**
-        * @var      WDataSet&
-        */
-        $dataset = null,
-        /**
-        * @var      boolean
-        */
-		$visible = 1,
+		 * @var string holds CSS classes for the widget
+		 */
+		$style_class = null,
 		/**
-        * @var      string
-        */
-        $html_id = "",
+		 * @var boolean defines whether widget is in "enabled" or "disabled" state
+		 */
+		$state = true,
 		/**
-        * @var      array
-        */
+		 * @var string holds the name of the file with template to render to show the widget
+		 */
+		$template_name = "default",
+		/**
+		 * @var CTemplate& object which renders the HTML responce
+		 */
+		$tpl = null,
+		/**
+		 * @var string HTML title property
+		 */
+		$title = null,
+		/**
+		 * @var boolean defines visibility of the widget
+		 */
+		$visible = true,
+		/**
+		 * @var      string
+		 */
+		$html_id = "",
+		/**
+		 * @var array holds all the class variables (including protected)
+		 */
 		$class_vars = array(),
 		/**
-        * @var      string
-        */
-		$hide_if_empty_id = null,
-		/**
-        * @var      string
-        */
-        $hide_if_hidden_id = null,
-		/**
-        * @var      string
-        */
-        $string_process = null
-        ;
-		
-		private static $w_counter = 0;
-		private
-		/**
-        * @var      boolean
-        */
-        $inside_roll = 0  ,
-		/**
-        * @var      boolean
-        */
-        $do_increment = 0  ,
-		/**
-        * @var      integer
-        */
-		$add_html_id=0,
-		/**
-        * @var      array
-        */
-		$memento = array(),
-		/**
-        * @var      array
-        */
-        $memento_vars = array(),
-		/**
-        * @var      string
-        */
-        $id_lower = null,
-		/**
-        * @var      string
-        */
-        $class_lower = null,
-		/**
-        * @var      string
-        */
-		$data_setted = false
+		 * @var string parameters for {@link StringProcessor}
+		 */
+		$string_process = null
 		;
 
-    // {{{ __construct
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    */
-    function __construct($id = null)
-    {
-		parent::__construct($id);
-    }
-	// }}}
-	
-	// {{{ setID 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $id    
-    * @return   void
-    */
-    function setID($id = null)
+	/**
+	 * @var int if no id is given, this incremented value will be used in id creation
+	 */
+	private static $w_counter = 0;
+	private
+		/**
+		 * @var boolean equals true if particular widget is inside the roll
+		 */
+		$inside_roll = false,
+		/**
+		 * @var boolean defines whether the add_html_id should be incremented. Often used in inter-widget 
+		 * communication
+		 */
+		$do_increment = false,
+		/**
+		 * @var integer when widget is inside the roll the html id should be incremented
+		 */
+		$add_html_id=0,
+		/**
+		 * @var array holds vars values to recover later
+		 */
+		$memento = array(),
+		/**
+		 * @var array list of the var names to store in memnto
+		 */
+		$memento_vars = array(),
+		/**
+		 * @var string id of the widget, lowercased. Optimization for WidgetSelector
+		 */
+		$id_lower = null,
+		/**
+		 * @var string id of the widget, lowercased. Optimization for WidgetSelector
+		 */
+		$class_lower = null,
+		/**
+		 * @var string shows whether setData method was already called
+		 */
+		$data_set = false
+		;
+
+	//{{{ setID 
+	/**
+	 * Redefines parent's setId method to handle empty id attribute
+	 * and to cache lowercased versions of id and class name.
+	 *
+	 * @param    string id of the widget
+	 * @return   void
+	 */
+	function setID($id = null)
 	{
-		if(!isset($id) || !is_scalar($id) /*|| Controller::getInstance()->getWidget($id) instanceof WObject*/)
+		if(!isset($id) || !is_scalar($id))
 			$id = "__w".(self::$w_counter++);
 		parent::setId($id);
-        $this->setIDLower(strtolower($this->getId()));
-        $this->setClassLower(strtolower(get_class($this)));
-
-		//$this->id = "".$id;
-		//$this->setHTMLId($this->getId());
-    }
-    // }}}
+		$this->id_lower = strtolower($this->getId());
+		$this->class_lower = strtolower(get_class($this));
+	}
+	//}}}
     
-	// {{{ setIDLowert
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $id    
-    * @return   void
-    */
-    function setIDLower($id = null)
-	{
-		if(!isset($id) || !is_scalar($id))return;
-		$this->id_lower = (string)$id;
-    }
-    // }}}
-    
-	// {{{ getIDLowert
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getIDLower()
+	//{{{ getIDLower
+	/**
+	 * Returns cached lowercased version of the id of the widget
+	 *
+	 * @param    void
+	 * @return   string
+	 */
+	function getIDLower()
 	{
 		return $this->id_lower;
-    }
-    // }}}
+	}
+	//}}}
 
-	// {{{ setClassLowert
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $class
-    * @return   void
-    */
-    function setClassLower($class = null)
-	{
-		if(!isset($class) || !is_scalar($class))return;
-		$this->class_lower = (string)$class;
-    }
-    // }}}
-    
-	// {{{ getIDLowert
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getClassLower()
+	//{{{ getClassLower
+	/**
+	 * Returns cached lowercased class name
+	 *
+	 * @param    void
+	 * @return   string
+	 */
+	function getClassLower()
 	{
 		return $this->class_lower;
-    }
-    // }}}
-    // {{{ setEnabled 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $state    
-    * @return   void
-    */
-    function setEnabled($state)
-    {
-		if(!isset($state)) 
-			return;
-		$this->state = ($state)?1:0;
-    }
-    // }}}
-    
-    // {{{ generateHTML 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function generateHTML()
-    {
-   		if(!$this->getState()) return "";
+	}
+	//}}}
+	
+	//{{{ setEnabled 
+	/**
+	 * Alias of setState.
+	 *
+	 * @param    boolean $state
+	 * @return   void
+	 */
+	function setEnabled($state)
+	{
+		$this->setState($state);
+	}
+	//}}}
+
+	//{{{ getEnabled 
+	/**
+	 * Alias of getState.
+	 *
+	 * @param    void
+	 * @return   bool
+	 */
+	function getEnabled()
+	{
+		return $this->state;
+	}
+	//}}}
+
+	//{{{ generateHTML 
+	/**
+	 * This function triggers assignment of the variables to template and 
+	 * rendering it. The output is gathering by the Controller to glue
+	 * into the response.
+	 * If the widget is not visible or disabled, the empty string will be returned.
+	 *
+	 * @param    void
+	 * @return   string
+	 */
+	function generateHTML()
+	{
+		if(!$this->getState()) return "";
 		$this->assignVars();
 		if($this->getVisible() && isset($this->tpl)) return $this->tpl->getHTML();
 		else return "";
 
 	}
-    // }}}
+	//}}}
     
     // {{{ setTemplate 
     /**
@@ -371,7 +324,7 @@ abstract class WComponent extends WObject
     // {{{ setState
     /**
     * Method description
-    *
+    * assign vars and generate html
     * More detailed method description
     * @param    boolean $state
     * @return   void
@@ -474,17 +427,17 @@ abstract class WComponent extends WObject
 			return false;
 
 		$vars = get_object_vars($this);
-		$setted = 0;
+		$set = 0;
 		foreach($vars as $k=>$v)
 		{
 			if($attribute == $k)
 			{
 				$this->$k = $value;
-				$setted = 1;
+				$set = 1;
 				break;
 			}
 		}
-		return $setted;
+		return $set;
 	}
     // }}}
     
@@ -510,7 +463,7 @@ abstract class WComponent extends WObject
     }
     // }}}
     
-    // {{{ getDataSetted
+    // {{{ getDataSet
     /**
     * Method description
     *
@@ -518,24 +471,24 @@ abstract class WComponent extends WObject
     * @param    void
     * @return   bool
     */
-    function getDataSetted()
+    function getDataSet()
     {
-		return $this->data_setted;
+		return $this->data_set;
     }
     // }}}
     
-    // {{{ setDataSetted
+    // {{{ setDataSet
     /**
     * Method description
     *
     * More detailed method description
-    * @param    bool $setted
+    * @param    bool $set
     * @return   void
     */
-    function setDataSetted($setted)
+    function setDataSet($set)
     {
-        if(!isset($setted)) return;
-        $this->data_setted = (bool)$setted;
+        if(!isset($set)) return;
+        $this->data_set = (bool)$set;
     }
     // }}}
 
@@ -549,7 +502,7 @@ abstract class WComponent extends WObject
     */
     function checkAndSetData()
     {
-        if(!$this->getDataSetted() && !$this instanceof iNotSelectable)
+        if(!$this->getDataSet() && !$this instanceof iNotSelectable)
         {
 		    $this->restoreMemento();
 		    DataRetriever::manageData($this->getId());
@@ -583,23 +536,6 @@ abstract class WComponent extends WObject
     /*function getDataSet()
     {
 		return $this->dataset;
-    }*/
-    // }}}
-    
-    // {{{ setDataSet 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    WDataSet& $dataset    
-    * @return   void
-    */
-    // DEPRECATED
-    /*function setDataSet(DataSet $dataset)
-    {
-		if(!isset($this->dataset))
-			$this->dataset = new DataSetAggregator();
-		$this->dataset->addDataSet($dataset);
     }*/
     // }}}
     
@@ -695,7 +631,7 @@ abstract class WComponent extends WObject
 		if(isset($data->hide_if_hidden))
 			$this->setHideIfHidden($data->get('hide_if_hidden'));
 
-        $this->setDataSetted(true);
+        $this->setDataSet(true);
     }
 	// }}}
     
@@ -915,9 +851,6 @@ EOD;
 	function buildComplete()
 	{
 		if(empty($this->class_vars))
-			//foreach(get_class_vars(get_class($this)) as $k=>$v)
-			/*foreach($this->getProperties() as $k)
-				$this->class_vars[] = $k;*/
 			$this->class_vars = $this->getProperties();
 		if(!$this instanceof iNotSelectable)
 			$this->createMemento();
@@ -940,7 +873,7 @@ EOD;
 		$controller = Controller::getInstance();
 		if($this->do_increment)
 			$this->add_html_id++;
-        $this->setDataSetted(false);
+        $this->setDataSet(false);
 	}
 	//}}}	
 

@@ -41,7 +41,7 @@
 /**
  * It provides basic methods for widget naming, property listing, etc.
  */
-abstract class WObject
+abstract class WObject extends EventBehavior
 {
 	/**
 	 * @var int counter for widgets w/o id of with malformed ids.
