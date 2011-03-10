@@ -105,7 +105,7 @@ class WNavigator extends WComponent
 	function buildComplete()
 	{
 		$this->tpl = $this->createTemplate();
-		$this->setStyleClass("__nav");
+		$this->addStyleClass("__nav");
 		parent::buildComplete();
 	}    
 	// }}}

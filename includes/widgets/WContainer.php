@@ -475,9 +475,9 @@ class IterableCollection extends WidgetCollection
 			{
                 $this->i_elem[$i][$j] = clone $this->getItem($j);
 				if($oddeven)
-					if($i%2) $this->i_elem[$i][$j]->setStyleClass($holder->getOddClass());
+					if($i%2) $this->i_elem[$i][$j]->addStyleClass($holder->getOddClass());
 						else
-							 $this->i_elem[$i][$j]->setStyleClass($holder->getEvenClass());
+							 $this->i_elem[$i][$j]->addStyleClass($holder->getEvenClass());
 			}
 
             $controller->getDisplayModeParams()->incCurrent($this->parent_id);

@@ -60,6 +60,7 @@ abstract class WObject extends EventBehavior
 	function __construct($id = null)
 	{
 		$this->setID($id);
+		parent::__construct();
 	}
 	//}}}
 

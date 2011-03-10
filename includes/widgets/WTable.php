@@ -159,7 +159,7 @@ class WTable extends WContainer
 			$controller->addScript("jquery.metadata.js");
 			$controller->addScript("jquery.tablesorter.js");
 			$controller->addCSS("jquery.tablesorter.css");
-			$this->setStyleClass("tablesorter");
+			$this->addStyleClass("tablesorter");
 		}
 		parent::buildComplete();
 	}    

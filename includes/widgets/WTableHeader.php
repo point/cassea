@@ -103,9 +103,9 @@ class WTableHeader extends WTableColumn
 		parent::preRender();
 
 		if(!$this->getSorter())
-			$this->setStyleClass("{sorter:false}");
+			$this->addStyleClass("{sorter:false}");
 		elseif($this->getSorter() !== "non_existent")
-			$this->setStyleClass("{sorter:'".$this->getSorter()."'}");
+			$this->addStyleClass("{sorter:'".$this->getSorter()."'}");
     }
 	// }}}    
 

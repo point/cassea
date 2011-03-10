@@ -50,7 +50,7 @@ abstract class WComponent extends WObject
 		/**
 		 * @var string holds CSS classes for the widget
 		 */
-		$style_class = null,
+		$style_class = array(),
 		/**
 		 * @var boolean defines whether widget is in "enabled" or "disabled" state
 		 */
@@ -140,6 +140,7 @@ abstract class WComponent extends WObject
 		parent::setId($id);
 		$this->id_lower = strtolower($this->getId());
 		$this->class_lower = strtolower(get_class($this));
+		$this->setHTMLId($this->getId());
 	}
 	//}}}
     
@@ -215,145 +216,179 @@ abstract class WComponent extends WObject
 	}
 	//}}}
     
-    // {{{ setTemplate 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $template_name    
-    * @return   void
-    */
-    function setTemplate($template_name = null)
+	//{{{ setTemplate 
+	/**
+	 * Sets template name to render. By default, the "default.tpl" will be rendered.
+	 * This could be set using the template attribute in any widget.
+	 *
+	 * @param    string name of the template file to render
+	 * @return   void
+	 */
+	function setTemplate($template_name = null)
 	{
 		if(!isset($template_name)) return;
 		$this->template_name = $template_name;
-    }
-    // }}}
+	}
+	//}}}
     
-    // {{{ getStyle 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   WStyle
-    */
-    function getStyle()
-    {
-		return $this->style;
-    }
-    // }}}
-	
-    // {{{ getStyleClass
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getStyleClass()
-    {
+	//{{{ getStyleClasses
+	/**
+	 * Returns the array of style classes which are defined for the 
+	 * particular widget. 
+	 *
+	 * @param    void
+	 * @return   array
+	 */
+	function getStyleClasses()
+	{
 		return $this->style_class;
-    }
-    // }}}
+	}
+	//}}}
     
-    // {{{ setStyle 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    WStyle& $style    
-    * @return   void
-    */
-    function setStyle($style)
-    {
-		if(!isset($style) || !$style instanceof WStyle) 
+	//{{{ addStyleClass
+	/**
+	 * Adds style class (or style classes) to the current list.
+	 *
+	 * They should be specified using the "class" attribute in widget declaration.
+	 * 
+	 * The parameter could have several classes to set devided with the spaces. 
+	 * This case will be handled properly.
+	 *
+	 * @param    string name (or name) of classes to add
+	 * @return   void
+	 */
+	function addStyleClass($style_class = null)
+	{
+		if(!isset($style_class) || !is_string($style_class)) 
 			return;
-		$this->style = $style;
-    }
-    // }}}
-	
-    // {{{ setStyleClass
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $style_class
-    * @return   void
-    */
-    function setStyleClass($style_class = null)
-    {
+		$this->style_class = array_unique(array_merge($this->style_class, 
+			explode(" ", $style_class)));
+	}
+	//}}}
+
+	//{{{ removeStyleClass
+	/**
+	 * Removes specified class(es) from the list.
+	 *
+	 * The supported parameter formats:
+	 * - single word string
+	 * - several words separated with the whitespace
+	 * - array of single strings
+	 *
+	 * @param    string|array name (or name) of classes to remove
+	 * @return   void
+	 */
+	function removeStyleClass($style_class = null)
+	{
 		if(!isset($style_class)) 
 			return;
-		$this->style_class .= " ".$style_class;
-    }
-    // }}}
-    
-    // {{{ setVisible 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $visible    
-    * @return   void
-    */
-    function setVisible($visible)
-    {
-		if(!isset($visible)) 
+
+		if(!is_array($style_class))
+			$style_class = array_filter(explode(" ", $style_class));
+
+		$flipped = array_flip($this->style_class);
+		foreach($style_class as $value)
+			if($flipped[$value])
+				unset($this->style_class[$flipped[$value]]);
+		
+		$this->style_class = array_values($this->style_class);
+	}
+	//}}}
+
+	//{{{ toggleStyleClass
+	/**
+	 * Toggles the presence of given class(es)
+	 *
+	 * The supported parameter formats:
+	 * - single word string
+	 * - several words separated with the whitespace
+	 * - array of single strings
+	 *
+	 * @param    string|array name (or name) of classes to toggle
+	 * @return   void
+	 */
+	function toggleStyleClass($style_class = null)
+	{
+		if(!isset($style_class)) 
 			return;
 
-		$this->visible = ($visible)?1:0;
-    }
-    // }}}
+		if(!is_array($style_class))
+			$style_class = array_filter(explode(" ", $style_class));
+
+		foreach($style_class as $class)
+			if(in_array($class, $this->style_class))
+				$this->removeStyleClass($class);
+			else
+				$this->addStyleClass($class);
+	}
+	//}}}
     
-    // {{{ getVisible 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    null
-    * @return   boolean
-    */
+	//{{{ setVisible 
+	/**
+	 * Sets visibility of the widget. The hidden widget (with visibility == false)
+	 * will pass all the levels of rendering, template parsing and assigning vars.
+	 * But at the last stage instead of output, the empty string is returned.
+	 *
+	 * It could be set using widget's "visible" attribute.
+	 *
+	 * @param    boolean when to show or not the widget
+	 * @return   void
+	 */
+	function setVisible($visible)
+	{
+		$this->visible = (bool)$visible;
+	}
+	//}}}
+    
+	// {{{ getVisible 
+	/**
+	 * Returns the visibility state of the widget
+	 *
+	 * @param    null
+	 * @return   boolean
+	 */
 	function getVisible()
 	{
 		return $this->visible;
-    }
-    // }}}
+	}
+	// }}}
 
-    // {{{ setState
-    /**
-    * Method description
-    * assign vars and generate html
-    * More detailed method description
-    * @param    boolean $state
-    * @return   void
-    */
-    function setState($state)
-    {
-		if(!isset($state)) 
-			return;
-		$this->state = ($state)?1:0;
-    }
-    // }}}
+	//{{{ setState
+	/**
+	 * Defines the state of the widget. It could be enabled/disabled.
+	 * So the state value are true/false respectively.
+	 *
+	 * The disabled widgets are almost as hidden except the are
+	 * not passing the "assign vars" and "generate html" stages/
+	 *
+	 * It could be set using widget's "enabled" attribute.
+	 * 
+	 * @param    boolean to enable or disabled the widget
+	 * @return   void
+	 */
+	function setState($state)
+	{
+		$this->state = (bool)$state;
+	}
+	//}}}
 
-    // {{{ getState
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    null
-    * @return   boolean
-    */
-    function getState()
-    {
-    	return $this->state;
-    }
-    // }}}
+	//{{{ getState
+	/**
+	 * Returns current enabled/disabled state.
+	 *
+	 * @param    null
+	 * @return   boolean
+	 */
+	function getState()
+	{
+		return $this->state;
+	}
+	//}}}
 	
-    // {{{ setTitle 
+    //{{{ setTitle 
     /**
-    * Method description
+	 * Defines the HTML "title" attribute. It could be set using
+	 * widget's "title" attribute.
     *
     * More detailed method description
     * @param    string $title    
@@ -366,87 +401,55 @@ abstract class WComponent extends WObject
 
 		$this->title = "".$title;
     }
-    // }}}
+    //}}}
     
-    // {{{ getTitle 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   string
-    */
-    function getTitle()
-    {
-		return $this->title;
-    }
-    // }}}
-    
-    // {{{ setJavaScript 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    JavaScript& $javascript    
-    * @return   void
-    */
-    function setJavaScript(WJavaScript $javascript)
+	//{{{ getTitle 
+	/**
+	 * Returns title the widget
+	 *
+	 * @param    void
+	 * @return   string
+	 */
+	function getTitle()
 	{
-		if(!isset($javascript) || !$javascript instanceof WJavaScript) 
-			return;
-		$this->javascript = $javascript;		
-    }
-    // }}}
-    
-    // {{{ getJavaScript 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   WJavaScript&
-    */
-    function getJavaScript()
-    {
-		return $this->javascript;
-    }
-    // }}}
-    
-    // {{{ setAttribute 
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @param    string $attribute    
-    * @param    mixed $value    
-    * @return   void
-    */
-    function setAttribute($attribute, $value)
-    {
+		return $this->title;
+	}
+	//}}}
+
+	//{{{ setAttribute 
+	/**
+	 * Generic method for setting any type of attributes.
+	 * The system properties (which begin with "__")
+	 * will be omitted.
+	 *
+	 * @param    string attribute name
+	 * @param    mixed attribute value
+	 * @return   void
+	 */
+	function setAttribute($attribute, $value)
+	{
 		if(!isset($attribute) || !isset($value)) 
 			return false;
 
 		$vars = get_object_vars($this);
 		$set = 0;
 		foreach($vars as $k=>$v)
-		{
-			if($attribute == $k)
+			if(substr($k, 0, 2) !== "__" && $attribute == $k)
 			{
 				$this->$k = $value;
 				$set = 1;
 				break;
 			}
-		}
+
 		return $set;
 	}
-    // }}}
+	//}}}
     
-    // {{{ getAttribute 
+    //{{{ getAttribute 
     /**
-    * Method description
+    * Returns the value of the specified attribute
     *
-    * More detailed method description
-    * @param    string $attribute    
+    * @param    string attribute value to get
     * @return   mixed
     */
     function getAttribute($attribute)
@@ -456,100 +459,100 @@ abstract class WComponent extends WObject
 
 		$vars = get_object_vars($this);
 		foreach($vars as $k=>$v)
-			if($attribute == $k)
+			if(substr($k, 0, 2) !== "__" && $attribute == $k)
 				return $v;
 
 		return null;
     }
     // }}}
     
-    // {{{ getDataSet
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   bool
-    */
-    function getDataSet()
-    {
+    //{{{ getDataSet
+	/**
+	 * Retrieves the flag which shows whether data
+	 * is set to the widget.
+	 *
+	 * @param    void
+	 * @return   bool
+	 */
+	function getDataSet()
+	{
 		return $this->data_set;
-    }
-    // }}}
+	}
+	//}}}
     
-    // {{{ setDataSet
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    bool $set
-    * @return   void
-    */
+    //{{{ setDataSet
+	/**
+	 * Assigns the flag which shows whether data
+	 * is set to the widget.
+	 *
+	 * @param    bool the flag to set
+	 * @return   void
+	 */
     function setDataSet($set)
     {
-        if(!isset($set)) return;
         $this->data_set = (bool)$set;
     }
-    // }}}
+    //}}}
 
-    // {{{ checkAndSetData
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
-    function checkAndSetData()
-    {
-        if(!$this->getDataSet() && !$this instanceof iNotSelectable)
-        {
-		    $this->restoreMemento();
-		    DataRetriever::manageData($this->getId());
-        }
-    }
-    // }}}
+	//{{{ checkAndSetData
+	/**
+	 * Checks if the data could be set for the widget. And 
+	 * if everything is ok the data is assigned for the 
+	 * particular object, using the DataRetriever helper class.
+	 *
+	 * It's used generaly by the system and shouldn't be called
+	 * from the client's code.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
+	function checkAndSetData()
+	{
+		if(!$this->getDataSet() && !$this instanceof iNotSelectable)
+		{
+			$this->restoreMemento();
+			DataRetriever::manageData($this->getId());
+		}
+	}
+	//}}}
 
-    // {{{ getDataSetterMethod
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   void
-    */
+	//{{{ getDataSetterMethod
+	/**
+	 * Returns name of the method which dispatches the 
+	 * data, came from the model. 
+	 *
+	 * It's used generaly by the system and shouldn't be called
+	 * from the client's code.
+	 *
+	 * @param    void
+	 * @return   string
+	 */
 	function getDataSetterMethod()
 	{
 		return "setData";
 	}
 	//}}}
-
-    // {{{ getDataSet 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    void
-    * @return   WDataSet
-     */
-    // DEPRECATED
-    /*function getDataSet()
-    {
-		return $this->dataset;
-    }*/
-    // }}}
     
-    // {{{ parseParams 
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    array $params
-    * @return   void
-    */
+	//{{{ parseParams 
+	/**
+	 * The number two method which is called to initialize all internal
+	 * data structures basing on the information, specified in XML.
+	 *
+	 * It's called by the Controller's buildWidget method and pass
+	 * the parsed XML element  with the only widget definition.
+	 *
+	 * It also initializes events and creates memento snapshot of the 
+	 * current object state. It will be need when the object will has to
+	 * restore the initial state inside the roll iteration.
+	 *
+	 * @param    SimpleXMLElement
+	 * @return   void
+	 */
     function parseParams(SimpleXMLElement $params)
 	{
-        if(isset($params['enabled'])) $this->setState(0+$params['enabled']);
+		if(isset($params['enabled'])) 
+			$this->setState(0+$params['enabled']);
+
         $a = $d = null;
         if(isset($params['allow']))
             $a = (string)$params['allow'];
@@ -557,22 +560,15 @@ abstract class WComponent extends WObject
             $d = (string)$params['deny'];
         if(!ACL::check($a,$d))
             $this->setState(0);
+
 		if(isset($params['title'])) $this->setTitle((string)$params['title']);
 		if(isset($params['visible'])) $this->setVisible(0+$params['visible']);
-		if(isset($params['html_id'])) $this->setHTMLId((string)$params['html_id']);
-		else $this->setHTMLId($this->getId());
 
         if(isset($params['class'])) 
-            $this->setStyleClass((string)$params['class']);
-        $this->setTemplate(isset($params['template'])?(string)$params['template']:null);
-		if(isset($params['tooltip']))
-			$this->setTooltip((string)$params['tooltip']);
+            $this->addStyleClass((string)$params['class']);
 
-		if(isset($params['hide_if_empty']))
-			$this->setHideIfEmpty((string)$params['hide_if_empty']);
-
-		if(isset($params['hide_if_hidden']))
-			$this->setHideIfHidden((string)$params['hide_if_hidden']);
+		if(isset($params['template']))
+			$this->setTemplate((string)$params['template']);
 
         if(isset($params['process']))
             $this->setStringProcess((string)$params['process']);
@@ -580,15 +576,11 @@ abstract class WComponent extends WObject
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
 		$controller->getDispatcher()->addEvent("all_build_complete");	
-		//$controller->getDispatcher()->addSubscriber("roll_inside", $this->getId());
 		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
-		//$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 		
-        $this->addToMemento(array("enabled","title","visible","html_id","style_class","tooltip","javascript",
-			"javascript_before","javascript_after","hide_if_hidden","hide_if_empty"/*,"tpl"*/));
-
+        $this->addToMemento(array("enabled","title","visible","html_id","style_class"));
     }
-    // }}}
+    //}}}
     
 	// {{{ setData
     /**
@@ -623,7 +615,7 @@ abstract class WComponent extends WObject
 			$this->setHTMLId($data->html_id);
 
 		if(isset($data->class))
-			$this->setStyleClass($data->get('class'));
+			$this->addStyleClass($data->get('class'));
 
 		if(isset($data->hide_if_empty))
 			$this->setHideIfEmpty($data->get('hide_if_empty'));
@@ -632,37 +624,6 @@ abstract class WComponent extends WObject
 			$this->setHideIfHidden($data->get('hide_if_hidden'));
 
         $this->setDataSet(true);
-    }
-	// }}}
-    
-    // {{{ setTooltip
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @param    string $tooltip
-    * @return   void
-    */
-    function setTooltip($tooltip)
-    {
-		if(!isset($tooltip)) 
-			return;
-		$replacement = array("\"", "'",  "\r","\n","\r\n");
-		$replace_to  = array("\\'","\\'"," " ," " , " "  );
-		$this->tooltip = trim(str_replace($replacement,$replace_to,$tooltip));
-    }
-	// }}}
-    
-	// {{{ getTooltip
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @return   string
-    */
-    function getTooltip()
-    {
-		return $this->tooltip;
     }
 	// }}}
     
@@ -747,7 +708,7 @@ EOD;
             $this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".Language::encodePair($this->getTitle())."\" ":"",
                 "id"=>$this->getHTMLId()));
             if(!empty($this->style_class)) 
-                $this->tpl->setParamsArray(array("class"=>" class=\"".$this->getStyleClass()."\" "));
+                $this->tpl->setParamsArray(array("class"=>" class=\"".implode(" ", $this->getStyleClasses())."\" "));
             if(isset($this->style) && !$this->style->isEmpty()) 
                 $this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
             if(!empty($this->javascript)) 
