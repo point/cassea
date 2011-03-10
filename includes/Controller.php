@@ -807,7 +807,7 @@ class Controller extends EventBehavior
 	//{{{ parsePageOnGET
 	/**
 	 * This method creates all necessary objects to make GET request, so to display page.
-	 * This is DataSets, Styles, JavaScripts, ValueCheckers objects and widgets directly 
+	 * This is DataSets, ValueCheckers objects and widgets directly 
 	 * (via {@link buildWidget} function.
 	 *
 	 * It's called only if current request method is GET.
@@ -840,23 +840,6 @@ class Controller extends EventBehavior
 			$this->addDataSet(simplexml_import_dom($el));
 			$el->parentNode->removeChild($el);
 		}
-		$node = $dom->getElementsByTagName("WStyle");
-		for($i = 0, $c = $node->length;$i < $c;$i++)
-		{
-			$el = $node->item(0);
-			if(empty($el)) continue;
-			$this->addStyle(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
-		}
-
-		$xpath = new DOMXPath($dom);
-		foreach($xpath->query('//WJavaScript | //WHyperLinkJS | //WFormJS | //WInputJS | //WButtonJS | //WTextareaJS') as $el)
-		{
-			if(empty($el)) continue;
-			$this->addJS(simplexml_import_dom($el));
-			$el->parentNode->removeChild($el);
-		}
-		unset($xpath);
 
 		$node = $dom->getElementsByTagName("WValueChecker");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
@@ -930,8 +913,7 @@ class Controller extends EventBehavior
 
 	//{{{ buildWidget
 	/**
-	 * This function creates new instance of widget and setups all need environment,
-	 * such as javascripts, styles, etc.
+	 * This function creates new instance of widget and setups all need environment.
 	 *
 	 * If widget class could not be found it silently exists.
 	 *
@@ -958,17 +940,6 @@ class Controller extends EventBehavior
 
 		if(isset($this->system_widgets[$w_id]) || isset($this->widgets[$w_id])) 
 			throw new IdExistsException('Widget with id '.$w_id.' already exists');
-
-
-		WidgetLoader::load("WStyle");
-		if(isset($elem['style']) && isset($this->styles[(string)$elem['style']]))
-			$widget->setStyle($this->styles[(string)$elem['style']]);
-		else 	$widget->setStyle(new WStyle());
-
-		WidgetLoader::load("WJavaScript");
-		if(isset($elem['javascript']) && isset($this->javascripts[(string)$elem['javascript']]))
-			$widget->setJavaScript($this->javascripts[(string)$elem['javascript']]);
-		else	$widget->setJavaScript(new WJavaScript());
 
 		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
 					$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
@@ -1050,70 +1021,6 @@ class Controller extends EventBehavior
 		$dh->parseParams($elem);
 		$this->datahandlers[] = $dh;
 	}
-	//}}}
-	
-	//{{{ addStyle
-	/**
-	 * Adds style to styles list. Each widget could declare 
-	 * <code> style="id"</code> construction to use one of
-	 * created style. This style are located in this list.
-	 *
-	 * Triggers "BeforeAddStyle" event. 
-	 * $this passed as 1st element, $elem as 2nd.
-	 *
-	 * @param SimpleXMLElement  parsed part of XML tree, representing single style.
-	 * @return null
-	 * @throws IdExistsException in case of such style already exists.
-	 */ 
-	protected function addStyle(SimpleXMLElement $elem)
-	{
-		$this->trigger("BeforeAddStyle",array($this,&$elem));
-
-		WidgetLoader::load("WStyle");
-		if(empty($elem['id'])) return;
-
-		if(!$this->checkACL($elem)) return;
-
-		$s = new WStyle((string)$elem['id']);
-
-		if(isset($this->styles[$s->getId()]))
-			throw new IdExistsException('WStyle with id '.$s->getId().' already exists');
-
-		$s->parseParams($elem);
-		$this->styles[$s->getId()] = $s;
-	}
-	//}}}
-	
-	//{{{ addJS
-	/**
-	 * Adds js to inner js list. Each widget could declare 
-	 * <code>javascript="id"</code> construction to use one of
-	 * created script object. 
-	 *
-	 * Triggers "BeforeAddJS" event.
-	 * $this passed as 1st element, $elem as 2nd.
-	 *
-	 * @param SimpleXMLElement  parsed part of XML tree, representing single js.
-	 * @return null
-	 * @throws IdExistsException in case of such javascript already exists.
-	 */
-	protected function addJS(SimpleXMLElement $elem)
-	{
-		$this->trigger("BeforeAddJS",array($this,&$elem));
-
-		if(($c_name = WidgetLoader::load($elem->getName())) === false) return;
-
-		if(!$this->checkACL($elem)) return;
-
-		$j = new $c_name((string)$elem['id']);
-
-		$j->parseParams($elem);
-		
-		if(isset($this->javascripts[$j->getId()]))
-			throw new IdExistsException('WJavaScript with id '.$j->getId().' already exists');
-
-		$this->javascripts[$j->getId()] = $j;
-	}	
 	//}}}
 	
 	//{{{ addPageHandler
@@ -1467,36 +1374,6 @@ class Controller extends EventBehavior
 	}
 	//}}}
 	
-	//{{{ getStyleByName
-	/**
-	 * Returns style object by given id.
-	 *
-	 * @param string id of style object.
-	 * @return mixed WStyle object or null if nothing was found.
-	 */
-	function getStyleByName($name = null)
-	{
-		if(!isset($name) ||empty($this->styles["".$name]))
-			return null;
-		return $this->styles["".$name];
-	}
-	//}}}
-	
-	//{{{ getJavaScriptByName
-	/**
-	 * Returns javascript object by given id.
-	 *
-	 * @param string id of javascript object.
-	 * @return mixed WJavaScript object or null if nothing was found.
-	 */
-	function getJavaScriptByName($name = null)
-	{
-		if(!isset($name) || empty($this->javascripts["".$name]))
-			return null;
-		return $this->javascripts["".$name];
-	}
-	//}}}
-
 	//{{{ addScript
 	/**
 	 * Add script to be included to the head part of HTML document.
