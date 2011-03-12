@@ -27,7 +27,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }}} -*/ 
 /**
- * This file contains class for encapsultaing data, pasing to the
+ * This file contains class for encapsulating data, passing to the
  * widget during the managing data.
  *
  * @author point <alex.softx@gmail.com>
@@ -52,9 +52,11 @@
  *  setter-like methods and <code>merge()</code>.
  *
  * Instance of this class passed to the widget's <code>setData</code>
- * method. Widget could retreive data with all kind of getter-like
+ * method. Widget could retrieve data with all kind of getter-like
  * methods: <code>get()</code>, <code>getDef()</code> or
- * directly through the <code>__get</code> magick method.
+ * directly through the <code>__get</code> magic method. The key
+ * to these methods is case insensitive. So "AddClass" and addclass
+ * keys mean the same.
  */
 class WidgetResultSet implements IteratorAggregate
 {
@@ -84,28 +86,29 @@ class WidgetResultSet implements IteratorAggregate
         if(!is_array($arr)) return;
 		foreach($arr as $k => $v)
 			if(is_scalar($k) && !is_resource($v))
-				$this->properties[$k] = $v;
+				$this->properties[strtolower($k)] = $v;
 	}
 	//}}}
 
 	//{{{ get
 	/**
-	 * Used by widgets to retreive value with the given key.
+	 * Used by widgets to retrieve value with the given key.
 	 * 
 	 * @var string the key
 	 * @return mixed 
 	 */ 
 	function get($key)
 	{
+		$key = strtolower($key);
 		return (isset($this->properties[$key]))?$this->properties[$key]:null;
 	}
 	//}}}
 
 	//{{{ getDef
 	/**
-	 * Returns default widget value. It might be setted if no data for
+	 * Returns default widget value. It might be set if no data for
 	 * the widget was found. For example, for WText, "text" property is default
-	 * and could be setted by the system.
+	 * and could be set by the system.
 	 *
 	 * @var mixed default value
 	 * @return null
@@ -154,6 +157,7 @@ class WidgetResultSet implements IteratorAggregate
 	 */
 	function __isset($key)
 	{
+		$key = strtolower($key);
 		return isset($this->properties[$key]);
 	}
 	//}}}
