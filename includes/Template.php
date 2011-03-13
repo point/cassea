@@ -127,8 +127,8 @@ class Template
 		$this->params = new TemplateParams;
 	}
 	//}}}
-
-	//{{{ setParams
+ 
+ 	//{{{ setParams
 	/** 
 	 * Inject early created parms to the 
 	 * current template object.
@@ -158,6 +158,47 @@ class Template
 	}
 	//}}}
 
+	//{{{ setAttributeOrEmpty
+	/**
+	 * If passed <code>$attribute_value</code> is not empty, then the
+	 * HTML attribute string will be formatted and set to params list.
+	 * Else the empty string will be recordered.
+	 * 
+	 * @params string name of the attribute
+	 * @params string value of the attribute to check and set
+	 * @return null
+	 */
+	function setAttributeOrEmpty($attribute_name, $attribute_value)
+	{
+		if(empty($attribute_name)) return;
+
+		if(!empty($attribute_value))
+			$this->params->set($attribute, "{$attribute}=\"{$attribute_value}\"");
+		else
+			$this->params->set($attribute, "");
+	}
+	//}}}
+	
+	//{{{ setLanguageAttributeOrEmpty
+	/**
+	 * Does the same but additionally tries to detect language constants, convert
+	 * them and set as a part of (or whole) attribute value.
+	 *
+	 * @params string name of the attribute
+	 * @params string value of the attribute to check and set
+	 * @return null
+	 */
+	function setLanguageAttributeOrEmpty($attribute_name, $attribute_value)
+	{
+		if(empty($attribute_name)) return;
+
+		if(!empty($attribute_value))
+			$this->params->set($attribute, "{$attribute}=\"{Language::encodePair($attribute_value)}\"");
+		else
+			$this->params->set($attribute, "");
+	}
+	//}}}
+	
 	//{{{ flushVars
 	/**
 	 * Cleans current parameters.
