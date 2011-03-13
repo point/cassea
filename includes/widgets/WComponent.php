@@ -582,22 +582,26 @@ abstract class WComponent extends WObject
     }
     //}}}
     
-	// {{{ setData
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    array $data
-    * @return   void
-	*/
+	//{{{ setData
+	/**
+	 * This method is called during the phase of setting data in
+	 * the models' code. So, when all widgets are built, the 
+	 * information from all the models are gathered, the
+	 * setData method is called over all widgets. 
+	 * This information store in {@link WidgetResultSet} object,
+	 * passing as a parameter. It's a simply value object, which 
+	 * holds data, addressed with the selector.
+	 *
+	 * It sets the basic info, so the custom widgets should take 
+	 * about calling <code>parent::setData()</code> in overloading
+	 * <code>setData</code> method.
+	 *
+	 * @param    WidgetResultSet data object with data to set
+	 * @return   void
+	 */
     function setData(WidgetResultSet $data)
 	{
 		$controller = Controller::getInstance();
-		if(isset($data->style))
-			$this->setStyle($controller->getStyleByName($data->get('style')));
-
-		if(isset($data->javascript))
-			$this->setJavaScript($controller->getJavaScriptByName($data->get('javascript')));
 
 		if(isset($data->visible))
 			$this->setVisible($data->get('visible'));
@@ -608,33 +612,37 @@ abstract class WComponent extends WObject
 		if(isset($data->title))
 			$this->setTitle($data->get('title'));
 
-		if(isset($data->tooltip))
-			$this->setTooltip($data->get('tooltip'));
-
 		if(isset($data->html_id))
 			$this->setHTMLId($data->html_id);
 
-		if(isset($data->class))
-			$this->addStyleClass($data->get('class'));
+		if(isset($data->addClass))
+			$this->addStyleClass($data->get('addClass'));
 
-		if(isset($data->hide_if_empty))
-			$this->setHideIfEmpty($data->get('hide_if_empty'));
+		if(isset($data->toggleClass))
+			$this->toggleStyleClass($data->get('toggleClass'));
 
-		if(isset($data->hide_if_hidden))
-			$this->setHideIfHidden($data->get('hide_if_hidden'));
+		if(isset($data->removeClass))
+			$this->removeStyleClass($data->get('removeClass'));
 
         $this->setDataSet(true);
     }
-	// }}}
+	//}}}
     
-    // {{{ setHTMLId
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @param    string $html_id
-    * @return   void
-    */
+	//{{{ setHTMLId
+	/**
+	 * Sets id, that will be outputted to the "id" tag attribute. 
+	 * It may differs from the object's id property. The additional 
+	 * incremental value is adding to it while staying inside the WRoll.
+	 *
+	 * It's mostly for internal use, but there ara possibilities to change
+	 * it from the successor's methods or even by the dataset (but it's not recommended).
+	 *
+	 * The <code>html_id</code> property is always defined because it initializes
+	 * in the constructor of the object.
+	 *
+	 * @param    string id to set to the HTML tag
+	 * @return   void
+	 */
     function setHTMLId($html_id)
     {
 		if(!isset($html_id) || !is_scalar($html_id)) 
@@ -648,92 +656,81 @@ abstract class WComponent extends WObject
 
 		$this->html_id = $html_id;	
     }
-	// }}}
+	//}}}
     
-	// {{{ getHTMLId
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @return   string
-    */
+	//{{{ getHTMLId
+	/**
+	 * Returns value of the <code>html_id</code> property.
+	 *
+	 * @return   string
+	 */
     function getHTMLId()
     {
 		return $this->html_id;
     }
-	// }}}
+	//}}}
 
-	// {{{ assignVars
-    /**
-    * method description
-    *
-    * more detailed method description
-    * @param    string $tooltip
-    * @return   void
-    */
+	//{{{ assignVars
+	/**
+	 * This method is called inside the {@link generateHTML} method and 
+	 * it sets the information which will be passed to the template.
+	 *
+	 * It adds only the basic info, so every widget overwrites it to 
+	 * add passing data about their own special attributes to the templates.
+	 * Do not forget to call <code>parent::assignVars()</code> in this case.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
     function assignVars()
     {
 
 		if(!$this->getState()) return;
-		//TODO rework this part
-		if(!empty($this->html_id))
-        {
-            $final_html_id = $this->getHTMLId();
-        }
 		if($this->inside_roll || $this->do_increment)
-		{
-			//$final_html_id = ltrim($this->id,"_")."_".$this->add_html_id;
-			//$this->setHTMLId($final_html_id);
-			$this->setHTMLId($final_html_id = $this->html_id."_".$this->add_html_id);
-		}
-		/*else 
-		{
-			$final_html_id = ltrim($this->id,"_");
-			$this->setHTMLId($final_html_id);
-		}*/
-		if(isset($this->tooltip))
-		{
-			$html_id = $this->getHTMLId();
-			$js = <<<EOD
-$(document).ready(function(){
-	$('#{$html_id}').tooltip({track: true,delay: 0,showURL: false,showBody:false,opacity: 0.85 });
-});
-EOD;
-			$this->javascript->addBeforeWidget($js);
-			$this->setTitle($this->getTooltip());
-		}
+			$this->setHTMLId($this->html_id."_".$this->add_html_id);
 
-        if(isset($this->tpl))
-        {
-            $this->tpl->setParamsArray(array("title"=>isset($this->title)?" title=\"".Language::encodePair($this->getTitle())."\" ":"",
-                "id"=>$this->getHTMLId()));
-            if(!empty($this->style_class)) 
-                $this->tpl->setParamsArray(array("class"=>" class=\"".implode(" ", $this->getStyleClasses())."\" "));
-            if(isset($this->style) && !$this->style->isEmpty()) 
-                $this->tpl->setParamsArray(array("style"=>" style=\"".$this->style->generateStyle()."\" "));
-            if(!empty($this->javascript)) 
-                $this->tpl->setParamsArray(array("javascript"=>Language::encodePair(" ".$this->javascript->generateJS()),
-                    "javascript_before"=>Language::encodePair($this->javascript->getBeforeWidget()),
-                    "javascript_after"=>Language::encodePair($this->javascript->getAfterWidget())));
-        }
+        if(!isset($this->tpl)) return;
+
+		$this->tpl->setLanguageAttributeOrEmpty("title",  $this->getTitle());
+		$this->tpl->setParamsArray(array("id"=>$this->getHTMLId()));
+		$this->tpl->setLanguageAttributeOrEmpty("class",  $this->getTitle());
+		if(!empty($this->style_class)) 
+			$this->tpl->setLanguageAttributeOrEmpty("class", implode(" ", $this->getStyleClasses()));
     }
 	// }}}
     
-	// {{{ handleEvent
+	//{{{ handleEvent
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    WidgetEvent $event
-    * @return   void
-    */
+	 * This method is called over all widgets when somebody triggers message handling.
+	 *
+	 * Custom widget class could override this method to add some special event processing, 
+	 * but do not forget about calling parent's method.
+	 *
+	 * All information about the parameters of generated event (such as name, parameters, etc)
+	 * could be found in {@link WidgetEvent} object.
+	 *
+	 * To be the subscriber of the events, method "addSubscriver" of WidgetEventDispatcher object should be called:
+	 * <pre><code>
+	 *	Controller::getInstance()->getDispatcher()->addSubscriber("__event_name__", "__widget_id__");
+	 * </code></pre>
+	 * The <code>__widget_id__</code> is usually the <code>$this->getId()</code> call.
+	 *
+	 * To trigger handling of "__event_name__" eventthere should be such method call:
+	 * <pre><code>
+	 * Controller::getInstance()->getDispatcher()->notify(new WidgetEvent("__event_name__"));
+	 * </pre></code>
+	 *
+	 * To cancel widget subscription to any event, use such call:
+	 * <pre><code>
+	 * Controller::getInstance()->getDispatcher()->deleteSubscriber("__event_name__", "__widget_id__");
+	 * </code></pre>
+	 * 
+	 * @param    WidgetEvent $event
+	 * @return   void
+	 */
     function handleEvent(WidgetEvent $event)
     {
-		if($event->getName() === "increment_id" /*&& $event->inDst($this->getId())*/)
-		{
-			$this->do_increment = 0 + $event->getParam('do_increment');
-		}
-		elseif($event->getName() == "all_build_complete")
+		if($event->getName() == "all_build_complete")
 		{
 			$controller = Controller::getInstance();
 			$_w2 = $this;
@@ -743,7 +740,6 @@ EOD;
 				else  $_w2 = $controller->getWidget($_p);
 			if($has_roll)
 			{
-				$controller->getDispatcher()->addSubscriber("increment_id", $this->getId());
 				$this->inside_roll = 1;
 				$this->do_increment = 1;
 			}
@@ -753,12 +749,19 @@ EOD;
     
 	//{{{ createMemento
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * Memento holds copy of the internal data to recover and thus to
+	 * re-create initial state of the widget. It's heavily used inside
+	 * the WRoll to revert state and apply info, passed via setData as if
+	 * it was untouched widget.
+	 *
+	 * Not all properties will be reverted, but only those, which was pointed in 
+	 * <code>addToMemento</code> method.
+	 *
+	 * The {@link restoreMemento} method may be called to restore data.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
 	function createMemento()
 	{
 		$x = new ReflectionClass(get_class($this));
@@ -773,27 +776,30 @@ EOD;
     
 	//{{{ addToMemento
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    array $vars
-    * @return   void
-    */
+	 * Adds to list properties which should be store in memento while
+	 * {@link createMemento} method call.
+	 *
+	 * @param    array|string the set of string with tne names of properties to store
+	 * @return   void
+	 */
 	function addToMemento($vars)
 	{
-		if(!is_array($vars)) return;
+		if(!is_array($vars) && !is_string($vars)) return;
+		if(is_string($vars))
+			$vars = array($vars);
+
 		$this->memento_vars = array_merge($this->memento_vars,$vars);
 	}
 	//}}}
     
-	// {{{ restoreMemento
+	//{{{ restoreMemento
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * Restores object state (only that object properties which has been pointed in {@link addToMemento} method) 
+	 * with the saved values.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
 	function restoreMemento()
 	{
 		foreach($this->memento as $k => $v)
@@ -850,7 +856,6 @@ EOD;
 	{
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
-		//$controller->getDispatcher()->deleteSubscriber("increment_id", $this->id);
 	}
 	//}}}	
     
