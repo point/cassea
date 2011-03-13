@@ -800,21 +800,24 @@ abstract class WComponent extends WObject
 	 * @param    void
 	 * @return   void
 	 */
-	function restoreMemento()
+	function restoreMtemento()
 	{
 		foreach($this->memento as $k => $v)
 			$this->$k = $this->memento[$k];
 	}
 	//}}}	
 
-	// {{{ buildComplete
+	//{{{ buildComplete
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * This method is called by the Controller class when all actions were made by controller and
+	 * widget is ready for use.
+	 *
+	 * This method could be orverrided to make any setup. The <code>parent::buildComplete</code>
+	 * call is required.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
 	function buildComplete()
 	{
 		if(empty($this->class_vars))
@@ -824,18 +827,26 @@ abstract class WComponent extends WObject
 	}
 	//}}}	
 
-	// {{{ preRender
+	//{{{ preRender
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * This is callback right before <code>generateHTML()</code> method invokation.
+	 * At this stage all the info is passed from the models, calculated, all event 
+	 * handler were called and everything is ready to render a template.
+	 *
+	 * Inside, this method additionally checks if data was set. The place of invokation of 
+	 * <code>checkAndSetData</code> is not strongly limited. In trivial cases, it will be called
+	 * here, in <code>WComponent::preRender()</code> method.
+	 *
+	 * Take in consideration, that if widget is rendering inside the {@link WRoll}, the 
+	 * <code>preRender()</code>, <code>generateHTML</code>, <code>postRender</code> methods
+	 * will be called on each iteration step.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
 	function preRender()
     {
         $this->checkAndSetData();
-
 
 		$controller = Controller::getInstance();
 		if($this->do_increment)
@@ -844,14 +855,15 @@ abstract class WComponent extends WObject
 	}
 	//}}}	
 
-	// {{{ postRender
+	//{{{ postRender
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * This method is called by the Controller when HTML was generated.
+	 * Usually, it's used for cleaning data, event unsubscribing, etc.
+	 *
+	 * more detailed method description
+	 * @param    void
+	 * @return   void
+	 */
 	function postRender()
 	{
 		$controller = Controller::getInstance();
@@ -859,120 +871,38 @@ abstract class WComponent extends WObject
 	}
 	//}}}	
     
-	// {{{ messageInterchange
+	//{{{ messageInterchange
 	/**
-    * method description
-    *
-    * more detailed method description
-    * @param    void
-    * @return   void
-    */
+	 * This method is called by the controller after
+	 * <code>buildComplete</code> but before <code>preRender</code>
+	 * to arrange communication between widgets using Controller's 
+	 * WidgetEventDispatcher object (retrived by the <code>$controller->getDispatcher() call).
+	 *
+	 * Beware, that data from the models hasn't been assigned yet.
+	 *
+	 * @param    void
+	 * @return   void
+	 */
 	function messageInterchange()
 	{
-		$controller = Controller::getInstance();
-		if(isset($this->hide_if_hidden_id))
-		{
-			$w = null;
-			$w = $controller->getWidget($this->getHideIfHidden());
-			if(!empty($w) && (!$w->getVisible() || !$w->getState()))
-				$this->setVisible(0);
-		}
-		if(isset($this->hide_if_empty_id))
-		{
-			$w = null;
-			$w = $controller->getWidget($this->getHideIfEmpty());
-			if(isset($w))
-			{
-				if(method_exists($w,"getText"))
-				{
-					$t = $w->getText();
-					if(empty($t))
-						$this->setVisible(0);
-				}
-				if($w instanceof WControl)
-				{
-					$v = $w->getValue();
-					if(empty($v))
-						$this->setVisible(0);
-				}
-				if(isset($w->items) && $w->items instanceof WidgetCollection && $w->items->isEmpty())
-					$this->setVisible(0);
-			}
-		}
 	}
 	//}}}	
     
-	// {{{ setHideIfHidden
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $hidden_id
-    * @return   void
-    */
-    function setHideIfHidden($hidden_id)
-    {
-		if(!isset($hidden_id)) 
-			return;
-		$this->hide_if_hidden_id = "".$hidden_id;
-    }
-    // }}}
-    
-    // {{{ getHideIfHidden
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    null
-    * @return   string
-    */
-    function getHideIfHidden()
-    {
-    	return $this->hide_if_hidden_id;
-    }
-    // }}}
-    
-	// {{{ setHideIfEmpty
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    boolean $empty_id
-    * @return   void
-    */
-    function setHideIfEmpty($empty_id)
-    {
-		if(!isset($empty_id)) 
-		{
-			/*$this->log->log(WHelper::alogf(__FILE__,__FUNCTION__,__LINE__,
-				"Enable parameter is empty"),LOG_LEVEL_WARNING);*/
-			return;
-		}	
-		$this->hide_if_empty_id = "".$empty_id;
-    }
-    // }}}
-    
-    // {{{ getHideIfEmpty
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    null
-    * @return   string
-    */
-    function getHideIfEmpty()
-    {
-    	return $this->hide_if_empty_id;
-    }
-    // }}}
-	
 	// {{{ setStringProcess
     /**
-    * Method description
+	 * Sets the instructions for string processor, which additionally
+	 * modifies the output of the widget from the user's point of view.
+	 * For example, if string "capitalize" is passed and the current widget
+	 * is {@link WText}:
+	 * <pre><code>
+	 *	<WText>some text</WText>
+	 * </code></pre>
+	 * then the HTML value of this tag will be capitalized and
+	 * browser will render "<p>SOME TEXT</p>".
     *
-    * More detailed method description
-    * @param    boolean $empty_id
+    * @param    string string processor intstructions
     * @return   void
+	* @see StringProcessor
     */
     function setStringProcess($str)
     {
@@ -983,9 +913,8 @@ abstract class WComponent extends WObject
     
     // {{{ getStringProcess
     /**
-    * Method description
+    * Returns string processor instruction string.
     *
-    * More detailed method description
     * @param    null
     * @return   string
     */
@@ -995,22 +924,30 @@ abstract class WComponent extends WObject
     }
     // }}}
 	
-	// {{{ createTemplate
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    string $path
-    * @param    string $tpl_name
-    * @return   void
-    */
+	//{{{ createTemplate
+	/**
+	 * This method tries to find, create and return the template to render
+	 * particular widget.
+	 *
+	 * If given $path is null the places to search templates are:
+	 * 1) /vendors/widgets/templates/__class_name__ (this made to easily override default templates, stored in (2))
+	 * 2) /includes/widgets/templates/__class_name__ 
+	 *
+	 * If the path was found, and no $tpl_name is given, the <code>$this->template_name</code> file is searching.
+	 * <code>$tpl_name</code> may optionally ends with ".tpl" extenstion.
+	 *
+	 * @param    string 
+	 * @param    string $tpl_name
+	 * @return   void
+	 * @throws   WidgetException
+	 */
     function createTemplate($path = null, $tpl_name = null)
     {
 		if (is_null($path)){
 			$conf = Config::getInstance();
 			if(is_dir( $path = $conf->root_dir.$conf->vendors_dir."/widgets/templates/".get_class($this)));
 			elseif(is_dir($path = $conf->root_dir."/includes/widgets/templates/".get_class($this)));
-			else throw new ControllerException(' Template path for widget '.get_class($this).' not found');
+			else throw new WidgetException(' Template path for widget '.get_class($this).' not found');
 		}
 		
 		if (is_null($tpl_name) && is_null($this->template_name)) $tpl_name = 'default.tpl';
@@ -1022,20 +959,18 @@ abstract class WComponent extends WObject
     }
     // }}}
 
-    // {{{ getInsideRoll
-    /**
-    * Method description
-    *
-    * More detailed method description
-    * @param    null
-    * @return   string
-    */
+	//{{{ getInsideRoll
+	/**
+	 * Returns boolean flag if current widget is inside {@link WRoll}.
+	 *
+	 * @param    null
+	 * @return   bool
+	 */
     function isInsideRoll()
     {
     	return $this->inside_roll;
     }
     // }}}
-
 }
 //}}}
 ?>
