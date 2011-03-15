@@ -51,39 +51,39 @@ abstract class WComponent extends WObject
 		 * @var string holds CSS classes for the widget
 		 */
 		$style_class = array(),
-		/**
-		 * @var boolean defines whether widget is in "enabled" or "disabled" state
-		 */
-		$state = true,
-		/**
-		 * @var string holds the name of the file with template to render to show the widget
-		 */
-		$template_name = "default",
-		/**
-		 * @var CTemplate& object which renders the HTML responce
-		 */
-		$tpl = null,
-		/**
-		 * @var string HTML title property
-		 */
-		$title = null,
-		/**
-		 * @var boolean defines visibility of the widget
-		 */
-		$visible = true,
-		/**
-		 * @var      string
-		 */
-		$html_id = "",
-		/**
-		 * @var array holds all the class variables (including protected)
-		 */
-		$class_vars = array(),
-		/**
-		 * @var string parameters for {@link StringProcessor}
-		 */
-		$string_process = null
-		;
+			/**
+			 * @var boolean defines whether widget is in "enabled" or "disabled" state
+			 */
+			$state = true,
+			/**
+			 * @var string holds the name of the file with template to render to show the widget
+			 */
+			$template_name = "default",
+			/**
+			 * @var CTemplate& object which renders the HTML response
+			 */
+			$tpl = null,
+			/**
+			 * @var string HTML title property
+			 */
+			$title = null,
+			/**
+			 * @var boolean defines visibility of the widget
+			 */
+			$visible = true,
+			/**
+			 * @var      string
+			 */
+			$html_id = "",
+			/**
+			 * @var array holds all the class variables (including protected)
+			 */
+			$class_vars = array(),
+			/**
+			 * @var string parameters for {@link StringProcessor}
+			 */
+			$string_process = null
+			;
 
 	/**
 	 * @var int if no id is given, this incremented value will be used in id creation
@@ -108,15 +108,15 @@ abstract class WComponent extends WObject
 		 */
 		$memento = array(),
 		/**
-		 * @var array list of the var names to store in memnto
+		 * @var array list of the var names to store in memento
 		 */
 		$memento_vars = array(),
 		/**
-		 * @var string id of the widget, lowercased. Optimization for WidgetSelector
+		 * @var string id of the widget, lower cased. Optimization for WidgetSelector
 		 */
 		$id_lower = null,
 		/**
-		 * @var string id of the widget, lowercased. Optimization for WidgetSelector
+		 * @var string id of the widget, lower cased. Optimization for WidgetSelector
 		 */
 		$class_lower = null,
 		/**
@@ -128,7 +128,7 @@ abstract class WComponent extends WObject
 	//{{{ setID 
 	/**
 	 * Redefines parent's setId method to handle empty id attribute
-	 * and to cache lowercased versions of id and class name.
+	 * and to cache lower cased versions of id and class name.
 	 *
 	 * @param    string id of the widget
 	 * @return   void
@@ -143,10 +143,10 @@ abstract class WComponent extends WObject
 		$this->setHTMLId($this->getId());
 	}
 	//}}}
-    
+
 	//{{{ getIDLower
 	/**
-	 * Returns cached lowercased version of the id of the widget
+	 * Returns cached lower cased version of the id of the widget
 	 *
 	 * @param    void
 	 * @return   string
@@ -159,7 +159,7 @@ abstract class WComponent extends WObject
 
 	//{{{ getClassLower
 	/**
-	 * Returns cached lowercased class name
+	 * Returns cached lower cased class name
 	 *
 	 * @param    void
 	 * @return   string
@@ -169,7 +169,7 @@ abstract class WComponent extends WObject
 		return $this->class_lower;
 	}
 	//}}}
-	
+
 	//{{{ setEnabled 
 	/**
 	 * Alias of setState.
@@ -215,7 +215,7 @@ abstract class WComponent extends WObject
 
 	}
 	//}}}
-    
+
 	//{{{ setTemplate 
 	/**
 	 * Sets template name to render. By default, the "default.tpl" will be rendered.
@@ -230,7 +230,7 @@ abstract class WComponent extends WObject
 		$this->template_name = $template_name;
 	}
 	//}}}
-    
+
 	//{{{ getStyleClasses
 	/**
 	 * Returns the array of style classes which are defined for the 
@@ -244,14 +244,14 @@ abstract class WComponent extends WObject
 		return $this->style_class;
 	}
 	//}}}
-    
+
 	//{{{ addStyleClass
 	/**
 	 * Adds style class (or style classes) to the current list.
 	 *
 	 * They should be specified using the "class" attribute in widget declaration.
 	 * 
-	 * The parameter could have several classes to set devided with the spaces. 
+	 * The parameter could have several classes to set divided with the spaces. 
 	 * This case will be handled properly.
 	 *
 	 * @param    string name (or name) of classes to add
@@ -272,7 +272,7 @@ abstract class WComponent extends WObject
 	 *
 	 * The supported parameter formats:
 	 * - single word string
-	 * - several words separated with the whitespace
+	 * - several words separated with the white space
 	 * - array of single strings
 	 *
 	 * @param    string|array name (or name) of classes to remove
@@ -290,7 +290,7 @@ abstract class WComponent extends WObject
 		foreach($style_class as $value)
 			if($flipped[$value])
 				unset($this->style_class[$flipped[$value]]);
-		
+
 		$this->style_class = array_values($this->style_class);
 	}
 	//}}}
@@ -301,7 +301,7 @@ abstract class WComponent extends WObject
 	 *
 	 * The supported parameter formats:
 	 * - single word string
-	 * - several words separated with the whitespace
+	 * - several words separated with the white space
 	 * - array of single strings
 	 *
 	 * @param    string|array name (or name) of classes to toggle
@@ -322,7 +322,7 @@ abstract class WComponent extends WObject
 				$this->addStyleClass($class);
 	}
 	//}}}
-    
+
 	//{{{ setVisible 
 	/**
 	 * Sets visibility of the widget. The hidden widget (with visibility == false)
@@ -339,7 +339,7 @@ abstract class WComponent extends WObject
 		$this->visible = (bool)$visible;
 	}
 	//}}}
-    
+
 	// {{{ getVisible 
 	/**
 	 * Returns the visibility state of the widget
@@ -384,25 +384,25 @@ abstract class WComponent extends WObject
 		return $this->state;
 	}
 	//}}}
-	
-    //{{{ setTitle 
-    /**
+
+	//{{{ setTitle 
+	/**
 	 * Defines the HTML "title" attribute. It could be set using
 	 * widget's "title" attribute.
-    *
-    * More detailed method description
-    * @param    string $title    
-    * @return   void
-    */
-    function setTitle($title)
-    {
+	 *
+	 * More detailed method description
+	 * @param    string $title    
+	 * @return   void
+	 */
+	function setTitle($title)
+	{
 		if(!isset($title) || !is_scalar($title)) 
 			return;
 
 		$this->title = "".$title;
-    }
-    //}}}
-    
+	}
+	//}}}
+
 	//{{{ getTitle 
 	/**
 	 * Returns title the widget
@@ -444,16 +444,16 @@ abstract class WComponent extends WObject
 		return $set;
 	}
 	//}}}
-    
-    //{{{ getAttribute 
-    /**
-    * Returns the value of the specified attribute
-    *
-    * @param    string attribute value to get
-    * @return   mixed
-    */
-    function getAttribute($attribute)
-    {
+
+	//{{{ getAttribute 
+	/**
+	 * Returns the value of the specified attribute
+	 *
+	 * @param    string attribute value to get
+	 * @return   mixed
+	 */
+	function getAttribute($attribute)
+	{
 		if(!isset($attribute)) 
 			return null;
 
@@ -463,10 +463,10 @@ abstract class WComponent extends WObject
 				return $v;
 
 		return null;
-    }
-    // }}}
-    
-    //{{{ getDataSet
+	}
+	// }}}
+
+	//{{{ getDataSet
 	/**
 	 * Retrieves the flag which shows whether data
 	 * is set to the widget.
@@ -479,8 +479,8 @@ abstract class WComponent extends WObject
 		return $this->data_set;
 	}
 	//}}}
-    
-    //{{{ setDataSet
+
+	//{{{ setDataSet
 	/**
 	 * Assigns the flag which shows whether data
 	 * is set to the widget.
@@ -488,19 +488,19 @@ abstract class WComponent extends WObject
 	 * @param    bool the flag to set
 	 * @return   void
 	 */
-    function setDataSet($set)
-    {
-        $this->data_set = (bool)$set;
-    }
-    //}}}
+	function setDataSet($set)
+	{
+		$this->data_set = (bool)$set;
+	}
+	//}}}
 
 	//{{{ checkAndSetData
 	/**
 	 * Checks if the data could be set for the widget. And 
-	 * if everything is ok the data is assigned for the 
+	 * if everything is OK the data is assigned for the 
 	 * particular object, using the DataRetriever helper class.
 	 *
-	 * It's used generaly by the system and shouldn't be called
+	 * It's used generally by the system and shouldn't be called
 	 * from the client's code.
 	 *
 	 * @param    void
@@ -521,7 +521,7 @@ abstract class WComponent extends WObject
 	 * Returns name of the method which dispatches the 
 	 * data, came from the model. 
 	 *
-	 * It's used generaly by the system and shouldn't be called
+	 * It's used generally by the system and shouldn't be called
 	 * from the client's code.
 	 *
 	 * @param    void
@@ -532,7 +532,7 @@ abstract class WComponent extends WObject
 		return "setData";
 	}
 	//}}}
-    
+
 	//{{{ parseParams 
 	/**
 	 * The number two method which is called to initialize all internal
@@ -548,40 +548,40 @@ abstract class WComponent extends WObject
 	 * @param    SimpleXMLElement
 	 * @return   void
 	 */
-    function parseParams(SimpleXMLElement $params)
+	function parseParams(SimpleXMLElement $params)
 	{
 		if(isset($params['enabled'])) 
 			$this->setState(0+$params['enabled']);
 
-        $a = $d = null;
-        if(isset($params['allow']))
-            $a = (string)$params['allow'];
-        if(isset($params['deny']))
-            $d = (string)$params['deny'];
-        if(!ACL::check($a,$d))
-            $this->setState(0);
+		$a = $d = null;
+		if(isset($params['allow']))
+			$a = (string)$params['allow'];
+		if(isset($params['deny']))
+			$d = (string)$params['deny'];
+		if(!ACL::check($a,$d))
+			$this->setState(0);
 
 		if(isset($params['title'])) $this->setTitle((string)$params['title']);
 		if(isset($params['visible'])) $this->setVisible(0+$params['visible']);
 
-        if(isset($params['class'])) 
-            $this->addStyleClass((string)$params['class']);
+		if(isset($params['class'])) 
+			$this->addStyleClass((string)$params['class']);
 
 		if(isset($params['template']))
 			$this->setTemplate((string)$params['template']);
 
-        if(isset($params['process']))
-            $this->setStringProcess((string)$params['process']);
+		if(isset($params['process']))
+			$this->setStringProcess((string)$params['process']);
 
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->addEvent("increment_id");	
 		$controller->getDispatcher()->addEvent("all_build_complete");	
 		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
-		
-        $this->addToMemento(array("enabled","title","visible","html_id","style_class"));
-    }
-    //}}}
-    
+
+		$this->addToMemento(array("enabled","title","visible","html_id","style_class"));
+	}
+	//}}}
+
 	//{{{ setData
 	/**
 	 * This method is called during the phase of setting data in
@@ -599,7 +599,7 @@ abstract class WComponent extends WObject
 	 * @param    WidgetResultSet data object with data to set
 	 * @return   void
 	 */
-    function setData(WidgetResultSet $data)
+	function setData(WidgetResultSet $data)
 	{
 		$controller = Controller::getInstance();
 
@@ -624,17 +624,17 @@ abstract class WComponent extends WObject
 		if(isset($data->removeClass))
 			$this->removeStyleClass($data->get('removeClass'));
 
-        $this->setDataSet(true);
-    }
+		$this->setDataSet(true);
+	}
 	//}}}
-    
+
 	//{{{ setHTMLId
 	/**
 	 * Sets id, that will be outputted to the "id" tag attribute. 
 	 * It may differs from the object's id property. The additional 
 	 * incremental value is adding to it while staying inside the WRoll.
 	 *
-	 * It's mostly for internal use, but there ara possibilities to change
+	 * It's mostly for internal use, but there are possibilities to change
 	 * it from the successor's methods or even by the dataset (but it's not recommended).
 	 *
 	 * The <code>html_id</code> property is always defined because it initializes
@@ -643,8 +643,8 @@ abstract class WComponent extends WObject
 	 * @param    string id to set to the HTML tag
 	 * @return   void
 	 */
-    function setHTMLId($html_id)
-    {
+	function setHTMLId($html_id)
+	{
 		if(!isset($html_id) || !is_scalar($html_id)) 
 			return;
 
@@ -655,19 +655,19 @@ abstract class WComponent extends WObject
 				str_replace(']','_',$html_id));
 
 		$this->html_id = $html_id;	
-    }
+	}
 	//}}}
-    
+
 	//{{{ getHTMLId
 	/**
 	 * Returns value of the <code>html_id</code> property.
 	 *
 	 * @return   string
 	 */
-    function getHTMLId()
-    {
+	function getHTMLId()
+	{
 		return $this->html_id;
-    }
+	}
 	//}}}
 
 	//{{{ assignVars
@@ -682,23 +682,23 @@ abstract class WComponent extends WObject
 	 * @param    void
 	 * @return   void
 	 */
-    function assignVars()
-    {
+	function assignVars()
+	{
 
 		if(!$this->getState()) return;
 		if($this->inside_roll || $this->do_increment)
 			$this->setHTMLId($this->html_id."_".$this->add_html_id);
 
-        if(!isset($this->tpl)) return;
+		if(!isset($this->tpl)) return;
 
 		$this->tpl->setLanguageAttributeOrEmpty("title",  $this->getTitle());
 		$this->tpl->setParamsArray(array("id"=>$this->getHTMLId()));
 		$this->tpl->setLanguageAttributeOrEmpty("class",  $this->getTitle());
 		if(!empty($this->style_class)) 
 			$this->tpl->setLanguageAttributeOrEmpty("class", implode(" ", $this->getStyleClasses()));
-    }
+	}
 	// }}}
-    
+
 	//{{{ handleEvent
 	/**
 	 * This method is called over all widgets when somebody triggers message handling.
@@ -728,8 +728,8 @@ abstract class WComponent extends WObject
 	 * @param    WidgetEvent $event
 	 * @return   void
 	 */
-    function handleEvent(WidgetEvent $event)
-    {
+	function handleEvent(WidgetEvent $event)
+	{
 		if($event->getName() == "all_build_complete")
 		{
 			$controller = Controller::getInstance();
@@ -744,9 +744,9 @@ abstract class WComponent extends WObject
 				$this->do_increment = 1;
 			}
 		}
-    }
+	}
 	//}}}
-    
+
 	//{{{ createMemento
 	/**
 	 * Memento holds copy of the internal data to recover and thus to
@@ -773,13 +773,13 @@ abstract class WComponent extends WObject
 					$this->memento[$v] = $this->$v;
 	}
 	//}}}	
-    
+
 	//{{{ addToMemento
 	/**
 	 * Adds to list properties which should be store in memento while
 	 * {@link createMemento} method call.
 	 *
-	 * @param    array|string the set of string with tne names of properties to store
+	 * @param    array|string the set of string with the names of properties to store
 	 * @return   void
 	 */
 	function addToMemento($vars)
@@ -791,7 +791,7 @@ abstract class WComponent extends WObject
 		$this->memento_vars = array_merge($this->memento_vars,$vars);
 	}
 	//}}}
-    
+
 	//{{{ restoreMemento
 	/**
 	 * Restores object state (only that object properties which has been pointed in {@link addToMemento} method) 
@@ -812,7 +812,7 @@ abstract class WComponent extends WObject
 	 * This method is called by the Controller class when all actions were made by controller and
 	 * widget is ready for use.
 	 *
-	 * This method could be orverrided to make any setup. The <code>parent::buildComplete</code>
+	 * This method could be overridden to make any setup. The <code>parent::buildComplete</code>
 	 * call is required.
 	 *
 	 * @param    void
@@ -829,11 +829,11 @@ abstract class WComponent extends WObject
 
 	//{{{ preRender
 	/**
-	 * This is callback right before <code>generateHTML()</code> method invokation.
+	 * This is callback right before <code>generateHTML()</code> method invocation.
 	 * At this stage all the info is passed from the models, calculated, all event 
 	 * handler were called and everything is ready to render a template.
 	 *
-	 * Inside, this method additionally checks if data was set. The place of invokation of 
+	 * Inside, this method additionally checks if data was set. The place of invocation of 
 	 * <code>checkAndSetData</code> is not strongly limited. In trivial cases, it will be called
 	 * here, in <code>WComponent::preRender()</code> method.
 	 *
@@ -845,13 +845,13 @@ abstract class WComponent extends WObject
 	 * @return   void
 	 */
 	function preRender()
-    {
-        $this->checkAndSetData();
+	{
+		$this->checkAndSetData();
 
 		$controller = Controller::getInstance();
 		if($this->do_increment)
 			$this->add_html_id++;
-        $this->setDataSet(false);
+		$this->setDataSet(false);
 	}
 	//}}}	
 
@@ -870,13 +870,13 @@ abstract class WComponent extends WObject
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
 	}
 	//}}}	
-    
+
 	//{{{ messageInterchange
 	/**
 	 * This method is called by the controller after
 	 * <code>buildComplete</code> but before <code>preRender</code>
 	 * to arrange communication between widgets using Controller's 
-	 * WidgetEventDispatcher object (retrived by the <code>$controller->getDispatcher() call).
+	 * WidgetEventDispatcher object (retrieved by the <code>$controller->getDispatcher() call).
 	 *
 	 * Beware, that data from the models hasn't been assigned yet.
 	 *
@@ -887,9 +887,9 @@ abstract class WComponent extends WObject
 	{
 	}
 	//}}}	
-    
+
 	// {{{ setStringProcess
-    /**
+	/**
 	 * Sets the instructions for string processor, which additionally
 	 * modifies the output of the widget from the user's point of view.
 	 * For example, if string "capitalize" is passed and the current widget
@@ -899,31 +899,31 @@ abstract class WComponent extends WObject
 	 * </code></pre>
 	 * then the HTML value of this tag will be capitalized and
 	 * browser will render "<p>SOME TEXT</p>".
-    *
-    * @param    string string processor intstructions
-    * @return   void
-	* @see StringProcessor
-    */
-    function setStringProcess($str)
-    {
+	 *
+	 * @param    string string processor instructions
+	 * @return   void
+	 * @see StringProcessor
+	 */
+	function setStringProcess($str)
+	{
 		if(empty($str) || !is_string($str)) return;
 		$this->string_process = "".$str;
-    }
-    // }}}
-    
-    // {{{ getStringProcess
-    /**
-    * Returns string processor instruction string.
-    *
-    * @param    null
-    * @return   string
-    */
-    function getStringProcess()
-    {
-    	return $this->string_process;
-    }
-    // }}}
-	
+	}
+	// }}}
+
+	// {{{ getStringProcess
+	/**
+	 * Returns string processor instruction string.
+	 *
+	 * @param    null
+	 * @return   string
+	 */
+	function getStringProcess()
+	{
+		return $this->string_process;
+	}
+	// }}}
+
 	//{{{ createTemplate
 	/**
 	 * This method tries to find, create and return the template to render
@@ -941,23 +941,23 @@ abstract class WComponent extends WObject
 	 * @return   void
 	 * @throws   WidgetException
 	 */
-    function createTemplate($path = null, $tpl_name = null)
-    {
+	function createTemplate($path = null, $tpl_name = null)
+	{
 		if (is_null($path)){
 			$conf = Config::getInstance();
 			if(is_dir( $path = $conf->root_dir.$conf->vendors_dir."/widgets/templates/".get_class($this)));
 			elseif(is_dir($path = $conf->root_dir."/includes/widgets/templates/".get_class($this)));
 			else throw new WidgetException(' Template path for widget '.get_class($this).' not found');
 		}
-		
+
 		if (is_null($tpl_name) && is_null($this->template_name)) $tpl_name = 'default.tpl';
 		elseif(isset($this->template_name)&&(is_null($tpl_name)))
-            $tpl_name = $this->template_name;
+			$tpl_name = $this->template_name;
 
-        $tpl_name = $tpl_name.(substr($tpl_name, -4) == '.tpl'?'':".tpl"); 
+		$tpl_name = $tpl_name.(substr($tpl_name, -4) == '.tpl'?'':".tpl"); 
 		return new Template($path,$tpl_name);
-    }
-    // }}}
+	}
+	// }}}
 
 	//{{{ getInsideRoll
 	/**
@@ -966,11 +966,11 @@ abstract class WComponent extends WObject
 	 * @param    null
 	 * @return   bool
 	 */
-    function isInsideRoll()
-    {
-    	return $this->inside_roll;
-    }
-    // }}}
+	function isInsideRoll()
+	{
+		return $this->inside_roll;
+	}
+	// }}}
 }
 //}}}
 ?>
