@@ -51,39 +51,39 @@ abstract class WComponent extends WObject
 		 * @var string holds CSS classes for the widget
 		 */
 		$style_class = array(),
-			/**
-			 * @var boolean defines whether widget is in "enabled" or "disabled" state
-			 */
-			$state = true,
-			/**
-			 * @var string holds the name of the file with template to render to show the widget
-			 */
-			$template_name = "default",
-			/**
-			 * @var CTemplate& object which renders the HTML response
-			 */
-			$tpl = null,
-			/**
-			 * @var string HTML title property
-			 */
-			$title = null,
-			/**
-			 * @var boolean defines visibility of the widget
-			 */
-			$visible = true,
-			/**
-			 * @var      string
-			 */
-			$html_id = "",
-			/**
-			 * @var array holds all the class variables (including protected)
-			 */
-			$class_vars = array(),
-			/**
-			 * @var string parameters for {@link StringProcessor}
-			 */
-			$string_process = null
-			;
+		/**
+		 * @var boolean defines whether widget is in "enabled" or "disabled" state
+		 */
+		$state = true,
+		/**
+		 * @var string holds the name of the file with template to render to show the widget
+		 */
+		$template_name = "default",
+		/**
+		 * @var CTemplate& object which renders the HTML response
+		 */
+		$tpl = null,
+		/**
+		 * @var string HTML title property
+		 */
+		$title = null,
+		/**
+		 * @var boolean defines visibility of the widget
+		 */
+		$visible = true,
+		/**
+		 * @var      string
+		 */
+		$html_id = "",
+		/**
+		 * @var array holds all the class variables (including protected)
+		 */
+		$class_vars = array(),
+		/**
+		 * @var string parameters for {@link StringProcessor}
+		 */
+		$string_process = null
+		;
 
 	/**
 	 * @var int if no id is given, this incremented value will be used in id creation
@@ -203,16 +203,20 @@ abstract class WComponent extends WObject
 	 * into the response.
 	 * If the widget is not visible or disabled, the empty string will be returned.
 	 *
+	 * It triggers BeforeGenerateHTML and AfterGenerateHTML events.
+	 *
 	 * @param    void
 	 * @return   string
 	 */
 	function generateHTML()
 	{
+		$this->trigger("BeforeGenerateHTML", $this);
 		if(!$this->getState()) return "";
 		$this->assignVars();
-		if($this->getVisible() && isset($this->tpl)) return $this->tpl->getHTML();
-		else return "";
-
+		if($this->getVisible() && isset($this->tpl)) $html = $this->tpl->getHTML();
+		else $html = "";
+		$this->trigger("AfterGenerateHTML", array($this, &$html));
+		return $html;
 	}
 	//}}}
 
@@ -503,6 +507,8 @@ abstract class WComponent extends WObject
 	 * It's used generally by the system and shouldn't be called
 	 * from the client's code.
 	 *
+	 * It triggers BeforeCheckAndSetData and AfterCheckAndSetData events.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
@@ -510,8 +516,10 @@ abstract class WComponent extends WObject
 	{
 		if(!$this->getDataSet() && !$this instanceof iNotSelectable)
 		{
+			$this->trigger("BeforeCheckAndSetData", $this);
 			$this->restoreMemento();
 			DataRetriever::manageData($this->getId());
+			$this->trigger("AfterCheckAndSetData", $this);
 		}
 	}
 	//}}}
@@ -545,11 +553,15 @@ abstract class WComponent extends WObject
 	 * current object state. It will be need when the object will has to
 	 * restore the initial state inside the roll iteration.
 	 *
+	 * Triggers BeforeParseParams and AfterParseParams events.
+	 *
 	 * @param    SimpleXMLElement
 	 * @return   void
 	 */
 	function parseParams(SimpleXMLElement $params)
 	{
+		$this->trigger("BeforeParseParams", array($this, $params));
+
 		if(isset($params['enabled'])) 
 			$this->setState(0+$params['enabled']);
 
@@ -579,6 +591,8 @@ abstract class WComponent extends WObject
 		$controller->getDispatcher()->addSubscriber("all_build_complete", $this->getId());;
 
 		$this->addToMemento(array("enabled","title","visible","html_id","style_class"));
+
+		$this->trigger("AfterParseParams", $this);
 	}
 	//}}}
 
@@ -596,11 +610,15 @@ abstract class WComponent extends WObject
 	 * about calling <code>parent::setData()</code> in overloading
 	 * <code>setData</code> method.
 	 *
+	 * It triggers BeforeSetData and AfterSetData events.
+	 *
 	 * @param    WidgetResultSet data object with data to set
 	 * @return   void
 	 */
 	function setData(WidgetResultSet $data)
 	{
+		$this->trigger("BeforeSetData", array($this, $data));
+
 		$controller = Controller::getInstance();
 
 		if(isset($data->visible))
@@ -625,6 +643,8 @@ abstract class WComponent extends WObject
 			$this->removeStyleClass($data->get('removeClass'));
 
 		$this->setDataSet(true);
+
+		$this->trigger("AfterSetData", $this);
 	}
 	//}}}
 
@@ -679,11 +699,14 @@ abstract class WComponent extends WObject
 	 * add passing data about their own special attributes to the templates.
 	 * Do not forget to call <code>parent::assignVars()</code> in this case.
 	 *
+	 * It triggers BeforeAssignVars and AfterAssignVars events.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
 	function assignVars()
 	{
+		$this->trigger("BeforeAssignVars", $this);
 
 		if(!$this->getState()) return;
 		if($this->inside_roll || $this->do_increment)
@@ -696,6 +719,8 @@ abstract class WComponent extends WObject
 		$this->tpl->setLanguageAttributeOrEmpty("class",  $this->getTitle());
 		if(!empty($this->style_class)) 
 			$this->tpl->setLanguageAttributeOrEmpty("class", implode(" ", $this->getStyleClasses()));
+
+		$this->trigger("AfterAssignVars", $this);
 	}
 	// }}}
 
@@ -724,12 +749,16 @@ abstract class WComponent extends WObject
 	 * <pre><code>
 	 * Controller::getInstance()->getDispatcher()->deleteSubscriber("__event_name__", "__widget_id__");
 	 * </code></pre>
+	 *
+	 * It triggers BeforeHandleEvent and AfterHandleEvent events.
 	 * 
 	 * @param    WidgetEvent $event
 	 * @return   void
 	 */
 	function handleEvent(WidgetEvent $event)
 	{
+		$this->trigger("BeforeHandleEvent", array($this, $event));
+
 		if($event->getName() == "all_build_complete")
 		{
 			$controller = Controller::getInstance();
@@ -744,6 +773,8 @@ abstract class WComponent extends WObject
 				$this->do_increment = 1;
 			}
 		}
+
+		$this->trigger("AfterHandleEvent", array($this, $event));
 	}
 	//}}}
 
@@ -759,6 +790,8 @@ abstract class WComponent extends WObject
 	 *
 	 * The {@link restoreMemento} method may be called to restore data.
 	 *
+	 * It triggers AfterCreateMemento event.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
@@ -771,6 +804,8 @@ abstract class WComponent extends WObject
 					$this->memento[$v] = clone $this->$v;
 				else
 					$this->memento[$v] = $this->$v;
+
+		$this->trigger("AfterCreateMemento", array($this, &$this->memento));
 	}
 	//}}}	
 
@@ -797,11 +832,15 @@ abstract class WComponent extends WObject
 	 * Restores object state (only that object properties which has been pointed in {@link addToMemento} method) 
 	 * with the saved values.
 	 *
+	 * It triggers BeforeRestoreMemento event.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
 	function restoreMtemento()
 	{
+		$this->trigger("BeforeRestoreMemento", array(&$this->memento));
+
 		foreach($this->memento as $k => $v)
 			$this->$k = $this->memento[$k];
 	}
@@ -815,15 +854,19 @@ abstract class WComponent extends WObject
 	 * This method could be overridden to make any setup. The <code>parent::buildComplete</code>
 	 * call is required.
 	 *
+	 * It triggers BeforeBuildComplete and AfterBuildComplete events.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
 	function buildComplete()
 	{
+		$this->trigger("BeforeBuildComplete", $this);
 		if(empty($this->class_vars))
 			$this->class_vars = $this->getProperties();
 		if(!$this instanceof iNotSelectable)
 			$this->createMemento();
+		$this->trigger("AfterBuildComplete", $this);
 	}
 	//}}}	
 
@@ -841,17 +884,23 @@ abstract class WComponent extends WObject
 	 * <code>preRender()</code>, <code>generateHTML</code>, <code>postRender</code> methods
 	 * will be called on each iteration step.
 	 *
+	 * It triggers BeforePreRender and AfterPreRender events.
+	 *
 	 * @param    void
 	 * @return   void
 	 */
 	function preRender()
 	{
+		$this->trigger("BeforePreRender", $this);
+
 		$this->checkAndSetData();
 
 		$controller = Controller::getInstance();
 		if($this->do_increment)
 			$this->add_html_id++;
 		$this->setDataSet(false);
+
+		$this->trigger("AfterPreRender", $this);
 	}
 	//}}}	
 
@@ -860,14 +909,17 @@ abstract class WComponent extends WObject
 	 * This method is called by the Controller when HTML was generated.
 	 * Usually, it's used for cleaning data, event unsubscribing, etc.
 	 *
-	 * more detailed method description
+	 * It triggers BeforePostRender and AfterPostRender events.
+	 * 
 	 * @param    void
 	 * @return   void
 	 */
 	function postRender()
 	{
+		$this->trigger("BeforePostRender", $this);
 		$controller = Controller::getInstance();
 		$controller->getDispatcher()->deleteSubscriber("roll_inside", $this->id);
+		$this->trigger("AfterPostRender", $this);
 	}
 	//}}}	
 
@@ -943,6 +995,8 @@ abstract class WComponent extends WObject
 	 */
 	function createTemplate($path = null, $tpl_name = null)
 	{
+		$this->trigger("BeforeCreateTemplate", array($this, $path, $tpl_name));
+
 		if (is_null($path)){
 			$conf = Config::getInstance();
 			if(is_dir( $path = $conf->root_dir.$conf->vendors_dir."/widgets/templates/".get_class($this)));
@@ -955,7 +1009,12 @@ abstract class WComponent extends WObject
 			$tpl_name = $this->template_name;
 
 		$tpl_name = $tpl_name.(substr($tpl_name, -4) == '.tpl'?'':".tpl"); 
-		return new Template($path,$tpl_name);
+
+		$tpl = new Template($path,$tpl_name);
+
+		$this->trigger("AfterCreateTemplate", array($this, &$tpl));
+
+		return $tpl;
 	}
 	// }}}
 
