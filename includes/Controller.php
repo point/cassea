@@ -108,7 +108,7 @@ class Controller extends EventBehavior
 	 * @static
 	 */
 	static  $instance = null;
-	
+
 	public	
 		/**
 		 * Parameters of current request
@@ -142,7 +142,7 @@ class Controller extends EventBehavior
 		;
 
 	protected 
-	
+
 		/**
 		 * Defines whenever to reqister step in Navigator
 		 *
@@ -340,16 +340,16 @@ class Controller extends EventBehavior
 			$this->controller_name = $m[1];
 		else throw new ControllerException('controller name is not defined');
 
-        //some browsers (ie) have bugs, if host contains underscore
-        if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
-            Header::redirect(str_replace("_","-",requestURI(1)), 301);
+		//some browsers (ie) have bugs, if host contains underscore
+		if(strpos($_SERVER['HTTP_HOST'],"_") !== false)
+			Header::redirect(str_replace("_","-",requestURI(1)), 301);
 
 		$this->storage_postfix = $this->controller_name;
 
 		$this->get = new HTTPParamHolder($_GET);
-        $this->post = new HTTPParamHolder($_POST,1);
-        $this->post->cleanStrings();
-        $this->cookies = new HTTPCookieHolder($_COOKIE);
+		$this->post = new HTTPParamHolder($_POST,1);
+		$this->post->cleanStrings();
+		$this->cookies = new HTTPCookieHolder($_COOKIE);
 
 		$this->parseP1P2();	
 
@@ -369,17 +369,17 @@ class Controller extends EventBehavior
 	 */ 
 	static function getInstance()
 	{
-        if(!isset(self::$instance))
-        {
-            if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === "XMLHttpRequest")
-                self::$instance = new AjaxController();
-            else 
-                self::$instance = new Controller();
-        }
+		if(!isset(self::$instance))
+		{
+			if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === "XMLHttpRequest")
+				self::$instance = new AjaxController();
+			else 
+				self::$instance = new Controller();
+		}
 		return self::$instance;
 	}
 	//}}}
-	
+
 	//{{{ setPageFunc
 	/**
 	 * Sets callback to function, that defines name of the page to be displayed.
@@ -416,30 +416,30 @@ class Controller extends EventBehavior
 	 * @throws ControllerException if system can't load page file
 	 */
 	function init()
-    {
+	{
 		$this->trigger("BeforeInit",$this);
 
 		Boot::setupAll();
-        
-        $this->header = Header::get();
+
+		$this->header = Header::get();
 		$this->dispatcher = new WidgetEventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
 		$this->navigator = new Navigator();
 
-        $full_path = $this->findPage();
+		$full_path = $this->findPage();
 
 		$dom = new DomDocument;
-        if($dom->load($full_path) === false)
-            throw new ControllerException("Can not load XML ".$full_path);
+		if($dom->load($full_path) === false)
+			throw new ControllerException("Can not load XML ".$full_path);
 
 		$this->restoreSignatures();
 		POSTErrors::restoreErrorList();
-		
+
 		$this->trigger("BeforeHandlePOST",$this);
 
-        if($_SERVER['REQUEST_METHOD'] == "POST")
+		if($_SERVER['REQUEST_METHOD'] == "POST")
 		{
 			$this->restoreCheckers();
 			$this->parsePageOnPOST($this->processPage($dom));
@@ -460,14 +460,14 @@ class Controller extends EventBehavior
 		if($this->register_step)
 			$this->navigator->addStep($this->page);
 
-        $this->parsePageOnGET($this->processPage($dom));
-        
+		$this->parsePageOnGET($this->processPage($dom));
+
 		$this->inited = true;
 
 		$this->trigger("AfterInit",$this);
-    }
+	}
 	//}}}
-	
+
 	//{{{ findPage
 	/**
 	 * Tries to find page to display basing on "p1", "p2" parameters
@@ -483,11 +483,11 @@ class Controller extends EventBehavior
 	 * @return string full path to the page (from the server's root).
 	 * @throws ControllerException in case of error.
 	 */
-    protected function findPage()
-    {
+	protected function findPage()
+	{
 		$this->trigger("BeforeFindPage",$this);
 
-        $ret = null;
+		$ret = null;
 		if(!is_null($this->page_function))
 			$ret = str_replace('.xml','',call_user_func($this->page_function,$this->p1,$this->p2));
 		if(!isset($ret))
@@ -502,15 +502,15 @@ class Controller extends EventBehavior
 
 		$full_path = $this->pagePath($this->page);
 
-        if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
-            throw new ControllerException('page '.$this->page.' is for internal use only');
+		if(preg_match('/internal\s*=\s*[\'"`]\s*([^\'"`]+)\s*[\'"`]/',file_get_contents($full_path,null,null,0,100),$m) && (bool)$m[1])
+			throw new ControllerException('page '.$this->page.' is for internal use only');
 
 		$this->trigger("AfterFindPage",$this);
 
-        return $full_path;
+		return $full_path;
 	}
 	//}}}
-	
+
 	//{{{ parseP1P2
 	/**
 	 * Retrieves and parses "p1" and "p2" parameters from GET.
@@ -525,20 +525,20 @@ class Controller extends EventBehavior
 		$this->get->bindFilter('__p2',Filter::STRING_QUOTE_ENCODE);
 		if(isset($this->get->__p1))
 			$this->p1 = $this->get->__p1;
-			
+
 		if(isset($this->get->__p2))
 		{
 			$this->p2 = urldecode($this->get->__p2);
 
-            $this->p2 = trim($this->p2,"/");
+			$this->p2 = trim($this->p2,"/");
 
-            if(!empty($this->p2))
-                $this->p2 = explode("/",$this->p2);
-            else $this->p2 = array();
+			if(!empty($this->p2))
+				$this->p2 = explode("/",$this->p2);
+			else $this->p2 = array();
 		}
-    }
+	}
 	//}}}
-	
+
 	//{{{ pagePath
 	/**
 	 * Returns full page path based on given src.
@@ -557,9 +557,9 @@ class Controller extends EventBehavior
 	 * @see vendorPagePath
 	 * @throws ControllerException if unable to find page path
 	 */
-    protected final function pagePath($src, $vendor_only = false)
-    {
-        if(empty($src))
+	protected final function pagePath($src, $vendor_only = false)
+	{
+		if(empty($src))
 			throw new ControllerException('page file not set');
 
 
@@ -581,7 +581,7 @@ class Controller extends EventBehavior
 			catch(ControllerException $e)
 			{throw new ControllerException('page file '.$file->getAbsPath().' not found');}
 		}
-		
+
 	}
 	//}}}
 
@@ -593,8 +593,8 @@ class Controller extends EventBehavior
 	 * @return string full path to the page from server's root.
 	 * @throws ControllerException if unable to find page path
 	 */
-    protected final function vendorPagePath($src)
-    {
+	protected final function vendorPagePath($src)
+	{
 		$file = Dir::get(Config::get('ROOT_DIR'), true)->getDir(Config::get("vendors_dir"))->getDir('pages')->getFile($src);
 
 		if($file->exists()) return $file;
@@ -652,110 +652,110 @@ class Controller extends EventBehavior
 	 * @throws ControllerException in case of unrecoverable error
 	 * @see ACL::check
 	 */
-    protected function processPage(DomDocument $dom)
-    {
+	protected function processPage(DomDocument $dom)
+	{
 		$this->trigger("BeforePageProcess",array($this,&$dom));
 
-        if(! $dom instanceof DOMNode || !isset($dom->firstChild))
-            throw new ControllerException("XML document not valid");
-        // check rights
-        $a = $dom->firstChild->getAttribute('allow');
-        $d = $dom->firstChild->getAttribute('deny');
-        if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
-        
+		if(! $dom instanceof DOMNode || !isset($dom->firstChild))
+			throw new ControllerException("XML document not valid");
+		// check rights
+		$a = $dom->firstChild->getAttribute('allow');
+		$d = $dom->firstChild->getAttribute('deny');
+		if(!ACL::check($a,$d)) Header::error(Header::FORBIDDEN);
+
 
 		$this->trigger("BeforPageExtendsLookup",array($this,&$dom));
 
-        // extends
-        $adj_list = array($dom);
-        $included_pages = array($this->page.".xml");
-        $t_dom = $dom;
-        while(($e_src = $t_dom->firstChild->getAttribute('extends')) != "" && !in_array($e_src,$included_pages))
-        {
-            $t_dom = new DomDocument;
-            try { $t_dom->load(($pp = $this->pagePath($e_src))); }
-            catch(ControllerException $e) { throw new ControllerException('extends page not found');}
-			
-            $_a = $t_dom->firstChild->getAttribute('allow');
-            $_d = $t_dom->firstChild->getAttribute('deny');
-            if(!ACL::check($_a,$_d)) Header::error(Header::FORBIDDEN);
-           
-            array_unshift($included_pages,$e_src);
-            array_unshift($adj_list,$t_dom);
-            $this->ie_files[] = $pp;
-        }
+		// extends
+		$adj_list = array($dom);
+		$included_pages = array($this->page.".xml");
+		$t_dom = $dom;
+		while(($e_src = $t_dom->firstChild->getAttribute('extends')) != "" && !in_array($e_src,$included_pages))
+		{
+			$t_dom = new DomDocument;
+			try { $t_dom->load(($pp = $this->pagePath($e_src))); }
+			catch(ControllerException $e) { throw new ControllerException('extends page not found');}
+
+				$_a = $t_dom->firstChild->getAttribute('allow');
+			$_d = $t_dom->firstChild->getAttribute('deny');
+			if(!ACL::check($_a,$_d)) Header::error(Header::FORBIDDEN);
+
+			array_unshift($included_pages,$e_src);
+			array_unshift($adj_list,$t_dom);
+			$this->ie_files[] = $pp;
+		}
 
 		$this->trigger("BeforePageParentLookup",array($this,&$dom));
 
-        // searching for <parent> blocks
-        for($i = 1, $c = count($adj_list);$i < $c;$i++)
-        {
-            $nl = t(new DOMXPath($adj_list[$i]))->query("//parent[@id]");
-            for($j = 0, $c2 = $nl->length;$j < $c2;$j++)
-                for($k = $i-1; $k >=0; $k--)
-                {
-                    $nl2 = t(new DOMXPath($adj_list[$k]))->query("//block[@id='".$nl->item($j)->getAttribute('id')."']");
-                    if(!$nl2->length) continue;
-                    $el = $nl->item($j);
-                    $el2 = $nl2->item(0);
+		// searching for <parent> blocks
+		for($i = 1, $c = count($adj_list);$i < $c;$i++)
+		{
+			$nl = t(new DOMXPath($adj_list[$i]))->query("//parent[@id]");
+			for($j = 0, $c2 = $nl->length;$j < $c2;$j++)
+				for($k = $i-1; $k >=0; $k--)
+				{
+					$nl2 = t(new DOMXPath($adj_list[$k]))->query("//block[@id='".$nl->item($j)->getAttribute('id')."']");
+					if(!$nl2->length) continue;
+					$el = $nl->item($j);
+					$el2 = $nl2->item(0);
 
-                    $el2 = $adj_list[$i]->importNode($el2,true);
-                    $el->parentNode->replaceChild($el2,$el);
-                    break;
-                }
-        }
-        // extending
+					$el2 = $adj_list[$i]->importNode($el2,true);
+					$el->parentNode->replaceChild($el2,$el);
+					break;
+				}
+		}
+		// extending
 
 		$this->trigger("BeforePageExtending",array($this,&$dom));
 
-        if(count($adj_list) > 1)
-            for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
-            {
+		if(count($adj_list) > 1)
+			for($adj_i = count($adj_list) - 2; $adj_i >=0; $adj_i--)
+			{
 
-                $dom = $adj_list[$adj_i];
-                $blocks = t(new DOMXPath($dom))->query("//block[@id]");
-                for($i = 0, $c = $blocks->length;$i < $c;$i++)
-                {
-                    if(($id = $blocks->item($i)->getAttribute("id")) == "") continue;
-                    for($j = count($adj_list)-1; $j > $adj_i; $j--)
-                    {
-                        $subst_blocks = t(new DOMXPath($adj_list[$j]))->query("//block[@id='".$id."']");
-                        if(!$subst_blocks->length) continue;
+				$dom = $adj_list[$adj_i];
+				$blocks = t(new DOMXPath($dom))->query("//block[@id]");
+				for($i = 0, $c = $blocks->length;$i < $c;$i++)
+				{
+					if(($id = $blocks->item($i)->getAttribute("id")) == "") continue;
+					for($j = count($adj_list)-1; $j > $adj_i; $j--)
+					{
+						$subst_blocks = t(new DOMXPath($adj_list[$j]))->query("//block[@id='".$id."']");
+						if(!$subst_blocks->length) continue;
 
-                        $el = $blocks->item($i);
-                        $el2 = $subst_blocks->item(0);
+						$el = $blocks->item($i);
+						$el2 = $subst_blocks->item(0);
 
-                        $el2 = $dom->importNode($el2,true);
-                        $el->parentNode->replaceChild($el2,$el);
-                        break;
-                    }
-                }
+						$el2 = $dom->importNode($el2,true);
+						$el->parentNode->replaceChild($el2,$el);
+						break;
+					}
+				}
 
-            }
+			}
 
 		$this->trigger("BeforePageClearingBlocks",array($this,&$dom));
 
-        // clean up from <block>
-        $node_list = $dom->getElementsByTagName('block');
-        for($i = 0, $c = $node_list->length; $i < $c; $i++)
-        {
+		// clean up from <block>
+		$node_list = $dom->getElementsByTagName('block');
+		for($i = 0, $c = $node_list->length; $i < $c; $i++)
+		{
 			$el = $node_list->item(0);
 			if(ACL::check($el->getAttribute('allow'),$el->getAttribute('deny')))
-            for($el = $node_list->item(0),$el_cn = $el->childNodes,$j = 0, $c2 = $el_cn->length;$j < $c2;$j++)
-                $el->parentNode->insertBefore($el_cn->item($j)->cloneNode(true),$el);
-            $el->parentNode->removeChild($el);
-        }
+				for($el = $node_list->item(0),$el_cn = $el->childNodes,$j = 0, $c2 = $el_cn->length;$j < $c2;$j++)
+					$el->parentNode->insertBefore($el_cn->item($j)->cloneNode(true),$el);
+			$el->parentNode->removeChild($el);
+		}
 
 		$this->trigger("BeforePageIncluding",array($this,&$dom));
 
-        // include
-        $node = $dom->getElementsByTagName("include");
+		// include
+		$node = $dom->getElementsByTagName("include");
 		for($i = 0, $c = $node->length;$i < $c;$i++)
-        {
+		{
 			$el = $node->item(0);
 			if($el && ($src = $el->getAttribute('src')) == "") {$el->parentNode->removeChild($el);continue;}
 
-            $_a = $el->getAttribute('allow');
+			$_a = $el->getAttribute('allow');
 			$_d = $el->getAttribute('deny');
 			if(!ACL::check($_a,$_d))  {$el->parentNode->removeChild($el);continue;}
 
@@ -765,45 +765,45 @@ class Controller extends EventBehavior
 			catch(ControllerException $e){ 
 				throw new ControllerException('include page file '.$src.' not found');
 			}
-            $d = new DomDocument;
-            $d->load($src);
+			$d = new DomDocument;
+			$d->load($src);
 
-            $_a = $d->firstChild->getAttribute('allow');
-            $_d = $d->firstChild->getAttribute('deny');
-            if(!ACL::check($_a,$_d)) {$el->parentNode->removeChild($el);continue;}
+			$_a = $d->firstChild->getAttribute('allow');
+			$_d = $d->firstChild->getAttribute('deny');
+			if(!ACL::check($_a,$_d)) {$el->parentNode->removeChild($el);continue;}
 
-            if($el && ($block_id = $el->getAttribute("block")) !== "")
-            {
-                $block = t(new DOMXPath($d))->query("//block[@id='".$block_id."']");
-                if(!$block->length) {$el->parentNode->removeChild($el);continue;}
-                else
-                {
-                    $n_d = new DOMDocument('1.0', 'utf-8');
-                    $n_el = $n_d->createElement('root');
-                    $n_block = $n_d->importNode($block->item(0),true);
-                    $n_el->appendChild($n_block);
-                    $n_d->appendChild($n_el);
-                    $d = $n_d;
-                }
-            }
-            $d = $this->processPage($d);
+			if($el && ($block_id = $el->getAttribute("block")) !== "")
+			{
+				$block = t(new DOMXPath($d))->query("//block[@id='".$block_id."']");
+				if(!$block->length) {$el->parentNode->removeChild($el);continue;}
+				else
+				{
+					$n_d = new DOMDocument('1.0', 'utf-8');
+					$n_el = $n_d->createElement('root');
+					$n_block = $n_d->importNode($block->item(0),true);
+					$n_el->appendChild($n_block);
+					$n_d->appendChild($n_el);
+					$d = $n_d;
+				}
+			}
+			$d = $this->processPage($d);
 
-            $imported_node = $dom->importNode($d->firstChild,true);
-            if($imported_node->hasChildNodes())
-                for($node_list = $imported_node->childNodes,$j = 0, $c2 = $node_list->length; $j < $c2;$j++)
-                    $el->parentNode->insertBefore($node_list->item($j)->cloneNode(true),$el);
-            
-            $el->parentNode->removeChild($el);
-            $this->ie_files[] = $src;
-            
-        }
+			$imported_node = $dom->importNode($d->firstChild,true);
+			if($imported_node->hasChildNodes())
+				for($node_list = $imported_node->childNodes,$j = 0, $c2 = $node_list->length; $j < $c2;$j++)
+					$el->parentNode->insertBefore($node_list->item($j)->cloneNode(true),$el);
+
+			$el->parentNode->removeChild($el);
+			$this->ie_files[] = $src;
+
+		}
 
 		$this->trigger("AfterPageProcess",array($this,&$dom));
 
-        return $dom;
-    }
+		return $dom;
+	}
 	//}}}
-	
+
 	//{{{ parsePageOnGET
 	/**
 	 * This method creates all necessary objects to make GET request, so to display page.
@@ -866,7 +866,7 @@ class Controller extends EventBehavior
 			$this->addValueChecker(simplexml_import_dom($el));
 			$el->parentNode->removeChild($el);
 		}
-	
+
 		$sxml = simplexml_import_dom($dom);
 		foreach($sxml as $elem)
 			$this->buildWidget($elem);
@@ -877,7 +877,7 @@ class Controller extends EventBehavior
 
 	}
 	//}}}
-	
+
 	//{{{ parsePageOnPOST
 	/**
 	 *
@@ -952,7 +952,7 @@ class Controller extends EventBehavior
 
 		$widget = new $widget_name(isset($elem['id'])?(string)$elem['id']:null);
 		if(!$widget instanceof WComponent) return;
-		
+
 		$w_id = $widget->getID();
 		$widget->parseParams($elem);
 
@@ -971,7 +971,7 @@ class Controller extends EventBehavior
 		else	$widget->setJavaScript(new WJavaScript());
 
 		if($widget instanceof WControl && isset($elem['valuechecker']) && isset($this->valuecheckers[(string)$elem['valuechecker']]))
-					$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
+			$widget->setValueChecker($this->valuecheckers[(string)$elem['valuechecker']]);
 
 		if($widget instanceof WComponent && $widget->getState())
 			$widget->buildComplete();
@@ -984,7 +984,7 @@ class Controller extends EventBehavior
 			$this->widgets[$w_id] = $widget;
 	}
 	//}}}
-	
+
 	//{{{ checkACL
 	/**
 	 * Iternal function that checks rights upon given parsed XML, representing single widget.
@@ -995,14 +995,14 @@ class Controller extends EventBehavior
 	private function checkACL(SimpleXMLElement $elem)
 	{
 		$a = $d = null;
-        if(isset($elem['allow']))
-            $a = (string)$elem['allow'];
-        if(isset($elem['deny']))
-            $d = (string)$elem['deny'];
-        return ACL::check($a,$d);
+		if(isset($elem['allow']))
+			$a = (string)$elem['allow'];
+		if(isset($elem['deny']))
+			$d = (string)$elem['deny'];
+		return ACL::check($a,$d);
 	}
 	//}}}
-	
+
 	//{{{ addDataSet
 	/** 
 	 * Adds DataSet widget to current datasets list. 
@@ -1022,7 +1022,7 @@ class Controller extends EventBehavior
 		if(!$this->checkACL($elem)) return;
 
 		$ds = new WDataSet(isset($elem['id'])?$elem['id']:null);
-			
+
 		$ds->parseParams($elem);
 		$this->datasets[] = $ds;
 	}
@@ -1051,7 +1051,7 @@ class Controller extends EventBehavior
 		$this->datahandlers[] = $dh;
 	}
 	//}}}
-	
+
 	//{{{ addStyle
 	/**
 	 * Adds style to styles list. Each widget could declare 
@@ -1083,7 +1083,7 @@ class Controller extends EventBehavior
 		$this->styles[$s->getId()] = $s;
 	}
 	//}}}
-	
+
 	//{{{ addJS
 	/**
 	 * Adds js to inner js list. Each widget could declare 
@@ -1108,14 +1108,14 @@ class Controller extends EventBehavior
 		$j = new $c_name((string)$elem['id']);
 
 		$j->parseParams($elem);
-		
+
 		if(isset($this->javascripts[$j->getId()]))
 			throw new IdExistsException('WJavaScript with id '.$j->getId().' already exists');
 
 		$this->javascripts[$j->getId()] = $j;
 	}	
 	//}}}
-	
+
 	//{{{ addPageHandler
 	/**
 	 * Sets PageHandler for current request. It uses to detect location 
@@ -1137,7 +1137,7 @@ class Controller extends EventBehavior
 		if(!$this->checkACL($elem)) return;
 
 
-        $this->pagehandler = new WPageHandler();
+		$this->pagehandler = new WPageHandler();
 		$this->pagehandler->parseParams($elem);
 		if($is_get)
 			$this->pagehandler->storeSteps();
@@ -1146,7 +1146,7 @@ class Controller extends EventBehavior
 
 	}
 	//}}}
-	
+
 	//{{{ addValueChecker
 	/**
 	 * Adds valuechecker to inner list. Each widget could declare 
@@ -1246,24 +1246,24 @@ class Controller extends EventBehavior
 		{
 			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$this->widgets[$name]->preRender();
-        }
+		}
 		foreach($this->widgets as $name=>$widget)
 		{
 			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$widget->messageInterchange();
 		}
-        foreach($this->widgets as $name => $widget)
-        {
-            if(!$widget->getState() || !$widget instanceof WComponent) continue;
+		foreach($this->widgets as $name => $widget)
+		{
+			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$final_html .= $this->widgets[$name]->generateHTML();
-        }
+		}
 		foreach($this->widgets as $name=>$widget)
 		{
 			if(!$widget->getState() || !$widget instanceof WComponent) continue;
 			$this->widgets[$name]->postRender();				
-        }
+		}
 
-        $final_html.= $this->processNotifications();
+		$final_html.= $this->processNotifications();
 
 		$this->trigger("AfterAllHTML",$this);
 
@@ -1299,20 +1299,20 @@ class Controller extends EventBehavior
 	{
 		$this->trigger("BeforeHead",$this);
 
-        /*if(isset($this->response_string))
-            if ($echo) echo $this->response_string;
-            else return $this->response_string;
+		/*if(isset($this->response_string))
+			if ($echo) echo $this->response_string;
+			else return $this->response_string;
 		 */
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
-			 else return $a["priority"] - $b["priority"];'));
+			else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->scripts as $v)
 			$this->header->addScript($v['src'],$v['cond']);
 
 		usort($this->css,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
-			 else return $a["priority"] - $b["priority"];'));
+		else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->css as $v)
 			$this->header->addCSS($v['src'],$v['cond'],$v['media']);
@@ -1326,7 +1326,7 @@ class Controller extends EventBehavior
 		else return $v;
 	}
 	//}}}
-	
+
 	//{{{ tail
 	/**
 	 * Return enclosing tags of HTML document
@@ -1345,9 +1345,9 @@ class Controller extends EventBehavior
 	{
 		$this->trigger("BeforeTail",$this);
 
-        if(isset($this->response_string)) return;
+		if(isset($this->response_string)) return;
 
-        $v = "\n</body></html>";
+		$v = "\n</body></html>";
 
 		$this->trigger("AfterTail",array($this,&$v));
 
@@ -1370,10 +1370,10 @@ class Controller extends EventBehavior
 	 * @see tail
 	 * @see getHeadBodyTail
 	 */
-    function setResponseString($str)
-    {
-        if(!isset($str) || !is_scalar($str)) return ;
-        $this->response_string = $str;
+	function setResponseString($str)
+	{
+		if(!isset($str) || !is_scalar($str)) return ;
+		$this->response_string = $str;
 	}
 	//}}}
 
@@ -1403,15 +1403,15 @@ class Controller extends EventBehavior
 	function getHeadBodyTail($echo = 1)
 	{
 		$this->trigger("BeforeHeadBodyTail",$this);
-		
-        if(isset($this->response_string))
+
+		if(isset($this->response_string))
 		{
 			$this->trigger("BeforeSendingCookiesResponce",$this->cookies);
 			if(!$this->cookies->send())
 				throw new ControllerException('Unable to send cookies. Probably headers already sent.');
 
 			$this->trigger("AfterHeadBodyTailResponce",array($this,&$this->response_string));
-            if ($echo) echo $this->response_string;
+			if ($echo) echo $this->response_string;
 			else return $this->response_string;
 		}
 		else
@@ -1451,7 +1451,7 @@ class Controller extends EventBehavior
 		return $this->dispatcher;
 	}
 	//}}}
-	
+
 	//{{{ getAdjacencyList
 	/**
 	 * Returns widgets adjacency list.
@@ -1466,7 +1466,7 @@ class Controller extends EventBehavior
 		return $this->adjacency_list;
 	}
 	//}}}
-	
+
 	//{{{ getStyleByName
 	/**
 	 * Returns style object by given id.
@@ -1481,7 +1481,7 @@ class Controller extends EventBehavior
 		return $this->styles["".$name];
 	}
 	//}}}
-	
+
 	//{{{ getJavaScriptByName
 	/**
 	 * Returns javascript object by given id.
@@ -1545,7 +1545,7 @@ class Controller extends EventBehavior
 			'cond'=>$cond,'priority'=>$priority,"ind"=>count($this->scripts));
 	}
 	//}}}
-	
+
 	//{{{ addCSS
 	/**
 	 * Similar to {@link addScript}, adds link to css file to the head part 
@@ -1597,7 +1597,7 @@ class Controller extends EventBehavior
 			'cond'=>$cond, 'media'=>$media,'priority'=>$priority,"ind"=>count($this->css));
 	}
 	//}}}
-	
+
 	//{{{ getNavigator
 	/**
 	 * Return instance of page navigator, used in the system.
@@ -1611,7 +1611,7 @@ class Controller extends EventBehavior
 		return $this->navigator;
 	}
 	//}}}
-	
+
 	//{{{ makeURL
 	/**
 	 * Used for easy way of creating various URLs, inside the system and userland models.
@@ -1697,7 +1697,7 @@ class Controller extends EventBehavior
 			$p2_type = 1;
 			foreach($p2 as $k=>$v)
 				if(is_int($k))
-					{$p2_type = 2;break;}
+				{$p2_type = 2;break;}
 			if($p2_type == 1)
 			{
 				$c_p2 = array_flip($this->p2);
@@ -1713,11 +1713,11 @@ class Controller extends EventBehavior
 						foreach($this->p2 as $temp_k_p2 => $temp_v_p2)
 							if(preg_match($k,$temp_v_p2))
 								if($v === null)
-									{ unset($n_p2[$temp_k_p2]); $replaced = true; }
+								{ unset($n_p2[$temp_k_p2]); $replaced = true; }
 								else 
-									{ $n_p2[$temp_k_p2] = preg_replace($k,$v,$temp_v_p2); $replaced = true; }
-						if(!empty($v) && !$replaced)
-							$n_p2[] = $v;
+								{ $n_p2[$temp_k_p2] = preg_replace($k,$v,$temp_v_p2); $replaced = true; }
+								if(!empty($v) && !$replaced)
+									$n_p2[] = $v;
 					}
 					elseif(!empty($v))
 						$n_p2[] = $v;
@@ -1744,9 +1744,9 @@ class Controller extends EventBehavior
 				if(isset($c_get[$k]))
 					if($v === null)
 					{ unset($n_get[$k]); continue; }
-				$n_get[$k] = $v;
+					$n_get[$k] = $v;
 			}
-		
+
 		if($controller_name == "index" && empty($n_p2))
 			$controller_name = null;
 
@@ -1774,13 +1774,13 @@ class Controller extends EventBehavior
 			else $lang = Language::getLangName($lang);
 		}
 
-		
+
 		return Header::makeHTTPHost(). 
 			((!empty($lang))?"/".$lang:"").
-            ((!empty($controller_name))?"/".$controller_name:"")."/".
+			((!empty($controller_name))?"/".$controller_name:"")."/".
 			(!empty($n_p2)?implode("/",$n_p2)."/":"").(!empty($p1) && strpos($p1,".") === false?$p1.".html":$p1).
 			(!empty($n_get2)?"?".implode("&",$n_get2):"");
-    }
+	}
 	//}}}
 
 	//{{{ getDisplayModeParams
@@ -1798,7 +1798,7 @@ class Controller extends EventBehavior
 		return $this->display_mode_params;
 	}
 	//}}}
-	
+
 	//{{{ getPage
 	/**
 	 * Returns name of the current page. 
@@ -1818,7 +1818,7 @@ class Controller extends EventBehavior
 		return $this->page;
 	}
 	//}}}
-	
+
 	//{{{ getControllerName
 	/**
 	 * Returns name of the current controller.
@@ -1835,7 +1835,7 @@ class Controller extends EventBehavior
 		return $this->controller_name;
 	}
 	//}}}
-	
+
 	//{{{ XMLPageChanged
 	/**
 	 * Checks if current page changed since the specified time.
@@ -1849,10 +1849,10 @@ class Controller extends EventBehavior
 	{
 		if(!isset($mtime)) return true;
 		$file = Config::get('ROOT_DIR').Config::get("XMLPAGES_DIR")."/".$this->controller_name."/".$this->page.".xml";
-        if(fileChanged($file,$mtime)) return true;
-        foreach($this->ie_files as $f)
-            if(fileChanged($f,$mtime)) return true;
-        return false;
+		if(fileChanged($file,$mtime)) return true;
+		foreach($this->ie_files as $f)
+			if(fileChanged($f,$mtime)) return true;
+		return false;
 	}
 	//}}}
 
@@ -1887,7 +1887,7 @@ class Controller extends EventBehavior
 	 * @see PageHandlerObject
 	 */
 	protected function handlePOST()
-    {
+	{
 		$this->trigger("BeforeHandlePOST",$this);
 
 		if($this->post->isEmpty()) 
@@ -1911,7 +1911,7 @@ class Controller extends EventBehavior
 
 			POSTChecker::checkByRules($this->post->{WForm::signature_name},$this->checker_rules,$this->checker_messages);
 			POSTChecker::checkFiles(  $this->post->{WForm::signature_name},$this->file_rules,$this->checker_messages);
-			
+
 			if(POSTErrors::hasErrors())
 			{
 				POSTErrors::saveErrorList();
@@ -1936,23 +1936,23 @@ class Controller extends EventBehavior
 		}
 		DataUpdaterPool::callHandlers($formid);
 		DataUpdaterPool::callFinalize($formid);
-        $ret = null;
-        if(isset($this->pagehandler))
-            $ret = $this->pagehandler->handle();
+		$ret = null;
+		if(isset($this->pagehandler))
+			$ret = $this->pagehandler->handle();
 
 		$this->trigger("AfterHandlePOST",array($this,&$ret));
 
-        if(is_numeric($ret))
-            $this->gotoLocation($this->navigator->getStepURL($ret));
-        elseif(is_string($ret))
-            $this->gotoLocation($ret);
+		if(is_numeric($ret))
+			$this->gotoLocation($this->navigator->getStepURL($ret));
+		elseif(is_string($ret))
+			$this->gotoLocation($ret);
 
 		//$this->gotoStep_0();
-        Header::redirect(requestURI(true), Header::SEE_OTHER); 
+		Header::redirect(requestURI(true), Header::SEE_OTHER); 
 		exit();
 	}
 	//}}}
-	
+
 	//{{{ gotoStep_0
 	/**
 	 * Redirects to the current URL and halts script execution.
@@ -1966,11 +1966,11 @@ class Controller extends EventBehavior
 		//TODO: review mb delete
 		//deprecated
 		$s = $this->navigator->getStep(0);
-        Header::redirect( isset($s,$s['url'])?$s['url']:"/");
+		Header::redirect( isset($s,$s['url'])?$s['url']:"/");
 		exit();
-    }
+	}
 	//}}}
-	
+
 	//{{{ gotoLocation
 	/**
 	 * Redirects to specified location or page.
@@ -1979,17 +1979,17 @@ class Controller extends EventBehavior
 	 * current parameters will be saved and only page will be changed.
 	 * return null
 	 */
-    protected function gotoLocation($loc)
-    {
+	protected function gotoLocation($loc)
+	{
 		if(!isset($loc)) exit();
 		if(($pos = strpos($loc,"/")) === false) 
 			$loc = $this->makeURL($loc);//suggest $loc is a page to which redirect to.
 		elseif($pos == 0)
 			$loc = Header::makeHTTPHost().$loc;
 		Header::redirect($loc, Header::SEE_OTHER);
-    }
+	}
 	//}}}
-	
+
 	// checkers
 
 	//{{{ setChecker
@@ -2007,13 +2007,13 @@ class Controller extends EventBehavior
 	 * @param string optional message to be displayed, if default doesn't feet for particular needs.
 	 */
 	function setChecker($form_sig,WControl $widget,$rule,$rule_value, $message = null)
-    {
+	{
 		if(!isset($form_sig,$widget,$rule,$rule_value)) return;
 		if($widget instanceof iFileUploader)
 			$this->file_rules[$form_sig][$widget->getName()][$rule] = trim($rule_value);
 		else
 			$this->checker_rules[$form_sig][$widget->getName()][$rule] = trim($rule_value);
-        if (!is_null($message)) $this->checker_messages[$form_sig][$widget->getName()] = $message;
+		if (!is_null($message)) $this->checker_messages[$form_sig][$widget->getName()] = $message;
 	}
 	//}}}
 
@@ -2096,7 +2096,7 @@ class Controller extends EventBehavior
 		return false;
 	}
 	//}}}
-	
+
 	//{{{ restoreSignatures
 	/**
 	 * Restore signatures, setted and saved during GET request by {@link addSignature} method.
@@ -2116,28 +2116,28 @@ class Controller extends EventBehavior
 	//}}}
 
 	// TODO: move to vendors and plugins
-    public function addNotify($text){
-        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
-        $notes = $this->notifyStorage['notify'];
-        $notes[] = Language::encodePair($text);
-        $this->notifyStorage['notify'] = $notes;
-    }
-    
-    private function processNotifications(){
+	public function addNotify($text){
+		if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
+		$notes = $this->notifyStorage['notify'];
+		$notes[] = Language::encodePair($text);
+		$this->notifyStorage['notify'] = $notes;
+	}
+
+	private function processNotifications(){
 		$this->trigger("BeforeProcessNotifications",$this);
 
-        if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
-        $notes = $this->notifyStorage['notify'];
-        if (!is_array($notes) || empty($notes)) return '';
+		if (!is_object($this->notifyStorage)) $this->notifyStorage = Storage::createWithSession('ControllerNotify');
+		$notes = $this->notifyStorage['notify'];
+		if (!is_array($notes) || empty($notes)) return '';
 
-        $this->addScript("jquery.jgrowl.js");
-        $this->addCSS("jquery.jgrowl.css");
+		$this->addScript("jquery.jgrowl.js");
+		$this->addCSS("jquery.jgrowl.css");
 
-        $tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notify.tpl');
-        $tpl->setParamsArray(array('list' => $notes));
-        unset($this->notifyStorage['notify']);
-        return $tpl->getHTML();
-    }
+		$tpl = new Template(Config::get('ROOT_DIR').'/includes/widgets/templates', 'notify.tpl');
+		$tpl->setParamsArray(array('list' => $notes));
+		unset($this->notifyStorage['notify']);
+		return $tpl->getHTML();
+	}
 
 	//{{{ isAjax
 	/**
@@ -2146,9 +2146,9 @@ class Controller extends EventBehavior
 	 * @param null
 	 * @return bool true if request made via AJAX
 	 */
-    function isAjax()
-    {
-        return $this->is_ajax;
+	function isAjax()
+	{
+		return $this->is_ajax;
 	}
 	//}}}
 
@@ -2164,28 +2164,28 @@ class Controller extends EventBehavior
 	 * @return null
 	 */
 	function __destruct()
-    {
+	{
 		$this->trigger("BeforeDestruct",$this);
-        //do it only if init was completed
-        if($this->inited)
+		//do it only if init was completed
+		if($this->inited)
 		{
 			$this->trigger("DestructInited",$this);
 
-		    $storage = Storage::createWithSession("controller");
+			$storage = Storage::createWithSession("controller");
 			$storage->set('signatures',$this->form_signatures);
-		    $storage = Storage::createWithSession("controller".$this->getStoragePostfix());
-		    $storage->set('checker_rules',$this->checker_rules);
-		    $storage->set('file_rules',$this->file_rules);
-		    $storage->set('checker_messages',$this->checker_messages);
-            POSTErrors::flushErrors();
-        }
+			$storage = Storage::createWithSession("controller".$this->getStoragePostfix());
+			$storage->set('checker_rules',$this->checker_rules);
+			$storage->set('file_rules',$this->file_rules);
+			$storage->set('checker_messages',$this->checker_messages);
+			POSTErrors::flushErrors();
+		}
 
 		$this->trigger("Destruct",$this);
 
 		DB::close();
 	}
 	//}}}
-	
+
 	//{{{ setStoragePostfix
 	/**
 	 * It sets postifx, that will be added to the storage name to store
@@ -2206,7 +2206,7 @@ class Controller extends EventBehavior
 		$this->storage_postfix = (string)$name;
 	}
 	//}}}
-	
+
 	//{{{ getStoragePostfix
 	/** 
 	 * Returns currently used postfix string
@@ -2220,7 +2220,7 @@ class Controller extends EventBehavior
 		return $this->storage_postfix;
 	}
 	//}}}
-	
+
 	//{{{ registerStep
 	/**
 	 * Sets flag that defines whenever to set or not current page to the
@@ -2251,13 +2251,13 @@ class DisplayModeParams
 		 * Params for displaying.
 		 * @var array
 		 */
-        $widget_params = array(),
-		/**
-		 * Index of selector that have been matched.
-		 * @var int
-		 */
-        $matched_index = null
-        ;
+		$widget_params = array(),
+			/**
+			 * Index of selector that have been matched.
+			 * @var int
+			 */
+			$matched_index = null
+			;
 	public 
 		/**
 		 * Sets predicted limit for displaying iterable containers.
@@ -2265,7 +2265,7 @@ class DisplayModeParams
 		$predicted_from = null,
 		$predicted_limit = null
 		;
-		
+
 
 	//{{{ set
 	/**
@@ -2286,7 +2286,7 @@ class DisplayModeParams
 			"limit"=>$limit,
 			"count"=>$count,
 			"current"=>$from
-			);
+		);
 	}
 	//}}}
 
@@ -2366,7 +2366,7 @@ class DisplayModeParams
 	{
 		if(!isset($this->widget_params[$widget_id])) return ;
 		$this->widget_params[$widget_id]['current'] = $this->widget_params[$widget_id]['from'];
-		
+
 	}
 	//}}}
 
@@ -2403,10 +2403,10 @@ class DisplayModeParams
 			return $this->widget_params[$widget_id]['current'] == $this->widget_params[$widget_id]['count']-1;
 		return $this->widget_params[$widget_id]['current'] == 
 			$this->widget_params[$widget_id]['from'] + $this->widget_params[$widget_id]['limit'] -1;
-		
+
 	}
 	//}}}
-	
+
 	//{{{ getMatchedIndex
 	/**
 	 * Returns matched index
@@ -2414,9 +2414,9 @@ class DisplayModeParams
 	 * @param null
 	 * @return int
 	 */
-    function getMatchedIndex()
-    {
-        return $this->matched_index;
+	function getMatchedIndex()
+	{
+		return $this->matched_index;
 	}
 	//}}}
 
@@ -2427,10 +2427,10 @@ class DisplayModeParams
 	 * @param int index to set
 	 * @return null
 	 */
-    function setMatchedIndex($ind = null)
-    {
-        if(!isset($ind)) return;
-        $this->matched_index = $ind;
+	function setMatchedIndex($ind = null)
+	{
+		if(!isset($ind)) return;
+		$this->matched_index = $ind;
 	}
 	//}}}
 }
@@ -2448,11 +2448,11 @@ class AjaxController extends Controller
 	/**
 	 * Constructor
 	 */
-    public function __construct()
-    {
-        $this->is_ajax = true;
-        parent::__construct();
-    }
+	public function __construct()
+	{
+		$this->is_ajax = true;
+		parent::__construct();
+	}
 	//}}}
 
 	//{{{ init
@@ -2465,27 +2465,27 @@ class AjaxController extends Controller
 	 * @return nul
 	 */
 	function init()
-    {
+	{
 		$this->trigger("BeforeInit",$this);
 
 		Boot::setupAll();
-        
-        $this->header = Header::get();
+
+		$this->header = Header::get();
 		$this->dispatcher = new WidgetEventDispatcher();
 		$this->display_mode_params = new DisplayModeParams();
 		$this->adjacency_list = new WidgetsAdjacencyList();
 
 
-        $full_path = $this->findPage();
+		$full_path = $this->findPage();
 
 		$dom = new DomDocument;
-        if($dom->load($full_path) === false)
-            throw new ControllerException("Can not load XML ".$full_path);
+		if($dom->load($full_path) === false)
+			throw new ControllerException("Can not load XML ".$full_path);
 
 		$this->restoreSignatures();
 		$this->trigger("BeforeHandlePOST",$this);
 
-        if($_SERVER['REQUEST_METHOD'] == "POST")
+		if($_SERVER['REQUEST_METHOD'] == "POST")
 		{
 			$this->restoreCheckers();
 			$this->parsePageOnPOST($this->processPage($dom));
@@ -2493,10 +2493,10 @@ class AjaxController extends Controller
 			exit();
 		}
 
-        $this->parsePageOnGET($this->processPage($dom));
+		$this->parsePageOnGET($this->processPage($dom));
 		$this->inited = true;
 		$this->trigger("AfterInit",$this);
-    }
+	}
 	//}}}
 
 	//{{{ head
@@ -2523,14 +2523,14 @@ class AjaxController extends Controller
 		$head = "";
 
 		$this->trigger("BeforeHead",$this);
-	
-        /*if(isset($this->response_string))
-            if ($echo) echo $this->response_string;
-			else return $this->response_string;*/
+
+		/*if(isset($this->response_string))
+			if ($echo) echo $this->response_string;
+		else return $this->response_string;*/
 
 		usort($this->scripts,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
-			 else return $a["priority"] - $b["priority"];'));
+			else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->scripts as $v)
 		{
@@ -2543,7 +2543,7 @@ class AjaxController extends Controller
 
 		usort($this->css,create_function('$a,$b',
 			'if($a["priority"] == $b["priority"]) return $a["ind"]-$b["ind"];
-			 else return $a["priority"] - $b["priority"];'));
+		else return $a["priority"] - $b["priority"];'));
 
 		foreach($this->css as $v)
 		{
@@ -2573,7 +2573,7 @@ class AjaxController extends Controller
 	 */
 	function tail($echo = 1)
 	{
-        return "";
+		return "";
 	}
 	//}}}
 
@@ -2601,7 +2601,7 @@ class AjaxController extends Controller
 	 * @return null
 	 */
 	protected function handlePOST()
-    {
+	{
 		$this->trigger("BeforeHandlePOST",$this);
 
 		if($this->post->isEmpty()) 
@@ -2657,10 +2657,10 @@ class AjaxController extends Controller
 
 		$this->trigger("AfterHandlePOST",$this);
 
-        if(isset($this->response_string))
+		if(isset($this->response_string))
 		{
 			$this->trigger("AfterHeadBodyTailResponce",array($this,&$this->response_string));
-            echo $this->response_string;
+			echo $this->response_string;
 		}
 
 	}
